@@ -6,12 +6,12 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
     case smartScan = "Smart Scan"
     case systemJunk = "System Junk"
     case userCache = "User Cache"
-    case mailAttachments = "Mail Attachments"
+    case mailAttachments = "Mail Files"
     case trashBins = "Trash Bins"
     case largeFiles = "Large & Old Files"
     case purgeableSpace = "Purgeable Space"
     case xcodeJunk = "Xcode Junk"
-    case brewCache = "Homebrew Cache"
+    case brewCache = "Brew Cache"
 
     var id: String { rawValue }
 

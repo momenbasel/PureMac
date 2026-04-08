@@ -21,6 +21,12 @@ A free, open-source macOS cleaning utility. Keep your Mac fast, clean, and optim
 - **Auto-Purge** - Automatically purge purgeable files on schedule
 - **Click-to-inspect** - Click any category to see exactly what will be removed
 
+## Screenshots
+
+| Smart Scan | Category Detail |
+|---|---|
+| ![Smart Scan](screenshots/smart-scan.png) | ![System Junk Detail](screenshots/system-junk-detail.png) |
+
 ## Install
 
 ### Download (recommended)

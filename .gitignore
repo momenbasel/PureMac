@@ -28,3 +28,20 @@ Carthage/Build/
 *.mode2v3
 *.perspectivev3
 *.moved-aside
+
+# Fastlane sensitive
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output
+fastlane/.env
+fastlane/.env.*
+
+# Screenshots (local only, too large for git)
+fastlane/screenshots/
+
+# Credentials
+*.p8
+*.p12
+*.cer
+*.mobileprovision
+fastlane/README.md
