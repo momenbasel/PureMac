@@ -45,3 +45,5 @@ fastlane/screenshots/
 *.cer
 *.mobileprovision
 fastlane/README.md
+asc_api.py
+ExportOptions.plist
