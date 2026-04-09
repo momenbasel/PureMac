@@ -17,6 +17,14 @@ struct ContentView: View {
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
+                    // Full Disk Access banner
+                    if !vm.hasFullDiskAccess && !vm.fdaBannerDismissed {
+                        FullDiskAccessBanner()
+                            .padding(.horizontal, 24)
+                            .padding(.top, 12)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+
                     // Top bar with disk info
                     TopBarView()
                         .padding(.horizontal, 24)
@@ -40,6 +48,69 @@ struct ContentView: View {
         .onAppear {
             NSWindow.allowsAutomaticWindowTabbing = false
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            vm.checkFullDiskAccess()
+        }
+    }
+}
+
+// MARK: - Full Disk Access Banner
+
+struct FullDiskAccessBanner: View {
+    @EnvironmentObject var vm: AppViewModel
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "lock.shield.fill")
+                .font(.system(size: 18))
+                .foregroundColor(.pmWarning)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Full Disk Access Required")
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundColor(.pmTextPrimary)
+
+                Text("PureMac needs Full Disk Access to scan Trash, Mail, Desktop, Documents, and Homebrew cache.")
+                    .font(.system(size: 11))
+                    .foregroundColor(.pmTextSecondary)
+                    .lineLimit(2)
+            }
+
+            Spacer()
+
+            Button(action: { vm.openFullDiskAccessSettings() }) {
+                Text("Open Settings")
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 6)
+                    .background(AppGradients.accent)
+                    .cornerRadius(8)
+            }
+            .buttonStyle(.plain)
+
+            Button(action: {
+                withAnimation(.pmSmooth) {
+                    vm.fdaBannerDismissed = true
+                }
+            }) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.pmTextMuted)
+                    .frame(width: 20, height: 20)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.pmWarning.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.pmWarning.opacity(0.2), lineWidth: 1)
+                )
+        )
     }
 }
 

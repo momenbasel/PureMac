@@ -268,10 +268,13 @@ actor ScanEngine {
     private func scanBrewCache() async -> CategoryResult {
         var items: [CleanableItem] = []
 
-        // Homebrew cache location
+        // Homebrew cache locations (Apple Silicon + Intel)
         let brewCachePaths = [
             "\(home)/Library/Caches/Homebrew",
             "/opt/homebrew/Caskroom/.metadata",
+            "/usr/local/Caskroom/.metadata",
+            "/opt/homebrew/Cellar/.metadata",
+            "/usr/local/Cellar/.metadata",
         ]
 
         for path in brewCachePaths {

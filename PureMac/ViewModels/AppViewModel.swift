@@ -16,6 +16,8 @@ class AppViewModel: ObservableObject {
     @Published var showCleanConfirmation = false
     @Published var lastCleanedDate: Date?
     @Published var deselectedItems: Set<UUID> = []
+    @Published var hasFullDiskAccess: Bool = true
+    @Published var fdaBannerDismissed: Bool = false
 
     var scheduler = SchedulerService()
     private let scanEngine = ScanEngine()
@@ -81,10 +83,26 @@ class AppViewModel: ObservableObject {
 
     init() {
         loadDiskInfo()
+        checkFullDiskAccess()
         scheduler.setTrigger { [weak self] in
             await self?.runScheduledScan()
         }
         scheduler.start()
+    }
+
+    // MARK: - Full Disk Access
+
+    func checkFullDiskAccess() {
+        Task.detached {
+            let granted = FullDiskAccessManager.shared.hasFullDiskAccess
+            await MainActor.run { [weak self] in
+                self?.hasFullDiskAccess = granted
+            }
+        }
+    }
+
+    func openFullDiskAccessSettings() {
+        FullDiskAccessManager.shared.openFullDiskAccessSettings()
     }
 
     // MARK: - Disk Info
