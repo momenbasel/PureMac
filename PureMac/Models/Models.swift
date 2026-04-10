@@ -159,14 +159,14 @@ struct ScheduleConfig: Codable {
     var minimumCleanSize: Int64 = 100 * 1024 * 1024 // 100 MB
 
     var formattedLastRun: String {
-        guard let date = lastRunDate else { return "Never" }
+        guard let date = lastRunDate else { return String(localized: "Never") }
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .abbreviated
         return formatter.localizedString(for: date, relativeTo: Date())
     }
 
     var formattedNextRun: String {
-        guard let date = nextRunDate else { return "Not scheduled" }
+        guard let date = nextRunDate else { return String(localized: "Not scheduled") }
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .abbreviated
         return formatter.localizedString(for: date, relativeTo: Date())

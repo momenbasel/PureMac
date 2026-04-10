@@ -61,7 +61,7 @@ struct ScheduleSettingsTab: View {
                     set: { vm.scheduler.updateSchedule(interval: $0) }
                 )) {
                     ForEach(ScheduleInterval.allCases) { interval in
-                        Text(interval.rawValue).tag(interval)
+                        Text(LocalizedStringKey(interval.rawValue)).tag(interval)
                     }
                 }
                 .pickerStyle(.menu)

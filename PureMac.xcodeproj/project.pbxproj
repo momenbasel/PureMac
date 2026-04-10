@@ -21,6 +21,7 @@
 		DDD6BA35DBF32E7A6B5F6F8B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2EA41E1096FA8E3B916AD13 /* Assets.xcassets */; };
 		EDEF28CAD23E936FBED1783B /* PureMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63581B70F9B10231964E3602 /* PureMacApp.swift */; };
 		F1A2B3C4D5E6F70819203142 /* FullDiskAccessManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F607182930A1B2 /* FullDiskAccessManager.swift */; };
+		AA0000000000000000000004 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000003 /* Localizable.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +42,8 @@
 		B2EA41E1096FA8E3B916AD13 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C5ADDC35F31E40780FB5D017 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		DD7FDA1B749FFA61DFB52AB5 /* AppViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViewModel.swift; sourceTree = "<group>"; };
+		AA0000000000000000000001 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		AA0000000000000000000002 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -111,6 +114,7 @@
 			isa = PBXGroup;
 			children = (
 				B2EA41E1096FA8E3B916AD13 /* Assets.xcassets */,
+				AA0000000000000000000003 /* Localizable.strings */,
 				46660271CFF167AB0FE7371D /* Info.plist */,
 				5664D2BDAEAA9AE3A53DB364 /* PureMac.entitlements */,
 				63581B70F9B10231964E3602 /* PureMacApp.swift */,
@@ -124,6 +128,18 @@
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
+
+/* Begin PBXVariantGroup section */
+		AA0000000000000000000003 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				AA0000000000000000000001 /* en */,
+				AA0000000000000000000002 /* zh-Hans */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin PBXNativeTarget section */
 		B19E38DEAA0144A77120F39C /* PureMac */ = {
@@ -165,6 +181,7 @@
 			knownRegions = (
 				Base,
 				en,
+				"zh-Hans",
 			);
 			mainGroup = 13CF0676D0E93925F46C13AA;
 			minimizedProjectReferenceProxies = 1;
@@ -184,6 +201,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				DDD6BA35DBF32E7A6B5F6F8B /* Assets.xcassets in Resources */,
+				AA0000000000000000000004 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

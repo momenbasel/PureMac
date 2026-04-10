@@ -168,7 +168,7 @@ struct TopBarView: View {
                     Circle()
                         .fill(Color.pmSuccess)
                         .frame(width: 6, height: 6)
-                    Text("Auto-clean: \(vm.scheduler.config.interval.rawValue)")
+                    Text("Auto-clean: ") + Text(LocalizedStringKey(vm.scheduler.config.interval.rawValue))
                         .font(.pmCaption)
                         .foregroundColor(.pmTextSecondary)
                 }

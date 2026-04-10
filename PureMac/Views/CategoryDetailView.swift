@@ -52,11 +52,11 @@ struct CategoryDetailView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(category.rawValue)
+                Text(LocalizedStringKey(category.rawValue))
                     .font(.pmHeadline)
                     .foregroundColor(.pmTextPrimary)
 
-                Text(category.description)
+                Text(LocalizedStringKey(category.description))
                     .font(.pmCaption)
                     .foregroundColor(.pmTextSecondary)
             }

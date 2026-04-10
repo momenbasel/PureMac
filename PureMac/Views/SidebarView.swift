@@ -144,7 +144,7 @@ struct SidebarItem: View {
 
             // Label
             VStack(alignment: .leading, spacing: 2) {
-                Text(category.rawValue)
+                Text(LocalizedStringKey(category.rawValue))
                     .font(.pmBody)
                     .foregroundColor(isSelected ? .pmTextPrimary : .pmTextSecondary)
                     .lineLimit(1)

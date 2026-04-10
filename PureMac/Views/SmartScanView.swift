@@ -113,7 +113,7 @@ struct SmartScanView: View {
                         .foregroundColor(.pmTextPrimary)
                         .contentTransition(.numericText())
 
-                    Text(vm.currentScanCategory)
+                    Text(LocalizedStringKey(vm.currentScanCategory))
                         .font(.pmCaption)
                         .foregroundColor(.pmTextSecondary)
                         .lineLimit(1)
@@ -281,7 +281,7 @@ struct SmartScanView: View {
                         .foregroundColor(result.category.color)
                         .frame(width: 20)
 
-                    Text(result.category.rawValue)
+                    Text(LocalizedStringKey(result.category.rawValue))
                         .font(.pmCaption)
                         .foregroundColor(.pmTextSecondary)
 
@@ -535,7 +535,7 @@ struct ResultRow: View {
                     }
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(result.category.rawValue)
+                        Text(LocalizedStringKey(result.category.rawValue))
                             .font(.pmBody)
                             .foregroundColor(isCategorySelected ? .pmTextPrimary : .pmTextMuted)
 
@@ -576,7 +576,7 @@ struct ResultRow: View {
 // MARK: - Gradient Action Button
 
 struct GradientActionButton: View {
-    let title: String
+    let title: LocalizedStringKey
     let icon: String
     let gradient: LinearGradient
     let action: () -> Void

@@ -279,7 +279,8 @@ class AppViewModel: ObservableObject {
     private func sendNotification(freed: Int64) {
         let content = UNMutableNotificationContent()
         content.title = "PureMac"
-        content.body = "Found \(ByteCountFormatter.string(fromByteCount: freed, countStyle: .file)) of junk files."
+        let sizeStr = ByteCountFormatter.string(fromByteCount: freed, countStyle: .file)
+        content.body = String(format: NSLocalizedString("Found %@ of junk files.", comment: ""), sizeStr)
         content.sound = .default
 
         let request = UNNotificationRequest(
