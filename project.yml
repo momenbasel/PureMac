@@ -11,6 +11,7 @@ settings:
   base:
     SWIFT_VERSION: "5.9"
     MACOSX_DEPLOYMENT_TARGET: "13.0"
+    ARCHS: "arm64 x86_64"
     CODE_SIGN_IDENTITY: "-"
     CODE_SIGN_STYLE: "Automatic"
     DEVELOPMENT_TEAM: "H3WXHVTP97"
