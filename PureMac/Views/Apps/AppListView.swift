@@ -17,6 +17,37 @@ struct AppListView: View {
     }
 
     var body: some View {
+        HSplitView {
+            appTable
+                .frame(minWidth: 300, idealWidth: 380)
+
+            fileDetail
+                .frame(minWidth: 300)
+        }
+        .searchable(text: $searchText, prompt: "Search apps")
+        .navigationTitle("Installed Apps (\(appState.installedApps.count))")
+        .toolbar {
+            ToolbarItemGroup {
+                Button {
+                    appState.loadInstalledApps()
+                } label: {
+                    Label("Refresh", systemImage: "arrow.clockwise")
+                }
+
+                if !appState.selectedFiles.isEmpty {
+                    Button("Uninstall (\(appState.selectedFiles.count) files)", role: .destructive) {
+                        appState.removeSelectedFiles()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.red)
+                }
+            }
+        }
+    }
+
+    // MARK: - App Table (left side)
+
+    private var appTable: some View {
         Group {
             if appState.isLoadingApps {
                 VStack(spacing: 12) {
@@ -41,21 +72,14 @@ struct AppListView: View {
                             Text(app.appName)
                         }
                     }
-                    .width(min: 200)
+                    .width(min: 150)
 
                     TableColumn("Size") { app in
                         Text(app.formattedSize)
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
                     }
-                    .width(ideal: 80)
-
-                    TableColumn("Bundle Identifier") { app in
-                        Text(app.bundleIdentifier)
-                            .foregroundStyle(.tertiary)
-                            .font(.caption)
-                    }
-                    .width(min: 180)
+                    .width(ideal: 70)
                 }
                 .onChange(of: selection) { newValue in
                     if let id = newValue,
@@ -66,16 +90,20 @@ struct AppListView: View {
                 }
             }
         }
-        .searchable(text: $searchText, prompt: "Search apps")
-        .navigationTitle("Installed Apps (\(appState.installedApps.count))")
-        .toolbar {
-            ToolbarItem {
-                Button {
-                    appState.loadInstalledApps()
-                } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise")
-                }
-            }
+    }
+
+    // MARK: - File Detail (right side)
+
+    @ViewBuilder
+    private var fileDetail: some View {
+        if let app = appState.selectedApp {
+            AppFilesView(app: app)
+        } else {
+            EmptyStateView(
+                "Select an App",
+                systemImage: "cursorarrow.click.2",
+                description: "Select an app from the list to see all its related files across your system."
+            )
         }
     }
 }

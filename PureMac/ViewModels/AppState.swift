@@ -40,6 +40,7 @@ final class AppState: ObservableObject {
     @Published var orphanedFiles: [URL] = []
     @Published var isSearchingOrphans: Bool = false
     @Published var isLoadingApps: Bool = false
+    @Published var isScanningAppFiles: Bool = false
 
     // MARK: - Services
 
@@ -93,6 +94,7 @@ final class AppState: ObservableObject {
     func scanForAppFiles(_ app: InstalledApp) {
         discoveredFiles = []
         selectedFiles = []
+        isScanningAppFiles = true
         let locations = Locations()
         let appInfo = AppPathFinder.AppInfo(
             appName: app.appName,
@@ -107,6 +109,7 @@ final class AppState: ObservableObject {
             let sorted = urls.sorted { $0.path < $1.path }
             self.discoveredFiles = sorted
             self.selectedFiles = urls
+            self.isScanningAppFiles = false
         }
     }
 

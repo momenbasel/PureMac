@@ -4,6 +4,12 @@ struct AppFilesView: View {
     @EnvironmentObject var appState: AppState
     let app: InstalledApp
 
+    private var totalSelectedSize: Int64 {
+        appState.selectedFiles.reduce(Int64(0)) { total, url in
+            total + (fileSize(url) ?? 0)
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // App header
@@ -14,7 +20,7 @@ struct AppFilesView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(app.appName)
-                        .font(.title2)
+                        .font(.title3.bold())
                     Text(app.bundleIdentifier)
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -23,21 +29,36 @@ struct AppFilesView: View {
                 Spacer()
 
                 if !appState.discoveredFiles.isEmpty {
-                    let totalSize = appState.discoveredFiles.reduce(Int64(0)) { total, url in
-                        total + (fileSize(url) ?? 0)
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("\(appState.discoveredFiles.count) files")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                        Text(ByteCountFormatter.string(fromByteCount: totalSelectedSize, countStyle: .file))
+                            .font(.callout.bold())
                     }
-                    Text(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))
-                        .font(.title3)
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
                 }
             }
             .padding()
 
             Divider()
 
-            if appState.discoveredFiles.isEmpty {
-                EmptyStateView("No Related Files Found", systemImage: "magnifyingglass", description: "No additional files were found for this application.")
+            // Content
+            if appState.isScanningAppFiles {
+                VStack(spacing: 12) {
+                    Spacer()
+                    ProgressView("Scanning for related files...")
+                    Text("Checking \(appState.discoveredFiles.count) locations...")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if appState.discoveredFiles.isEmpty {
+                EmptyStateView(
+                    "No Related Files",
+                    systemImage: "checkmark.circle",
+                    description: "No additional files found for \(app.appName)."
+                )
             } else {
                 List(appState.discoveredFiles, id: \.self) { fileURL in
                     Toggle(isOn: fileSelectionBinding(for: fileURL)) {
@@ -72,11 +93,9 @@ struct AppFilesView: View {
                         }
                     }
                 }
-            }
-        }
-        .toolbar {
-            ToolbarItemGroup {
-                if !appState.discoveredFiles.isEmpty {
+
+                // Bottom action bar
+                HStack {
                     Button("Select All") {
                         appState.selectedFiles = Set(appState.discoveredFiles)
                     }
@@ -84,14 +103,17 @@ struct AppFilesView: View {
                         appState.selectedFiles.removeAll()
                     }
 
+                    Spacer()
+
                     if !appState.selectedFiles.isEmpty {
-                        Button("Remove Selected (\(appState.selectedFiles.count))", role: .destructive) {
+                        Button("Uninstall \(appState.selectedFiles.count) files (\(ByteCountFormatter.string(fromByteCount: totalSelectedSize, countStyle: .file)))", role: .destructive) {
                             appState.removeSelectedFiles()
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.red)
                     }
                 }
+                .padding()
             }
         }
     }
