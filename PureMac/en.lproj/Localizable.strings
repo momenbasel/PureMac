@@ -84,6 +84,7 @@
 /* Cleaning Categories */
 "System Junk" = "System Junk";
 "User Cache" = "User Cache";
+"AI Apps" = "AI Apps";
 "Mail Files" = "Mail Files";
 "Trash Bins" = "Trash Bins";
 "Large & Old Files" = "Large & Old Files";
@@ -95,6 +96,7 @@
 "Scan everything at once" = "Scan everything at once";
 "System caches, logs, and temporary files" = "System caches, logs, and temporary files";
 "Application caches and browser data" = "Application caches and browser data";
+"Logs, caches, and temporary files from local AI apps" = "Logs, caches, and temporary files from local AI apps";
 "Downloaded mail attachments" = "Downloaded mail attachments";
 "Files in your Trash" = "Files in your Trash";
 "Files over 100 MB or older than 1 year" = "Files over 100 MB or older than 1 year";
