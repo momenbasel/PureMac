@@ -123,6 +123,7 @@ class AppViewModel: ObservableObject {
         categoryResults = [:]
         totalJunkSize = 0
         scanProgress = 0
+        deselectedItems.removeAll()
 
         Task {
             let categories = CleaningCategory.scannable
@@ -153,6 +154,7 @@ class AppViewModel: ObservableObject {
 
         Task {
             scanProgress = 0.5
+            deselectedItems.removeAll()
             let result = await scanEngine.scanCategory(category)
             categoryResults[category] = result
 
