@@ -5,6 +5,8 @@ struct CategoryDetailView: View {
     let category: CleaningCategory
 
     @State private var sortDescending: Bool = true
+    @State private var searchText = ""
+    @State private var showConfirmation = false
 
     private var result: CategoryResult? {
         appState.categoryResults[category]
@@ -22,6 +24,7 @@ struct CategoryDetailView: View {
                 EmptyStateView("Not Scanned", systemImage: category.icon, description: "Run a scan to analyze this category.")
             }
         }
+        .searchable(text: $searchText, prompt: "Filter files")
         .navigationTitle(category.rawValue)
         .toolbar {
             ToolbarItemGroup {
@@ -56,7 +59,7 @@ struct CategoryDetailView: View {
                     let selectedCount = appState.selectedCountInCategory(category)
                     if selectedSize > 0 {
                         Button {
-                            appState.cleanCategory(category)
+                            showConfirmation = true
                         } label: {
                             Label(
                                 "Clean \(selectedCount) items (\(ByteCountFormatter.string(fromByteCount: selectedSize, countStyle: .file)))",
@@ -67,14 +70,25 @@ struct CategoryDetailView: View {
                 }
             }
         }
+        .confirmationDialog("Clean \(ByteCountFormatter.string(fromByteCount: appState.selectedSizeInCategory(category), countStyle: .file))?", isPresented: $showConfirmation, titleVisibility: .visible) {
+            Button("Clean", role: .destructive) {
+                appState.cleanCategory(category)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will permanently delete the selected files. This cannot be undone.")
+        }
     }
 
     // MARK: - File List
 
     private func fileList(_ result: CategoryResult) -> some View {
-        List {
+        let items = sortedItems(result.items).filter { item in
+            searchText.isEmpty || item.name.localizedCaseInsensitiveContains(searchText) || item.path.localizedCaseInsensitiveContains(searchText)
+        }
+        return List {
             Section {
-                ForEach(sortedItems(result.items)) { item in
+                ForEach(items) { item in
                     FileRowView(item: item)
                 }
             } header: {

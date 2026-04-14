@@ -24,6 +24,7 @@
 		9BB5AAA574AFED6C27A3F8E2 /* AppPathFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0FEE7141871ED5F9E36121 /* AppPathFinder.swift */; };
 		A89DF967EC9E5E8123B2925A /* SmartScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BA091943263913276F3CCF /* SmartScanView.swift */; };
 		B52938BBD11842631314543D /* CategoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B0AF194677EAC1D5568785 /* CategoryDetailView.swift */; };
+		BC6C800216343438413349A3 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D4FD34378988D430A582ED0 /* OnboardingView.swift */; };
 		CDCDFEBA39A3290101F86AC6 /* MainWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F510F232341EE18F11DC934 /* MainWindow.swift */; };
 		D50EB059E741011EB2523731 /* ScanError.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEF15CB1B8EFCA78EF491824 /* ScanError.swift */; };
 		D9445C2641A8637B65DA5ACE /* ScanEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A711CDF5285F68775D9B5513 /* ScanEngine.swift */; };
@@ -47,6 +48,7 @@
 		311078221878708524283765 /* PureMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PureMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3667D46D8E2004EB4D73835A /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		3A8D39C3C250F26302EC45AB /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		3D4FD34378988D430A582ED0 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		424F7B28624C271620E13BBC /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
 		46660271CFF167AB0FE7371D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		5664D2BDAEAA9AE3A53DB364 /* PureMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PureMac.entitlements; sourceTree = "<group>"; };
@@ -100,6 +102,7 @@
 			children = (
 				10B0AF194677EAC1D5568785 /* CategoryDetailView.swift */,
 				9F510F232341EE18F11DC934 /* MainWindow.swift */,
+				3D4FD34378988D430A582ED0 /* OnboardingView.swift */,
 				11BA091943263913276F3CCF /* SmartScanView.swift */,
 				DAD2EC78EB98016ADA27D114 /* Apps */,
 				8AE26715B5748307483A1A5E /* Components */,
@@ -314,6 +317,7 @@
 				DDDA5879006CB97D5D7BDD87 /* Logger.swift in Sources */,
 				CDCDFEBA39A3290101F86AC6 /* MainWindow.swift in Sources */,
 				826A750D2D7EC14C2AE306A3 /* Models.swift in Sources */,
+				BC6C800216343438413349A3 /* OnboardingView.swift in Sources */,
 				FDA30FE6349CA01C8D859F04 /* OrphanListView.swift in Sources */,
 				EDEF28CAD23E936FBED1783B /* PureMacApp.swift in Sources */,
 				D9445C2641A8637B65DA5ACE /* ScanEngine.swift in Sources */,

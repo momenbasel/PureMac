@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SmartScanView: View {
     @EnvironmentObject var appState: AppState
+    @State private var showConfirmation = false
 
     var body: some View {
         VStack(spacing: 20) {
@@ -140,7 +141,7 @@ struct SmartScanView: View {
                 HStack(spacing: 12) {
                     if appState.totalSelectedSize > 0 {
                         Button("Clean Selected (\(ByteCountFormatter.string(fromByteCount: appState.totalSelectedSize, countStyle: .file)))") {
-                            appState.cleanAll()
+                            showConfirmation = true
                         }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.large)
@@ -150,6 +151,14 @@ struct SmartScanView: View {
                         appState.startSmartScan()
                     }
                     .controlSize(.large)
+                }
+                .confirmationDialog("Clean \(ByteCountFormatter.string(fromByteCount: appState.totalSelectedSize, countStyle: .file))?", isPresented: $showConfirmation, titleVisibility: .visible) {
+                    Button("Clean", role: .destructive) {
+                        appState.cleanAll()
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("This will permanently delete the selected files. This cannot be undone.")
                 }
             } else {
                 Image(systemName: "checkmark.circle")

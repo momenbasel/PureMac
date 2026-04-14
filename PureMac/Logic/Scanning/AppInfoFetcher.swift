@@ -26,6 +26,19 @@ final class AppInfoFetcher {
     static let shared = AppInfoFetcher()
     private let fileManager = FileManager.default
 
+    private static let protectedBundleIDs: Set<String> = [
+        "com.apple.Safari", "com.apple.finder", "com.apple.AppStore",
+        "com.apple.systempreferences", "com.apple.Terminal",
+        "com.apple.ActivityMonitor", "com.apple.dt.Xcode",
+        "com.apple.mail", "com.apple.iCal", "com.apple.AddressBook",
+        "com.apple.Preview", "com.apple.TextEdit", "com.apple.calculator",
+        "com.apple.MobileSMS", "com.apple.FaceTime", "com.apple.Music",
+        "com.apple.TV", "com.apple.Podcasts", "com.apple.News",
+        "com.apple.Maps", "com.apple.Photos", "com.apple.Notes",
+        "com.apple.reminders", "com.apple.Stocks", "com.apple.Home",
+        "com.apple.weather", "com.apple.clock", "com.apple.Passwords",
+    ]
+
     private init() {}
 
     func fetchInstalledApps() -> [InstalledApp] {
@@ -51,8 +64,12 @@ final class AppInfoFetcher {
                 // Skip subdirectories inside .app bundles
                 enumerator.skipDescendants()
 
+                // Skip system/protected apps
+                if url.path.hasPrefix("/System") { continue }
+
                 guard let app = loadAppInfo(from: url),
-                      !seenBundleIDs.contains(app.bundleIdentifier) else { continue }
+                      !seenBundleIDs.contains(app.bundleIdentifier),
+                      !Self.protectedBundleIDs.contains(app.bundleIdentifier) else { continue }
 
                 seenBundleIDs.insert(app.bundleIdentifier)
                 apps.append(app)

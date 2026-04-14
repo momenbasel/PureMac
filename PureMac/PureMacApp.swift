@@ -13,12 +13,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 struct PureMacApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var appState = AppState()
+    @AppStorage("PureMac.OnboardingComplete") private var onboardingComplete = false
 
     var body: some Scene {
         WindowGroup {
-            MainWindow()
-                .environmentObject(appState)
-                .frame(minWidth: 900, minHeight: 600)
+            if onboardingComplete {
+                MainWindow()
+                    .environmentObject(appState)
+                    .frame(minWidth: 900, minHeight: 600)
+            } else {
+                OnboardingView(isComplete: $onboardingComplete)
+            }
         }
         .windowStyle(.automatic)
         .windowToolbarStyle(.unified)
