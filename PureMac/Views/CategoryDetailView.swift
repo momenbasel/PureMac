@@ -21,22 +21,29 @@ struct CategoryDetailView: View {
                     fileList(result)
                 }
             } else {
-                EmptyStateView("Not Scanned", systemImage: category.icon, description: "Run a scan to analyze this category.")
+                EmptyStateView("Not Scanned", systemImage: category.icon, description: "Run a scan to analyze this category.", action: { appState.scanSingleCategory(category) }, actionLabel: "Scan Now")
             }
         }
         .searchable(text: $searchText, prompt: "Filter files")
         .navigationTitle(category.rawValue)
         .toolbar {
-            ToolbarItemGroup {
+            ToolbarItem(placement: .automatic) {
+                Button {
+                    appState.scanSingleCategory(category)
+                } label: {
+                    Label("Scan", systemImage: "arrow.clockwise")
+                }
+                .disabled(appState.scanState.isActive)
+            }
+
+            ToolbarItemGroup(placement: .automatic) {
                 if let result = result, !result.items.isEmpty {
                     Button("Select All") {
                         appState.selectAllInCategory(category)
                     }
-
                     Button("Deselect All") {
                         appState.deselectAllInCategory(category)
                     }
-
                     Button(action: { sortDescending.toggle() }) {
                         Label(
                             sortDescending ? "Largest First" : "Smallest First",
@@ -45,15 +52,9 @@ struct CategoryDetailView: View {
                     }
                     .help(sortDescending ? "Sorted: Largest First" : "Sorted: Smallest First")
                 }
+            }
 
-                if result == nil || !appState.scanState.isActive {
-                    Button {
-                        appState.scanSingleCategory(category)
-                    } label: {
-                        Label("Scan", systemImage: "magnifyingglass")
-                    }
-                }
-
+            ToolbarItem(placement: .automatic) {
                 if let _ = result, !appState.scanState.isActive {
                     let selectedSize = appState.selectedSizeInCategory(category)
                     let selectedCount = appState.selectedCountInCategory(category)
@@ -62,7 +63,7 @@ struct CategoryDetailView: View {
                             showConfirmation = true
                         } label: {
                             Label(
-                                "Clean \(selectedCount) items (\(ByteCountFormatter.string(fromByteCount: selectedSize, countStyle: .file)))",
+                                "Clean \(selectedCount) items",
                                 systemImage: "trash"
                             )
                         }

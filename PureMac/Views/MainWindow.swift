@@ -11,7 +11,7 @@ struct MainWindow: View {
         } detail: {
             detailView
         }
-        .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 300)
+        .navigationSplitViewColumnWidth(min: 220, ideal: 250, max: 320)
         .frame(minWidth: 860, minHeight: 520)
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             appState.checkFullDiskAccess()
