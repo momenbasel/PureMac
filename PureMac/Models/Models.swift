@@ -65,6 +65,16 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
     static var scannable: [CleaningCategory] {
         allCases.filter { $0 != .smartScan }
     }
+
+    // Categories safe for unattended cleanup. Personal-file categories and
+    // purgeable space require explicit manual action or the separate purge toggle.
+    static var automaticCleaningCategories: [CleaningCategory] {
+        [.systemJunk, .userCache, .aiApps, .trashBins, .xcodeJunk, .brewCache]
+    }
+
+    var isAutomaticCleaningAllowed: Bool {
+        Self.automaticCleaningCategories.contains(self)
+    }
 }
 
 // MARK: - Scan State
@@ -156,7 +166,7 @@ struct ScheduleConfig: Codable {
     var interval: ScheduleInterval = .daily
     var autoClean: Bool = false
     var autoPurge: Bool = false
-    var categoriesToScan: [CleaningCategory] = CleaningCategory.scannable
+    var categoriesToScan: [CleaningCategory] = CleaningCategory.automaticCleaningCategories
     var lastRunDate: Date?
     var nextRunDate: Date?
     var notifyOnCompletion: Bool = true

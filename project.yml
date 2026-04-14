@@ -36,3 +36,16 @@ targets:
         PRODUCT_NAME: PureMac
         SWIFT_EMIT_LOC_STRINGS: "YES"
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
+
+  PureMacTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - PureMacTests
+    dependencies:
+      - target: PureMac
+    settings:
+      base:
+        PRODUCT_NAME: PureMacTests
+        PRODUCT_BUNDLE_IDENTIFIER: com.puremac.app.tests
+        GENERATE_INFOPLIST_FILE: "YES"

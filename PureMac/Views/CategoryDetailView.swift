@@ -220,7 +220,7 @@ struct CategoryDetailView: View {
                         gradient: AppGradients.accent
                     ) {
                         withAnimation(.pmSpring) {
-                            vm.cleanCategory(category)
+                            vm.requestCleanCategory(category)
                         }
                     }
                 }

@@ -51,6 +51,16 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             vm.checkFullDiskAccess()
         }
+        .alert("Confirm Cleaning", isPresented: $vm.showCleanConfirmation) {
+            Button("Cancel", role: .cancel) {
+                vm.cancelClean()
+            }
+            Button("Delete Permanently", role: .destructive) {
+                vm.confirmClean()
+            }
+        } message: {
+            Text(vm.cleanConfirmationMessage)
+        }
     }
 }
 

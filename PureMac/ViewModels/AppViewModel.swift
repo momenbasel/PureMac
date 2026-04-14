@@ -3,6 +3,18 @@ import Combine
 
 @MainActor
 class AppViewModel: ObservableObject {
+    private enum PendingCleanAction {
+        case all(items: [CleanableItem])
+        case category(CleaningCategory, items: [CleanableItem])
+
+        var items: [CleanableItem] {
+            switch self {
+            case .all(let items), .category(_, let items):
+                return items
+            }
+        }
+    }
+
     // MARK: - State
     @Published var selectedCategory: CleaningCategory = .smartScan
     @Published var scanState: ScanState = .idle
@@ -15,13 +27,14 @@ class AppViewModel: ObservableObject {
     @Published var currentScanCategory: String = ""
     @Published var showCleanConfirmation = false
     @Published var lastCleanedDate: Date?
-    @Published var deselectedItems: Set<UUID> = []
     @Published var hasFullDiskAccess: Bool = true
     @Published var fdaBannerDismissed: Bool = false
+    @Published private var itemSelection = ItemSelectionState()
 
     var scheduler = SchedulerService()
     private let scanEngine = ScanEngine()
     private let cleaningEngine = CleaningEngine()
+    private var pendingCleanAction: PendingCleanAction?
 
     // MARK: - Computed
 
@@ -40,29 +53,21 @@ class AppViewModel: ObservableObject {
     // MARK: - Selection
 
     func isItemSelected(_ item: CleanableItem) -> Bool {
-        !deselectedItems.contains(item.id)
+        itemSelection.isSelected(item)
     }
 
     func toggleItem(_ item: CleanableItem) {
-        if deselectedItems.contains(item.id) {
-            deselectedItems.remove(item.id)
-        } else {
-            deselectedItems.insert(item.id)
-        }
+        itemSelection.toggle(item)
     }
 
     func selectAllInCategory(_ category: CleaningCategory) {
         guard let result = categoryResults[category] else { return }
-        for item in result.items {
-            deselectedItems.remove(item.id)
-        }
+        itemSelection.selectAll(result.items)
     }
 
     func deselectAllInCategory(_ category: CleaningCategory) {
         guard let result = categoryResults[category] else { return }
-        for item in result.items {
-            deselectedItems.insert(item.id)
-        }
+        itemSelection.deselectAll(result.items)
     }
 
     func selectedSizeInCategory(_ category: CleaningCategory) -> Int64 {
@@ -77,6 +82,14 @@ class AppViewModel: ObservableObject {
 
     var totalSelectedSize: Int64 {
         allResults.flatMap { $0.items }.filter { isItemSelected($0) }.reduce(0) { $0 + $1.size }
+    }
+
+    var cleanConfirmationMessage: String {
+        let items = pendingCleanAction?.items ?? []
+        let size = items.reduce(0) { $0 + $1.size }
+        let formattedSize = ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
+
+        return "This will permanently delete \(items.count) selected items (\(formattedSize)). This cannot be undone."
     }
 
     // MARK: - Init
@@ -123,7 +136,7 @@ class AppViewModel: ObservableObject {
         categoryResults = [:]
         totalJunkSize = 0
         scanProgress = 0
-        deselectedItems.removeAll()
+        itemSelection.clear()
 
         Task {
             let categories = CleaningCategory.scannable
@@ -154,7 +167,7 @@ class AppViewModel: ObservableObject {
 
         Task {
             scanProgress = 0.5
-            deselectedItems.removeAll()
+            itemSelection.clear()
             let result = await scanEngine.scanCategory(category)
             categoryResults[category] = result
 
@@ -168,9 +181,69 @@ class AppViewModel: ObservableObject {
     // MARK: - Cleaning
 
     func cleanAll() {
+        requestCleanAll()
+    }
+
+    func cleanCategory(_ category: CleaningCategory) {
+        requestCleanCategory(category)
+    }
+
+    func requestCleanAll() {
         guard !scanState.isActive else { return }
 
-        let itemsToClean = allResults.flatMap { $0.items }.filter { isItemSelected($0) }
+        let items = selectedItemsForAll()
+        guard !items.isEmpty else { return }
+
+        pendingCleanAction = .all(items: items)
+        showCleanConfirmation = true
+    }
+
+    func requestCleanCategory(_ category: CleaningCategory) {
+        guard !scanState.isActive else { return }
+
+        let items = selectedItems(in: category)
+        guard !items.isEmpty else { return }
+
+        pendingCleanAction = .category(category, items: items)
+        showCleanConfirmation = true
+    }
+
+    func cancelClean() {
+        pendingCleanAction = nil
+        showCleanConfirmation = false
+    }
+
+    func confirmClean() {
+        let action = pendingCleanAction
+        pendingCleanAction = nil
+        showCleanConfirmation = false
+
+        switch action {
+        case .all(let items):
+            performCleanAll(itemsToClean: items)
+        case .category(let category, let items):
+            performCleanCategory(category, itemsToClean: items)
+        case nil:
+            break
+        }
+    }
+
+    private func performCleanAll(
+        itemsToClean providedItems: [CleanableItem]? = nil,
+        limitingTo categories: Set<CleaningCategory>? = nil
+    ) {
+        guard !scanState.isActive else { return }
+
+        let itemsToClean: [CleanableItem]
+        if let providedItems {
+            itemsToClean = providedItems
+        } else {
+            let resultsToClean = allResults.filter { result in
+                categories?.contains(result.category) ?? true
+            }
+            itemsToClean = resultsToClean.flatMap { $0.items }.filter { isItemSelected($0) }
+        }
+
         guard !itemsToClean.isEmpty else { return }
 
         scanState = .cleaning(progress: 0)
@@ -187,9 +260,17 @@ class AppViewModel: ObservableObject {
             totalFreedSpace = result.freedSpace
             lastCleanedDate = Date()
 
-            // Clear results
-            categoryResults = [:]
-            totalJunkSize = 0
+            if let categories {
+                for category in categories {
+                    categoryResults.removeValue(forKey: category)
+                }
+                totalJunkSize = categoryResults.values.reduce(0) { $0 + $1.totalSize }
+            } else {
+                categoryResults = [:]
+                totalJunkSize = 0
+            }
+
+            itemSelection.clear()
             scanState = .cleaned
             loadDiskInfo()
 
@@ -200,10 +281,20 @@ class AppViewModel: ObservableObject {
         }
     }
 
-    func cleanCategory(_ category: CleaningCategory) {
-        guard let result = categoryResults[category], !scanState.isActive else { return }
+    private func performCleanCategory(
+        _ category: CleaningCategory,
+        itemsToClean providedItems: [CleanableItem]? = nil
+    ) {
+        guard !scanState.isActive else { return }
 
-        let selectedItems = result.items.filter { isItemSelected($0) }
+        let selectedItems: [CleanableItem]
+        if let providedItems {
+            selectedItems = providedItems
+        } else {
+            guard let result = categoryResults[category] else { return }
+            selectedItems = result.items.filter { isItemSelected($0) }
+        }
+
         guard !selectedItems.isEmpty else { return }
 
         scanState = .cleaning(progress: 0)
@@ -222,6 +313,7 @@ class AppViewModel: ObservableObject {
 
             categoryResults.removeValue(forKey: category)
             totalJunkSize = categoryResults.values.reduce(0) { $0 + $1.totalSize }
+            itemSelection.clear()
             scanState = .cleaned
             loadDiskInfo()
 
@@ -254,7 +346,7 @@ class AppViewModel: ObservableObject {
     // MARK: - Scheduled Scan
 
     private func runScheduledScan() async {
-        let categories = scheduler.config.categoriesToScan
+        let categories = scheduler.config.categoriesToScan.filter { $0.isAutomaticCleaningAllowed }
         var totalFound: Int64 = 0
 
         for category in categories {
@@ -266,7 +358,7 @@ class AppViewModel: ObservableObject {
         totalJunkSize = totalFound
 
         if scheduler.config.autoClean && totalFound >= scheduler.config.minimumCleanSize {
-            cleanAll()
+            performCleanAll(limitingTo: Set(categories))
         }
 
         if scheduler.config.autoPurge {
@@ -293,6 +385,16 @@ class AppViewModel: ObservableObject {
 
         UNUserNotificationCenter.current().add(request)
     }
+
+    private func selectedItemsForAll() -> [CleanableItem] {
+        allResults.flatMap { $0.items }.filter { isItemSelected($0) }
+    }
+
+    private func selectedItems(in category: CleaningCategory) -> [CleanableItem] {
+        guard let result = categoryResults[category] else { return [] }
+        return result.items.filter { isItemSelected($0) }
+    }
+
 }
 
 import UserNotifications

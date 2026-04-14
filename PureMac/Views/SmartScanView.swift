@@ -356,7 +356,7 @@ struct SmartScanView: View {
                         gradient: AppGradients.accent
                     ) {
                         withAnimation(.pmSpring) {
-                            vm.cleanAll()
+                            vm.requestCleanAll()
                         }
                     }
 
