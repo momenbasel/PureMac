@@ -18,6 +18,9 @@ class AppViewModel: ObservableObject {
     @Published var deselectedItems: Set<UUID> = []
     @Published var hasFullDiskAccess: Bool = true
     @Published var fdaBannerDismissed: Bool = false
+    @Published var installedApps: [InstalledApp] = []
+    @Published var isLoadingApps: Bool = false
+    @Published var appSearchText: String = ""
 
     var scheduler = SchedulerService()
     private let scanEngine = ScanEngine()
@@ -246,6 +249,84 @@ class AppViewModel: ObservableObject {
             loadDiskInfo()
 
             try? await Task.sleep(nanoseconds: 3_000_000_000)
+            scanState = .idle
+            totalFreedSpace = 0
+        }
+    }
+
+    // MARK: - App Uninstaller
+
+    var filteredApps: [InstalledApp] {
+        if appSearchText.isEmpty {
+            return installedApps
+        }
+        return installedApps.filter {
+            $0.name.localizedCaseInsensitiveContains(appSearchText) ||
+            $0.bundleIdentifier.localizedCaseInsensitiveContains(appSearchText)
+        }
+    }
+
+    func loadInstalledApps() {
+        guard !isLoadingApps else { return }
+        isLoadingApps = true
+
+        Task {
+            let apps = await scanEngine.scanInstalledApps()
+            self.installedApps = apps
+            self.isLoadingApps = false
+        }
+    }
+
+    func uninstallApp(_ app: InstalledApp) {
+        guard !scanState.isActive else { return }
+
+        scanState = .cleaning(progress: 0)
+        cleanProgress = 0
+
+        Task {
+            var freedSpace: Int64 = 0
+            let totalSteps = 1 + app.associatedFiles.count
+            var currentStep = 0
+
+            // Remove associated files first
+            for file in app.associatedFiles {
+                currentStep += 1
+                cleanProgress = Double(currentStep) / Double(totalSteps)
+                scanState = .cleaning(progress: cleanProgress)
+
+                do {
+                    if FileManager.default.fileExists(atPath: file.path) {
+                        try FileManager.default.removeItem(atPath: file.path)
+                        freedSpace += file.size
+                    }
+                } catch {
+                    // Continue with remaining files
+                }
+            }
+
+            // Remove the app bundle
+            currentStep += 1
+            cleanProgress = Double(currentStep) / Double(totalSteps)
+            scanState = .cleaning(progress: cleanProgress)
+
+            do {
+                if FileManager.default.fileExists(atPath: app.path) {
+                    try FileManager.default.removeItem(atPath: app.path)
+                    freedSpace += app.appSize
+                }
+            } catch {
+                // App removal may fail due to permissions
+            }
+
+            totalFreedSpace = freedSpace
+            lastCleanedDate = Date()
+
+            // Remove from list and refresh
+            installedApps.removeAll { $0.id == app.id }
+            scanState = .cleaned
+            loadDiskInfo()
+
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
             scanState = .idle
             totalFreedSpace = 0
         }

@@ -36,6 +36,8 @@ struct ContentView: View {
                         switch vm.selectedCategory {
                         case .smartScan:
                             SmartScanView()
+                        case .appUninstaller:
+                            AppUninstallerView()
                         default:
                             CategoryDetailView(category: vm.selectedCategory)
                         }

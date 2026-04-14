@@ -1,4 +1,5 @@
 import Foundation
+import AppKit
 
 actor ScanEngine {
     private let fileManager = FileManager.default
@@ -33,6 +34,8 @@ actor ScanEngine {
             return scanXcodeJunk()
         case .brewCache:
             return scanBrewCache()
+        case .appUninstaller:
+            return CategoryResult(category: category, items: [], totalSize: 0)
         }
     }
 
@@ -558,6 +561,130 @@ actor ScanEngine {
         // Use a reasonable estimate based on total snapshot usage
         // For accurate per-snapshot sizes we'd need root access
         return 0
+    }
+
+    // MARK: - App Uninstaller
+
+    /// System app bundle identifiers that should never be uninstalled
+    private static let protectedBundleIDs: Set<String> = [
+        "com.apple.Safari", "com.apple.finder", "com.apple.AppStore",
+        "com.apple.systempreferences", "com.apple.Terminal",
+        "com.apple.ActivityMonitor", "com.apple.dt.Xcode",
+    ]
+
+    /// Scan /Applications for installed apps
+    func scanInstalledApps() -> [InstalledApp] {
+        var apps: [InstalledApp] = []
+
+        let appDirs = [
+            "/Applications",
+            "\(home)/Applications",
+        ]
+
+        for dir in appDirs {
+            guard fileManager.fileExists(atPath: dir),
+                  let contents = try? fileManager.contentsOfDirectory(atPath: dir)
+            else { continue }
+
+            for item in contents {
+                guard item.hasSuffix(".app") else { continue }
+                let appPath = (dir as NSString).appendingPathComponent(item)
+                let appURL = URL(fileURLWithPath: appPath)
+
+                guard let bundle = Bundle(url: appURL),
+                      let bundleID = bundle.bundleIdentifier
+                else { continue }
+
+                // Skip system/protected apps
+                if Self.protectedBundleIDs.contains(bundleID) { continue }
+                if appPath.hasPrefix("/System") { continue }
+
+                let appName = bundle.infoDictionary?["CFBundleName"] as? String
+                    ?? bundle.infoDictionary?["CFBundleDisplayName"] as? String
+                    ?? (item as NSString).deletingPathExtension
+
+                let icon = NSWorkspace.shared.icon(forFile: appPath)
+                let appSize = directorySize(path: appPath)
+
+                let associatedFiles = findAssociatedFiles(
+                    bundleIdentifier: bundleID,
+                    appName: appName
+                )
+
+                apps.append(InstalledApp(
+                    name: appName,
+                    bundleIdentifier: bundleID,
+                    path: appPath,
+                    icon: icon,
+                    appSize: appSize,
+                    associatedFiles: associatedFiles
+                ))
+            }
+        }
+
+        return apps.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    /// Find associated files for a given app by bundle identifier and name
+    private func findAssociatedFiles(bundleIdentifier: String, appName: String) -> [AssociatedFile] {
+        var files: [AssociatedFile] = []
+
+        let searches: [(path: String, kind: AssociatedFileKind)] = [
+            ("\(home)/Library/Preferences/\(bundleIdentifier).plist", .preferences),
+            ("\(home)/Library/Application Support/\(appName)", .applicationSupport),
+            ("\(home)/Library/Application Support/\(bundleIdentifier)", .applicationSupport),
+            ("\(home)/Library/Caches/\(bundleIdentifier)", .caches),
+            ("\(home)/Library/Saved Application State/\(bundleIdentifier).savedState", .savedState),
+            ("\(home)/Library/Containers/\(bundleIdentifier)", .container),
+            ("\(home)/Library/HTTPStorages/\(bundleIdentifier)", .webData),
+            ("\(home)/Library/WebKit/\(bundleIdentifier)", .webData),
+            ("\(home)/Library/Logs/\(appName)", .logs),
+            ("\(home)/Library/Logs/\(bundleIdentifier)", .logs),
+        ]
+
+        for search in searches {
+            guard fileManager.fileExists(atPath: search.path) else { continue }
+
+            var isDir: ObjCBool = false
+            fileManager.fileExists(atPath: search.path, isDirectory: &isDir)
+
+            let size: Int64
+            if isDir.boolValue {
+                size = directorySize(path: search.path)
+            } else {
+                size = (try? fileManager.attributesOfItem(atPath: search.path)[.size] as? Int64) ?? 0
+            }
+
+            guard size > 0 else { continue }
+
+            files.append(AssociatedFile(
+                name: URL(fileURLWithPath: search.path).lastPathComponent,
+                path: search.path,
+                size: size,
+                kind: search.kind
+            ))
+        }
+
+        // Search group containers
+        let groupContainersPath = "\(home)/Library/Group Containers"
+        if let groupContents = try? fileManager.contentsOfDirectory(atPath: groupContainersPath) {
+            for item in groupContents {
+                if item.contains(bundleIdentifier) || item.localizedCaseInsensitiveContains(appName) {
+                    let fullPath = (groupContainersPath as NSString).appendingPathComponent(item)
+                    let size = directorySize(path: fullPath)
+                    if size > 0 {
+                        files.append(AssociatedFile(
+                            name: item,
+                            path: fullPath,
+                            size: size,
+                            kind: .groupContainer
+                        ))
+                    }
+                }
+            }
+        }
+
+        return files
     }
 
     /// Calculate total local snapshot size from disk usage difference

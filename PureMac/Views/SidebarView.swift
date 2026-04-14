@@ -52,6 +52,12 @@ struct SidebarView: View {
                         .onTapGesture { vm.selectedCategory = category }
                     }
 
+                    SidebarItem(
+                        category: .appUninstaller,
+                        isSelected: vm.selectedCategory == .appUninstaller,
+                        resultSize: nil
+                    )
+                    .onTapGesture { vm.selectedCategory = .appUninstaller }
                 }
                 .padding(.bottom, 16)
             }

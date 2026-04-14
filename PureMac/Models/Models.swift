@@ -39,6 +39,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
     case purgeableSpace = "Purgeable Space"
     case xcodeJunk = "Xcode Junk"
     case brewCache = "Brew Cache"
+    case appUninstaller = "App Uninstaller"
 
     var id: String { rawValue }
 
@@ -54,7 +55,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .purgeableSpace: return "arrow.3.trianglepath"
         case .xcodeJunk: return "hammer.fill"
         case .brewCache: return "mug.fill"
-
+        case .appUninstaller: return "xmark.app.fill"
         }
     }
 
@@ -70,7 +71,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .purgeableSpace: return "APFS purgeable disk space"
         case .xcodeJunk: return "Derived data, archives, and simulators"
         case .brewCache: return "Homebrew download cache"
-
+        case .appUninstaller: return "Uninstall apps and their leftover files"
         }
     }
 
@@ -86,14 +87,62 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .purgeableSpace: return .pmSuccess
         case .xcodeJunk: return Color(hex: "06b6d4")
         case .brewCache: return Color(hex: "84cc16")
-
+        case .appUninstaller: return Color(hex: "e11d48")
         }
     }
 
     // Categories to scan in Smart Scan mode
     static var scannable: [CleaningCategory] {
-        allCases.filter { $0 != .smartScan }
+        allCases.filter { $0 != .smartScan && $0 != .appUninstaller }
     }
+}
+
+// MARK: - Installed App
+
+struct InstalledApp: Identifiable {
+    let id = UUID()
+    let name: String
+    let bundleIdentifier: String
+    let path: String
+    let icon: NSImage?
+    let appSize: Int64
+    var associatedFiles: [AssociatedFile]
+
+    var totalSize: Int64 {
+        appSize + associatedFiles.reduce(0) { $0 + $1.size }
+    }
+
+    var formattedTotalSize: String {
+        ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file)
+    }
+
+    var formattedAppSize: String {
+        ByteCountFormatter.string(fromByteCount: appSize, countStyle: .file)
+    }
+}
+
+struct AssociatedFile: Identifiable {
+    let id = UUID()
+    let name: String
+    let path: String
+    let size: Int64
+    let kind: AssociatedFileKind
+
+    var formattedSize: String {
+        ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
+    }
+}
+
+enum AssociatedFileKind: String {
+    case preferences = "Preferences"
+    case applicationSupport = "Application Support"
+    case caches = "Caches"
+    case savedState = "Saved State"
+    case container = "Container"
+    case groupContainer = "Group Container"
+    case logs = "Logs"
+    case webData = "Web Data"
+    case other = "Other"
 }
 
 // MARK: - Scan State
