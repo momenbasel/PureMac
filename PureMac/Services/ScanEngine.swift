@@ -111,7 +111,7 @@ actor ScanEngine {
                         size: size,
                         category: .userCache,
                         isSelected: true,
-                        lastModified: nil
+                        lastModified: fileModDate(path: path)
                     ))
                 }
             }
@@ -255,7 +255,7 @@ actor ScanEngine {
                         size: size,
                         category: .xcodeJunk,
                         isSelected: true,
-                        lastModified: nil
+                        lastModified: fileModDate(path: path)
                     ))
                 }
             }
@@ -287,7 +287,7 @@ actor ScanEngine {
                         size: size,
                         category: .brewCache,
                         isSelected: true,
-                        lastModified: nil
+                        lastModified: fileModDate(path: path)
                     ))
                 }
             }

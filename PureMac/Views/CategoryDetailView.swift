@@ -4,8 +4,30 @@ struct CategoryDetailView: View {
     @EnvironmentObject var vm: AppViewModel
     let category: CleaningCategory
 
+    @State private var filter = FilterConfig()
+
     var result: CategoryResult? {
         vm.categoryResults[category]
+    }
+
+    var filteredItems: [CleanableItem] {
+        guard let items = result?.items else { return [] }
+
+        let filtered = items.filter { filter.matches($0) }
+
+        return filtered.sorted { a, b in
+            let ascending = filter.sortOrder == .ascending
+            switch filter.sortBy {
+            case .size:
+                return ascending ? a.size < b.size : a.size > b.size
+            case .date:
+                let d1 = a.lastModified ?? Date.distantPast
+                let d2 = b.lastModified ?? Date.distantPast
+                return ascending ? d1 < d2 : d1 > d2
+            case .name:
+                return ascending ? a.name < b.name : a.name > b.name
+            }
+        }
     }
 
     var body: some View {
@@ -20,6 +42,11 @@ struct CategoryDetailView: View {
                 if result.items.isEmpty {
                     emptyState
                 } else {
+                    // Search & Filter Bar
+                    filterBar
+                        .padding(.horizontal, 32)
+                        .padding(.bottom, 8)
+
                     // File list
                     fileList(result)
                 }
@@ -77,14 +104,102 @@ struct CategoryDetailView: View {
         }
     }
 
+    // MARK: - Filter Bar
+
+    private var filterBar: some View {
+        HStack(spacing: 12) {
+            // Search field
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.pmTextMuted)
+                    .font(.system(size: 12))
+                TextField("Search files...", text: $filter.searchText)
+                    .textFieldStyle(.plain)
+                    .font(.pmBody)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color.pmCard)
+            .cornerRadius(8)
+            .frame(maxWidth: .infinity)
+
+            // Size Filter
+            filterMenu(title: filter.sizeFilter == .all ? "Size" : filter.sizeFilter.rawValue, icon: "line.3.horizontal.decrease.circle") {
+                Picker("Size", selection: $filter.sizeFilter) {
+                    ForEach(SizeFilter.allCases) { f in
+                        Text(f.rawValue).tag(f)
+                    }
+                }
+            }
+
+            // Date Filter
+            filterMenu(title: filter.dateFilter == .all ? "Date" : filter.dateFilter.rawValue, icon: "calendar") {
+                Picker("Date", selection: $filter.dateFilter) {
+                    ForEach(DateFilter.allCases) { f in
+                        Text(f.rawValue).tag(f)
+                    }
+                }
+            }
+
+            // Sort
+            Menu {
+                Picker("Sort By", selection: $filter.sortBy) {
+                    ForEach(SortBy.allCases) { s in
+                        Text(s.rawValue).tag(s)
+                    }
+                }
+                Divider()
+                Button(action: { filter.sortOrder = .ascending }) {
+                    HStack {
+                        Text("Ascending")
+                        if filter.sortOrder == .ascending { Image(systemName: "checkmark") }
+                    }
+                }
+                Button(action: { filter.sortOrder = .descending }) {
+                    HStack {
+                        Text("Descending")
+                        if filter.sortOrder == .descending { Image(systemName: "checkmark") }
+                    }
+                }
+            } label: {
+                Image(systemName: "arrow.up.arrow.down")
+                    .font(.system(size: 12))
+                    .foregroundColor(.pmTextSecondary)
+                    .padding(8)
+                    .background(Color.pmCard)
+                    .cornerRadius(8)
+            }
+            .menuStyle(.plain)
+        }
+    }
+
+    private func filterMenu<Content: View>(title: String, icon: String, @ViewBuilder content: () -> Content) -> some View {
+        Menu {
+            content()
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                Text(title)
+            }
+            .font(.system(size: 11, weight: .medium))
+            .foregroundColor(.pmTextSecondary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color.pmCard)
+            .cornerRadius(8)
+        }
+        .menuStyle(.plain)
+    }
+
     // MARK: - File List
 
     private func fileList(_ result: CategoryResult) -> some View {
         VStack(spacing: 0) {
             // Select all / Deselect all bar
             HStack(spacing: 16) {
-                let selectedCount = vm.selectedCountInCategory(category)
-                let totalCount = result.itemCount
+                let items = filteredItems
+                let selectedCount = items.filter { vm.isItemSelected($0) }.count
+                let totalCount = items.count
 
                 Text("\(selectedCount) of \(totalCount) selected")
                     .font(.system(size: 11, weight: .medium, design: .rounded))
@@ -93,7 +208,7 @@ struct CategoryDetailView: View {
                 Spacer()
 
                 Button("Select All") {
-                    vm.selectAllInCategory(category)
+                    vm.selectItems(items)
                 }
                 .font(.system(size: 11, weight: .medium))
                 .foregroundColor(.pmAccentLight)
@@ -104,7 +219,7 @@ struct CategoryDetailView: View {
                     .font(.system(size: 11))
 
                 Button("Deselect All") {
-                    vm.deselectAllInCategory(category)
+                    vm.deselectItems(items)
                 }
                 .font(.system(size: 11, weight: .medium))
                 .foregroundColor(.pmAccentLight)
@@ -119,7 +234,7 @@ struct CategoryDetailView: View {
 
             ScrollView {
                 LazyVStack(spacing: 4) {
-                    ForEach(result.items) { item in
+                    ForEach(filteredItems) { item in
                         FileRow(item: item, color: category.color)
                     }
                 }

@@ -1,5 +1,100 @@
 import SwiftUI
 
+// MARK: - Filter & Sort
+
+struct FilterConfig {
+    var searchText: String = ""
+    var sizeFilter: SizeFilter = .all
+    var dateFilter: DateFilter = .all
+    var sortBy: SortBy = .size
+    var sortOrder: SortOrder = .descending
+
+    func matches(_ item: CleanableItem) -> Bool {
+        // Search text
+        if !searchText.isEmpty {
+            if !item.name.localizedCaseInsensitiveContains(searchText) &&
+               !item.path.localizedCaseInsensitiveContains(searchText) {
+                return false
+            }
+        }
+
+        // Size filter
+        if !sizeFilter.matches(item.size) {
+            return false
+        }
+
+        // Date filter
+        if let date = item.lastModified {
+            if !dateFilter.matches(date) {
+                return false
+            }
+        } else if dateFilter != .all {
+            return false
+        }
+
+        return true
+    }
+}
+
+enum SizeFilter: String, CaseIterable, Identifiable {
+    case all = "All Sizes"
+    case small = "Small (< 10 MB)"
+    case medium = "Medium (10 - 100 MB)"
+    case large = "Large (> 100 MB)"
+
+    var id: String { rawValue }
+
+    func matches(_ size: Int64) -> Bool {
+        switch self {
+        case .all: return true
+        case .small: return size < 10 * 1024 * 1024
+        case .medium: return size >= 10 * 1024 * 1024 && size <= 100 * 1024 * 1024
+        case .large: return size > 100 * 1024 * 1024
+        }
+    }
+}
+
+enum DateFilter: String, CaseIterable, Identifiable {
+    case all = "All Time"
+    case today = "Today"
+    case week = "Last 7 Days"
+    case month = "Last 30 Days"
+    case year = "Last Year"
+
+    var id: String { rawValue }
+
+    func matches(_ date: Date) -> Bool {
+        let now = Date()
+        let calendar = Calendar.current
+        switch self {
+        case .all: return true
+        case .today: return calendar.isDateInToday(date)
+        case .week:
+            let weekAgo = calendar.date(byAdding: .day, value: -7, to: now)!
+            return date >= weekAgo
+        case .month:
+            let monthAgo = calendar.date(byAdding: .month, value: -1, to: now)!
+            return date >= monthAgo
+        case .year:
+            let yearAgo = calendar.date(byAdding: .year, value: -1, to: now)!
+            return date >= yearAgo
+        }
+    }
+}
+
+enum SortBy: String, CaseIterable, Identifiable {
+    case size = "Size"
+    case date = "Date"
+    case name = "Name"
+
+    var id: String { rawValue }
+}
+
+enum SortOrder {
+    case ascending
+    case descending
+}
+
 // MARK: - Cleaning Category
 
 enum CleaningCategory: String, CaseIterable, Identifiable, Codable {

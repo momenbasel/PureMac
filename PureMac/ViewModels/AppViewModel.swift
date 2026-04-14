@@ -65,6 +65,18 @@ class AppViewModel: ObservableObject {
         }
     }
 
+    func selectItems(_ items: [CleanableItem]) {
+        for item in items {
+            deselectedItems.remove(item.id)
+        }
+    }
+
+    func deselectItems(_ items: [CleanableItem]) {
+        for item in items {
+            deselectedItems.insert(item.id)
+        }
+    }
+
     func selectedSizeInCategory(_ category: CleaningCategory) -> Int64 {
         guard let result = categoryResults[category] else { return 0 }
         return result.items.filter { isItemSelected($0) }.reduce(0) { $0 + $1.size }
