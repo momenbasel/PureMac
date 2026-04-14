@@ -14,7 +14,7 @@ struct OrphanListView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if appState.orphanedFiles.isEmpty {
-                EmptyStateView("No Orphaned Files", systemImage: "checkmark.circle", description: "No leftover files from uninstalled apps were found.", action: { /* Will be connected to OrphanFinder */ }, actionLabel: "Scan for Orphans")
+                EmptyStateView("No Orphaned Files", systemImage: "checkmark.circle", description: "No leftover files from uninstalled apps were found.", action: { appState.findOrphans() }, actionLabel: "Scan for Orphans")
             } else {
                 List(appState.orphanedFiles, id: \.self) { fileURL in
                     Toggle(isOn: orphanBinding(for: fileURL)) {
@@ -55,12 +55,16 @@ struct OrphanListView: View {
         .toolbar {
             ToolbarItemGroup {
                 Button("Scan for Orphans") {
-                    // Will be connected to OrphanFinder
+                    appState.findOrphans()
                 }
 
                 if !selectedOrphans.isEmpty {
-                    Button("Remove Selected", role: .destructive) {
-                        // Will be connected to cleaning engine
+                    Button("Remove Selected (\(selectedOrphans.count))", role: .destructive) {
+                        for url in selectedOrphans {
+                            try? FileManager.default.removeItem(at: url)
+                        }
+                        appState.orphanedFiles.removeAll { selectedOrphans.contains($0) }
+                        selectedOrphans.removeAll()
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.red)

@@ -3,9 +3,9 @@ import SwiftUI
 struct AppListView: View {
     @EnvironmentObject var appState: AppState
     @State private var searchText = ""
-    @State private var selection: AppInfoPlaceholder.ID?
+    @State private var selection: InstalledApp.ID?
 
-    private var filteredApps: [AppInfoPlaceholder] {
+    private var filteredApps: [InstalledApp] {
         if searchText.isEmpty {
             return appState.installedApps
         }
@@ -18,8 +18,19 @@ struct AppListView: View {
 
     var body: some View {
         Group {
-            if appState.installedApps.isEmpty {
-                EmptyStateView("No Apps Loaded", systemImage: "square.grid.2x2", description: "App scanning is being set up. This feature will discover all installed applications and their related files.")
+            if appState.isLoadingApps {
+                VStack(spacing: 12) {
+                    ProgressView("Loading installed apps...")
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if appState.installedApps.isEmpty {
+                EmptyStateView(
+                    "No Apps Found",
+                    systemImage: "square.grid.2x2",
+                    description: "Could not find any installed applications.",
+                    action: { appState.loadInstalledApps() },
+                    actionLabel: "Retry"
+                )
             } else {
                 Table(filteredApps, selection: $selection) {
                     TableColumn("Application") { app in
@@ -32,9 +43,16 @@ struct AppListView: View {
                     }
                     .width(min: 200)
 
+                    TableColumn("Size") { app in
+                        Text(app.formattedSize)
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                    }
+                    .width(ideal: 80)
+
                     TableColumn("Bundle Identifier") { app in
                         Text(app.bundleIdentifier)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.tertiary)
                             .font(.caption)
                     }
                     .width(min: 180)
@@ -43,11 +61,21 @@ struct AppListView: View {
                     if let id = newValue,
                        let app = appState.installedApps.first(where: { $0.id == id }) {
                         appState.selectedApp = app
+                        appState.scanForAppFiles(app)
                     }
                 }
             }
         }
         .searchable(text: $searchText, prompt: "Search apps")
         .navigationTitle("Installed Apps (\(appState.installedApps.count))")
+        .toolbar {
+            ToolbarItem {
+                Button {
+                    appState.loadInstalledApps()
+                } label: {
+                    Label("Refresh", systemImage: "arrow.clockwise")
+                }
+            }
+        }
     }
 }

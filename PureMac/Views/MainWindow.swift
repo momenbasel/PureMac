@@ -11,7 +11,8 @@ struct MainWindow: View {
         } detail: {
             detailView
         }
-        .frame(minWidth: 800, minHeight: 500)
+        .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 280)
+        .frame(minWidth: 860, minHeight: 520)
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             appState.checkFullDiskAccess()
         }
@@ -22,8 +23,10 @@ struct MainWindow: View {
             Section("Applications") {
                 Label("Installed Apps", systemImage: "square.grid.2x2")
                     .tag(AppSection.apps)
+                    .badge(appState.installedApps.count)
                 Label("Orphaned Files", systemImage: "doc.questionmark")
                     .tag(AppSection.orphans)
+                    .badge(appState.orphanedFiles.count)
             }
 
             Section("Cleaning") {
@@ -49,15 +52,9 @@ struct MainWindow: View {
     private var detailView: some View {
         switch selectedSection {
         case .apps:
-            Text("Installed Apps")
-                .font(.title2)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            AppListView()
         case .orphans:
-            Text("Orphaned Files")
-                .font(.title2)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            OrphanListView()
         case .cleaning(let category):
             if category == .smartScan {
                 SmartScanView()
@@ -65,9 +62,7 @@ struct MainWindow: View {
                 CategoryDetailView(category: category)
             }
         case nil:
-            Text("Select a category")
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            EmptyStateView("PureMac", systemImage: "sparkles", description: "Select a category from the sidebar to get started.")
         }
     }
 }

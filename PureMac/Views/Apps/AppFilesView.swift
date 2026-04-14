@@ -2,7 +2,7 @@ import SwiftUI
 
 struct AppFilesView: View {
     @EnvironmentObject var appState: AppState
-    let app: AppInfoPlaceholder
+    let app: InstalledApp
 
     var body: some View {
         VStack(spacing: 0) {
@@ -85,8 +85,8 @@ struct AppFilesView: View {
                     }
 
                     if !appState.selectedFiles.isEmpty {
-                        Button("Remove Selected", role: .destructive) {
-                            // Will be connected to cleaning engine
+                        Button("Remove Selected (\(appState.selectedFiles.count))", role: .destructive) {
+                            appState.removeSelectedFiles()
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.red)

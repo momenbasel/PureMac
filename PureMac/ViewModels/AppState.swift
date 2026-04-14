@@ -3,12 +3,7 @@ import Combine
 import UserNotifications
 import AppKit
 
-struct AppInfoPlaceholder: Identifiable, Hashable {
-    let id = UUID()
-    var appName: String = ""
-    var bundleIdentifier: String = ""
-    var icon: NSImage = NSImage()
-}
+// InstalledApp is defined in AppInfoFetcher.swift
 
 enum AppSection: Hashable {
     case apps
@@ -38,12 +33,13 @@ final class AppState: ObservableObject {
 
     // MARK: - App Uninstaller State
 
-    @Published var installedApps: [AppInfoPlaceholder] = []
-    @Published var selectedApp: AppInfoPlaceholder?
+    @Published var installedApps: [InstalledApp] = []
+    @Published var selectedApp: InstalledApp?
     @Published var discoveredFiles: [URL] = []
     @Published var selectedFiles: Set<URL> = []
     @Published var orphanedFiles: [URL] = []
     @Published var isSearchingOrphans: Bool = false
+    @Published var isLoadingApps: Bool = false
 
     // MARK: - Services
 
@@ -74,10 +70,100 @@ final class AppState: ObservableObject {
     init() {
         loadDiskInfo()
         checkFullDiskAccess()
+        loadInstalledApps()
         scheduler.setTrigger { [weak self] in
             await self?.runScheduledScan()
         }
         scheduler.start()
+    }
+
+    // MARK: - App Loading
+
+    func loadInstalledApps() {
+        isLoadingApps = true
+        Task.detached(priority: .userInitiated) {
+            let apps = AppInfoFetcher.shared.fetchInstalledApps()
+            await MainActor.run { [weak self] in
+                self?.installedApps = apps
+                self?.isLoadingApps = false
+            }
+        }
+    }
+
+    func scanForAppFiles(_ app: InstalledApp) {
+        discoveredFiles = []
+        selectedFiles = []
+        let locations = Locations()
+        let appInfo = AppPathFinder.AppInfo(
+            appName: app.appName,
+            bundleIdentifier: app.bundleIdentifier,
+            path: app.path,
+            entitlements: nil,
+            teamIdentifier: nil
+        )
+        let finder = AppPathFinder(appInfo: appInfo, locations: locations)
+        finder.findPathsAsync { [weak self] urls in
+            guard let self else { return }
+            let sorted = urls.sorted { $0.path < $1.path }
+            self.discoveredFiles = sorted
+            self.selectedFiles = urls
+        }
+    }
+
+    func removeSelectedFiles() {
+        var errors: [String] = []
+        for url in selectedFiles {
+            do {
+                try FileManager.default.removeItem(at: url)
+            } catch {
+                errors.append("\(url.lastPathComponent): \(error.localizedDescription)")
+                Logger.shared.log("Failed to remove \(url.path): \(error.localizedDescription)", level: .error)
+            }
+        }
+        discoveredFiles.removeAll { selectedFiles.contains($0) }
+        selectedFiles.removeAll()
+        if errors.isEmpty {
+            Logger.shared.log("Successfully removed all selected files", level: .info)
+        }
+    }
+
+    func findOrphans() {
+        isSearchingOrphans = true
+        orphanedFiles = []
+        Task.detached(priority: .userInitiated) {
+            let locations = Locations()
+            let knownApps = await MainActor.run { self.installedApps }
+            let knownIDs = Set(knownApps.map { $0.bundleIdentifier.normalizedForMatching() })
+            let knownNames = Set(knownApps.map { $0.appName.normalizedForMatching() })
+
+            var orphans: [URL] = []
+            let fm = FileManager.default
+
+            for path in locations.reverseSearch.paths {
+                guard let contents = try? fm.contentsOfDirectory(atPath: path) else { continue }
+                for item in contents {
+                    let normalized = item.normalizedForMatching()
+
+                    // Skip known system items
+                    if skipReverse.contains(where: { normalized.hasPrefix($0) }) { continue }
+
+                    // Check if this item belongs to any known app
+                    let belongsToApp = knownIDs.contains(where: { normalized.contains($0) }) ||
+                                       knownNames.contains(where: { normalized.contains($0) })
+
+                    if !belongsToApp {
+                        let fullPath = URL(fileURLWithPath: path).appendingPathComponent(item)
+                        orphans.append(fullPath)
+                    }
+                }
+            }
+
+            let sorted = orphans.sorted { $0.lastPathComponent < $1.lastPathComponent }
+            await MainActor.run { [weak self] in
+                self?.orphanedFiles = sorted
+                self?.isSearchingOrphans = false
+            }
+        }
     }
 
     // MARK: - Selection
