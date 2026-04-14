@@ -1,5 +1,31 @@
 import SwiftUI
 
+// MARK: - Appearance
+
+enum AppAppearance: String, CaseIterable, Identifiable, Codable {
+    case system = "system"
+    case light = "light"
+    case dark = "dark"
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .system: return String(localized: "System")
+        case .light: return String(localized: "Light")
+        case .dark: return String(localized: "Dark")
+        }
+    }
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+}
+
 // MARK: - Cleaning Category
 
 enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
@@ -18,7 +44,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
 
     var icon: String {
         switch self {
-        case .smartScan: return "sparkles"
+        case .smartScan: return "magnifyingglass"
         case .systemJunk: return "gearshape.fill"
         case .userCache: return "internaldrive.fill"
         case .aiApps: return "cpu.fill"
@@ -28,6 +54,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .purgeableSpace: return "arrow.3.trianglepath"
         case .xcodeJunk: return "hammer.fill"
         case .brewCache: return "mug.fill"
+
         }
     }
 
@@ -43,6 +70,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .purgeableSpace: return "APFS purgeable disk space"
         case .xcodeJunk: return "Derived data, archives, and simulators"
         case .brewCache: return "Homebrew download cache"
+
         }
     }
 
@@ -58,6 +86,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .purgeableSpace: return .pmSuccess
         case .xcodeJunk: return Color(hex: "06b6d4")
         case .brewCache: return Color(hex: "84cc16")
+
         }
     }
 

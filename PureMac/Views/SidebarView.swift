@@ -5,55 +5,43 @@ struct SidebarView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // App logo / title
-            VStack(spacing: 8) {
-                HStack(spacing: 10) {
-                    ZStack {
-                        Circle()
-                            .fill(AppGradients.primary)
-                            .frame(width: 36, height: 36)
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                    }
+            // App branding
+            HStack(spacing: 12) {
+                Image("SidebarLogo")
+                    .resizable()
+                    .interpolation(.high)
+                    .frame(width: 36, height: 36)
+                    .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
 
+                VStack(alignment: .leading, spacing: 1) {
                     Text("PureMac")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
                         .foregroundColor(.pmTextPrimary)
 
-                    Spacer()
+                    Text("System Cleaner")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.pmTextMuted)
                 }
-                .padding(.horizontal, 20)
+
+                Spacer()
             }
-            .padding(.top, 48) // Account for title bar
+            .padding(.horizontal, 20)
+            .padding(.top, 48)
             .padding(.bottom, 24)
+
+            // Smart Scan card
+            SmartScanSidebarCard(
+                isSelected: vm.selectedCategory == .smartScan,
+                totalJunk: vm.totalJunkSize
+            )
+            .onTapGesture { vm.selectedCategory = .smartScan }
+            .padding(.horizontal, 12)
+            .padding(.bottom, 16)
 
             // Category list
             ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 2) {
-                    // Smart Scan - always first
-                    SidebarItem(
-                        category: .smartScan,
-                        isSelected: vm.selectedCategory == .smartScan,
-                        resultSize: vm.totalJunkSize
-                    )
-                    .onTapGesture { vm.selectedCategory = .smartScan }
-
-                    Divider()
-                        .background(Color.pmSeparator)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-
-                    // Section header
-                    HStack {
-                        Text("CLEANING")
-                            .font(.system(size: 10, weight: .bold, design: .rounded))
-                            .foregroundColor(.pmTextMuted)
-                            .tracking(1.2)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 4)
+                VStack(spacing: 0) {
+                    SectionHeader(title: "CLEANING")
 
                     ForEach(CleaningCategory.scannable) { category in
                         SidebarItem(
@@ -63,53 +51,36 @@ struct SidebarView: View {
                         )
                         .onTapGesture { vm.selectedCategory = category }
                     }
+
                 }
                 .padding(.bottom, 16)
             }
 
             Spacer()
 
-            // Bottom info
+            // Bottom status
             VStack(spacing: 8) {
-                Divider()
-                    .background(Color.pmSeparator)
-
                 if let lastCleaned = vm.lastCleanedDate {
-                    HStack {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 10))
-                            .foregroundColor(.pmSuccess)
-                        Text("Last cleaned: \(timeAgo(lastCleaned))")
-                            .font(.system(size: 10))
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(Color.pmSuccess)
+                            .frame(width: 6, height: 6)
+
+                        Text("Cleaned \(timeAgo(lastCleaned))")
+                            .font(.system(size: 10, weight: .medium))
                             .foregroundColor(.pmTextMuted)
                     }
-                    .padding(.horizontal, 16)
                 }
 
                 Text("v\(AppConstants.appVersion)")
-                    .font(.system(size: 10))
-                    .foregroundColor(.pmTextMuted)
-                    .padding(.bottom, 12)
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(.pmTextMuted.opacity(0.6))
             }
+            .padding(.bottom, 14)
         }
         .background(
-            ZStack {
-                AppGradients.sidebar
-                    .ignoresSafeArea()
-                // Subtle right border glow
-                HStack {
-                    Spacer()
-                    Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [.pmAccent.opacity(0.05), .clear],
-                                startPoint: .trailing,
-                                endPoint: .leading
-                            )
-                        )
-                        .frame(width: 1)
-                }
-            }
+            Color.pmSidebar
+                .ignoresSafeArea()
         )
     }
 
@@ -117,6 +88,84 @@ struct SidebarView: View {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .abbreviated
         return formatter.localizedString(for: date, relativeTo: Date())
+    }
+}
+
+// MARK: - Smart Scan Card
+
+struct SmartScanSidebarCard: View {
+    let isSelected: Bool
+    let totalJunk: Int64
+
+    @State private var isHovering = false
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.pmAccent)
+                    .frame(width: 36, height: 36)
+
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Smart Scan")
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundColor(.pmTextPrimary)
+
+                if totalJunk > 0 {
+                    Text(ByteCountFormatter.string(fromByteCount: totalJunk, countStyle: .file) + " found")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.pmAccentLight)
+                } else {
+                    Text("Scan everything at once")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.pmTextMuted)
+                }
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(.pmTextMuted)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(isSelected ? Color.pmAccent.opacity(0.12) : Color.pmCard.opacity(isHovering ? 0.8 : 0.5))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(isSelected ? Color.pmAccent.opacity(0.3) : Color.clear, lineWidth: 1)
+                )
+        )
+        .onHover { h in
+            withAnimation(.pmSmooth) { isHovering = h }
+        }
+        .contentShape(Rectangle())
+    }
+}
+
+// MARK: - Section Header
+
+struct SectionHeader: View {
+    let title: String
+
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .foregroundColor(.pmTextMuted)
+                .tracking(1.2)
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 6)
+        .padding(.top, 2)
     }
 }
 
@@ -130,48 +179,55 @@ struct SidebarItem: View {
     @State private var isHovering = false
 
     var body: some View {
-        HStack(spacing: 12) {
-            // Icon
+        HStack(spacing: 0) {
+            // Selection indicator bar
+            RoundedRectangle(cornerRadius: 2)
+                .fill(isSelected ? category.color : Color.clear)
+                .frame(width: 3, height: 20)
+                .padding(.trailing, 9)
+
+            // Icon with colored background
             ZStack {
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? category.color.opacity(0.2) : Color.clear)
-                    .frame(width: 32, height: 32)
+                    .fill(category.color.opacity(isSelected ? 0.15 : 0.08))
+                    .frame(width: 30, height: 30)
 
                 Image(systemName: category.icon)
-                    .font(.system(size: 14))
-                    .foregroundColor(isSelected ? category.color : .pmTextSecondary)
+                    .font(.system(size: 13))
+                    .foregroundColor(isSelected ? category.color : category.color.opacity(0.6))
             }
 
             // Label
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 1) {
                 Text(LocalizedStringKey(category.rawValue))
-                    .font(.pmBody)
+                    .font(.system(size: 12, weight: isSelected ? .semibold : .regular, design: .rounded))
                     .foregroundColor(isSelected ? .pmTextPrimary : .pmTextSecondary)
                     .lineLimit(1)
-
-                if let size = resultSize, size > 0 {
-                    Text(ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
-                        .font(.system(size: 10, weight: .medium, design: .rounded))
-                        .foregroundColor(category.color)
-                }
             }
+            .padding(.leading, 10)
 
             Spacer()
 
             // Size badge
-            if let size = resultSize, size > 0, !isSelected {
-                Circle()
-                    .fill(category.color.opacity(0.2))
-                    .frame(width: 8, height: 8)
+            if let size = resultSize, size > 0 {
+                Text(ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
+                    .font(.system(size: 9, weight: .semibold, design: .rounded))
+                    .foregroundColor(isSelected ? category.color : .pmTextMuted)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(
+                        Capsule()
+                            .fill(category.color.opacity(isSelected ? 0.12 : 0.06))
+                    )
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.trailing, 14)
+        .padding(.vertical, 6)
         .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(isSelected ? Color.pmCard : (isHovering ? Color.pmCard.opacity(0.5) : .clear))
+            RoundedRectangle(cornerRadius: 8)
+                .fill(isSelected ? Color.pmCard.opacity(0.6) : (isHovering ? Color.pmCard.opacity(0.3) : .clear))
+                .padding(.horizontal, 6)
         )
-        .padding(.horizontal, 8)
         .onHover { hovering in
             withAnimation(.pmSmooth) { isHovering = hovering }
         }

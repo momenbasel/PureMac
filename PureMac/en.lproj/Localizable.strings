@@ -10,16 +10,21 @@
 
 /* Sidebar */
 "CLEANING" = "CLEANING";
+"System Cleaner" = "System Cleaner";
 "Last cleaned: %@" = "Last cleaned: %@";
+"Cleaned %@" = "Cleaned %@";
 
 /* Smart Scan */
 "Smart Scan" = "Smart Scan";
 "Click Scan to start" = "Click Scan to start";
+"Analyze all categories" = "Analyze all categories";
+"Scan everything at once" = "Scan everything at once";
 "Total" = "Total";
 "Used" = "Used";
 "Free" = "Free";
 "Purgeable" = "Purgeable";
 "junk found" = "junk found";
+"All clean" = "All clean";
 "Your Mac is clean!" = "Your Mac is clean!";
 "freed up" = "freed up";
 "Cleaning..." = "Cleaning...";
@@ -43,6 +48,41 @@
 "Done" = "Done";
 "Clean (%@)" = "Clean (%@)";
 "Clean %lld items (%@)" = "Clean %lld items (%@)";
+"Continue" = "Continue";
+"Skip" = "Skip";
+"Start Scanning" = "Start Scanning";
+"Uninstall" = "Uninstall";
+
+/* Onboarding */
+"Welcome to PureMac" = "Welcome to PureMac";
+"Keep your Mac fast, clean, and optimized." = "Keep your Mac fast, clean, and optimized.";
+"One-Click Clean" = "One-Click Clean";
+"Find junk in seconds" = "Find junk in seconds";
+"Remove files safely" = "Remove files safely";
+"Delete apps completely" = "Delete apps completely";
+"Full Disk Access" = "Full Disk Access";
+"Access Granted" = "Access Granted";
+"PureMac can now scan all areas of your Mac." = "PureMac can now scan all areas of your Mac.";
+"PureMac needs Full Disk Access to scan Trash, Mail, Desktop, Documents, and Homebrew cache." = "PureMac needs Full Disk Access to scan Trash, Mail, Desktop, Documents, and Homebrew cache.";
+"Open System Settings" = "Open System Settings";
+"Click \"Open System Settings\" below" = "Click \"Open System Settings\" below";
+"Find PureMac in the list" = "Find PureMac in the list";
+"Toggle the switch to enable access" = "Toggle the switch to enable access";
+"You're All Set" = "You're All Set";
+"PureMac is ready to keep your Mac clean." = "PureMac is ready to keep your Mac clean.";
+"Limited Access" = "Limited Access";
+
+/* App Uninstaller */
+"App Uninstaller" = "App Uninstaller";
+"Uninstall apps and their leftover files" = "Uninstall apps and their leftover files";
+"Remove apps and all their associated data" = "Remove apps and all their associated data";
+"Search apps..." = "Search apps...";
+"Scanning applications..." = "Scanning applications...";
+"No removable apps found" = "No removable apps found";
+"No apps matching \"%@\"" = "No apps matching \"%@\"";
+"Uninstall %@?" = "Uninstall %@?";
+"%lld related" = "%lld related";
+"%@ apps" = "%@ apps";
 
 /* Settings - Schedule */
 "Schedule" = "Schedule";
@@ -67,6 +107,10 @@
 
 /* Settings - General */
 "General" = "General";
+"Appearance" = "Appearance";
+"System" = "System";
+"Light" = "Light";
+"Dark" = "Dark";
 "App Behavior" = "App Behavior";
 "Launch at login" = "Launch at login";
 "Show in Dock" = "Show in Dock";
@@ -76,7 +120,6 @@
 
 /* Settings - About */
 "About" = "About";
-"Version 1.0.0" = "Version 1.0.0";
 "A free, open-source Mac cleaning utility.\nKeep your Mac fast, clean, and optimized." = "A free, open-source Mac cleaning utility.\nKeep your Mac fast, clean, and optimized.";
 "GitHub Repository" = "GitHub Repository";
 "MIT License" = "MIT License";
@@ -93,7 +136,6 @@
 "Brew Cache" = "Brew Cache";
 
 /* Category Descriptions */
-"Scan everything at once" = "Scan everything at once";
 "System caches, logs, and temporary files" = "System caches, logs, and temporary files";
 "Application caches and browser data" = "Application caches and browser data";
 "Logs, caches, and temporary files from local AI apps" = "Logs, caches, and temporary files from local AI apps";

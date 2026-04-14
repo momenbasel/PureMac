@@ -45,6 +45,7 @@ struct ContentView: View {
             }
         }
         .background(Color.pmBackground)
+        .focusable(false)
         .onAppear {
             NSWindow.allowsAutomaticWindowTabbing = false
         }
@@ -84,7 +85,7 @@ struct FullDiskAccessBanner: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 6)
-                    .background(AppGradients.accent)
+                    .background(Color.pmAccent)
                     .cornerRadius(8)
             }
             .buttonStyle(.plain)
@@ -140,9 +141,9 @@ struct TopBarView: View {
 
                             RoundedRectangle(cornerRadius: 3)
                                 .fill(
-                                    vm.diskInfo.usedPercentage > 0.9 ? AppGradients.danger :
-                                    vm.diskInfo.usedPercentage > 0.7 ? AppGradients.accent :
-                                    AppGradients.success
+                                    vm.diskInfo.usedPercentage > 0.9 ? Color.pmDanger :
+                                    vm.diskInfo.usedPercentage > 0.7 ? Color.pmAccent :
+                                    Color.pmSuccess
                                 )
                                 .frame(width: geo.size.width * vm.diskInfo.usedPercentage, height: 6)
                         }

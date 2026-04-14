@@ -32,46 +32,50 @@ struct SmartScanView: View {
     // MARK: - Idle View
 
     private var idleView: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 32) {
+            // Logo-centered circle
             ZStack {
-                // Outer glow ring
+                // Outer decorative ring
                 Circle()
-                    .stroke(Color.pmAccent.opacity(0.1), lineWidth: 2)
-                    .frame(width: 220, height: 220)
+                    .stroke(Color.pmSeparator.opacity(0.3), style: StrokeStyle(lineWidth: 1, dash: [6, 4]))
+                    .frame(width: 240, height: 240)
 
+                // Main ring track
                 Circle()
-                    .stroke(Color.pmAccent.opacity(0.05), lineWidth: 1)
-                    .frame(width: 250, height: 250)
-
-                // Main circle
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [Color.pmAccent.opacity(0.15), Color.pmBackground],
-                            center: .center,
-                            startRadius: 20,
-                            endRadius: 110
-                        )
-                    )
+                    .stroke(Color.pmSeparator.opacity(0.2), lineWidth: 8)
                     .frame(width: 200, height: 200)
 
-                VStack(spacing: 8) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 40))
-                        .foregroundColor(.pmAccentLight)
+                // Accent arc hint
+                Circle()
+                    .trim(from: 0, to: 0.3)
+                    .stroke(Color.pmAccent.opacity(0.15), style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                    .frame(width: 200, height: 200)
+                    .rotationEffect(.degrees(-90))
+
+                // Inner fill
+                Circle()
+                    .fill(Color.pmAccent.opacity(0.04))
+                    .frame(width: 188, height: 188)
+
+                // App logo as centerpiece
+                VStack(spacing: 12) {
+                    Image("SidebarLogo")
+                        .resizable()
+                        .interpolation(.high)
+                        .frame(width: 56, height: 56)
+                        .shadow(color: .black.opacity(0.08), radius: 6, y: 3)
 
                     Text("Smart Scan")
-                        .font(.pmHeadline)
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
                         .foregroundColor(.pmTextPrimary)
 
-                    Text("Click Scan to start")
-                        .font(.pmCaption)
+                    Text("Analyze all categories")
+                        .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.pmTextMuted)
                 }
             }
-            .pmGlow(color: .pmAccent, radius: 40)
 
-            // Disk overview
+            // Disk overview cards
             diskOverview
         }
     }
@@ -79,50 +83,65 @@ struct SmartScanView: View {
     // MARK: - Scanning View
 
     private var scanningView: some View {
-        VStack(spacing: 24) {
+        ZStack {
+            // Circle — pinned above center, never moves
             ZStack {
-                // Background ring
+                // Thick track
                 Circle()
-                    .stroke(Color.pmCard, lineWidth: 8)
+                    .stroke(Color.pmSeparator.opacity(0.15), lineWidth: 10)
                     .frame(width: 200, height: 200)
 
                 // Progress ring
                 Circle()
                     .trim(from: 0, to: vm.scanProgress)
                     .stroke(
-                        AppGradients.scanRing,
-                        style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                        AngularGradient(
+                            colors: [.pmAccent, .pmAccentLight, .pmAccent],
+                            center: .center
+                        ),
+                        style: StrokeStyle(lineWidth: 10, lineCap: .round)
                     )
                     .frame(width: 200, height: 200)
                     .rotationEffect(.degrees(-90))
                     .animation(.easeInOut(duration: 0.3), value: vm.scanProgress)
 
-                // Spinning outer ring
+                // Spinning outer indicator
                 Circle()
-                    .trim(from: 0, to: 0.3)
+                    .trim(from: 0, to: 0.2)
                     .stroke(
-                        Color.pmAccent.opacity(0.3),
-                        style: StrokeStyle(lineWidth: 2, lineCap: .round)
+                        Color.pmAccent.opacity(0.15),
+                        style: StrokeStyle(lineWidth: 1.5, lineCap: .round)
                     )
-                    .frame(width: 230, height: 230)
+                    .frame(width: 226, height: 226)
                     .rotationEffect(.degrees(rotationAngle))
 
-                VStack(spacing: 4) {
-                    Text("\(Int(vm.scanProgress * 100))%")
-                        .font(.pmLargeNumber)
-                        .foregroundColor(.pmTextPrimary)
-                        .contentTransition(.numericText())
+                // Center content
+                VStack(spacing: 2) {
+                    HStack(alignment: .firstTextBaseline, spacing: 1) {
+                        Text("\(Int(vm.scanProgress * 100))")
+                            .font(.system(size: 48, weight: .bold, design: .rounded))
+                            .foregroundColor(.pmTextPrimary)
+                            .contentTransition(.numericText())
+
+                        Text("%")
+                            .font(.system(size: 20, weight: .medium, design: .rounded))
+                            .foregroundColor(.pmTextMuted)
+                    }
 
                     Text(LocalizedStringKey(vm.currentScanCategory))
-                        .font(.pmCaption)
+                        .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.pmTextSecondary)
                         .lineLimit(1)
+                        .padding(.top, 4)
                 }
             }
+            .offset(y: -80)
 
-            // Live results
+            // Results — pinned below center, staggered fade-in
             if !vm.allResults.isEmpty {
                 liveResults
+                    .offset(y: 140)
+                    .transition(.opacity)
             }
         }
         .onAppear { startRotation() }
@@ -133,43 +152,47 @@ struct SmartScanView: View {
     private var completedView: some View {
         VStack(spacing: 24) {
             ZStack {
+                // Track
                 Circle()
-                    .stroke(Color.pmCard, lineWidth: 8)
+                    .stroke(Color.pmSeparator.opacity(0.15), lineWidth: 10)
                     .frame(width: 200, height: 200)
 
+                // Full ring
                 Circle()
-                    .trim(from: 0, to: 1)
-                    .stroke(
-                        AppGradients.primary,
-                        style: StrokeStyle(lineWidth: 8, lineCap: .round)
-                    )
+                    .stroke(Color.pmAccent, style: StrokeStyle(lineWidth: 10, lineCap: .round))
                     .frame(width: 200, height: 200)
-                    .rotationEffect(.degrees(-90))
 
+                // Center content
                 VStack(spacing: 4) {
-                    Text(ByteCountFormatter.string(fromByteCount: vm.totalJunkSize, countStyle: .file))
-                        .font(.pmLargeNumber)
-                        .foregroundColor(.pmTextPrimary)
+                    if vm.totalJunkSize > 0 {
+                        Text(ByteCountFormatter.string(fromByteCount: vm.totalJunkSize, countStyle: .file))
+                            .font(.system(size: 34, weight: .bold, design: .rounded))
+                            .foregroundColor(.pmTextPrimary)
 
-                    Text("junk found")
-                        .font(.pmSubheadline)
-                        .foregroundColor(.pmTextSecondary)
+                        Text("junk found")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.pmTextSecondary)
+                    } else {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 36, weight: .light))
+                            .foregroundColor(.pmSuccess)
+
+                        Text("All clean")
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundColor(.pmTextPrimary)
+                    }
                 }
             }
-            .pmGlow(color: vm.totalJunkSize > 0 ? .pmWarning : .pmSuccess, radius: 30)
+
+            // Segmented breakdown bar
+            if !vm.allResults.isEmpty {
+                junkBreakdownBar
+                    .padding(.top, 4)
+            }
 
             // Results breakdown
             if !vm.allResults.isEmpty {
                 resultsBreakdown
-            } else {
-                VStack(spacing: 8) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 32))
-                        .foregroundColor(.pmSuccess)
-                    Text("Your Mac is clean!")
-                        .font(.pmSubheadline)
-                        .foregroundColor(.pmTextSecondary)
-                }
             }
         }
     }
@@ -180,32 +203,29 @@ struct SmartScanView: View {
         VStack(spacing: 24) {
             ZStack {
                 Circle()
-                    .stroke(Color.pmCard, lineWidth: 8)
+                    .stroke(Color.pmSeparator.opacity(0.15), lineWidth: 10)
                     .frame(width: 200, height: 200)
 
                 Circle()
                     .trim(from: 0, to: vm.cleanProgress)
-                    .stroke(
-                        AppGradients.danger,
-                        style: StrokeStyle(lineWidth: 8, lineCap: .round)
-                    )
+                    .stroke(Color.pmDanger, style: StrokeStyle(lineWidth: 10, lineCap: .round))
                     .frame(width: 200, height: 200)
                     .rotationEffect(.degrees(-90))
                     .animation(.easeInOut(duration: 0.3), value: vm.cleanProgress)
 
                 VStack(spacing: 4) {
                     Image(systemName: "trash.fill")
-                        .font(.system(size: 28))
+                        .font(.system(size: 22, weight: .light))
                         .foregroundColor(.pmDanger)
 
-                    Text("Cleaning...")
-                        .font(.pmSubheadline)
-                        .foregroundColor(.pmTextSecondary)
-
                     Text("\(Int(vm.cleanProgress * 100))%")
-                        .font(.pmMediumNumber)
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
                         .foregroundColor(.pmTextPrimary)
                         .contentTransition(.numericText())
+
+                    Text("Cleaning...")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.pmTextSecondary)
                 }
             }
         }
@@ -214,95 +234,163 @@ struct SmartScanView: View {
     // MARK: - Cleaned View
 
     private var cleanedView: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 16) {
             ZStack {
                 Circle()
-                    .fill(Color.pmSuccess.opacity(0.1))
+                    .stroke(Color.pmSuccess.opacity(0.2), lineWidth: 10)
                     .frame(width: 200, height: 200)
 
+                Circle()
+                    .fill(Color.pmSuccess.opacity(0.04))
+                    .frame(width: 190, height: 190)
+
                 VStack(spacing: 8) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 48))
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 32, weight: .light))
                         .foregroundColor(.pmSuccess)
 
                     Text(ByteCountFormatter.string(fromByteCount: vm.totalFreedSpace, countStyle: .file))
-                        .font(.pmLargeNumber)
+                        .font(.system(size: 30, weight: .bold, design: .rounded))
                         .foregroundColor(.pmSuccess)
 
                     Text("freed up")
-                        .font(.pmSubheadline)
+                        .font(.system(size: 13, weight: .medium))
                         .foregroundColor(.pmTextSecondary)
                 }
             }
-            .pmGlow(color: .pmSuccess, radius: 40)
         }
         .transition(.scale.combined(with: .opacity))
     }
 
-    // MARK: - Sub Views
+    // MARK: - Junk Breakdown Bar
+
+    private var junkBreakdownBar: some View {
+        VStack(spacing: 8) {
+            GeometryReader { geo in
+                HStack(spacing: 1.5) {
+                    ForEach(vm.allResults) { result in
+                        let fraction = vm.totalJunkSize > 0
+                            ? CGFloat(result.totalSize) / CGFloat(vm.totalJunkSize)
+                            : 0
+
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(result.category.color)
+                            .frame(width: max(4, geo.size.width * fraction))
+                    }
+                }
+            }
+            .frame(height: 8)
+            .background(
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(Color.pmSeparator.opacity(0.2))
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 3))
+
+            // Legend
+            HStack(spacing: 12) {
+                ForEach(vm.allResults.prefix(5)) { result in
+                    HStack(spacing: 4) {
+                        Circle()
+                            .fill(result.category.color)
+                            .frame(width: 6, height: 6)
+
+                        Text(LocalizedStringKey(result.category.rawValue))
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundColor(.pmTextMuted)
+                            .lineLimit(1)
+                    }
+                }
+
+                if vm.allResults.count > 5 {
+                    Text("+\(vm.allResults.count - 5) more")
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundColor(.pmTextMuted)
+                }
+            }
+        }
+        .frame(maxWidth: 480)
+    }
+
+    // MARK: - Disk Overview
 
     private var diskOverview: some View {
-        HStack(spacing: 24) {
-            DiskStatCard(
-                title: "Total",
-                value: vm.diskInfo.formattedTotal,
-                icon: "internaldrive.fill",
-                color: .pmAccent
-            )
-            DiskStatCard(
-                title: "Used",
-                value: vm.diskInfo.formattedUsed,
-                icon: "chart.pie.fill",
-                color: .pmWarning
-            )
-            DiskStatCard(
-                title: "Free",
-                value: vm.diskInfo.formattedFree,
-                icon: "checkmark.circle.fill",
-                color: .pmSuccess
-            )
+        HStack(spacing: 16) {
+            DiskStatCard(title: "Total", value: vm.diskInfo.formattedTotal, icon: "internaldrive.fill", color: .pmAccent)
+            DiskStatCard(title: "Used", value: vm.diskInfo.formattedUsed, icon: "chart.pie.fill", color: .pmWarning)
+            DiskStatCard(title: "Free", value: vm.diskInfo.formattedFree, icon: "checkmark.circle.fill", color: .pmSuccess)
             if vm.diskInfo.purgeableSpace > 0 {
-                DiskStatCard(
-                    title: "Purgeable",
-                    value: vm.diskInfo.formattedPurgeable,
-                    icon: "arrow.3.trianglepath",
-                    color: .pmInfo
-                )
+                DiskStatCard(title: "Purgeable", value: vm.diskInfo.formattedPurgeable, icon: "arrow.3.trianglepath", color: .pmInfo)
             }
         }
     }
 
+    // MARK: - Live Results
+
     private var liveResults: some View {
-        VStack(spacing: 8) {
-            ForEach(vm.allResults.prefix(6)) { result in
-                HStack(spacing: 12) {
-                    Image(systemName: result.category.icon)
-                        .font(.system(size: 12))
-                        .foregroundColor(result.category.color)
-                        .frame(width: 20)
+        VStack(spacing: 2) {
+            ForEach(Array(vm.allResults.prefix(6).enumerated()), id: \.element.id) { index, result in
+                HStack(spacing: 10) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 5)
+                            .fill(result.category.color.opacity(0.1))
+                            .frame(width: 22, height: 22)
+
+                        Image(systemName: result.category.icon)
+                            .font(.system(size: 10))
+                            .foregroundColor(result.category.color)
+                    }
 
                     Text(LocalizedStringKey(result.category.rawValue))
-                        .font(.pmCaption)
+                        .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.pmTextSecondary)
 
                     Spacer()
 
                     Text(result.formattedSize)
-                        .font(.pmCaption)
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
                         .foregroundColor(.pmTextPrimary)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 6)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 5)
+                .opacity(appearingResults.contains(result.id) ? 1 : 0)
+                .offset(y: appearingResults.contains(result.id) ? 0 : 6)
+                .animation(.easeOut(duration: 0.3).delay(Double(index) * 0.05), value: appearingResults)
             }
         }
-        .padding(.vertical, 12)
-        .background(Color.pmCard.opacity(0.5))
-        .cornerRadius(12)
-        .frame(maxWidth: 400)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.pmCard.opacity(0.5))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.pmSeparator.opacity(0.5), lineWidth: 0.5)
+                )
+        )
+        .frame(maxWidth: 380)
+        .onChange(of: vm.allResults.count) { _ in
+            updateAppearingResults()
+        }
+        .onAppear {
+            updateAppearingResults()
+        }
     }
 
+    @State private var appearingResults: Set<UUID> = []
+
+    private func updateAppearingResults() {
+        for result in vm.allResults.prefix(6) {
+            if !appearingResults.contains(result.id) {
+                withAnimation {
+                    appearingResults.insert(result.id)
+                }
+            }
+        }
+    }
+
+    // MARK: - Results Breakdown
+
     private var resultsBreakdown: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             ForEach(vm.allResults) { result in
                 ResultRow(result: result) {
                     withAnimation(.pmSpring) {
@@ -311,108 +399,47 @@ struct SmartScanView: View {
                 }
             }
         }
-        .frame(maxWidth: 450)
+        .frame(maxWidth: 480)
     }
 
     // MARK: - Action Bar
 
     private var actionBar: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 12) {
             switch vm.scanState {
             case .idle:
-                GradientActionButton(
-                    title: "Scan",
-                    icon: "magnifyingglass",
-                    gradient: AppGradients.primary
-                ) {
-                    withAnimation(.pmSpring) {
-                        vm.startSmartScan()
-                    }
+                ActionButton(title: "Scan", icon: "magnifyingglass", color: .pmAccent) {
+                    withAnimation(.pmSpring) { vm.startSmartScan() }
                 }
 
             case .scanning:
-                Button(action: {}) {
-                    HStack(spacing: 8) {
-                        ProgressView()
-                            .progressViewStyle(.circular)
-                            .scaleEffect(0.7)
-                            .tint(.white)
-                        Text("Scanning...")
-                            .font(.pmSubheadline)
-                            .foregroundColor(.pmTextSecondary)
-                    }
-                    .frame(width: 200, height: 44)
-                    .background(Color.pmCard)
-                    .cornerRadius(12)
-                }
-                .buttonStyle(.plain)
-                .disabled(true)
+                ActionButton(title: "Scanning...", icon: nil, color: .pmCard, isLoading: true, disabled: true) {}
 
             case .completed:
                 if vm.totalSelectedSize > 0 {
-                    GradientActionButton(
-                        title: "Clean (\(ByteCountFormatter.string(fromByteCount: vm.totalSelectedSize, countStyle: .file)))",
+                    ActionButton(
+                        title: "Clean \(ByteCountFormatter.string(fromByteCount: vm.totalSelectedSize, countStyle: .file))",
                         icon: "trash.fill",
-                        gradient: AppGradients.accent
+                        color: .pmAccent
                     ) {
-                        withAnimation(.pmSpring) {
-                            vm.cleanAll()
-                        }
+                        withAnimation(.pmSpring) { vm.cleanAll() }
                     }
 
-                    Button(action: {
-                        withAnimation(.pmSpring) {
-                            vm.startSmartScan()
-                        }
-                    }) {
-                        Text("Re-scan")
-                            .font(.pmBody)
-                            .foregroundColor(.pmTextSecondary)
-                            .frame(height: 44)
-                            .padding(.horizontal, 24)
-                            .background(Color.pmCard)
-                            .cornerRadius(12)
+                    SecondaryButton(title: "Re-scan") {
+                        withAnimation(.pmSpring) { vm.startSmartScan() }
                     }
-                    .buttonStyle(.plain)
                 } else {
-                    GradientActionButton(
-                        title: "Scan Again",
-                        icon: "arrow.clockwise",
-                        gradient: AppGradients.success
-                    ) {
-                        withAnimation(.pmSpring) {
-                            vm.startSmartScan()
-                        }
+                    ActionButton(title: "Scan Again", icon: "arrow.clockwise", color: .pmSuccess) {
+                        withAnimation(.pmSpring) { vm.startSmartScan() }
                     }
                 }
 
             case .cleaning:
-                Button(action: {}) {
-                    HStack(spacing: 8) {
-                        ProgressView()
-                            .progressViewStyle(.circular)
-                            .scaleEffect(0.7)
-                            .tint(.white)
-                        Text("Cleaning...")
-                            .font(.pmSubheadline)
-                            .foregroundColor(.pmTextSecondary)
-                    }
-                    .frame(width: 200, height: 44)
-                    .background(Color.pmCard)
-                    .cornerRadius(12)
-                }
-                .buttonStyle(.plain)
-                .disabled(true)
+                ActionButton(title: "Cleaning...", icon: nil, color: .pmCard, isLoading: true, disabled: true) {}
 
             case .cleaned:
-                GradientActionButton(
-                    title: "Done",
-                    icon: "checkmark",
-                    gradient: AppGradients.success
-                ) {
-                    withAnimation(.pmSpring) {
-                        vm.scanState = .idle
-                    }
+                ActionButton(title: "Done", icon: "checkmark", color: .pmSuccess) {
+                    withAnimation(.pmSpring) { vm.scanState = .idle }
                 }
             }
         }
@@ -443,7 +470,7 @@ struct DiskStatCard: View {
     let color: Color
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 10) {
             Image(systemName: icon)
                 .font(.system(size: 16))
                 .foregroundColor(color)
@@ -456,13 +483,19 @@ struct DiskStatCard: View {
                 .font(.system(size: 10, weight: .medium))
                 .foregroundColor(.pmTextMuted)
         }
-        .frame(width: 100, height: 80)
-        .background(Color.pmCard.opacity(0.5))
-        .cornerRadius(12)
+        .frame(width: 110, height: 90)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.pmCard.opacity(0.5))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.pmSeparator.opacity(0.4), lineWidth: 0.5)
+                )
+        )
     }
 }
 
-// MARK: - Result Row (Clickable)
+// MARK: - Result Row
 
 struct ResultRow: View {
     @EnvironmentObject var vm: AppViewModel
@@ -484,8 +517,8 @@ struct ResultRow: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
-            // Category checkbox
+        HStack(spacing: 10) {
+            // Checkbox
             Button(action: {
                 withAnimation(.pmSmooth) {
                     if isFullySelected {
@@ -497,24 +530,22 @@ struct ResultRow: View {
             }) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 4)
-                        .stroke(isCategorySelected ? result.category.color : Color.pmTextMuted, lineWidth: 1.5)
-                        .frame(width: 18, height: 18)
+                        .stroke(isCategorySelected ? result.category.color : Color.pmTextMuted.opacity(0.5), lineWidth: 1.5)
+                        .frame(width: 16, height: 16)
 
                     if isFullySelected {
                         RoundedRectangle(cornerRadius: 4)
                             .fill(result.category.color)
-                            .frame(width: 18, height: 18)
-
+                            .frame(width: 16, height: 16)
                         Image(systemName: "checkmark")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(.system(size: 9, weight: .bold))
                             .foregroundColor(.white)
                     } else if isCategorySelected {
                         RoundedRectangle(cornerRadius: 4)
                             .fill(result.category.color)
-                            .frame(width: 18, height: 18)
-
+                            .frame(width: 16, height: 16)
                         Image(systemName: "minus")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(.system(size: 9, weight: .bold))
                             .foregroundColor(.white)
                     }
                 }
@@ -522,12 +553,12 @@ struct ResultRow: View {
             }
             .buttonStyle(.plain)
 
-            // Category icon + info (clickable to navigate)
+            // Category row (clickable to navigate)
             Button(action: onTap) {
-                HStack(spacing: 12) {
+                HStack(spacing: 10) {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(result.category.color.opacity(isCategorySelected ? 0.15 : 0.05))
+                        RoundedRectangle(cornerRadius: 7)
+                            .fill(result.category.color.opacity(isCategorySelected ? 0.12 : 0.06))
                             .frame(width: 28, height: 28)
 
                         Image(systemName: result.category.icon)
@@ -535,39 +566,39 @@ struct ResultRow: View {
                             .foregroundColor(isCategorySelected ? result.category.color : .pmTextMuted)
                     }
 
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 1) {
                         Text(LocalizedStringKey(result.category.rawValue))
-                            .font(.pmBody)
+                            .font(.system(size: 12, weight: .medium, design: .rounded))
                             .foregroundColor(isCategorySelected ? .pmTextPrimary : .pmTextMuted)
 
                         Text("\(vm.selectedCountInCategory(result.category))/\(result.itemCount) items")
-                            .font(.system(size: 10))
+                            .font(.system(size: 9, weight: .medium))
                             .foregroundColor(.pmTextMuted)
                     }
 
                     Spacer()
 
                     Text(ByteCountFormatter.string(fromByteCount: selectedSize, countStyle: .file))
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundColor(isCategorySelected ? result.category.color : .pmTextMuted)
 
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(isHovering ? result.category.color : .pmTextMuted)
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundColor(isHovering ? result.category.color : .pmTextMuted.opacity(0.5))
                 }
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 9)
         .background(
             RoundedRectangle(cornerRadius: 10)
                 .fill(isHovering ? Color.pmCardHover : Color.pmCard.opacity(0.4))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(isHovering ? result.category.color.opacity(0.3) : Color.clear, lineWidth: 1)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(isHovering ? result.category.color.opacity(0.2) : Color.pmSeparator.opacity(0.3), lineWidth: 0.5)
+                )
         )
         .onHover { h in
             withAnimation(.pmSmooth) { isHovering = h }
@@ -575,7 +606,85 @@ struct ResultRow: View {
     }
 }
 
-// MARK: - Gradient Action Button
+// MARK: - Action Button
+
+struct ActionButton: View {
+    let title: LocalizedStringKey
+    let icon: String?
+    let color: Color
+    var isLoading: Bool = false
+    var disabled: Bool = false
+    let action: () -> Void
+
+    @State private var isHovering = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                if isLoading {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .scaleEffect(0.6)
+                        .tint(.white)
+                }
+                if let icon = icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 13, weight: .semibold))
+                }
+                Text(title)
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+            }
+            .foregroundColor(.white)
+            .frame(height: 42)
+            .padding(.horizontal, 28)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(color)
+            )
+            .scaleEffect(isHovering && !disabled ? 1.02 : 1.0)
+            .shadow(color: color.opacity(isHovering ? 0.25 : 0.12), radius: isHovering ? 10 : 5, y: isHovering ? 4 : 2)
+        }
+        .buttonStyle(.plain)
+        .disabled(disabled)
+        .opacity(disabled ? 0.7 : 1)
+        .onHover { h in
+            withAnimation(.pmSmooth) { isHovering = h }
+        }
+    }
+}
+
+// MARK: - Secondary Button
+
+struct SecondaryButton: View {
+    let title: String
+    let action: () -> Void
+
+    @State private var isHovering = false
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .foregroundColor(.pmTextSecondary)
+                .frame(height: 42)
+                .padding(.horizontal, 20)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.pmCard)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.pmSeparator.opacity(0.5), lineWidth: 0.5)
+                        )
+                )
+        }
+        .buttonStyle(.plain)
+        .onHover { h in
+            withAnimation(.pmSmooth) { isHovering = h }
+        }
+    }
+}
+
+// MARK: - Legacy Gradient Button (kept for CategoryDetailView compatibility)
 
 struct GradientActionButton: View {
     let title: LocalizedStringKey
@@ -589,17 +698,19 @@ struct GradientActionButton: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Image(systemName: icon)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
                 Text(title)
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
             }
             .foregroundColor(.white)
-            .frame(height: 44)
-            .padding(.horizontal, 32)
-            .background(gradient)
-            .cornerRadius(12)
-            .scaleEffect(isHovering ? 1.03 : 1.0)
-            .pmShadow(radius: isHovering ? 15 : 8, y: isHovering ? 6 : 4)
+            .frame(height: 42)
+            .padding(.horizontal, 28)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(gradient)
+            )
+            .scaleEffect(isHovering ? 1.02 : 1.0)
+            .pmShadow(radius: isHovering ? 10 : 5, y: isHovering ? 4 : 2)
         }
         .buttonStyle(.plain)
         .onHover { h in

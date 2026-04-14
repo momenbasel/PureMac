@@ -199,7 +199,7 @@ struct CategoryDetailView: View {
                     title: "Scan",
                     icon: "magnifyingglass",
                     gradient: LinearGradient(
-                        colors: [category.color, category.color.opacity(0.7)],
+                        colors: [category.color, category.color.opacity(0.8)],
                         startPoint: .leading,
                         endPoint: .trailing
                     )

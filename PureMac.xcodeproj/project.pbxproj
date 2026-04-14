@@ -7,28 +7,30 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		013EF7B96BF046D4DB38FBC5 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 241E0895B09C71AB423B2F9E /* Localizable.strings */; };
 		015C7A8CE16D49F2C445C02A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01E751C3B9ED986F1E6D3C8F /* SettingsView.swift */; };
 		0A7B70CBA747ED9FEE20C51A /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5402892366B3F00417FD05F9 /* SidebarView.swift */; };
+		2253F11BDF561B617439C96B /* FullDiskAccessManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E866A1541D289C69144A5E62 /* FullDiskAccessManager.swift */; };
 		27F449EDD1B082FE11FEC9DF /* SchedulerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28181F034530331A550C6A3D /* SchedulerService.swift */; };
 		340E424F759ACCDE7372F99F /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5ADDC35F31E40780FB5D017 /* Theme.swift */; };
 		48D1431A7C99C19EEBDB056B /* CleaningEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A8DE5D45BA19E2670B57DC5 /* CleaningEngine.swift */; };
+		4F754D89F4CE5142BE384062 /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31F91226CDCFBB8E303B7DA /* AppConstants.swift */; };
 		826A750D2D7EC14C2AE306A3 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3667D46D8E2004EB4D73835A /* Models.swift */; };
 		A221744A723582A6D075A7A0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86105573F4051764E9E46626 /* ContentView.swift */; };
 		A89DF967EC9E5E8123B2925A /* SmartScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BA091943263913276F3CCF /* SmartScanView.swift */; };
-		AA0000000000000000000004 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000003 /* Localizable.strings */; };
 		B52938BBD11842631314543D /* CategoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B0AF194677EAC1D5568785 /* CategoryDetailView.swift */; };
 		B8A524AF7F7DCDFCFCA9EDF6 /* AppViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7FDA1B749FFA61DFB52AB5 /* AppViewModel.swift */; };
 		D9445C2641A8637B65DA5ACE /* ScanEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A711CDF5285F68775D9B5513 /* ScanEngine.swift */; };
-		D9D4E0FA2F8C135400ABB13C /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9D4E0F92F8C135400ABB13C /* AppConstants.swift */; };
 		DDD6BA35DBF32E7A6B5F6F8B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2EA41E1096FA8E3B916AD13 /* Assets.xcassets */; };
 		EDEF28CAD23E936FBED1783B /* PureMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63581B70F9B10231964E3602 /* PureMacApp.swift */; };
-		F1A2B3C4D5E6F70819203142 /* FullDiskAccessManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F607182930A1B2 /* FullDiskAccessManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		01E751C3B9ED986F1E6D3C8F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		02E502E2B5C6AECC76E5CFEF /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		10B0AF194677EAC1D5568785 /* CategoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryDetailView.swift; sourceTree = "<group>"; };
 		11BA091943263913276F3CCF /* SmartScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartScanView.swift; sourceTree = "<group>"; };
+		2641C6376DD6F5889F35510E /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		28181F034530331A550C6A3D /* SchedulerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchedulerService.swift; sourceTree = "<group>"; };
 		2A8DE5D45BA19E2670B57DC5 /* CleaningEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleaningEngine.swift; sourceTree = "<group>"; };
 		311078221878708524283765 /* PureMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PureMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -38,15 +40,13 @@
 		5664D2BDAEAA9AE3A53DB364 /* PureMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PureMac.entitlements; sourceTree = "<group>"; };
 		63581B70F9B10231964E3602 /* PureMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PureMacApp.swift; sourceTree = "<group>"; };
 		86105573F4051764E9E46626 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		A1B2C3D4E5F607182930A1B2 /* FullDiskAccessManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullDiskAccessManager.swift; sourceTree = "<group>"; };
+		9F04B811BB0012F6D2F07F91 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		A711CDF5285F68775D9B5513 /* ScanEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanEngine.swift; sourceTree = "<group>"; };
-		AA0000000000000000000001 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
-		AA0000000000000000000002 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
-		AA0000000000000000000005 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		B2EA41E1096FA8E3B916AD13 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C5ADDC35F31E40780FB5D017 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
-		D9D4E0F92F8C135400ABB13C /* AppConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstants.swift; sourceTree = "<group>"; };
 		DD7FDA1B749FFA61DFB52AB5 /* AppViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViewModel.swift; sourceTree = "<group>"; };
+		E866A1541D289C69144A5E62 /* FullDiskAccessManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullDiskAccessManager.swift; sourceTree = "<group>"; };
+		F31F91226CDCFBB8E303B7DA /* AppConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstants.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -90,7 +90,7 @@
 			isa = PBXGroup;
 			children = (
 				2A8DE5D45BA19E2670B57DC5 /* CleaningEngine.swift */,
-				A1B2C3D4E5F607182930A1B2 /* FullDiskAccessManager.swift */,
+				E866A1541D289C69144A5E62 /* FullDiskAccessManager.swift */,
 				A711CDF5285F68775D9B5513 /* ScanEngine.swift */,
 				28181F034530331A550C6A3D /* SchedulerService.swift */,
 			);
@@ -113,10 +113,10 @@
 			path = ViewModels;
 			sourceTree = "<group>";
 		};
-		D9D4E0F82F8C135000ABB13C /* Core */ = {
+		D4333B07691BD85CAE0E5B15 /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				D9D4E0F92F8C135400ABB13C /* AppConstants.swift */,
+				F31F91226CDCFBB8E303B7DA /* AppConstants.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -124,13 +124,13 @@
 		E383F69184F4552E5A41D010 /* PureMac */ = {
 			isa = PBXGroup;
 			children = (
-				D9D4E0F82F8C135000ABB13C /* Core */,
 				B2EA41E1096FA8E3B916AD13 /* Assets.xcassets */,
-				AA0000000000000000000003 /* Localizable.strings */,
 				46660271CFF167AB0FE7371D /* Info.plist */,
 				5664D2BDAEAA9AE3A53DB364 /* PureMac.entitlements */,
 				63581B70F9B10231964E3602 /* PureMacApp.swift */,
+				D4333B07691BD85CAE0E5B15 /* Core */,
 				7C1729F88C0E5563E1A3DB40 /* Extensions */,
+				241E0895B09C71AB423B2F9E /* Localizable.strings */,
 				3CF46713F75B81F0F86D1C6F /* Models */,
 				6184B2EC3D01E6E95633406E /* Services */,
 				A8F1C251567E5321E1CA2484 /* ViewModels */,
@@ -202,7 +202,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				DDD6BA35DBF32E7A6B5F6F8B /* Assets.xcassets in Resources */,
-				AA0000000000000000000004 /* Localizable.strings in Resources */,
+				013EF7B96BF046D4DB38FBC5 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -213,18 +213,18 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4F754D89F4CE5142BE384062 /* AppConstants.swift in Sources */,
 				B8A524AF7F7DCDFCFCA9EDF6 /* AppViewModel.swift in Sources */,
 				B52938BBD11842631314543D /* CategoryDetailView.swift in Sources */,
 				48D1431A7C99C19EEBDB056B /* CleaningEngine.swift in Sources */,
 				A221744A723582A6D075A7A0 /* ContentView.swift in Sources */,
+				2253F11BDF561B617439C96B /* FullDiskAccessManager.swift in Sources */,
 				826A750D2D7EC14C2AE306A3 /* Models.swift in Sources */,
-				F1A2B3C4D5E6F70819203142 /* FullDiskAccessManager.swift in Sources */,
 				EDEF28CAD23E936FBED1783B /* PureMacApp.swift in Sources */,
 				D9445C2641A8637B65DA5ACE /* ScanEngine.swift in Sources */,
 				27F449EDD1B082FE11FEC9DF /* SchedulerService.swift in Sources */,
 				015C7A8CE16D49F2C445C02A /* SettingsView.swift in Sources */,
 				0A7B70CBA747ED9FEE20C51A /* SidebarView.swift in Sources */,
-				D9D4E0FA2F8C135400ABB13C /* AppConstants.swift in Sources */,
 				A89DF967EC9E5E8123B2925A /* SmartScanView.swift in Sources */,
 				340E424F759ACCDE7372F99F /* Theme.swift in Sources */,
 			);
@@ -233,12 +233,12 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
-		AA0000000000000000000003 /* Localizable.strings */ = {
+		241E0895B09C71AB423B2F9E /* Localizable.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
-				AA0000000000000000000001 /* en */,
-				AA0000000000000000000002 /* zh-Hans */,
-				AA0000000000000000000005 /* zh-Hant */,
+				9F04B811BB0012F6D2F07F91 /* en */,
+				2641C6376DD6F5889F35510E /* zh-Hans */,
+				02E502E2B5C6AECC76E5CFEF /* zh-Hant */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -250,6 +250,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "arm64 x86_64";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -285,7 +286,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 4;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = H3WXHVTP97;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -307,10 +308,10 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = PureMac/Info.plist;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.puremac.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -326,10 +327,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = PureMac/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				PRODUCT_NAME = PureMac;
 				SDKROOT = macosx;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -340,6 +338,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "arm64 x86_64";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -375,7 +374,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 4;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = H3WXHVTP97;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -391,9 +390,10 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = PureMac/Info.plist;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.puremac.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -409,10 +409,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = PureMac/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				PRODUCT_NAME = PureMac;
 				SDKROOT = macosx;
 				SWIFT_EMIT_LOC_STRINGS = YES;

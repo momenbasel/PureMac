@@ -114,5 +114,53 @@
 "Every 2 Weeks" = "每两周";
 "Monthly" = "每月";
 
+/* Sidebar */
+"System Cleaner" = "系统清理工具";
+"Cleaned %@" = "已清理 %@";
+
+/* Smart Scan - New */
+"Analyze all categories" = "分析所有类别";
+"All clean" = "全部干净";
+
+/* Onboarding */
+"Welcome to PureMac" = "欢迎使用 PureMac";
+"Keep your Mac fast, clean, and optimized." = "让您的 Mac 保持快速、干净和优化。";
+"One-Click Clean" = "一键清理";
+"Find junk in seconds" = "秒速发现垃圾";
+"Remove files safely" = "安全删除文件";
+"Delete apps completely" = "彻底删除应用";
+"Full Disk Access" = "完整磁盘访问权限";
+"Access Granted" = "已授予访问权限";
+"PureMac can now scan all areas of your Mac." = "PureMac 现在可以扫描您 Mac 的所有区域。";
+"Open System Settings" = "打开系统设置";
+"Click \"Open System Settings\" below" = "点击下方「打开系统设置」";
+"Find PureMac in the list" = "在列表中找到 PureMac";
+"Toggle the switch to enable access" = "打开开关以启用访问权限";
+"You're All Set" = "全部就绪";
+"PureMac is ready to keep your Mac clean." = "PureMac 已准备好保持您的 Mac 干净。";
+"Limited Access" = "有限访问";
+"Continue" = "继续";
+"Skip" = "跳过";
+"Start Scanning" = "开始扫描";
+
+/* App Uninstaller */
+"App Uninstaller" = "应用卸载";
+"Uninstall apps and their leftover files" = "卸载应用及其残留文件";
+"Remove apps and all their associated data" = "删除应用及其所有关联数据";
+"Search apps..." = "搜索应用...";
+"Scanning applications..." = "正在扫描应用...";
+"No removable apps found" = "未找到可卸载的应用";
+"Uninstall" = "卸载";
+
+/* Settings - General - New */
+"Appearance" = "外观";
+"System" = "系统";
+"Light" = "浅色";
+"Dark" = "深色";
+
+/* Cleaning Categories - New */
+"AI Apps" = "AI 应用";
+"Logs, caches, and temporary files from local AI apps" = "本地 AI 应用的日志、缓存和临时文件";
+
 /* Notifications */
 "Found %@ of junk files." = "发现了 %@ 的垃圾文件。";
