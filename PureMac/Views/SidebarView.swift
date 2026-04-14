@@ -86,7 +86,7 @@ struct SidebarView: View {
                     .padding(.horizontal, 16)
                 }
 
-                Text("v1.0.0")
+                Text("v\(AppConstants.appVersion)")
                     .font(.system(size: 10))
                     .foregroundColor(.pmTextMuted)
                     .padding(.bottom, 12)

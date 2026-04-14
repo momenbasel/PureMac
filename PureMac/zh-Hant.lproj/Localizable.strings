@@ -1,0 +1,116 @@
+/* Full Disk Access Banner */
+"Full Disk Access Required" = "需要完整磁碟存取權限";
+"PureMac needs Full Disk Access to scan Trash, Mail, Desktop, Documents, and Homebrew cache." = "PureMac 需要完整磁碟存取權限才能掃描垃圾桶、郵件、桌面、文件及 Homebrew 快取。";
+"Open Settings" = "開啟設定";
+
+/* Top Bar */
+"Macintosh HD" = "Macintosh HD";
+"%@ free" = "%@ 可用";
+"Auto-clean: " = "自動清理：";
+
+/* Sidebar */
+"CLEANING" = "清理";
+"Last cleaned: %@" = "上次清理：%@";
+
+/* Smart Scan */
+"Smart Scan" = "智慧掃描";
+"Click Scan to start" = "點一下「掃描」開始";
+"Total" = "總計";
+"Used" = "已使用";
+"Free" = "可用";
+"Purgeable" = "可清除";
+"junk found" = "發現垃圾檔案";
+"Your Mac is clean!" = "您的 Mac 很乾淨！";
+"freed up" = "已釋出";
+"Cleaning..." = "正在清理…";
+"Scanning..." = "正在掃描…";
+"%lld/%lld items" = "%lld/%lld 個項目";
+
+/* Category Detail */
+"All Clean!" = "全部乾淨！";
+"No junk files found in this category." = "此類別未發現垃圾檔案。";
+"Not scanned yet" = "尚未掃描";
+"Click Scan to analyze this category" = "點一下「掃描」以分析此類別";
+"%lld of %lld selected" = "已選取 %lld / %lld";
+"Select All" = "全選";
+"Deselect All" = "取消全選";
+"%lld items" = "%lld 個項目";
+
+/* Buttons */
+"Scan" = "掃描";
+"Re-scan" = "重新掃描";
+"Scan Again" = "再次掃描";
+"Done" = "完成";
+"Clean (%@)" = "清理（%@）";
+"Clean %lld items (%@)" = "清理 %lld 個項目（%@）";
+
+/* Settings - Schedule */
+"Schedule" = "排程";
+"Automatic Cleaning" = "自動清理";
+"Automatically scan and clean your Mac on a schedule" = "依排程自動掃描與清理您的 Mac";
+"Scan Interval" = "掃描間隔";
+"Automation" = "自動化";
+"Auto-clean after scan" = "掃描後自動清理";
+"Minimum junk size to trigger clean:" = "觸發清理的最小垃圾大小：";
+"50 MB" = "50 MB";
+"100 MB" = "100 MB";
+"250 MB" = "250 MB";
+"500 MB" = "500 MB";
+"1 GB" = "1 GB";
+"Auto-purge purgeable space" = "自動清除可清除空間";
+"Show notification on completion" = "完成時顯示通知";
+"Status" = "狀態";
+"Last run" = "上次執行";
+"Next run" = "下次執行";
+"Never" = "從未";
+"Not scheduled" = "未排程";
+
+/* Settings - General */
+"General" = "一般";
+"App Behavior" = "應用程式行為";
+"Launch at login" = "登入時啟動";
+"Show in Dock" = "於 Dock 中顯示";
+"Show menu bar icon" = "顯示選單列圖示";
+"Safety" = "安全性";
+"PureMac will never delete system-critical files. Only caches, logs, temporary files, and user-selected items are removed." = "PureMac 絕不會刪除系統關鍵檔案。僅會移除快取、記錄檔、暫存檔案及使用者選取的項目。";
+
+/* Settings - About */
+"About" = "關於";
+"Version 1.0.0" = "版本 1.0.0";
+"A free, open-source Mac cleaning utility.\nKeep your Mac fast, clean, and optimized." = "免費、開放原始碼的 Mac 清理工具。\n讓您的 Mac 保持快速、乾淨且最佳化。";
+"GitHub Repository" = "GitHub 儲存庫";
+"MIT License" = "MIT 授權";
+
+/* Cleaning Categories */
+"System Junk" = "系統垃圾";
+"User Cache" = "使用者快取";
+"Mail Files" = "郵件檔案";
+"Trash Bins" = "垃圾桶";
+"Large & Old Files" = "大型與舊檔案";
+"Purgeable Space" = "可清除空間";
+"Xcode Junk" = "Xcode 垃圾";
+"Brew Cache" = "Brew 快取";
+
+/* Category Descriptions */
+"Scan everything at once" = "一次掃描所有項目";
+"System caches, logs, and temporary files" = "系統快取、記錄檔及暫存檔案";
+"Application caches and browser data" = "應用程式快取與瀏覽器資料";
+"Downloaded mail attachments" = "已下載的郵件附件";
+"Files in your Trash" = "垃圾桶中的檔案";
+"Files over 100 MB or older than 1 year" = "超過 100 MB 或超過一年未使用的檔案";
+"APFS purgeable disk space" = "APFS 可清除磁碟空間";
+"Derived data, archives, and simulators" = "衍生資料、封存檔與模擬器";
+"Homebrew download cache" = "Homebrew 下載快取";
+
+/* Schedule Intervals */
+"Every Hour" = "每小時";
+"Every 3 Hours" = "每 3 小時";
+"Every 6 Hours" = "每 6 小時";
+"Every 12 Hours" = "每 12 小時";
+"Daily" = "每天";
+"Weekly" = "每週";
+"Every 2 Weeks" = "每兩週";
+"Monthly" = "每月";
+
+/* Notifications */
+"Found %@ of junk files." = "發現 %@ 的垃圾檔案。";

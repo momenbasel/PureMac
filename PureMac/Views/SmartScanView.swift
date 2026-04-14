@@ -518,6 +518,7 @@ struct ResultRow: View {
                             .foregroundColor(.white)
                     }
                 }
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 
@@ -554,6 +555,7 @@ struct ResultRow: View {
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundColor(isHovering ? result.category.color : .pmTextMuted)
                 }
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
         }

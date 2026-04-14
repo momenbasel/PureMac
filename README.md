@@ -72,6 +72,7 @@ open build/Build/Products/Release/PureMac.app
 - **Smart Scan** - One-click scan across all categories
 - **System Junk** - System caches, logs, and temporary files
 - **User Cache** - Application caches and browser data
+- **AI Apps** - Ollama and LM Studio logs, caches, and temporary app data
 - **Mail Attachments** - Downloaded mail attachments
 - **Trash Bins** - Empty all Trash bins
 - **Large & Old Files** - Files over 100 MB or older than 1 year
@@ -120,6 +121,7 @@ How does PureMac stack up against other Mac cleaning tools?
 |---|---|
 | System Junk | `/Library/Caches`, `/Library/Logs`, `/tmp`, `~/Library/Logs` |
 | User Cache | `~/Library/Caches`, npm/pip/yarn/pnpm caches |
+| AI Apps | `~/.ollama/logs`, Ollama caches/WebKit/saved state, `~/.lmstudio/server-logs` |
 | Mail Attachments | `~/Library/Mail Downloads` |
 | Trash | `~/.Trash` |
 | Large Files | `~/Downloads`, `~/Documents`, `~/Desktop` (>100MB or >1yr old) |
@@ -131,6 +133,7 @@ How does PureMac stack up against other Mac cleaning tools?
 
 - Never deletes system-critical files
 - Only removes caches, logs, temporary files, and user-selected items
+- AI Apps excludes Ollama models, LM Studio models, and LM Studio conversations
 - Large & Old Files are **not auto-selected** - you choose what to remove
 - All operations are non-destructive to the operating system
 - Purgeable space uses only Time Machine snapshots, not actual free space

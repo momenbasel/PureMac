@@ -1,5 +1,6 @@
 import SwiftUI
 
+
 struct CategoryDetailView: View {
     @EnvironmentObject var vm: AppViewModel
     let category: CleaningCategory

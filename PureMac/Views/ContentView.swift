@@ -179,21 +179,28 @@ struct TopBarView: View {
             }
 
             // Settings button
-            Button(action: {
-                if #available(macOS 14.0, *) {
-                    NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-                } else {
-                    NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+            if #available(macOS 14.0, *) {
+                SettingsLink {
+                    iconGearView
                 }
-            }) {
-                Image(systemName: "gearshape.fill")
-                    .font(.system(size: 14))
-                    .foregroundColor(.pmTextSecondary)
-                    .frame(width: 32, height: 32)
-                    .background(Color.pmCard.opacity(0.6))
-                    .cornerRadius(8)
+                .buttonStyle(.plain)
+            } else {
+                Button(action: {
+                    NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+                }) {
+                    iconGearView
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
+    }
+    
+    var iconGearView: some View {
+        Image(systemName: "gearshape.fill")
+            .font(.system(size: 14))
+            .foregroundColor(.pmTextSecondary)
+            .frame(width: 32, height: 32)
+            .background(Color.pmCard.opacity(0.6))
+            .cornerRadius(8)
     }
 }

@@ -4,6 +4,11 @@ actor ScanEngine {
     private let fileManager = FileManager.default
     private let home = FileManager.default.homeDirectoryForCurrentUser.path
 
+    private struct CleanupTarget {
+        let name: String
+        let path: String
+    }
+
     // MARK: - Public API
 
     func scanCategory(_ category: CleaningCategory) async -> CategoryResult {
@@ -11,21 +16,23 @@ actor ScanEngine {
         case .smartScan:
             return CategoryResult(category: category, items: [], totalSize: 0)
         case .systemJunk:
-            return await scanSystemJunk()
+            return scanSystemJunk()
         case .userCache:
-            return await scanUserCache()
+            return scanUserCache()
+        case .aiApps:
+            return scanAIApps()
         case .mailAttachments:
-            return await scanMailAttachments()
+            return scanMailAttachments()
         case .trashBins:
-            return await scanTrash()
+            return scanTrash()
         case .largeFiles:
-            return await scanLargeFiles()
+            return scanLargeFiles()
         case .purgeableSpace:
-            return await scanPurgeableSpace()
+            return scanPurgeableSpace()
         case .xcodeJunk:
-            return await scanXcodeJunk()
+            return scanXcodeJunk()
         case .brewCache:
-            return await scanBrewCache()
+            return scanBrewCache()
         }
     }
 
@@ -52,7 +59,7 @@ actor ScanEngine {
 
     // MARK: - Scanners
 
-    private func scanSystemJunk() async -> CategoryResult {
+    private func scanSystemJunk() -> CategoryResult {
         var items: [CleanableItem] = []
         var totalSize: Int64 = 0
 
@@ -74,13 +81,29 @@ actor ScanEngine {
         return CategoryResult(category: .systemJunk, items: items, totalSize: totalSize)
     }
 
-    private func scanUserCache() async -> CategoryResult {
+    private func scanUserCache() -> CategoryResult {
         var items: [CleanableItem] = []
+        // Exclude vendor roots claimed by dedicated categories from the broad
+        // ~/Library/Caches pass, then re-add the vendor root explicitly below so
+        // unrelated app caches remain visible and we only avoid double-counting.
+        let excludedRootPaths = Set([
+            "\(home)/Library/Caches/com.apple.Safari",
+            "\(home)/Library/Caches/Google",
+            "\(home)/Library/Caches/Firefox",
+            "\(home)/Library/Caches/com.spotify.client",
+            "\(home)/Library/Caches/com.microsoft.VSCode",
+            "\(home)/Library/Caches/Slack",
+            "\(home)/Library/Caches/Homebrew",
+            "\(home)/Library/Caches/com.apple.dt.Xcode",
+            "\(home)/Library/Caches/pip",
+            "\(home)/Library/Caches/com.electron.ollama",
+            "\(home)/Library/Caches/ollama",
+        ].map(normalizePath))
 
         let cachePaths = [
             "\(home)/Library/Caches",
             "\(home)/Library/Caches/com.apple.Safari",
-            "\(home)/Library/Caches/Google/Chrome",
+            "\(home)/Library/Caches/Google",
             "\(home)/Library/Caches/Firefox",
             "\(home)/Library/Caches/com.spotify.client",
             "\(home)/Library/Caches/com.microsoft.VSCode",
@@ -88,7 +111,13 @@ actor ScanEngine {
         ]
 
         for path in cachePaths {
-            let scanned = scanDirectory(path: path, category: .userCache, recursive: false, maxDepth: 1)
+            let scanned = scanDirectory(
+                path: path,
+                category: .userCache,
+                recursive: false,
+                maxDepth: 1,
+                excluding: path == "\(home)/Library/Caches" ? excludedRootPaths : Set<String>()
+            )
             items.append(contentsOf: scanned)
         }
 
@@ -102,26 +131,56 @@ actor ScanEngine {
         ]
 
         for path in devCaches {
-            if fileManager.fileExists(atPath: path) {
-                let size = directorySize(path: path)
-                if size > 0 {
-                    items.append(CleanableItem(
-                        name: URL(fileURLWithPath: path).lastPathComponent,
-                        path: path,
-                        size: size,
-                        category: .userCache,
-                        isSelected: true,
-                        lastModified: fileModDate(path: path)
-                    ))
-                }
+            if let item = makeCleanupItem(
+                name: URL(fileURLWithPath: path).lastPathComponent,
+                path: path,
+                category: .userCache
+            ) {
+                items.append(item)
             }
         }
 
-        let totalSize = items.reduce(0) { $0 + $1.size }
-        return CategoryResult(category: .userCache, items: items, totalSize: totalSize)
+        let uniqueItems = deduplicatedItems(items)
+        let totalSize = uniqueItems.reduce(0) { $0 + $1.size }
+        return CategoryResult(category: .userCache, items: uniqueItems, totalSize: totalSize)
     }
 
-    private func scanMailAttachments() async -> CategoryResult {
+    private func scanAIApps() -> CategoryResult {
+        let targets = [
+            CleanupTarget(
+                name: "Ollama Logs",
+                path: "\(home)/.ollama/logs"
+            ),
+            CleanupTarget(
+                name: "Ollama Cache",
+                path: "\(home)/Library/Caches/ollama"
+            ),
+            CleanupTarget(
+                name: "Ollama Electron Cache",
+                path: "\(home)/Library/Caches/com.electron.ollama"
+            ),
+            CleanupTarget(
+                name: "Ollama WebKit Data",
+                path: "\(home)/Library/WebKit/com.electron.ollama"
+            ),
+            CleanupTarget(
+                name: "Ollama Saved State",
+                path: "\(home)/Library/Saved Application State/com.electron.ollama.savedState"
+            ),
+            CleanupTarget(
+                name: "LM Studio Server Logs",
+                path: "\(home)/.lmstudio/server-logs"
+            ),
+        ]
+
+        let items = deduplicatedItems(targets.compactMap { target in
+            makeCleanupItem(name: target.name, path: target.path, category: .aiApps)
+        })
+        let totalSize = items.reduce(0) { $0 + $1.size }
+        return CategoryResult(category: .aiApps, items: items.sorted { $0.size > $1.size }, totalSize: totalSize)
+    }
+
+    private func scanMailAttachments() -> CategoryResult {
         var items: [CleanableItem] = []
 
         let mailPaths = [
@@ -138,7 +197,7 @@ actor ScanEngine {
         return CategoryResult(category: .mailAttachments, items: items, totalSize: totalSize)
     }
 
-    private func scanTrash() async -> CategoryResult {
+    private func scanTrash() -> CategoryResult {
         var items: [CleanableItem] = []
 
         let trashPath = "\(home)/.Trash"
@@ -149,7 +208,7 @@ actor ScanEngine {
         return CategoryResult(category: .trashBins, items: items, totalSize: totalSize)
     }
 
-    private func scanLargeFiles() async -> CategoryResult {
+    private func scanLargeFiles() -> CategoryResult {
         var items: [CleanableItem] = []
         let minSize: Int64 = 100 * 1024 * 1024 // 100 MB
         let oneYearAgo = Calendar.current.date(byAdding: .year, value: -1, to: Date())!
@@ -198,7 +257,7 @@ actor ScanEngine {
         return CategoryResult(category: .largeFiles, items: items, totalSize: totalSize)
     }
 
-    private func scanPurgeableSpace() async -> CategoryResult {
+    private func scanPurgeableSpace() -> CategoryResult {
         var items: [CleanableItem] = []
         var totalSize: Int64 = 0
 
@@ -235,7 +294,7 @@ actor ScanEngine {
         return CategoryResult(category: .purgeableSpace, items: items, totalSize: totalSize)
     }
 
-    private func scanXcodeJunk() async -> CategoryResult {
+    private func scanXcodeJunk() -> CategoryResult {
         var items: [CleanableItem] = []
 
         let xcodePaths = [
@@ -265,7 +324,7 @@ actor ScanEngine {
         return CategoryResult(category: .xcodeJunk, items: items, totalSize: totalSize)
     }
 
-    private func scanBrewCache() async -> CategoryResult {
+    private func scanBrewCache() -> CategoryResult {
         var items: [CleanableItem] = []
 
         // Homebrew cache locations (Apple Silicon + Intel)
@@ -299,7 +358,13 @@ actor ScanEngine {
 
     // MARK: - Helpers
 
-    private func scanDirectory(path: String, category: CleaningCategory, recursive: Bool, maxDepth: Int) -> [CleanableItem] {
+    private func scanDirectory(
+        path: String,
+        category: CleaningCategory,
+        recursive: Bool,
+        maxDepth: Int,
+        excluding excludedPaths: Set<String> = []
+    ) -> [CleanableItem] {
         var items: [CleanableItem] = []
 
         guard fileManager.fileExists(atPath: path),
@@ -309,6 +374,9 @@ actor ScanEngine {
             let contents = try fileManager.contentsOfDirectory(atPath: path)
             for item in contents {
                 let fullPath = (path as NSString).appendingPathComponent(item)
+                if excludedPaths.contains(normalizePath(fullPath)) {
+                    continue
+                }
 
                 var isDir: ObjCBool = false
                 guard fileManager.fileExists(atPath: fullPath, isDirectory: &isDir) else { continue }
@@ -344,6 +412,56 @@ actor ScanEngine {
         }
 
         return items
+    }
+
+    private func makeCleanupItem(name: String, path: String, category: CleaningCategory) -> CleanableItem? {
+        var isDirectory: ObjCBool = false
+        guard fileManager.fileExists(atPath: path, isDirectory: &isDirectory),
+              fileManager.isReadableFile(atPath: path) else { return nil }
+
+        if isDirectory.boolValue {
+            let size = directorySize(path: path)
+            guard size > 1024 else { return nil }
+            return CleanableItem(
+                name: name,
+                path: path,
+                size: size,
+                category: category,
+                isSelected: true,
+                lastModified: fileModDate(path: path)
+            )
+        }
+
+        guard let attrs = try? fileManager.attributesOfItem(atPath: path),
+              let size = attrs[.size] as? Int64,
+              size > 1024 else { return nil }
+
+        return CleanableItem(
+            name: name,
+            path: path,
+            size: size,
+            category: category,
+            isSelected: true,
+            lastModified: attrs[.modificationDate] as? Date
+        )
+    }
+
+    private func deduplicatedItems(_ items: [CleanableItem]) -> [CleanableItem] {
+        var seenPaths: Set<String> = []
+        var uniqueItems: [CleanableItem] = []
+
+        for item in items {
+            let normalizedPath = normalizePath(item.path)
+            if seenPaths.insert(normalizedPath).inserted {
+                uniqueItems.append(item)
+            }
+        }
+
+        return uniqueItems
+    }
+
+    private func normalizePath(_ path: String) -> String {
+        (path as NSString).standardizingPath
     }
 
     private func directorySize(path: String) -> Int64 {

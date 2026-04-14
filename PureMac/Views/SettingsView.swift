@@ -210,7 +210,7 @@ struct AboutTab: View {
             Text("PureMac")
                 .font(.system(size: 24, weight: .bold, design: .rounded))
 
-            Text("Version 1.0.0")
+            Text("Version \(AppConstants.appVersion)")
                 .font(.system(size: 13))
                 .foregroundColor(.secondary)
 
