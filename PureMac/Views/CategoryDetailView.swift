@@ -1,80 +1,69 @@
 import SwiftUI
 
-
 struct CategoryDetailView: View {
-    @EnvironmentObject var vm: AppViewModel
+    @EnvironmentObject var appState: AppState
     let category: CleaningCategory
 
     @State private var sortDescending: Bool = true
 
-    var result: CategoryResult? {
-        vm.categoryResults[category]
+    private var result: CategoryResult? {
+        appState.categoryResults[category]
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Category header
-            categoryHeader
-                .padding(.horizontal, 32)
-                .padding(.top, 16)
-                .padding(.bottom, 16)
-
+        Group {
             if let result = result {
                 if result.items.isEmpty {
-                    emptyState
+                    EmptyStateView("All Clean", systemImage: "checkmark.circle", description: "No junk files found in this category.")
                 } else {
-                    // File list
                     fileList(result)
                 }
             } else {
-                // Not scanned yet
-                notScannedState
+                EmptyStateView("Not Scanned", systemImage: category.icon, description: "Run a scan to analyze this category.")
             }
-
-            Spacer()
-
-            // Action bar
-            categoryActionBar
-                .padding(.horizontal, 32)
-                .padding(.bottom, 32)
         }
-    }
+        .navigationTitle(category.rawValue)
+        .toolbar {
+            ToolbarItemGroup {
+                if let result = result, !result.items.isEmpty {
+                    Button("Select All") {
+                        appState.selectAllInCategory(category)
+                    }
 
-    // MARK: - Header
+                    Button("Deselect All") {
+                        appState.deselectAllInCategory(category)
+                    }
 
-    private var categoryHeader: some View {
-        HStack(spacing: 16) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(category.color.opacity(0.15))
-                    .frame(width: 48, height: 48)
+                    Button(action: { sortDescending.toggle() }) {
+                        Label(
+                            sortDescending ? "Largest First" : "Smallest First",
+                            systemImage: "arrow.up.arrow.down"
+                        )
+                    }
+                    .help(sortDescending ? "Sorted: Largest First" : "Sorted: Smallest First")
+                }
 
-                Image(systemName: category.icon)
-                    .font(.system(size: 22))
-                    .foregroundColor(category.color)
-            }
+                if result == nil || !appState.scanState.isActive {
+                    Button {
+                        appState.scanSingleCategory(category)
+                    } label: {
+                        Label("Scan", systemImage: "magnifyingglass")
+                    }
+                }
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(LocalizedStringKey(category.rawValue))
-                    .font(.pmHeadline)
-                    .foregroundColor(.pmTextPrimary)
-
-                Text(LocalizedStringKey(category.description))
-                    .font(.pmCaption)
-                    .foregroundColor(.pmTextSecondary)
-            }
-
-            Spacer()
-
-            if let result = result {
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text(result.formattedSize)
-                        .font(.pmMediumNumber)
-                        .foregroundColor(category.color)
-
-                    Text("\(result.itemCount) items")
-                        .font(.pmCaption)
-                        .foregroundColor(.pmTextMuted)
+                if let _ = result, !appState.scanState.isActive {
+                    let selectedSize = appState.selectedSizeInCategory(category)
+                    let selectedCount = appState.selectedCountInCategory(category)
+                    if selectedSize > 0 {
+                        Button {
+                            appState.cleanCategory(category)
+                        } label: {
+                            Label(
+                                "Clean \(selectedCount) items (\(ByteCountFormatter.string(fromByteCount: selectedSize, countStyle: .file)))",
+                                systemImage: "trash"
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -83,269 +72,92 @@ struct CategoryDetailView: View {
     // MARK: - File List
 
     private func fileList(_ result: CategoryResult) -> some View {
-        VStack(spacing: 0) {
-            // Select all / Deselect all bar
-            HStack(spacing: 16) {
-                let selectedCount = vm.selectedCountInCategory(category)
+        List {
+            Section {
+                ForEach(sortedItems(result.items)) { item in
+                    FileRowView(item: item)
+                }
+            } header: {
+                let selectedCount = appState.selectedCountInCategory(category)
                 let totalCount = result.itemCount
-
                 Text("\(selectedCount) of \(totalCount) selected")
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
-                    .foregroundColor(.pmTextMuted)
-
-                Spacer()
-
-                Button("Select All") {
-                    vm.selectAllInCategory(category)
-                }
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.pmAccentLight)
-                .buttonStyle(.plain)
-
-                Text("|")
-                    .foregroundColor(.pmSeparator)
-                    .font(.system(size: 11))
-
-                Button("Deselect All") {
-                    vm.deselectAllInCategory(category)
-                }
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.pmAccentLight)
-                .buttonStyle(.plain)
-
-                Button(action: { sortDescending.toggle() }) {
-                    Image(systemName: "arrow.up.arrow.down")
-                        .font(.system(size: 14))
-                        .foregroundColor(.pmAccentLight)
-                }
-                .buttonStyle(.plain)
-                .help(sortDescending ? "Sorted: Largest First" : "Sorted: Smallest First")
-            }
-            .padding(.horizontal, 48)
-            .padding(.vertical, 8)
-
-            Divider()
-                .background(Color.pmSeparator)
-                .padding(.horizontal, 32)
-
-            ScrollView {
-                LazyVStack(spacing: 4) {
-                    ForEach(sortedItems(result.items)) { item in
-                        FileRow(item: item, color: category.color)
-                    }
-                }
-                .padding(.horizontal, 32)
-                .padding(.vertical, 8)
             }
         }
     }
-
-    // MARK: - Empty / Not Scanned
-
-    private var emptyState: some View {
-        VStack(spacing: 16) {
-            Spacer()
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 48))
-                .foregroundColor(.pmSuccess)
-
-            Text("All Clean!")
-                .font(.pmHeadline)
-                .foregroundColor(.pmTextPrimary)
-
-            Text("No junk files found in this category.")
-                .font(.pmBody)
-                .foregroundColor(.pmTextSecondary)
-            Spacer()
-        }
-    }
-
-    private var notScannedState: some View {
-        VStack(spacing: 16) {
-            Spacer()
-            ZStack {
-                Circle()
-                    .fill(category.color.opacity(0.1))
-                    .frame(width: 120, height: 120)
-
-                Image(systemName: category.icon)
-                    .font(.system(size: 40))
-                    .foregroundColor(category.color.opacity(0.5))
-            }
-
-            Text("Not scanned yet")
-                .font(.pmSubheadline)
-                .foregroundColor(.pmTextSecondary)
-
-            Text("Click Scan to analyze this category")
-                .font(.pmCaption)
-                .foregroundColor(.pmTextMuted)
-            Spacer()
-        }
-    }
-
-    // MARK: - Sort
 
     private func sortedItems(_ items: [CleanableItem]) -> [CleanableItem] {
         items.sorted { sortDescending ? $0.size > $1.size : $0.size < $1.size }
     }
-
-    // MARK: - Action Bar
-
-    private var categoryActionBar: some View {
-        HStack(spacing: 16) {
-            if result == nil || vm.scanState == .idle || vm.scanState == .completed {
-                GradientActionButton(
-                    title: "Scan",
-                    icon: "magnifyingglass",
-                    gradient: LinearGradient(
-                        colors: [category.color, category.color.opacity(0.7)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                ) {
-                    withAnimation(.pmSpring) {
-                        vm.scanSingleCategory(category)
-                    }
-                }
-            }
-
-            if let _ = result, !vm.scanState.isActive {
-                let selectedSize = vm.selectedSizeInCategory(category)
-                let selectedCount = vm.selectedCountInCategory(category)
-                if selectedSize > 0 {
-                    GradientActionButton(
-                        title: "Clean \(selectedCount) items (\(ByteCountFormatter.string(fromByteCount: selectedSize, countStyle: .file)))",
-                        icon: "trash.fill",
-                        gradient: AppGradients.accent
-                    ) {
-                        withAnimation(.pmSpring) {
-                            vm.cleanCategory(category)
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 
-// MARK: - File Row
+// MARK: - File Row View
 
-struct FileRow: View {
-    @EnvironmentObject var vm: AppViewModel
+private struct FileRowView: View {
+    @EnvironmentObject var appState: AppState
     let item: CleanableItem
-    let color: Color
 
-    @State private var isHovering = false
-
-    var isSelected: Bool {
-        vm.isItemSelected(item)
+    private var isSelected: Bool {
+        appState.isItemSelected(item)
     }
 
     var body: some View {
-        HStack(spacing: 10) {
-            // Checkbox
-            Button(action: { vm.toggleItem(item) }) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 4)
-                        .stroke(isSelected ? color : Color.pmTextMuted, lineWidth: 1.5)
-                        .frame(width: 18, height: 18)
+        Toggle(isOn: Binding(
+            get: { isSelected },
+            set: { _ in appState.toggleItem(item) }
+        )) {
+            HStack {
+                Image(systemName: fileIcon)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 20)
 
-                    if isSelected {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(color)
-                            .frame(width: 18, height: 18)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.name)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
 
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.white)
-                    }
+                    Text(item.path)
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
                 }
-            }
-            .buttonStyle(.plain)
 
-            // File icon
-            Image(systemName: fileIcon)
-                .font(.system(size: 14))
-                .foregroundColor(isSelected ? color.opacity(0.7) : .pmTextMuted)
-                .frame(width: 20)
+                Spacer()
 
-            // File info
-            VStack(alignment: .leading, spacing: 2) {
-                Text(item.name)
-                    .font(.pmBody)
-                    .foregroundColor(isSelected ? .pmTextPrimary : .pmTextMuted)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-
-                Text(item.path)
-                    .font(.system(size: 10))
-                    .foregroundColor(.pmTextMuted)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-            }
-
-            Spacer()
-
-            // Date
-            if let date = item.lastModified {
-                Text(formatDate(date))
-                    .font(.system(size: 10))
-                    .foregroundColor(.pmTextMuted)
-            }
-
-            // Size
-            Text(item.formattedSize)
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundColor(isSelected ? .pmTextPrimary : .pmTextMuted)
-                .frame(width: 70, alignment: .trailing)
-
-            // Reveal button on hover
-            if isHovering {
-                Button(action: revealInFinder) {
-                    Image(systemName: "arrow.right.circle")
-                        .font(.system(size: 12))
-                        .foregroundColor(.pmTextSecondary)
+                if let date = item.lastModified {
+                    Text(date, style: .date)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-                .buttonStyle(.plain)
+
+                Text(item.formattedSize)
+                    .font(.callout)
+                    .fontWeight(.medium)
+                    .frame(width: 80, alignment: .trailing)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(isHovering ? Color.pmCard : Color.clear)
-        )
-        .onHover { h in
-            withAnimation(.pmSmooth) { isHovering = h }
+        .toggleStyle(.checkbox)
+        .contextMenu {
+            Button("Reveal in Finder") {
+                NSWorkspace.shared.selectFile(item.path, inFileViewerRootedAtPath: "")
+            }
         }
     }
 
     private var fileIcon: String {
         let ext = (item.name as NSString).pathExtension.lowercased()
         switch ext {
-        case "log", "txt": return "doc.text.fill"
+        case "log", "txt": return "doc.text"
         case "zip", "gz", "tar": return "doc.zipper"
-        case "dmg", "iso": return "opticaldisc.fill"
-        case "app": return "app.fill"
-        case "pkg": return "shippingbox.fill"
+        case "dmg", "iso": return "opticaldisc"
+        case "app": return "app"
+        case "pkg": return "shippingbox"
         default:
             var isDir: ObjCBool = false
             if FileManager.default.fileExists(atPath: item.path, isDirectory: &isDir), isDir.boolValue {
-                return "folder.fill"
+                return "folder"
             }
-            return "doc.fill"
+            return "doc"
         }
-    }
-
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .short
-        formatter.timeStyle = .none
-        return formatter.string(from: date)
-    }
-
-    private func revealInFinder() {
-        NSWorkspace.shared.selectFile(item.path, inFileViewerRootedAtPath: "")
     }
 }

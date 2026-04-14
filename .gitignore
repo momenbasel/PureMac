@@ -40,3 +40,8 @@ fastlane/
 fastlane/README.md
 asc_api.py
 ExportOptions.plist
+
+# Build artifacts
+*.dmg
+*.zip
+build/

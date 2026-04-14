@@ -1,17 +1,28 @@
+import AppKit
 import SwiftUI
+
+class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        NSWindow.allowsAutomaticWindowTabbing = false
+    }
+}
 
 @main
 struct PureMacApp: App {
-    @StateObject private var appViewModel = AppViewModel()
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @StateObject private var appState = AppState()
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environmentObject(appViewModel)
+            MainWindow()
+                .environmentObject(appState)
                 .frame(minWidth: 900, minHeight: 600)
-                .preferredColorScheme(.dark)
         }
-        .windowStyle(.hiddenTitleBar)
+        .windowStyle(.automatic)
+        .windowToolbarStyle(.unified)
+        .windowResizability(.contentMinSize)
         .defaultSize(width: 1000, height: 680)
         .commands {
             CommandGroup(replacing: .newItem) {}
@@ -19,7 +30,7 @@ struct PureMacApp: App {
 
         Settings {
             SettingsView()
-                .environmentObject(appViewModel)
+                .environmentObject(appState)
         }
     }
 }

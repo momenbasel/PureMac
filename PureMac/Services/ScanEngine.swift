@@ -19,8 +19,6 @@ actor ScanEngine {
             return scanSystemJunk()
         case .userCache:
             return scanUserCache()
-        case .aiApps:
-            return scanAIApps()
         case .mailAttachments:
             return scanMailAttachments()
         case .trashBins:
@@ -52,7 +50,7 @@ actor ScanEngine {
             // Purgeable = space used by local snapshots that macOS can reclaim
             info.purgeableSpace = getLocalSnapshotSize()
         } catch {
-            // Silently fail - disk info is supplementary
+            Logger.shared.log("Disk info unavailable: \(error.localizedDescription)", level: .warning)
         }
         return info
     }
@@ -83,43 +81,21 @@ actor ScanEngine {
 
     private func scanUserCache() -> CategoryResult {
         var items: [CleanableItem] = []
-        // Exclude vendor roots claimed by dedicated categories from the broad
-        // ~/Library/Caches pass, then re-add the vendor root explicitly below so
-        // unrelated app caches remain visible and we only avoid double-counting.
+        // Only exclude Homebrew since it has its own dedicated scan category
         let excludedRootPaths = Set([
-            "\(home)/Library/Caches/com.apple.Safari",
-            "\(home)/Library/Caches/Google",
-            "\(home)/Library/Caches/Firefox",
-            "\(home)/Library/Caches/com.spotify.client",
-            "\(home)/Library/Caches/com.microsoft.VSCode",
-            "\(home)/Library/Caches/Slack",
             "\(home)/Library/Caches/Homebrew",
-            "\(home)/Library/Caches/com.apple.dt.Xcode",
-            "\(home)/Library/Caches/pip",
-            "\(home)/Library/Caches/com.electron.ollama",
-            "\(home)/Library/Caches/ollama",
         ].map(normalizePath))
 
-        let cachePaths = [
-            "\(home)/Library/Caches",
-            "\(home)/Library/Caches/com.apple.Safari",
-            "\(home)/Library/Caches/Google",
-            "\(home)/Library/Caches/Firefox",
-            "\(home)/Library/Caches/com.spotify.client",
-            "\(home)/Library/Caches/com.microsoft.VSCode",
-            "\(home)/Library/Caches/Slack",
-        ]
-
-        for path in cachePaths {
-            let scanned = scanDirectory(
-                path: path,
-                category: .userCache,
-                recursive: false,
-                maxDepth: 1,
-                excluding: path == "\(home)/Library/Caches" ? excludedRootPaths : Set<String>()
-            )
-            items.append(contentsOf: scanned)
-        }
+        // Dynamically enumerate ~/Library/Caches/ so every subdirectory is visible
+        let cachePath = "\(home)/Library/Caches"
+        let scanned = scanDirectory(
+            path: cachePath,
+            category: .userCache,
+            recursive: false,
+            maxDepth: 1,
+            excluding: excludedRootPaths
+        )
+        items.append(contentsOf: scanned)
 
         // Also scan for npm/pip/yarn caches
         let devCaches = [
@@ -143,41 +119,6 @@ actor ScanEngine {
         let uniqueItems = deduplicatedItems(items)
         let totalSize = uniqueItems.reduce(0) { $0 + $1.size }
         return CategoryResult(category: .userCache, items: uniqueItems, totalSize: totalSize)
-    }
-
-    private func scanAIApps() -> CategoryResult {
-        let targets = [
-            CleanupTarget(
-                name: "Ollama Logs",
-                path: "\(home)/.ollama/logs"
-            ),
-            CleanupTarget(
-                name: "Ollama Cache",
-                path: "\(home)/Library/Caches/ollama"
-            ),
-            CleanupTarget(
-                name: "Ollama Electron Cache",
-                path: "\(home)/Library/Caches/com.electron.ollama"
-            ),
-            CleanupTarget(
-                name: "Ollama WebKit Data",
-                path: "\(home)/Library/WebKit/com.electron.ollama"
-            ),
-            CleanupTarget(
-                name: "Ollama Saved State",
-                path: "\(home)/Library/Saved Application State/com.electron.ollama.savedState"
-            ),
-            CleanupTarget(
-                name: "LM Studio Server Logs",
-                path: "\(home)/.lmstudio/server-logs"
-            ),
-        ]
-
-        let items = deduplicatedItems(targets.compactMap { target in
-            makeCleanupItem(name: target.name, path: target.path, category: .aiApps)
-        })
-        let totalSize = items.reduce(0) { $0 + $1.size }
-        return CategoryResult(category: .aiApps, items: items.sorted { $0.size > $1.size }, totalSize: totalSize)
     }
 
     private func scanMailAttachments() -> CategoryResult {
@@ -327,14 +268,43 @@ actor ScanEngine {
     private func scanBrewCache() -> CategoryResult {
         var items: [CleanableItem] = []
 
-        // Homebrew cache locations (Apple Silicon + Intel)
-        let brewCachePaths = [
+        // Default Homebrew download cache
+        var brewCachePaths = [
             "\(home)/Library/Caches/Homebrew",
-            "/opt/homebrew/Caskroom/.metadata",
-            "/usr/local/Caskroom/.metadata",
-            "/opt/homebrew/Cellar/.metadata",
-            "/usr/local/Cellar/.metadata",
         ]
+
+        // Detect custom HOMEBREW_CACHE via `brew --cache`
+        let brewBinPaths = ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"]
+        var detectedCustomCache = false
+        for brewBin in brewBinPaths {
+            guard fileManager.fileExists(atPath: brewBin) else { continue }
+            let task = Process()
+            task.executableURL = URL(fileURLWithPath: brewBin)
+            task.arguments = ["--cache"]
+            let pipe = Pipe()
+            task.standardOutput = pipe
+            task.standardError = Pipe()
+            do {
+                try task.run()
+                task.waitUntilExit()
+                let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                   !output.isEmpty {
+                    let normalized = normalizePath(output)
+                    if !brewCachePaths.map(normalizePath).contains(normalized) {
+                        brewCachePaths.append(output)
+                    }
+                    detectedCustomCache = true
+                }
+            } catch {
+                Logger.shared.log("Failed to run \(brewBin) --cache: \(error.localizedDescription)", level: .warning)
+            }
+            break // Only need the first available brew binary
+        }
+
+        if !detectedCustomCache {
+            Logger.shared.log("Homebrew not found at standard paths; scanning default cache location only", level: .info)
+        }
 
         for path in brewCachePaths {
             if fileManager.fileExists(atPath: path) {
@@ -408,7 +378,7 @@ actor ScanEngine {
                 }
             }
         } catch {
-            // Permission denied or other error - skip silently
+            Logger.shared.log("Cannot enumerate \(path): \(error.localizedDescription)", level: .warning)
         }
 
         return items
@@ -546,17 +516,44 @@ actor ScanEngine {
                 }
             }
         } catch {
-            // tmutil may require admin privileges
+            Logger.shared.log("tmutil listlocalsnapshots failed: \(error.localizedDescription)", level: .info)
         }
 
         return snapshots
     }
 
-    /// Get size of a specific local snapshot
+    /// Get size of a specific local snapshot via APFS snapshot listing
     private func getSnapshotSize(name: String) -> Int64 {
-        // tmutil doesn't directly report individual snapshot sizes easily
-        // Use a reasonable estimate based on total snapshot usage
-        // For accurate per-snapshot sizes we'd need root access
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/sbin/diskutil")
+        task.arguments = ["apfs", "listSnapshots", "/", "-plist"]
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = Pipe()
+
+        do {
+            try task.run()
+            task.waitUntilExit()
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            guard let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
+                  let snapshots = plist["Snapshots"] as? [[String: Any]] else {
+                Logger.shared.log("Could not parse APFS snapshot plist for \(name)", level: .info)
+                return 0
+            }
+
+            for snapshot in snapshots {
+                if let snapshotName = snapshot["SnapshotName"] as? String,
+                   snapshotName == name,
+                   let dataSize = snapshot["DataSize"] as? Int64 {
+                    return dataSize
+                }
+            }
+
+            Logger.shared.log("Snapshot \(name) not found in APFS listing", level: .info)
+        } catch {
+            Logger.shared.log("diskutil apfs listSnapshots failed: \(error.localizedDescription)", level: .warning)
+        }
+
         return 0
     }
 
@@ -607,7 +604,7 @@ actor ScanEngine {
                 }
             }
         } catch {
-            // Silently fail
+            Logger.shared.log("Purgeable space detection failed: \(error.localizedDescription)", level: .warning)
         }
 
         return 0

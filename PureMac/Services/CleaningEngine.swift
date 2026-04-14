@@ -66,6 +66,7 @@ actor CleaningEngine {
             let freedSpace = afterFree - beforeFree
             return max(0, freedSpace)
         } catch {
+            Logger.shared.log("diskutil purge failed: \(error.localizedDescription)", level: .error)
             return 0
         }
     }
@@ -87,7 +88,7 @@ actor CleaningEngine {
                 try fileManager.removeItem(atPath: fullPath)
             }
         } catch {
-            // Partial cleanup is OK
+            Logger.shared.log("Trash cleanup incomplete: \(error.localizedDescription)", level: .warning)
         }
 
         return totalFreed
@@ -100,6 +101,7 @@ actor CleaningEngine {
             let attrs = try fileManager.attributesOfFileSystem(forPath: "/")
             return (attrs[.systemFreeSize] as? Int64) ?? 0
         } catch {
+            Logger.shared.log("Cannot read filesystem attributes: \(error.localizedDescription)", level: .warning)
             return 0
         }
     }

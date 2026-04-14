@@ -1,9 +1,26 @@
 import SwiftUI
 import Combine
+import UserNotifications
+import AppKit
+
+struct AppInfoPlaceholder: Identifiable, Hashable {
+    let id = UUID()
+    var appName: String = ""
+    var bundleIdentifier: String = ""
+    var icon: NSImage = NSImage()
+}
+
+enum AppSection: Hashable {
+    case apps
+    case orphans
+    case cleaning(CleaningCategory)
+}
 
 @MainActor
-class AppViewModel: ObservableObject {
-    // MARK: - State
+final class AppState: ObservableObject {
+
+    // MARK: - Scan / Clean State
+
     @Published var selectedCategory: CleaningCategory = .smartScan
     @Published var scanState: ScanState = .idle
     @Published var categoryResults: [CleaningCategory: CategoryResult] = [:]
@@ -18,6 +35,17 @@ class AppViewModel: ObservableObject {
     @Published var deselectedItems: Set<UUID> = []
     @Published var hasFullDiskAccess: Bool = true
     @Published var fdaBannerDismissed: Bool = false
+
+    // MARK: - App Uninstaller State
+
+    @Published var installedApps: [AppInfoPlaceholder] = []
+    @Published var selectedApp: AppInfoPlaceholder?
+    @Published var discoveredFiles: [URL] = []
+    @Published var selectedFiles: Set<URL> = []
+    @Published var orphanedFiles: [URL] = []
+    @Published var isSearchingOrphans: Bool = false
+
+    // MARK: - Services
 
     var scheduler = SchedulerService()
     private let scanEngine = ScanEngine()
@@ -35,6 +63,21 @@ class AppViewModel: ObservableObject {
 
     var allResults: [CategoryResult] {
         CleaningCategory.scannable.compactMap { categoryResults[$0] }.filter { $0.totalSize > 0 }
+    }
+
+    var totalSelectedSize: Int64 {
+        allResults.flatMap { $0.items }.filter { isItemSelected($0) }.reduce(0) { $0 + $1.size }
+    }
+
+    // MARK: - Init
+
+    init() {
+        loadDiskInfo()
+        checkFullDiskAccess()
+        scheduler.setTrigger { [weak self] in
+            await self?.runScheduledScan()
+        }
+        scheduler.start()
     }
 
     // MARK: - Selection
@@ -75,19 +118,39 @@ class AppViewModel: ObservableObject {
         return result.items.filter { isItemSelected($0) }.count
     }
 
-    var totalSelectedSize: Int64 {
-        allResults.flatMap { $0.items }.filter { isItemSelected($0) }.reduce(0) { $0 + $1.size }
+    // MARK: - Helper Methods
+
+    func categorySize(for category: CleaningCategory) -> String {
+        guard let result = categoryResults[category], result.totalSize > 0 else { return "" }
+        return result.formattedSize
     }
 
-    // MARK: - Init
+    func categoryBinding(for category: CleaningCategory) -> Binding<Bool> {
+        Binding<Bool>(
+            get: { [weak self] in
+                guard let self else { return false }
+                return self.selectedCountInCategory(category) > 0
+            },
+            set: { [weak self] newValue in
+                guard let self else { return }
+                if newValue {
+                    self.selectAllInCategory(category)
+                } else {
+                    self.deselectAllInCategory(category)
+                }
+            }
+        )
+    }
 
-    init() {
-        loadDiskInfo()
-        checkFullDiskAccess()
-        scheduler.setTrigger { [weak self] in
-            await self?.runScheduledScan()
-        }
-        scheduler.start()
+    func itemBinding(for item: CleanableItem) -> Binding<Bool> {
+        Binding<Bool>(
+            get: { [weak self] in
+                self?.isItemSelected(item) ?? false
+            },
+            set: { [weak self] _ in
+                self?.toggleItem(item)
+            }
+        )
     }
 
     // MARK: - Full Disk Access
@@ -158,7 +221,6 @@ class AppViewModel: ObservableObject {
             let result = await scanEngine.scanCategory(category)
             categoryResults[category] = result
 
-            // Recalculate total
             totalJunkSize = categoryResults.values.reduce(0) { $0 + $1.totalSize }
             scanProgress = 1.0
             scanState = .completed
@@ -187,13 +249,11 @@ class AppViewModel: ObservableObject {
             totalFreedSpace = result.freedSpace
             lastCleanedDate = Date()
 
-            // Clear results
             categoryResults = [:]
             totalJunkSize = 0
             scanState = .cleaned
             loadDiskInfo()
 
-            // Reset state after delay
             try? await Task.sleep(nanoseconds: 3_000_000_000)
             scanState = .idle
             totalFreedSpace = 0
@@ -294,5 +354,3 @@ class AppViewModel: ObservableObject {
         UNUserNotificationCenter.current().add(request)
     }
 }
-
-import UserNotifications

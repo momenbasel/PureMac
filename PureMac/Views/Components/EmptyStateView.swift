@@ -1,0 +1,40 @@
+import SwiftUI
+
+struct EmptyStateView: View {
+    let title: String
+    let systemImage: String
+    let description: String
+    var action: (() -> Void)?
+    var actionLabel: String?
+
+    init(_ title: String, systemImage: String, description: String, action: (() -> Void)? = nil, actionLabel: String? = nil) {
+        self.title = title
+        self.systemImage = systemImage
+        self.description = description
+        self.action = action
+        self.actionLabel = actionLabel
+    }
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Spacer()
+            Image(systemName: systemImage)
+                .font(.system(size: 40))
+                .foregroundStyle(.secondary)
+            Text(title)
+                .font(.title3.bold())
+            Text(description)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 300)
+            if let action, let label = actionLabel {
+                Button(label, action: action)
+                    .buttonStyle(.borderedProminent)
+                    .padding(.top, 4)
+            }
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
