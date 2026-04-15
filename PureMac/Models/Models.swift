@@ -12,6 +12,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
     case purgeableSpace = "Purgeable Space"
     case xcodeJunk = "Xcode Junk"
     case brewCache = "Brew Cache"
+    case nodeCache = "Node Cache"
 
     var id: String { rawValue }
 
@@ -26,6 +27,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .purgeableSpace: return "arrow.3.trianglepath"
         case .xcodeJunk: return "hammer.fill"
         case .brewCache: return "mug.fill"
+        case .nodeCache: return "leaf.fill"
         }
     }
 
@@ -40,6 +42,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .purgeableSpace: return "APFS purgeable disk space"
         case .xcodeJunk: return "Derived data, archives, and simulators"
         case .brewCache: return "Homebrew download cache"
+        case .nodeCache: return "npm, yarn, and pnpm download caches"
         }
     }
 
@@ -54,6 +57,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .purgeableSpace: return .green
         case .xcodeJunk: return .cyan
         case .brewCache: return .mint
+        case .nodeCache: return .pink
         }
     }
 

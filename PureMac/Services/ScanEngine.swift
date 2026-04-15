@@ -31,6 +31,8 @@ actor ScanEngine {
             return scanXcodeJunk()
         case .brewCache:
             return scanBrewCache()
+        case .nodeCache:
+            return scanNodeCache()
         }
     }
 
@@ -335,6 +337,123 @@ actor ScanEngine {
 
         let totalSize = items.reduce(0) { $0 + $1.size }
         return CategoryResult(category: .brewCache, items: items, totalSize: totalSize)
+    }
+
+    private func scanNodeCache() -> CategoryResult {
+        // Each entry is `(displayName, defaultPath, optional CLI for cache-dir
+        // detection)`. The CLI invocation overrides `defaultPath` if the user
+        // has set a custom location (e.g. via `npm config set cache`).
+        struct ManagerCache {
+            let name: String
+            let defaultPath: String
+            let detectionCommand: (cli: String, args: [String])?
+        }
+
+        let managers: [ManagerCache] = [
+            ManagerCache(
+                name: "npm cache",
+                defaultPath: "\(home)/.npm",
+                detectionCommand: (cli: "npm", args: ["config", "get", "cache"])
+            ),
+            ManagerCache(
+                name: "yarn classic cache",
+                defaultPath: "\(home)/Library/Caches/Yarn",
+                detectionCommand: (cli: "yarn", args: ["cache", "dir"])
+            ),
+            // Yarn Berry / v2+ uses a per-project .yarn/cache. We don't try to
+            // chase those — they're inside user projects and shouldn't be
+            // touched by a system cleaner. The classic cache above remains the
+            // global, safe-to-clean location.
+            ManagerCache(
+                name: "pnpm content-addressable store",
+                defaultPath: "\(home)/Library/pnpm/store",
+                detectionCommand: (cli: "pnpm", args: ["store", "path"])
+            ),
+        ]
+
+        var items: [CleanableItem] = []
+
+        // Common $PATH locations on macOS where these CLIs land.
+        let cliSearchPaths = [
+            "/opt/homebrew/bin",
+            "/usr/local/bin",
+            "\(home)/.local/bin",
+            "\(home)/.volta/bin",
+            "\(home)/.nvm/versions/node",
+        ]
+
+        for manager in managers {
+            var paths: [String] = []
+            paths.append(manager.defaultPath)
+
+            if let cmd = manager.detectionCommand,
+               let cliPath = locateExecutable(named: cmd.cli, searchPaths: cliSearchPaths),
+               let detected = runCommandReadingStdout(executable: cliPath, args: cmd.args) {
+                let normalized = detected.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !normalized.isEmpty,
+                   !paths.map(normalizePath).contains(normalizePath(normalized)) {
+                    paths.append(normalized)
+                }
+            }
+
+            for path in paths {
+                guard fileManager.fileExists(atPath: path) else { continue }
+                let size = directorySize(path: path)
+                guard size > 0 else { continue }
+                items.append(CleanableItem(
+                    name: manager.name,
+                    path: path,
+                    size: size,
+                    category: .nodeCache,
+                    isSelected: true,
+                    lastModified: nil
+                ))
+            }
+        }
+
+        let totalSize = items.reduce(0) { $0 + $1.size }
+        return CategoryResult(category: .nodeCache, items: items, totalSize: totalSize)
+    }
+
+    // -- Process helpers (used by scanNodeCache) --
+
+    private func locateExecutable(named name: String, searchPaths: [String]) -> String? {
+        for dir in searchPaths {
+            let candidate = (dir as NSString).appendingPathComponent(name)
+            if fileManager.isExecutableFile(atPath: candidate) {
+                return candidate
+            }
+            // For nvm: ~/.nvm/versions/node/<version>/bin/<name>
+            if dir.hasSuffix("/.nvm/versions/node"),
+               let versions = try? fileManager.contentsOfDirectory(atPath: dir) {
+                for v in versions {
+                    let nested = (dir as NSString).appendingPathComponent("\(v)/bin/\(name)")
+                    if fileManager.isExecutableFile(atPath: nested) {
+                        return nested
+                    }
+                }
+            }
+        }
+        return nil
+    }
+
+    private func runCommandReadingStdout(executable: String, args: [String]) -> String? {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: executable)
+        task.arguments = args
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = Pipe()
+        do {
+            try task.run()
+            task.waitUntilExit()
+        } catch {
+            Logger.shared.log("\(executable) \(args.joined(separator: " ")) failed: \(error.localizedDescription)", level: .warning)
+            return nil
+        }
+        guard task.terminationStatus == 0 else { return nil }
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        return String(data: data, encoding: .utf8)
     }
 
     // MARK: - Helpers

@@ -116,3 +116,10 @@
 
 /* Notifications */
 "Found %@ of junk files." = "发现了 %@ 的垃圾文件。";
+
+/* Node Cache */
+"Node Cache" = "Node 缓存";
+"npm, yarn, and pnpm download caches" = "npm、yarn 和 pnpm 下载缓存";
+"npm cache" = "npm 缓存";
+"yarn classic cache" = "yarn 经典缓存";
+"pnpm content-addressable store" = "pnpm 内容寻址存储";
