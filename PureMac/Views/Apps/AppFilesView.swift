@@ -61,37 +61,12 @@ struct AppFilesView: View {
                 )
             } else {
                 List(appState.discoveredFiles, id: \.self) { fileURL in
-                    Toggle(isOn: fileSelectionBinding(for: fileURL)) {
-                        HStack {
-                            Image(nsImage: NSWorkspace.shared.icon(forFile: fileURL.path))
-                                .resizable()
-                                .frame(width: 16, height: 16)
-
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(fileURL.lastPathComponent)
-                                    .lineLimit(1)
-                                Text(fileURL.path)
-                                    .font(.caption)
-                                    .foregroundStyle(.tertiary)
-                                    .lineLimit(1)
-                                    .truncationMode(.middle)
-                            }
-
-                            Spacer()
-
-                            if let size = fileSize(fileURL) {
-                                Text(ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
-                                    .monospacedDigit()
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                    .toggleStyle(.checkbox)
-                    .contextMenu {
-                        Button("Reveal in Finder") {
-                            NSWorkspace.shared.selectFile(fileURL.path, inFileViewerRootedAtPath: "")
-                        }
-                    }
+                    FileRow(
+                        fileURL: fileURL,
+                        isSelected: fileSelectionBinding(for: fileURL),
+                        fileSize: fileSize(fileURL),
+                        onRemove: { removeSingleFile(fileURL) }
+                    )
                 }
 
                 // Bottom action bar
@@ -106,7 +81,7 @@ struct AppFilesView: View {
                     Spacer()
 
                     if !appState.selectedFiles.isEmpty {
-                        Button("Uninstall \(appState.selectedFiles.count) files (\(ByteCountFormatter.string(fromByteCount: totalSelectedSize, countStyle: .file)))", role: .destructive) {
+                        Button("Remove \(appState.selectedFiles.count) files (\(ByteCountFormatter.string(fromByteCount: totalSelectedSize, countStyle: .file)))", role: .destructive) {
                             appState.removeSelectedFiles()
                         }
                         .buttonStyle(.borderedProminent)
@@ -135,5 +110,91 @@ struct AppFilesView: View {
         guard let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
               let size = attrs[.size] as? Int64 else { return nil }
         return size
+    }
+
+    private func removeSingleFile(_ url: URL) {
+        try? FileManager.default.removeItem(at: url)
+        appState.discoveredFiles.removeAll { $0 == url }
+        appState.selectedFiles.remove(url)
+    }
+}
+
+// MARK: - File Row with hover-to-reveal actions
+
+struct FileRow: View {
+    let fileURL: URL
+    @Binding var isSelected: Bool
+    let fileSize: Int64?
+    let onRemove: () -> Void
+
+    @State private var isHovering = false
+    @State private var showConfirmation = false
+
+    var body: some View {
+        Toggle(isOn: $isSelected) {
+            HStack {
+                Image(nsImage: NSWorkspace.shared.icon(forFile: fileURL.path))
+                    .resizable()
+                    .frame(width: 16, height: 16)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(fileURL.lastPathComponent)
+                        .lineLimit(1)
+                    Text(fileURL.path)
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+
+                Spacer()
+
+                if isHovering {
+                    Button {
+                        NSWorkspace.shared.selectFile(fileURL.path, inFileViewerRootedAtPath: "")
+                    } label: {
+                        Image(systemName: "folder")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Reveal in Finder")
+                    .transition(.opacity)
+
+                    Button {
+                        showConfirmation = true
+                    } label: {
+                        Image(systemName: "trash")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Remove this file")
+                    .transition(.opacity)
+                }
+
+                if let size = fileSize {
+                    Text(ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .toggleStyle(.checkbox)
+        .padding(.vertical, 2)
+        .padding(.horizontal, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(isHovering ? Color.primary.opacity(0.04) : Color.clear)
+        )
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) { isHovering = hovering }
+        }
+        .alert("Remove \(fileURL.lastPathComponent)?", isPresented: $showConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Remove", role: .destructive) { onRemove() }
+        } message: {
+            Text("This will permanently delete this file. This action cannot be undone.")
+        }
     }
 }
