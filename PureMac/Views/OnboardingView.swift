@@ -137,7 +137,7 @@ struct OnboardingView: View {
         ))
     }
 
-    private func featureCard(icon: String, title: String, desc: String, delay: Double) -> some View {
+    private func featureCard(icon: String, title: LocalizedStringKey, desc: LocalizedStringKey, delay: Double) -> some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.title2)

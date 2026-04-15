@@ -33,7 +33,7 @@ struct AppListView: View {
                 .frame(minWidth: 300)
         }
         .searchable(text: $searchText, prompt: "Search apps")
-        .navigationTitle("Installed Apps (\(appState.installedApps.count))")
+        .navigationTitle(appListTitle)
         .toolbar {
             ToolbarItemGroup {
                 Button {
@@ -43,7 +43,7 @@ struct AppListView: View {
                 }
 
                 if !appState.selectedFiles.isEmpty {
-                    Button("Uninstall (\(appState.selectedFiles.count) files)", role: .destructive) {
+                    Button(uninstallButtonTitle, role: .destructive) {
                         appState.removeSelectedFiles()
                     }
                     .buttonStyle(.borderedProminent)
@@ -51,6 +51,14 @@ struct AppListView: View {
                 }
             }
         }
+    }
+
+    private var appListTitle: String {
+        String(format: String(localized: "Installed Apps (%lld)"), Int64(appState.installedApps.count))
+    }
+
+    private var uninstallButtonTitle: String {
+        String(format: String(localized: "Uninstall (%lld files)"), Int64(appState.selectedFiles.count))
     }
 
     // MARK: - App Table (left side)
@@ -71,7 +79,7 @@ struct AppListView: View {
                     actionLabel: "Retry"
                 )
             } else {
-                Table(filteredApps, selection: $selection, sortOrder: $sortOrder) {
+                Table(filteredApps, selection: selectionBinding, sortOrder: $sortOrder) {
                     TableColumn("Application", value: \.appName) { app in
                         HStack(spacing: 8) {
                             Image(nsImage: app.icon)
@@ -89,15 +97,22 @@ struct AppListView: View {
                     }
                     .width(ideal: 70)
                 }
-                .onChange(of: selection) { newValue in
-                    if let id = newValue,
-                       let app = appState.installedApps.first(where: { $0.id == id }) {
-                        appState.selectedApp = app
-                        appState.scanForAppFiles(app)
-                    }
-                }
             }
         }
+    }
+
+    private var selectionBinding: Binding<InstalledApp.ID?> {
+        Binding(
+            get: { selection },
+            set: { newValue in
+                selection = newValue
+                if let id = newValue,
+                   let app = appState.installedApps.first(where: { $0.id == id }) {
+                    appState.selectedApp = app
+                    appState.scanForAppFiles(app)
+                }
+            }
+        )
     }
 
     // MARK: - File Detail (right side)
