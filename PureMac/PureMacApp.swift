@@ -16,7 +16,8 @@ struct PureMacApp: App {
     @AppStorage("PureMac.OnboardingComplete") private var onboardingComplete = false
 
     init() {
-        if CommandLine.arguments.count > 1 {
+        let cliArguments = CommandLine.arguments.dropFirst().filter { !$0.hasPrefix("-psn_") }
+        if !cliArguments.isEmpty {
             CLI.run()
         }
     }

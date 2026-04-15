@@ -1,7 +1,27 @@
-/* Full Disk Access Banner */
+/* Navigation */
+"Applications" = "应用程序";
+"Cleaning" = "清理";
+"Installed Apps" = "已安装应用";
+"Installed Apps (%lld)" = "已安装应用（%lld）";
+"Orphaned Files" = "孤立文件";
+"Orphaned Files (%lld)" = "孤立文件（%lld）";
+"Select a category from the sidebar to get started." = "从边栏选择一个类别即可开始。";
+
+/* Full Disk Access */
 "Full Disk Access Required" = "需要完整磁盘访问权限";
+"Full Disk Access" = "完整磁盘访问权限";
 "PureMac needs Full Disk Access to scan Trash, Mail, Desktop, Documents, and Homebrew cache." = "PureMac 需要完整磁盘访问权限才能扫描废纸篓、邮件、桌面、文稿和 Homebrew 缓存。";
+"PureMac needs Full Disk Access to scan all caches, Trash, and app data." = "PureMac 需要完整磁盘访问权限才能扫描所有缓存、废纸篓和应用数据。";
+"Full Disk Access is granted. You're all set!" = "已授予完整磁盘访问权限。设置完成！";
 "Open Settings" = "打开设置";
+"Open System Settings" = "打开系统设置";
+"Open System Settings > Privacy & Security" = "打开系统设置 > 隐私与安全性";
+"Select Full Disk Access" = "选择完整磁盘访问权限";
+"Enable PureMac" = "启用 PureMac";
+"Full Disk Access: %@" = "完整磁盘访问权限：%@";
+"Granted" = "已授予";
+"Not Granted" = "未授予";
+"Some features may be limited without Full Disk Access." = "没有完整磁盘访问权限时，某些功能可能会受限。";
 
 /* Top Bar */
 "Macintosh HD" = "Macintosh HD";
@@ -15,41 +35,141 @@
 /* Smart Scan */
 "Smart Scan" = "智能扫描";
 "Click Scan to start" = "点击扫描开始";
+"Ready to Scan" = "准备扫描";
+"Disk Usage" = "磁盘使用情况";
+"Start Scan" = "开始扫描";
+"Preparing..." = "正在准备...";
+"Results Found" = "已找到结果";
 "Total" = "总计";
 "Used" = "已用";
 "Free" = "可用";
 "Purgeable" = "可清除";
-"junk found" = "垃圾文件";
+"junk found" = "发现垃圾文件";
 "Your Mac is clean!" = "您的 Mac 很干净！";
+"Your Mac is clean" = "您的 Mac 很干净";
 "freed up" = "已释放";
+"freed" = "已释放";
 "Cleaning..." = "正在清理...";
 "Scanning..." = "正在扫描...";
 "%lld/%lld items" = "%lld/%lld 个项目";
+"%lld items" = "%lld 个项目";
+"%lld files" = "%lld 个文件";
+"Clean Selected (%@)" = "清理已选项目（%@）";
+"Clean %@?" = "清理 %@？";
+"This will permanently delete the selected files. This cannot be undone." = "这将永久删除所选文件。此操作无法撤销。";
 
 /* Category Detail */
 "All Clean!" = "全部干净！";
+"All Clean" = "全部干净";
 "No junk files found in this category." = "此类别未发现垃圾文件。";
 "Not scanned yet" = "尚未扫描";
+"Not Scanned" = "未扫描";
 "Click Scan to analyze this category" = "点击扫描分析此类别";
+"Run a scan to analyze this category." = "运行扫描以分析此类别。";
+"Scan Now" = "立即扫描";
+"Filter files" = "筛选文件";
 "%lld of %lld selected" = "已选 %lld / %lld";
 "Select All" = "全选";
 "Deselect All" = "取消全选";
-"%lld items" = "%lld 个项目";
+"Largest First" = "最大优先";
+"Smallest First" = "最小优先";
+"Sorted: Largest First" = "排序：最大优先";
+"Sorted: Smallest First" = "排序：最小优先";
+"Clean %lld items" = "清理 %lld 个项目";
+"Reveal in Finder" = "在访达中显示";
 
 /* Buttons */
 "Scan" = "扫描";
 "Re-scan" = "重新扫描";
 "Scan Again" = "再次扫描";
 "Done" = "完成";
+"Clean" = "清理";
+"Cancel" = "取消";
 "Clean (%@)" = "清理（%@）";
 "Clean %lld items (%@)" = "清理 %lld 个项目（%@）";
+
+/* App Uninstaller */
+"Search apps" = "搜索应用";
+"Refresh" = "刷新";
+"Uninstall (%lld files)" = "卸载（%lld 个文件）";
+"Loading installed apps..." = "正在加载已安装应用...";
+"No Apps Found" = "未找到应用";
+"Could not find any installed applications." = "无法找到任何已安装的应用程序。";
+"Retry" = "重试";
+"Application" = "应用程序";
+"Size" = "大小";
+"Select an App" = "选择一个应用";
+"Select an app from the list to see all its related files across your system." = "从列表中选择一个应用，即可查看系统中所有相关文件。";
+"Scanning for related files..." = "正在扫描相关文件...";
+"Checking %lld locations..." = "正在检查 %lld 个位置...";
+"No Related Files" = "没有相关文件";
+"No additional files found for %@." = "未找到 %@ 的其他文件。";
+"Uninstall %lld files (%@)" = "卸载 %lld 个文件（%@）";
+
+/* Orphaned Files */
+"Scanning for orphaned files..." = "正在扫描孤立文件...";
+"No Orphaned Files" = "没有孤立文件";
+"No leftover files from uninstalled apps were found." = "未发现已卸载应用的残留文件。";
+"Scan for Orphans" = "扫描孤立文件";
+"Remove Selected (%lld)" = "移除已选项目（%lld）";
+
+/* Onboarding */
+"Back" = "返回";
+"Next" = "下一步";
+"Get Started" = "开始使用";
+"Welcome to PureMac" = "欢迎使用 PureMac";
+"Free, open-source macOS app manager and system cleaner." = "免费、开源的 macOS 应用管理器和系统清理工具。";
+"App Uninstaller" = "应用卸载器";
+"Find junk files across your system" = "查找系统中的垃圾文件";
+"Remove apps and all their files" = "移除应用及其所有文件";
+"Orphan Finder" = "孤立文件查找器";
+"Find leftovers from deleted apps" = "查找已删除应用的残留文件";
+"You're Ready" = "准备就绪";
+
+/* Settings - General */
+"General" = "通用";
+"Startup" = "启动";
+"Launch PureMac at login" = "登录时启动 PureMac";
+"App Scanning" = "应用扫描";
+"Search sensitivity" = "搜索灵敏度";
+"Language" = "语言";
+"System Default" = "系统默认";
+"English" = "英语";
+"Portuguese (Brazil)" = "葡萄牙语（巴西）";
+"Chinese (Simplified)" = "简体中文";
+"Chinese (Traditional)" = "繁体中文";
+"Restart PureMac to apply the selected language." = "重启 PureMac 以应用所选语言。";
+"Relaunch Now" = "立即重新启动";
+"Strict" = "严格";
+"Enhanced" = "增强";
+"Deep" = "深度";
+"Exact bundle ID and name matches only. Safest option." = "仅匹配精确的包 ID 和名称。最安全的选项。";
+"Includes partial name matching and bundle ID components." = "包含部分名称匹配和包 ID 组件。";
+"Includes company name, entitlements, and team identifier matching." = "包含公司名称、权限和团队标识符匹配。";
+"App Behavior" = "应用程序行为";
+"Launch at login" = "登录时启动";
+"Show in Dock" = "在程序坞中显示";
+"Show menu bar icon" = "显示菜单栏图标";
+"Safety" = "安全";
+"Confirm before deleting files" = "删除文件前确认";
+"PureMac will never delete system-critical files. Only caches, logs, temporary files, and user-selected items are removed." = "PureMac 永远不会删除系统关键文件。只会删除缓存、日志、临时文件和用户选择的项目。";
+
+/* Settings - Cleaning */
+"File Discovery" = "文件发现";
+"Skip hidden files during scan" = "扫描时跳过隐藏文件";
+"Large Files" = "大文件";
+"Minimum size: %lld MB" = "最小大小：%lld MB";
+"Files older than: %lld months" = "超过 %lld 个月的文件";
 
 /* Settings - Schedule */
 "Schedule" = "计划";
 "Automatic Cleaning" = "自动清理";
+"Automatic Scanning" = "自动扫描";
 "Automatically scan and clean your Mac on a schedule" = "按计划自动扫描和清理您的 Mac";
 "Scan Interval" = "扫描间隔";
+"Scan interval" = "扫描间隔";
 "Automation" = "自动化";
+"Enable scheduled scanning" = "启用计划扫描";
 "Auto-clean after scan" = "扫描后自动清理";
 "Minimum junk size to trigger clean:" = "触发清理的最小垃圾大小：";
 "50 MB" = "50 MB";
@@ -59,26 +179,21 @@
 "1 GB" = "1 GB";
 "Auto-purge purgeable space" = "自动清除可清除空间";
 "Show notification on completion" = "完成时显示通知";
+"Notify on completion" = "完成时通知";
 "Status" = "状态";
 "Last run" = "上次运行";
 "Next run" = "下次运行";
 "Never" = "从未";
 "Not scheduled" = "未计划";
 
-/* Settings - General */
-"General" = "通用";
-"App Behavior" = "应用程序行为";
-"Launch at login" = "登录时启动";
-"Show in Dock" = "在程序坞中显示";
-"Show menu bar icon" = "显示菜单栏图标";
-"Safety" = "安全";
-"PureMac will never delete system-critical files. Only caches, logs, temporary files, and user-selected items are removed." = "PureMac 永远不会删除系统关键文件。只会删除缓存、日志、临时文件和用户选择的项目。";
-
 /* Settings - About */
 "About" = "关于";
 "Version 1.0.0" = "版本 1.0.0";
+"Version %@" = "版本 %@";
 "A free, open-source Mac cleaning utility.\nKeep your Mac fast, clean, and optimized." = "免费、开源的 Mac 清理工具。\n让您的 Mac 保持快速、干净和优化。";
+"Free, open-source macOS app manager." = "免费、开源的 macOS 应用管理器。";
 "GitHub Repository" = "GitHub 仓库";
+"Report an Issue" = "报告问题";
 "MIT License" = "MIT 许可证";
 
 /* Cleaning Categories */

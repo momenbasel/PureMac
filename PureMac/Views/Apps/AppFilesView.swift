@@ -30,7 +30,7 @@ struct AppFilesView: View {
 
                 if !appState.discoveredFiles.isEmpty {
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text("\(appState.discoveredFiles.count) files")
+                        Text(fileCountText)
                             .font(.callout)
                             .foregroundStyle(.secondary)
                         Text(ByteCountFormatter.string(fromByteCount: totalSelectedSize, countStyle: .file))
@@ -47,7 +47,7 @@ struct AppFilesView: View {
                 VStack(spacing: 12) {
                     Spacer()
                     ProgressView("Scanning for related files...")
-                    Text("Checking \(appState.discoveredFiles.count) locations...")
+                    Text(checkingLocationsText)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer()
@@ -81,7 +81,7 @@ struct AppFilesView: View {
                     Spacer()
 
                     if !appState.selectedFiles.isEmpty {
-                        Button("Remove \(appState.selectedFiles.count) files (\(ByteCountFormatter.string(fromByteCount: totalSelectedSize, countStyle: .file)))", role: .destructive) {
+                        Button(uninstallSelectedTitle, role: .destructive) {
                             appState.removeSelectedFiles()
                         }
                         .buttonStyle(.borderedProminent)
@@ -105,6 +105,22 @@ struct AppFilesView: View {
         } message: {
             Text(appState.removalError ?? "")
         }
+    }
+
+    private var fileCountText: String {
+        String(format: String(localized: "%lld files"), Int64(appState.discoveredFiles.count))
+    }
+
+    private var checkingLocationsText: String {
+        String(format: String(localized: "Checking %lld locations..."), Int64(appState.discoveredFiles.count))
+    }
+
+    private var uninstallSelectedTitle: String {
+        String(
+            format: String(localized: "Uninstall %lld files (%@)"),
+            Int64(appState.selectedFiles.count),
+            ByteCountFormatter.string(fromByteCount: totalSelectedSize, countStyle: .file)
+        )
     }
 
     private func fileSelectionBinding(for url: URL) -> Binding<Bool> {

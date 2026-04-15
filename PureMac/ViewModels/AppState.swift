@@ -304,6 +304,7 @@ final class AppState: ObservableObject {
     func startSmartScan() {
         guard !scanState.isActive else { return }
 
+        currentScanCategory = "Preparing..."
         scanState = .scanning(progress: 0, currentCategory: "Preparing...")
         categoryResults = [:]
         totalJunkSize = 0

@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import ServiceManagement
 
@@ -13,7 +14,7 @@ struct SettingsView: View {
             AboutSettingsView()
                 .tabItem { Label("About", systemImage: "info.circle") }
         }
-        .frame(width: 480, height: 360)
+        .frame(width: 480, height: 430)
     }
 }
 
@@ -35,26 +36,64 @@ enum SearchSensitivity: String, CaseIterable, Identifiable, Codable {
     }
 }
 
+enum AppLanguage: String, CaseIterable, Identifiable {
+    case system = "system"
+    case english = "en"
+    case portugueseBrazil = "pt-BR"
+    case simplifiedChinese = "zh-Hans"
+    case traditionalChinese = "zh-Hant"
+
+    static let preferenceKey = "settings.general.appLanguage"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .system: return "System Default"
+        case .english: return "English"
+        case .portugueseBrazil: return "Portuguese (Brazil)"
+        case .simplifiedChinese: return "Chinese (Simplified)"
+        case .traditionalChinese: return "Chinese (Traditional)"
+        }
+    }
+
+    static var current: AppLanguage {
+        if let selectedLanguage = UserDefaults.standard.string(forKey: preferenceKey),
+           let language = AppLanguage(rawValue: selectedLanguage) {
+            return language
+        }
+
+        guard let bundleIdentifier = Bundle.main.bundleIdentifier,
+              let appDefaults = UserDefaults.standard.persistentDomain(forName: bundleIdentifier),
+              let preferredLanguages = appDefaults["AppleLanguages"] as? [String],
+              let preferredLanguage = preferredLanguages.first else {
+            return .system
+        }
+
+        let normalized = preferredLanguage.replacingOccurrences(of: "_", with: "-")
+        return allCases.first { $0.rawValue == normalized } ?? .system
+    }
+}
+
 struct GeneralSettingsView: View {
     @AppStorage("settings.general.launchAtLogin") private var launchAtLogin = false
     @AppStorage("settings.general.searchSensitivity") private var sensitivity: SearchSensitivity = .enhanced
     @AppStorage("settings.general.confirmBeforeDelete") private var confirmBeforeDelete = true
+    @AppStorage(AppLanguage.preferenceKey) private var appLanguageRaw = AppLanguage.current.rawValue
+    @State private var languageNeedsRelaunch = false
 
     var body: some View {
         Form {
             Section("Startup") {
-                Toggle("Launch PureMac at login", isOn: $launchAtLogin)
-                    .onChange(of: launchAtLogin) { newValue in
-                        toggleLaunchAtLogin(newValue)
-                    }
+                Toggle("Launch PureMac at login", isOn: launchAtLoginBinding)
             }
 
             Section("App Scanning") {
                 Picker("Search sensitivity", selection: $sensitivity) {
                     ForEach(SearchSensitivity.allCases) { level in
                         VStack(alignment: .leading) {
-                            Text(level.rawValue)
-                            Text(level.description)
+                            Text(LocalizedStringKey(level.rawValue))
+                            Text(LocalizedStringKey(level.description))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -64,11 +103,49 @@ struct GeneralSettingsView: View {
                 .pickerStyle(.radioGroup)
             }
 
+            Section("Language") {
+                Picker("Language", selection: appLanguageBinding) {
+                    ForEach(AppLanguage.allCases) { language in
+                        Text(LocalizedStringKey(language.displayName)).tag(language)
+                    }
+                }
+
+                if languageNeedsRelaunch {
+                    Text("Restart PureMac to apply the selected language.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Button("Relaunch Now") {
+                        relaunchApp()
+                    }
+                }
+            }
+
             Section("Safety") {
                 Toggle("Confirm before deleting files", isOn: $confirmBeforeDelete)
             }
         }
         .formStyle(.grouped)
+    }
+
+    private var launchAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { launchAtLogin },
+            set: { newValue in
+                launchAtLogin = newValue
+                toggleLaunchAtLogin(newValue)
+            }
+        )
+    }
+
+    private var appLanguageBinding: Binding<AppLanguage> {
+        Binding(
+            get: { AppLanguage(rawValue: appLanguageRaw) ?? .system },
+            set: { newValue in
+                appLanguageRaw = newValue.rawValue
+                applyLanguage(newValue)
+            }
+        )
     }
 
     private func toggleLaunchAtLogin(_ enabled: Bool) {
@@ -82,6 +159,35 @@ struct GeneralSettingsView: View {
             Logger.shared.log("Failed to \(enabled ? "enable" : "disable") launch at login: \(error.localizedDescription)", level: .error)
             // Revert the toggle if operation failed
             launchAtLogin = !enabled
+        }
+    }
+
+    private func applyLanguage(_ language: AppLanguage) {
+        if language == .system {
+            UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+        } else {
+            UserDefaults.standard.set([language.rawValue], forKey: "AppleLanguages")
+        }
+        UserDefaults.standard.removeObject(forKey: "AppleLocale")
+        UserDefaults.standard.synchronize()
+        languageNeedsRelaunch = true
+    }
+
+    private func relaunchApp() {
+        guard Bundle.main.bundleURL.pathExtension == "app" else {
+            NSApp.terminate(nil)
+            return
+        }
+
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        task.arguments = ["-n", Bundle.main.bundleURL.path]
+
+        do {
+            try task.run()
+            NSApp.terminate(nil)
+        } catch {
+            Logger.shared.log("Failed to relaunch PureMac: \(error.localizedDescription)", level: .error)
         }
     }
 }
@@ -100,11 +206,19 @@ struct CleaningSettingsView: View {
             }
 
             Section("Large Files") {
-                Stepper("Minimum size: \(largeFileThresholdMB) MB", value: $largeFileThresholdMB, in: 10...1000, step: 10)
-                Stepper("Files older than: \(oldFileMonths) months", value: $oldFileMonths, in: 1...60)
+                Stepper(minimumSizeTitle, value: $largeFileThresholdMB, in: 10...1000, step: 10)
+                Stepper(oldFilesTitle, value: $oldFileMonths, in: 1...60)
             }
         }
         .formStyle(.grouped)
+    }
+
+    private var minimumSizeTitle: String {
+        String(format: String(localized: "Minimum size: %lld MB"), Int64(largeFileThresholdMB))
+    }
+
+    private var oldFilesTitle: String {
+        String(format: String(localized: "Files older than: %lld months"), Int64(oldFileMonths))
     }
 }
 
@@ -121,7 +235,7 @@ struct ScheduleSettingsView: View {
                 if appState.scheduler.config.isEnabled {
                     Picker("Scan interval", selection: $appState.scheduler.config.interval) {
                         ForEach(ScheduleInterval.allCases) { interval in
-                            Text(interval.rawValue).tag(interval)
+                            Text(LocalizedStringKey(interval.rawValue)).tag(interval)
                         }
                     }
 
@@ -157,7 +271,7 @@ struct AboutSettingsView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("PureMac")
                             .font(.title2.bold())
-                        Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0")")
+                        Text(versionText)
                             .foregroundStyle(.secondary)
                         Text("Free, open-source macOS app manager.")
                             .foregroundStyle(.secondary)
@@ -177,5 +291,12 @@ struct AboutSettingsView: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    private var versionText: String {
+        String(
+            format: String(localized: "Version %@"),
+            Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+        )
     }
 }

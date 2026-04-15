@@ -53,7 +53,7 @@ struct OrphanListView: View {
                 }
             }
         }
-        .navigationTitle("Orphaned Files (\(appState.orphanedFiles.count))")
+        .navigationTitle(orphanListTitle)
         .toolbar {
             ToolbarItemGroup {
                 if !appState.orphanedFiles.isEmpty {
@@ -71,7 +71,7 @@ struct OrphanListView: View {
                 }
 
                 if !selectedOrphans.isEmpty {
-                    Button("Remove Selected (\(selectedOrphans.count))", role: .destructive) {
+                    Button(removeSelectedTitle, role: .destructive) {
                         Task {
                             await removeSelectedOrphans()
                         }
@@ -90,6 +90,14 @@ struct OrphanListView: View {
         } message: {
             Text(removalErrorMessage ?? "")
         }
+    }
+
+    private var orphanListTitle: String {
+        String(format: String(localized: "Orphaned Files (%lld)"), Int64(appState.orphanedFiles.count))
+    }
+
+    private var removeSelectedTitle: String {
+        String(format: String(localized: "Remove Selected (%lld)"), Int64(selectedOrphans.count))
     }
 
     private func orphanBinding(for url: URL) -> Binding<Bool> {
