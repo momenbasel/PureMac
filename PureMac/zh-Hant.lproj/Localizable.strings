@@ -84,6 +84,7 @@
 /* Cleaning Categories */
 "System Junk" = "系統垃圾";
 "User Cache" = "使用者快取";
+"AI Apps" = "AI 應用程式";
 "Mail Files" = "郵件檔案";
 "Trash Bins" = "垃圾桶";
 "Large & Old Files" = "大型與舊檔案";
@@ -95,6 +96,7 @@
 "Scan everything at once" = "一次掃描所有項目";
 "System caches, logs, and temporary files" = "系統快取、記錄檔及暫存檔案";
 "Application caches and browser data" = "應用程式快取與瀏覽器資料";
+"Logs, caches, and temporary files from local AI apps" = "來自本機 AI 應用程式的日誌、快取和暫存檔案";
 "Downloaded mail attachments" = "已下載的郵件附件";
 "Files in your Trash" = "垃圾桶中的檔案";
 "Files over 100 MB or older than 1 year" = "超過 100 MB 或超過一年未使用的檔案";
