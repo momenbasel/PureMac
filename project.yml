@@ -13,7 +13,7 @@ settings:
     MACOSX_DEPLOYMENT_TARGET: "13.0"
     ARCHS: "arm64 x86_64"
     ONLY_ACTIVE_ARCH: "NO"
-    CODE_SIGN_IDENTITY: "Developer ID Application: Moamen Basel (H3WXHVTP97)"
+    CODE_SIGN_IDENTITY: "Apple Development"
     CODE_SIGN_STYLE: "Automatic"
     DEVELOPMENT_TEAM: "H3WXHVTP97"
     CODE_SIGN_ENTITLEMENTS: "PureMac/PureMac.entitlements"
@@ -36,3 +36,7 @@ targets:
         PRODUCT_NAME: PureMac
         SWIFT_EMIT_LOC_STRINGS: "YES"
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
+      configs:
+        Debug:
+          CODE_SIGNING_ALLOWED: "NO"
+          CODE_SIGNING_REQUIRED: "NO"
