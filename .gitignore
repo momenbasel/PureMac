@@ -45,3 +45,6 @@ ExportOptions.plist
 *.dmg
 *.zip
 build/
+
+# Work files (local only)
+_work/
