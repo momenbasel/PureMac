@@ -112,7 +112,7 @@ struct AppFilesView: View {
     }
 
     private var checkingLocationsText: String {
-        String(format: String(localized: "Checking %lld locations..."), Int64(appState.discoveredFiles.count))
+        String(format: String(localized: "Checking %lld locations..."), Int64(appState.currentAppFileSearchLocationCount))
     }
 
     private var uninstallSelectedTitle: String {

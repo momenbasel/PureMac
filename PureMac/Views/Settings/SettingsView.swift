@@ -75,6 +75,16 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     }
 }
 
+enum AppLanguagePreferences {
+    static func apply(_ language: AppLanguage, defaults: UserDefaults = .standard) {
+        if language == .system {
+            defaults.removeObject(forKey: "AppleLanguages")
+        } else {
+            defaults.set([language.rawValue], forKey: "AppleLanguages")
+        }
+    }
+}
+
 struct GeneralSettingsView: View {
     @AppStorage("settings.general.launchAtLogin") private var launchAtLogin = false
     @AppStorage("settings.general.searchSensitivity") private var sensitivity: SearchSensitivity = .enhanced
@@ -163,13 +173,7 @@ struct GeneralSettingsView: View {
     }
 
     private func applyLanguage(_ language: AppLanguage) {
-        if language == .system {
-            UserDefaults.standard.removeObject(forKey: "AppleLanguages")
-        } else {
-            UserDefaults.standard.set([language.rawValue], forKey: "AppleLanguages")
-        }
-        UserDefaults.standard.removeObject(forKey: "AppleLocale")
-        UserDefaults.standard.synchronize()
+        AppLanguagePreferences.apply(language)
         languageNeedsRelaunch = true
     }
 

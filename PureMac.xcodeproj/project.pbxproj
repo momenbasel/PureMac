@@ -15,6 +15,7 @@
 		47C5ECD49C4DD75F271DB6CE /* StringNormalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D3AC5F17D7CA94FAB1E8D7A /* StringNormalization.swift */; };
 		48D1431A7C99C19EEBDB056B /* CleaningEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A8DE5D45BA19E2670B57DC5 /* CleaningEngine.swift */; };
 		4F754D89F4CE5142BE384062 /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31F91226CDCFBB8E303B7DA /* AppConstants.swift */; };
+		59B3096E2AE8ED0397B16798 /* AppLanguagePreferencesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 491771F923C93FD61A263893 /* AppLanguagePreferencesTests.swift */; };
 		75B5F0401D37F2872B1AD85A /* AppListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60E6BC61614B27C065BB18C9 /* AppListView.swift */; };
 		76B132F9C499225D33E0D075 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 424F7B28624C271620E13BBC /* EmptyStateView.swift */; };
 		826A750D2D7EC14C2AE306A3 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3667D46D8E2004EB4D73835A /* Models.swift */; };
@@ -31,12 +32,23 @@
 		D9445C2641A8637B65DA5ACE /* ScanEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A711CDF5285F68775D9B5513 /* ScanEngine.swift */; };
 		DDD6BA35DBF32E7A6B5F6F8B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2EA41E1096FA8E3B916AD13 /* Assets.xcassets */; };
 		DDDA5879006CB97D5D7BDD87 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5785762276FB5E3209C6DE4D /* Logger.swift */; };
+		E2403D82F00D749C9AD4A6D4 /* AppStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 752603285F7DBBA12BB3AA91 /* AppStateTests.swift */; };
 		E60B0A2C5D0A6CAE35BF4DFB /* Locations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77D3D9A9BC52839E6D0A22BC /* Locations.swift */; };
 		EDEF28CAD23E936FBED1783B /* PureMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63581B70F9B10231964E3602 /* PureMacApp.swift */; };
 		F1F506C146E17D6CEC4A12F3 /* AppInfoFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23486A54A82EE3865B784D1C /* AppInfoFetcher.swift */; };
 		F2FA881A4B2209CC2A6342FB /* CLI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01B2C5F66B6D812572BD4F05 /* CLI.swift */; };
 		FDA30FE6349CA01C8D859F04 /* OrphanListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B71E8F62DB76D85F41F9A2E9 /* OrphanListView.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		8D91DC174C821BE74C4B518C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 37BE87544E2EC9F6FF1CD280 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B19E38DEAA0144A77120F39C;
+			remoteInfo = PureMac;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		01B2C5F66B6D812572BD4F05 /* CLI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLI.swift; sourceTree = "<group>"; };
@@ -55,17 +67,20 @@
 		3D4FD34378988D430A582ED0 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		424F7B28624C271620E13BBC /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
 		46660271CFF167AB0FE7371D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		491771F923C93FD61A263893 /* AppLanguagePreferencesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguagePreferencesTests.swift; sourceTree = "<group>"; };
 		4AE790496C936424EF98320A /* OrphanSafetyPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrphanSafetyPolicy.swift; sourceTree = "<group>"; };
 		5664D2BDAEAA9AE3A53DB364 /* PureMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PureMac.entitlements; sourceTree = "<group>"; };
 		5785762276FB5E3209C6DE4D /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 		5A5C80929EE4A430272674BC /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
+		607B9A8C7B34D6A7DCF4FFE2 /* PureMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PureMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		60E6BC61614B27C065BB18C9 /* AppListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppListView.swift; sourceTree = "<group>"; };
 		63581B70F9B10231964E3602 /* PureMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PureMacApp.swift; sourceTree = "<group>"; };
+		752603285F7DBBA12BB3AA91 /* AppStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStateTests.swift; sourceTree = "<group>"; };
 		77D3D9A9BC52839E6D0A22BC /* Locations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Locations.swift; sourceTree = "<group>"; };
 		798B80977D14647A5691B0A0 /* AppFilesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFilesView.swift; sourceTree = "<group>"; };
+		8D5E63D733D1A3BDEDF4DCA5 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		9F04B811BB0012F6D2F07F91 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		9F510F232341EE18F11DC934 /* MainWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindow.swift; sourceTree = "<group>"; };
-		A0A3F10C6C9B4DE5802D6DFA /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		A711CDF5285F68775D9B5513 /* ScanEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanEngine.swift; sourceTree = "<group>"; };
 		AC0FEE7141871ED5F9E36121 /* AppPathFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPathFinder.swift; sourceTree = "<group>"; };
 		B2EA41E1096FA8E3B916AD13 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -83,8 +98,18 @@
 			isa = PBXGroup;
 			children = (
 				E383F69184F4552E5A41D010 /* PureMac */,
+				261FB8D961FEC76F15EA523A /* PureMacTests */,
 				4562CA9E5625FA4EEEFECB6D /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		261FB8D961FEC76F15EA523A /* PureMacTests */ = {
+			isa = PBXGroup;
+			children = (
+				491771F923C93FD61A263893 /* AppLanguagePreferencesTests.swift */,
+				752603285F7DBBA12BB3AA91 /* AppStateTests.swift */,
+			);
+			path = PureMacTests;
 			sourceTree = "<group>";
 		};
 		3CF46713F75B81F0F86D1C6F /* Models */ = {
@@ -100,6 +125,7 @@
 			isa = PBXGroup;
 			children = (
 				311078221878708524283765 /* PureMac.app */,
+				607B9A8C7B34D6A7DCF4FFE2 /* PureMacTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -258,6 +284,24 @@
 			productReference = 311078221878708524283765 /* PureMac.app */;
 			productType = "com.apple.product-type.application";
 		};
+		FBA8B0DE95746207A043B802 /* PureMacTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 25F40856927F2EE5BC50A0FB /* Build configuration list for PBXNativeTarget "PureMacTests" */;
+			buildPhases = (
+				A6847DD7D5552F4AA6B17BA8 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				0E97FDF7F6FA15845FCE6737 /* PBXTargetDependency */,
+			);
+			name = PureMacTests;
+			packageProductDependencies = (
+			);
+			productName = PureMacTests;
+			productReference = 607B9A8C7B34D6A7DCF4FFE2 /* PureMacTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -268,6 +312,10 @@
 				LastUpgradeCheck = 1640;
 				TargetAttributes = {
 					B19E38DEAA0144A77120F39C = {
+						DevelopmentTeam = H3WXHVTP97;
+						ProvisioningStyle = Automatic;
+					};
+					FBA8B0DE95746207A043B802 = {
 						DevelopmentTeam = H3WXHVTP97;
 						ProvisioningStyle = Automatic;
 					};
@@ -293,6 +341,7 @@
 			projectRoot = "";
 			targets = (
 				B19E38DEAA0144A77120F39C /* PureMac */,
+				FBA8B0DE95746207A043B802 /* PureMacTests */,
 			);
 		};
 /* End PBXProject section */
@@ -344,7 +393,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A6847DD7D5552F4AA6B17BA8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				59B3096E2AE8ED0397B16798 /* AppLanguagePreferencesTests.swift in Sources */,
+				E2403D82F00D749C9AD4A6D4 /* AppStateTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		0E97FDF7F6FA15845FCE6737 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B19E38DEAA0144A77120F39C /* PureMac */;
+			targetProxy = 8D91DC174C821BE74C4B518C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		241E0895B09C71AB423B2F9E /* Localizable.strings */ = {
@@ -353,7 +419,7 @@
 				9F04B811BB0012F6D2F07F91 /* en */,
 				340D303C60FF878B019056B6 /* es */,
 				5A5C80929EE4A430272674BC /* ja */,
-				A0A3F10C6C9B4DE5802D6DFA /* pt-BR */,
+				8D5E63D733D1A3BDEDF4DCA5 /* pt-BR */,
 				2641C6376DD6F5889F35510E /* zh-Hans */,
 				02E502E2B5C6AECC76E5CFEF /* zh-Hant */,
 			);
@@ -453,6 +519,36 @@
 			};
 			name = Debug;
 		};
+		6AC7FF3E26B642C05D435ADB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PureMac.app/Contents/MacOS/PureMac";
+			};
+			name = Debug;
+		};
+		8632219D8F7DC9932C9DCC9F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PureMac.app/Contents/MacOS/PureMac";
+			};
+			name = Release;
+		};
 		D1B9D379DD6CC0DA24E58BCF /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -538,6 +634,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		25F40856927F2EE5BC50A0FB /* Build configuration list for PBXNativeTarget "PureMacTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6AC7FF3E26B642C05D435ADB /* Debug */,
+				8632219D8F7DC9932C9DCC9F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		2754925F163D15C85EDF494D /* Build configuration list for PBXNativeTarget "PureMac" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

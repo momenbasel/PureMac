@@ -40,3 +40,21 @@ targets:
         Debug:
           CODE_SIGNING_ALLOWED: "NO"
           CODE_SIGNING_REQUIRED: "NO"
+  PureMacTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - PureMacTests
+    dependencies:
+      - target: PureMac
+
+schemes:
+  PureMac:
+    build:
+      targets:
+        PureMac: all
+        PureMacTests:
+          - test
+    test:
+      targets:
+        - name: PureMacTests
