@@ -86,7 +86,7 @@ struct SmartScanView: View {
                 .font(.title2)
 
             ProgressView(value: appState.scanProgress) {
-                Text(appState.currentScanCategory)
+                Text(LocalizedStringKey(appState.currentScanCategory))
                     .foregroundStyle(.secondary)
             } currentValueLabel: {
                 Text("\(Int(appState.scanProgress * 100))%")
@@ -140,7 +140,7 @@ struct SmartScanView: View {
 
                 HStack(spacing: 12) {
                     if appState.totalSelectedSize > 0 {
-                        Button("Clean Selected (\(ByteCountFormatter.string(fromByteCount: appState.totalSelectedSize, countStyle: .file)))") {
+                        Button(cleanSelectedTitle) {
                             showConfirmation = true
                         }
                         .buttonStyle(.borderedProminent)
@@ -152,7 +152,7 @@ struct SmartScanView: View {
                     }
                     .controlSize(.large)
                 }
-                .confirmationDialog("Clean \(ByteCountFormatter.string(fromByteCount: appState.totalSelectedSize, countStyle: .file))?", isPresented: $showConfirmation, titleVisibility: .visible) {
+                .confirmationDialog(cleanConfirmationTitle, isPresented: $showConfirmation, titleVisibility: .visible) {
                     Button("Clean", role: .destructive) {
                         appState.cleanAll()
                     }
@@ -214,6 +214,20 @@ struct SmartScanView: View {
             .controlSize(.large)
         }
     }
+
+    private var cleanSelectedTitle: String {
+        String(
+            format: String(localized: "Clean Selected (%@)"),
+            ByteCountFormatter.string(fromByteCount: appState.totalSelectedSize, countStyle: .file)
+        )
+    }
+
+    private var cleanConfirmationTitle: String {
+        String(
+            format: String(localized: "Clean %@?"),
+            ByteCountFormatter.string(fromByteCount: appState.totalSelectedSize, countStyle: .file)
+        )
+    }
 }
 
 // MARK: - Category Toggle Row
@@ -242,7 +256,7 @@ private struct CategoryToggleRow: View {
                     .frame(width: 20)
                 Text(LocalizedStringKey(result.category.rawValue))
                 Spacer()
-                Text("\(result.itemCount) items")
+                Text(String(format: String(localized: "%lld items"), Int64(result.itemCount)))
                     .foregroundStyle(.secondary)
                 Text(result.formattedSize)
                     .fontWeight(.medium)

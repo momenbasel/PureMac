@@ -13,6 +13,11 @@ enum AppSection: Hashable {
 
 @MainActor
 final class AppState: ObservableObject {
+    typealias AppFileScanner = @MainActor (
+        _ app: InstalledApp,
+        _ locations: Locations,
+        _ completion: @escaping (Set<URL>) -> Void
+    ) -> Void
 
     // MARK: - Scan / Clean State
 
@@ -42,12 +47,15 @@ final class AppState: ObservableObject {
     @Published var isLoadingApps: Bool = false
     @Published var isScanningAppFiles: Bool = false
     @Published var removalError: String?
+    @Published var appFileScanLocationCount: Int = 0
 
     // MARK: - Services
 
     var scheduler = SchedulerService()
     private let scanEngine = ScanEngine()
     private let cleaningEngine = CleaningEngine()
+    private let locationsProvider: () -> Locations
+    private let appFileScanner: AppFileScanner
 
     // MARK: - Computed
 
@@ -67,16 +75,32 @@ final class AppState: ObservableObject {
         allResults.flatMap { $0.items }.filter { isItemSelected($0) }.reduce(0) { $0 + $1.size }
     }
 
+    var currentAppFileSearchLocationCount: Int {
+        if isScanningAppFiles && appFileScanLocationCount > 0 {
+            return appFileScanLocationCount
+        }
+        return discoveredFiles.count
+    }
+
     // MARK: - Init
 
-    init() {
-        loadDiskInfo()
-        checkFullDiskAccess()
-        loadInstalledApps()
-        scheduler.setTrigger { [weak self] in
-            await self?.runScheduledScan()
+    init(
+        performStartupTasks: Bool = true,
+        locationsProvider: @escaping () -> Locations = Locations.init,
+        appFileScanner: @escaping AppFileScanner = AppState.defaultAppFileScanner
+    ) {
+        self.locationsProvider = locationsProvider
+        self.appFileScanner = appFileScanner
+
+        if performStartupTasks {
+            loadDiskInfo()
+            checkFullDiskAccess()
+            loadInstalledApps()
+            scheduler.setTrigger { [weak self] in
+                await self?.runScheduledScan()
+            }
+            scheduler.start()
         }
-        scheduler.start()
     }
 
     // MARK: - App Loading
@@ -96,21 +120,15 @@ final class AppState: ObservableObject {
         discoveredFiles = []
         selectedFiles = []
         isScanningAppFiles = true
-        let locations = Locations()
-        let appInfo = AppPathFinder.AppInfo(
-            appName: app.appName,
-            bundleIdentifier: app.bundleIdentifier,
-            path: app.path,
-            entitlements: nil,
-            teamIdentifier: nil
-        )
-        let finder = AppPathFinder(appInfo: appInfo, locations: locations)
-        finder.findPathsAsync { [weak self] urls in
+        let locations = locationsProvider()
+        appFileScanLocationCount = locations.appSearch.paths.count
+        appFileScanner(app, locations) { [weak self] urls in
             guard let self else { return }
             let sorted = urls.sorted { $0.path < $1.path }
             self.discoveredFiles = sorted
             self.selectedFiles = urls
             self.isScanningAppFiles = false
+            self.appFileScanLocationCount = 0
         }
     }
 
@@ -304,6 +322,7 @@ final class AppState: ObservableObject {
     func startSmartScan() {
         guard !scanState.isActive else { return }
 
+        currentScanCategory = "Preparing..."
         scanState = .scanning(progress: 0, currentCategory: "Preparing...")
         categoryResults = [:]
         totalJunkSize = 0
@@ -474,5 +493,21 @@ final class AppState: ObservableObject {
         )
 
         UNUserNotificationCenter.current().add(request)
+    }
+
+    private static func defaultAppFileScanner(
+        app: InstalledApp,
+        locations: Locations,
+        completion: @escaping (Set<URL>) -> Void
+    ) {
+        let appInfo = AppPathFinder.AppInfo(
+            appName: app.appName,
+            bundleIdentifier: app.bundleIdentifier,
+            path: app.path,
+            entitlements: nil,
+            teamIdentifier: nil
+        )
+        let finder = AppPathFinder(appInfo: appInfo, locations: locations)
+        finder.findPathsAsync(completion: completion)
     }
 }
