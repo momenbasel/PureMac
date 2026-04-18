@@ -1,0 +1,118 @@
+/* Full Disk Access Banner */
+"Full Disk Access Required" = "フルディスクアクセスが必要です";
+"PureMac needs Full Disk Access to scan Trash, Mail, Desktop, Documents, and Homebrew cache." = "PureMacがゴミ箱、メール、デスクトップ、書類、Homebrewキャッシュをスキャンするにはフルディスクアクセスが必要です。";
+"Open Settings" = "設定を開く";
+
+/* Top Bar */
+"Macintosh HD" = "Macintosh HD";
+"%@ free" = "%@ 空き";
+"Auto-clean: " = "自動クリーン： ";
+
+/* Sidebar */
+"CLEANING" = "クリーニング";
+"Last cleaned: %@" = "最終クリーン： %@";
+
+/* Smart Scan */
+"Smart Scan" = "スマートスキャン";
+"Click Scan to start" = "スキャンをクリックして開始";
+"Total" = "合計";
+"Used" = "使用済み";
+"Free" = "空き";
+"Purgeable" = "削除可能";
+"junk found" = "ジャンクを検出";
+"Your Mac is clean!" = "お使いのMacはクリーンです！";
+"freed up" = "解放済み";
+"Cleaning..." = "クリーン中…";
+"Scanning..." = "スキャン中…";
+"%lld/%lld items" = "%lld/%lld 件";
+
+/* Category Detail */
+"All Clean!" = "すべてクリーン！";
+"No junk files found in this category." = "このカテゴリにジャンクファイルはありません。";
+"Not scanned yet" = "未スキャン";
+"Click Scan to analyze this category" = "スキャンをクリックしてこのカテゴリを分析";
+"%lld of %lld selected" = "%lld / %lld 件を選択中";
+"Select All" = "すべて選択";
+"Deselect All" = "すべて選択解除";
+"%lld items" = "%lld 件";
+
+/* Buttons */
+"Scan" = "スキャン";
+"Re-scan" = "再スキャン";
+"Scan Again" = "もう一度スキャン";
+"Done" = "完了";
+"Clean (%@)" = "クリーン（%@）";
+"Clean %lld items (%@)" = "%lld 件をクリーン（%@）";
+
+/* Settings - Schedule */
+"Schedule" = "スケジュール";
+"Automatic Cleaning" = "自動クリーン";
+"Automatically scan and clean your Mac on a schedule" = "スケジュールに従ってお使いのMacを自動スキャン・クリーン";
+"Scan Interval" = "スキャン間隔";
+"Automation" = "自動化";
+"Auto-clean after scan" = "スキャン後に自動クリーン";
+"Minimum junk size to trigger clean:" = "クリーンを実行する最小ジャンクサイズ：";
+"50 MB" = "50 MB";
+"100 MB" = "100 MB";
+"250 MB" = "250 MB";
+"500 MB" = "500 MB";
+"1 GB" = "1 GB";
+"Auto-purge purgeable space" = "削除可能な領域を自動クリア";
+"Show notification on completion" = "完了時に通知を表示";
+"Status" = "ステータス";
+"Last run" = "最終実行";
+"Next run" = "次回実行";
+"Never" = "なし";
+"Not scheduled" = "未設定";
+
+/* Settings - General */
+"General" = "一般";
+"App Behavior" = "アプリの動作";
+"Launch at login" = "ログイン時に起動";
+"Show in Dock" = "Dockに表示";
+"Show menu bar icon" = "メニューバーアイコンを表示";
+"Safety" = "安全性";
+"PureMac will never delete system-critical files. Only caches, logs, temporary files, and user-selected items are removed." = "PureMacはシステムの重要なファイルを削除しません。キャッシュ、ログ、一時ファイル、ユーザーが選択した項目のみ削除されます。";
+
+/* Settings - About */
+"About" = "概要";
+"Version 1.0.0" = "バージョン 1.0.0";
+"A free, open-source Mac cleaning utility.\nKeep your Mac fast, clean, and optimized." = "無料のオープンソースMacクリーニングツール。\nお使いのMacを高速・クリーン・最適な状態に保ちます。";
+"GitHub Repository" = "GitHub リポジトリ";
+"MIT License" = "MIT License";
+
+/* Cleaning Categories */
+"System Junk" = "システムジャンク";
+"User Cache" = "ユーザーキャッシュ";
+"AI Apps" = "AIアプリ";
+"Mail Files" = "メールファイル";
+"Trash Bins" = "ゴミ箱";
+"Large & Old Files" = "大きいファイルと古いファイル";
+"Purgeable Space" = "削除可能な領域";
+"Xcode Junk" = "Xcodeジャンク";
+"Brew Cache" = "Brewキャッシュ";
+
+/* Category Descriptions */
+"Scan everything at once" = "すべてを一度にスキャン";
+"System caches, logs, and temporary files" = "システムキャッシュ、ログ、一時ファイル";
+"Application caches and browser data" = "アプリキャッシュとブラウザデータ";
+"Logs, caches, and temporary files from local AI apps" = "ローカルAIアプリのログ、キャッシュ、一時ファイル";
+"Downloaded mail attachments" = "ダウンロードしたメール添付ファイル";
+"Files in your Trash" = "ゴミ箱内のファイル";
+"Files over 100 MB or older than 1 year" = "100 MB超または1年以上前のファイル";
+"APFS purgeable disk space" = "APFSの削除可能なディスク領域";
+"Derived data, archives, and simulators" = "派生データ、アーカイブ、シミュレータ";
+"Homebrew download cache" = "Homebrewのダウンロードキャッシュ";
+
+/* Schedule Intervals */
+"Every Hour" = "1時間ごと";
+"Every 3 Hours" = "3時間ごと";
+"Every 6 Hours" = "6時間ごと";
+"Every 12 Hours" = "12時間ごと";
+"Daily" = "毎日";
+"Weekly" = "毎週";
+"Every 2 Weeks" = "2週間ごと";
+"Monthly" = "毎月";
+
+/* Notifications */
+"Found %@ of junk files." = "%@ のジャンクファイルを検出しました。";
