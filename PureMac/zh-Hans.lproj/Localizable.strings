@@ -123,3 +123,8 @@
 "npm cache" = "npm 缓存";
 "yarn classic cache" = "yarn 经典缓存";
 "pnpm content-addressable store" = "pnpm 内容寻址存储";
+
+/* Docker Cache */
+"Docker Cache" = "Docker 缓存";
+"Docker images, containers, and build cache" = "Docker 镜像、容器和构建缓存";
+"Reclaimable (run `docker system prune -af`)" = "可回收空间（运行 `docker system prune -af`）";
