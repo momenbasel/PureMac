@@ -1,0 +1,125 @@
+/* Full Disk Access Banner */
+"Full Disk Access Required" = "Se requiere acceso total al disco";
+"PureMac needs Full Disk Access to scan Trash, Mail, Desktop, Documents, and Homebrew cache." = "PureMac necesita acceso total al disco para analizar la Papelera, Mail, Escritorio, Documentos y la caché de Homebrew.";
+"Open Settings" = "Abrir Ajustes";
+
+/* Top Bar */
+"Macintosh HD" = "Macintosh HD";
+"%@ free" = "%@ libres";
+"Auto-clean: " = "Limpieza automática: ";
+
+/* Sidebar */
+"CLEANING" = "LIMPIEZA";
+"Last cleaned: %@" = "Última limpieza: %@";
+
+/* Smart Scan */
+"Smart Scan" = "Análisis inteligente";
+"Click Scan to start" = "Haz clic en Analizar para empezar";
+"Total" = "Total";
+"Used" = "Usado";
+"Free" = "Libre";
+"Purgeable" = "Purgable";
+"junk found" = "archivos basura encontrados";
+"Your Mac is clean!" = "¡Tu Mac está limpio!";
+"freed up" = "liberados";
+"Cleaning..." = "Limpiando...";
+"Scanning..." = "Analizando...";
+"%lld/%lld items" = "%lld/%lld elementos";
+
+/* Category Detail */
+"All Clean!" = "¡Todo limpio!";
+"No junk files found in this category." = "No se encontraron archivos basura en esta categoría.";
+"Not scanned yet" = "Aún no analizado";
+"Click Scan to analyze this category" = "Haz clic en Analizar para revisar esta categoría";
+"%lld of %lld selected" = "%lld de %lld seleccionados";
+"Select All" = "Seleccionar todo";
+"Deselect All" = "Deseleccionar todo";
+"%lld items" = "%lld elementos";
+
+/* Buttons */
+"Scan" = "Analizar";
+"Re-scan" = "Volver a analizar";
+"Scan Again" = "Analizar de nuevo";
+"Done" = "Listo";
+"Clean (%@)" = "Limpiar (%@)";
+"Clean %lld items (%@)" = "Limpiar %lld elementos (%@)";
+
+/* Settings - Schedule */
+"Schedule" = "Programación";
+"Automatic Cleaning" = "Limpieza automática";
+"Automatically scan and clean your Mac on a schedule" = "Analiza y limpia tu Mac automáticamente según una programación";
+"Scan Interval" = "Intervalo de análisis";
+"Automation" = "Automatización";
+"Auto-clean after scan" = "Limpiar automáticamente tras el análisis";
+"Minimum junk size to trigger clean:" = "Tamaño mínimo de basura para iniciar la limpieza:";
+"50 MB" = "50 MB";
+"100 MB" = "100 MB";
+"250 MB" = "250 MB";
+"500 MB" = "500 MB";
+"1 GB" = "1 GB";
+"Auto-purge purgeable space" = "Purgar automáticamente el espacio purgable";
+"Show notification on completion" = "Mostrar notificación al finalizar";
+"Status" = "Estado";
+"Last run" = "Última ejecución";
+"Next run" = "Próxima ejecución";
+"Never" = "Nunca";
+"Not scheduled" = "Sin programar";
+
+/* Settings - General */
+"General" = "General";
+"App Behavior" = "Comportamiento de la app";
+"Launch at login" = "Abrir al iniciar sesión";
+"Show in Dock" = "Mostrar en el Dock";
+"Show menu bar icon" = "Mostrar ícono en la barra de menús";
+"Safety" = "Seguridad";
+"PureMac will never delete system-critical files. Only caches, logs, temporary files, and user-selected items are removed." = "PureMac nunca eliminará archivos críticos del sistema. Solo se eliminan cachés, registros, archivos temporales y elementos seleccionados por el usuario.";
+
+/* Settings - About */
+"About" = "Acerca de";
+"Version 1.0.0" = "Versión 1.0.0";
+"A free, open-source Mac cleaning utility.\nKeep your Mac fast, clean, and optimized." = "Una utilidad de limpieza para Mac, gratuita y de código abierto.\nMantén tu Mac rápido, limpio y optimizado.";
+"GitHub Repository" = "Repositorio de GitHub";
+"MIT License" = "Licencia MIT";
+
+/* Cleaning Categories */
+"System Junk" = "Basura del sistema";
+"User Cache" = "Caché de usuario";
+"AI Apps" = "Apps de IA";
+"Mail Files" = "Archivos de Mail";
+"Trash Bins" = "Papeleras";
+"Large & Old Files" = "Archivos grandes y antiguos";
+"Purgeable Space" = "Espacio purgable";
+"Xcode Junk" = "Basura de Xcode";
+"Brew Cache" = "Caché de Brew";
+
+/* Category Descriptions */
+"Scan everything at once" = "Analiza todo a la vez";
+"System caches, logs, and temporary files" = "Cachés del sistema, registros y archivos temporales";
+"Application caches and browser data" = "Cachés de aplicaciones y datos del navegador";
+"Logs, caches, and temporary files from local AI apps" = "Registros, cachés y archivos temporales de apps de IA locales";
+"Downloaded mail attachments" = "Adjuntos de correo descargados";
+"Files in your Trash" = "Archivos en tu Papelera";
+"Files over 100 MB or older than 1 year" = "Archivos de más de 100 MB o con más de 1 año";
+"APFS purgeable disk space" = "Espacio purgable de disco APFS";
+"Derived data, archives, and simulators" = "Datos derivados, archivos y simuladores";
+"Homebrew download cache" = "Caché de descargas de Homebrew";
+
+/* Schedule Intervals */
+"Every Hour" = "Cada hora";
+"Every 3 Hours" = "Cada 3 horas";
+"Every 6 Hours" = "Cada 6 horas";
+"Every 12 Hours" = "Cada 12 horas";
+"Daily" = "Diariamente";
+"Weekly" = "Semanalmente";
+"Every 2 Weeks" = "Cada 2 semanas";
+"Monthly" = "Mensualmente";
+
+/* Notifications */
+"Found %@ of junk files." = "Se encontraron %@ de archivos basura.";
+
+/* Node Cache */
+"Node Cache" = "Caché de Node";
+"npm, yarn, and pnpm download caches" = "Cachés de descarga de npm, yarn y pnpm";
+"npm cache" = "caché de npm";
+"yarn classic cache" = "caché de yarn classic";
+"pnpm content-addressable store" = "almacén de contenido direccionable de pnpm";
