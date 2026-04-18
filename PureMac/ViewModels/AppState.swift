@@ -187,7 +187,9 @@ final class AppState: ObservableObject {
 
                     if !belongsToApp {
                         let fullPath = URL(fileURLWithPath: path).appendingPathComponent(item)
-                        orphans.append(fullPath)
+                        if OrphanSafetyPolicy.isSafeCandidate(fullPath) {
+                            orphans.append(fullPath)
+                        }
                     }
                 }
             }
