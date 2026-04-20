@@ -16,7 +16,11 @@ struct PureMacApp: App {
     @AppStorage("PureMac.OnboardingComplete") private var onboardingComplete = false
 
     init() {
-        if CommandLine.arguments.count > 1 {
+        // Enter CLI mode only when the first arg is a known command. Xcode and
+        // LaunchServices inject args like -NSDocumentRevisionsDebugMode and
+        // -psn_<pid> that must not be interpreted as CLI commands.
+        if let first = CommandLine.arguments.dropFirst().first,
+           CLI.isKnownCommand(first) {
             CLI.run()
         }
     }
