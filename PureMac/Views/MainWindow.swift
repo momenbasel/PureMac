@@ -25,14 +25,14 @@ struct MainWindow: View {
         let smartSize = appState.categoryResults[.smartScan]?.totalSize ?? appState.totalJunkSize
         let smartBadge = smartSize > 0 ? ByteCountFormatter.string(fromByteCount: smartSize, countStyle: .file) : nil
         var items: [SidebarItem] = [
-            SidebarItem(section: .cleaning(.smartScan), label: CleaningCategory.smartScan.rawValue, icon: CleaningCategory.smartScan.icon, badge: smartBadge, group: "Home"),
-            SidebarItem(section: .apps, label: "Installed Apps", icon: "square.grid.2x2", badge: "\(appState.installedApps.count)", group: "Applications"),
-            SidebarItem(section: .orphans, label: "Orphaned Files", icon: "doc.questionmark", badge: appState.orphanedFiles.count > 0 ? "\(appState.orphanedFiles.count)" : nil, group: "Applications"),
+            SidebarItem(section: .cleaning(.smartScan), label: LocalizedStringKey(CleaningCategory.smartScan.rawValue), icon: CleaningCategory.smartScan.icon, badge: smartBadge, group: .home),
+            SidebarItem(section: .apps, label: "Installed Apps", icon: "square.grid.2x2", badge: "\(appState.installedApps.count)", group: .applications),
+            SidebarItem(section: .orphans, label: "Orphaned Files", icon: "doc.questionmark", badge: appState.orphanedFiles.count > 0 ? "\(appState.orphanedFiles.count)" : nil, group: .applications),
         ]
         for category in CleaningCategory.scannable {
             let size = appState.categoryResults[category]?.totalSize ?? 0
             let badge = size > 0 ? ByteCountFormatter.string(fromByteCount: size, countStyle: .file) : nil
-            items.append(SidebarItem(section: .cleaning(category), label: category.rawValue, icon: category.icon, badge: badge, group: "Cleaning"))
+            items.append(SidebarItem(section: .cleaning(category), label: LocalizedStringKey(category.rawValue), icon: category.icon, badge: badge, group: .cleaning))
         }
         return items
     }
@@ -40,9 +40,8 @@ struct MainWindow: View {
     private var sidebar: some View {
         List(selection: $selectedSection) {
             let grouped = Dictionary(grouping: allSidebarItems, by: \.group)
-            let order = ["Home", "Applications", "Cleaning"]
-            ForEach(order, id: \.self) { group in
-                Section(group) {
+            ForEach(SidebarGroup.allCases, id: \.self) { group in
+                Section(group.title) {
                     ForEach(grouped[group] ?? [], id: \.section) { item in
                         HStack {
                             Label(item.label, systemImage: item.icon)
@@ -81,10 +80,22 @@ struct MainWindow: View {
     }
 }
 
+private enum SidebarGroup: Hashable, CaseIterable {
+    case home, applications, cleaning
+
+    var title: LocalizedStringKey {
+        switch self {
+        case .home: return "Home"
+        case .applications: return "Applications"
+        case .cleaning: return "Cleaning"
+        }
+    }
+}
+
 private struct SidebarItem {
     let section: AppSection
-    let label: String
+    let label: LocalizedStringKey
     let icon: String
     let badge: String?
-    let group: String
+    let group: SidebarGroup
 }

@@ -11,6 +11,12 @@
 /* Sidebar */
 "CLEANING" = "清理";
 "Last cleaned: %@" = "上次清理：%@";
+"Home" = "主页";
+"Applications" = "应用程序";
+"Cleaning" = "清理";
+"Installed Apps" = "已安装应用";
+"Orphaned Files" = "孤立文件";
+"Select a category from the sidebar to get started." = "从侧边栏选择一个类别开始。";
 
 /* Smart Scan */
 "Smart Scan" = "智能扫描";

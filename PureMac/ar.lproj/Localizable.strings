@@ -1,0 +1,136 @@
+/* Full Disk Access Banner */
+"Full Disk Access Required" = "يلزم منح الوصول الكامل إلى القرص";
+"PureMac needs Full Disk Access to scan Trash, Mail, Desktop, Documents, and Homebrew cache." = "يحتاج PureMac إلى الوصول الكامل للقرص لفحص سلة المهملات والبريد وسطح المكتب والمستندات وذاكرة التخزين المؤقت لـ Homebrew.";
+"Open Settings" = "فتح الإعدادات";
+
+/* Top Bar */
+"Macintosh HD" = "Macintosh HD";
+"%@ free" = "%@ متاحة";
+"Auto-clean: " = "التنظيف التلقائي: ";
+
+/* Sidebar */
+"CLEANING" = "التنظيف";
+"Last cleaned: %@" = "آخر تنظيف: %@";
+"Home" = "الرئيسية";
+"Applications" = "التطبيقات";
+"Cleaning" = "التنظيف";
+"Installed Apps" = "التطبيقات المثبّتة";
+"Orphaned Files" = "الملفات اليتيمة";
+"Select a category from the sidebar to get started." = "اختر فئة من الشريط الجانبي للبدء.";
+
+/* Smart Scan */
+"Smart Scan" = "الفحص الذكي";
+"Click Scan to start" = "انقر على فحص للبدء";
+"Total" = "الإجمالي";
+"Used" = "المستخدمة";
+"Free" = "المتاحة";
+"Purgeable" = "قابلة للتحرير";
+"junk found" = "ملفات غير مرغوبة";
+"Your Mac is clean!" = "جهاز Mac نظيف!";
+"freed up" = "تم تحريرها";
+"Cleaning..." = "جارٍ التنظيف...";
+"Scanning..." = "جارٍ الفحص...";
+"%lld/%lld items" = "%lld/%lld عنصر";
+
+/* Category Detail */
+"All Clean!" = "كل شيء نظيف!";
+"No junk files found in this category." = "لا توجد ملفات غير مرغوبة في هذه الفئة.";
+"Not scanned yet" = "لم يتم الفحص بعد";
+"Click Scan to analyze this category" = "انقر على فحص لتحليل هذه الفئة";
+"%lld of %lld selected" = "%lld من %lld محدد";
+"Select All" = "تحديد الكل";
+"Deselect All" = "إلغاء تحديد الكل";
+"%lld items" = "%lld عنصر";
+
+/* Buttons */
+"Scan" = "فحص";
+"Re-scan" = "إعادة الفحص";
+"Scan Again" = "فحص مرة أخرى";
+"Done" = "تم";
+"Clean (%@)" = "تنظيف (%@)";
+"Clean %lld items (%@)" = "تنظيف %lld عنصر (%@)";
+
+/* Settings - Schedule */
+"Schedule" = "الجدولة";
+"Automatic Cleaning" = "التنظيف التلقائي";
+"Automatically scan and clean your Mac on a schedule" = "فحص جهاز Mac وتنظيفه تلقائيًا وفق جدول زمني";
+"Scan Interval" = "الفاصل الزمني للفحص";
+"Automation" = "الأتمتة";
+"Auto-clean after scan" = "التنظيف التلقائي بعد الفحص";
+"Minimum junk size to trigger clean:" = "الحد الأدنى لحجم الملفات لبدء التنظيف:";
+"50 MB" = "50 ميغابايت";
+"100 MB" = "100 ميغابايت";
+"250 MB" = "250 ميغابايت";
+"500 MB" = "500 ميغابايت";
+"1 GB" = "1 غيغابايت";
+"Auto-purge purgeable space" = "تحرير المساحة القابلة للإزالة تلقائيًا";
+"Show notification on completion" = "إظهار إشعار عند الانتهاء";
+"Status" = "الحالة";
+"Last run" = "آخر تشغيل";
+"Next run" = "التشغيل التالي";
+"Never" = "أبدًا";
+"Not scheduled" = "لم تُجدول";
+
+/* Settings - General */
+"General" = "عام";
+"App Behavior" = "سلوك التطبيق";
+"Launch at login" = "التشغيل عند تسجيل الدخول";
+"Show in Dock" = "إظهار في Dock";
+"Show menu bar icon" = "إظهار أيقونة في شريط القوائم";
+"Safety" = "الأمان";
+"PureMac will never delete system-critical files. Only caches, logs, temporary files, and user-selected items are removed." = "لن يحذف PureMac أبدًا ملفات النظام الأساسية. لا تُزال سوى ذاكرة التخزين المؤقت والسجلات والملفات المؤقتة والعناصر التي يحددها المستخدم.";
+
+/* Settings - About */
+"About" = "حول";
+"Version 1.0.0" = "الإصدار 1.0.0";
+"A free, open-source Mac cleaning utility.\nKeep your Mac fast, clean, and optimized." = "أداة مجانية ومفتوحة المصدر لتنظيف الـ Mac.\nحافظ على سرعة جهازك ونظافته وكفاءته.";
+"GitHub Repository" = "مستودع GitHub";
+"MIT License" = "رخصة MIT";
+
+/* Cleaning Categories */
+"System Junk" = "ملفات النظام غير المرغوبة";
+"User Cache" = "ذاكرة التخزين المؤقت للمستخدم";
+"AI Apps" = "تطبيقات الذكاء الاصطناعي";
+"Mail Files" = "ملفات البريد";
+"Trash Bins" = "سلة المهملات";
+"Large & Old Files" = "الملفات الكبيرة والقديمة";
+"Purgeable Space" = "المساحة القابلة للإزالة";
+"Xcode Junk" = "ملفات Xcode غير المرغوبة";
+"Brew Cache" = "ذاكرة التخزين المؤقت لـ Brew";
+
+/* Category Descriptions */
+"Scan everything at once" = "فحص كل شيء مرة واحدة";
+"System caches, logs, and temporary files" = "ذاكرة التخزين المؤقت للنظام والسجلات والملفات المؤقتة";
+"Application caches and browser data" = "ذاكرة التخزين المؤقت للتطبيقات وبيانات المتصفح";
+"Logs, caches, and temporary files from local AI apps" = "السجلات وذاكرة التخزين المؤقت والملفات المؤقتة لتطبيقات الذكاء الاصطناعي المحلية";
+"Downloaded mail attachments" = "مرفقات البريد التي تم تنزيلها";
+"Files in your Trash" = "الملفات الموجودة في سلة المهملات";
+"Files over 100 MB or older than 1 year" = "الملفات التي يزيد حجمها عن 100 ميغابايت أو الأقدم من سنة";
+"APFS purgeable disk space" = "مساحة القرص القابلة للإزالة في APFS";
+"Derived data, archives, and simulators" = "البيانات المشتقة والأرشيفات والمحاكيات";
+"Homebrew download cache" = "ذاكرة التخزين المؤقت لتنزيلات Homebrew";
+
+/* Schedule Intervals */
+"Every Hour" = "كل ساعة";
+"Every 3 Hours" = "كل 3 ساعات";
+"Every 6 Hours" = "كل 6 ساعات";
+"Every 12 Hours" = "كل 12 ساعة";
+"Daily" = "يوميًا";
+"Weekly" = "أسبوعيًا";
+"Every 2 Weeks" = "كل أسبوعين";
+"Monthly" = "شهريًا";
+
+/* Notifications */
+"Found %@ of junk files." = "تم العثور على %@ من الملفات غير المرغوبة.";
+
+/* Node Cache */
+"Node Cache" = "ذاكرة التخزين المؤقت لـ Node";
+"npm, yarn, and pnpm download caches" = "ذاكرة التخزين المؤقت لتنزيلات npm وyarn وpnpm";
+"npm cache" = "ذاكرة التخزين المؤقت لـ npm";
+"yarn classic cache" = "ذاكرة التخزين المؤقت لـ yarn الكلاسيكي";
+"pnpm content-addressable store" = "مخزن المحتوى المُعنوَن لـ pnpm";
+
+/* Docker Cache */
+"Docker Cache" = "ذاكرة التخزين المؤقت لـ Docker";
+"Docker images, containers, and build cache" = "صور Docker والحاويات وذاكرة التخزين المؤقت للبناء";
+"Reclaimable (run `docker system prune -af`)" = "قابلة للاسترداد (شغّل `docker system prune -af`)";

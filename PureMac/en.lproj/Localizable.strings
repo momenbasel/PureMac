@@ -11,6 +11,12 @@
 /* Sidebar */
 "CLEANING" = "CLEANING";
 "Last cleaned: %@" = "Last cleaned: %@";
+"Home" = "Home";
+"Applications" = "Applications";
+"Cleaning" = "Cleaning";
+"Installed Apps" = "Installed Apps";
+"Orphaned Files" = "Orphaned Files";
+"Select a category from the sidebar to get started." = "Select a category from the sidebar to get started.";
 
 /* Smart Scan */
 "Smart Scan" = "Smart Scan";

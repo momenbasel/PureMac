@@ -4,6 +4,7 @@
 
 <p align="center">
   <a href="../README.md">English</a> |
+  <a href="README.ar.md">العربية</a> |
   <a href="README.es.md">Español</a> |
   <a href="README.ja.md">日本語</a> |
   <a href="README.zh-Hans.md">简体中文</a> |
