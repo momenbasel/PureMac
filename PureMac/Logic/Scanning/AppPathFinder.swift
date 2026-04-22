@@ -266,7 +266,7 @@ class AppPathFinder {
     // MARK: - Skip Logic
 
     private func shouldSkipItem(_ normalizedName: String, at url: URL) -> Bool {
-        if collectionSet.contains(url) { return true }
+        if collectionQueue.sync(execute: { collectionSet.contains(url) }) { return true }
 
         for skip in skipConditions {
             for path in skip.skipPaths {
