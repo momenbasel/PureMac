@@ -6,57 +6,76 @@ import Foundation
 /// ~/.Trash, and other app containers even for non-sandboxed apps.
 final class FullDiskAccessManager {
     static let shared = FullDiskAccessManager()
-
     private init() {}
 
-    /// Check if Full Disk Access is granted by probing TCC-protected paths.
-    /// Returns true if at least one protected path is readable.
+    /// Check if Full Disk Access is granted by attempting a real read of a
+    /// TCC-protected location. The heuristic is:
+    /// - Try to read a file from a TCC-protected directory (~/Library/Mail)
+    /// - If we get EPERM/EACCES, FDA is denied
+    /// - If we can read the file (or the file doesn't exist), FDA is likely granted
+    /// - Fallback: check that Desktop exists and is readable
     var hasFullDiskAccess: Bool {
-        // These paths are protected by TCC and require FDA to read.
-        // We try multiple because some may not exist on every system.
-        let protectedPaths = [
-            FileManager.default.homeDirectoryForCurrentUser
-                .appendingPathComponent("Library/Mail").path,
-            FileManager.default.homeDirectoryForCurrentUser
-                .appendingPathComponent("Library/Safari/Bookmarks.plist").path,
-            "/Library/Application Support/com.apple.TCC/TCC.db",
-        ]
+        let fileManager = FileManager.default
+        let home = fileManager.homeDirectoryForCurrentUser.path
 
-        for path in protectedPaths {
-            if FileManager.default.isReadableFile(atPath: path) {
+        // Primary probe: ~/Library/Mail directory contents.
+        // Even if the user has never used Mail, the directory may not exist.
+        // In that case, fall back to checking Desktop readability.
+        let mailPath = "\(home)/Library/Mail"
+
+        if fileManager.fileExists(atPath: mailPath) {
+            // TCC blocks _reading file contents_ but not directory traversal.
+            // The best signal: can we read a known mailbox file if it exists?
+            // Mail stores messages as individual files in subdirectories.
+            // Try enumerating the directory; if enumeration fails with EPERM, FDA denied.
+            // If enumeration succeeds, FDA grants at least some access to that location.
+            do {
+                _ = try fileManager.contentsOfDirectory(atPath: mailPath)
+                // If we got here, we successfully enumerated Mail dir → FDA likely granted
                 return true
+            } catch {
+                // EPERM or EACCES = permission denied by TCC = no FDA
+                let nsError = error as NSError
+                if nsError.domain == NSCocoaErrorDomain &&
+                   (nsError.code == NSFileReadNoPermissionError ||
+                    nsError.code == NSFileWriteNoPermissionError) {
+                    return false
+                }
+                // Some other error (file not found, etc.) — try fallback checks
             }
         }
 
-        // If none of the protected paths exist, assume FDA is not granted
-        // but don't block the user - some paths may legitimately not exist
-        // on a fresh system. Check if we can at least list a protected directory.
-        let home = FileManager.default.homeDirectoryForCurrentUser.path
-        let trashPath = "\(home)/.Trash"
-        if let contents = try? FileManager.default.contentsOfDirectory(atPath: trashPath),
-           !contents.isEmpty {
+        // Fallback 1: Check Desktop has readable files (not just empty dir).
+        // An empty Desktop is ambiguous; a non-empty readable Desktop suggests FDA.
+        let desktopPath = "\(home)/Desktop"
+        if let desktopContents = try? fileManager.contentsOfDirectory(atPath: desktopPath),
+           !desktopContents.isEmpty {
+            // Verify at least one file is actually readable (TCC might hide contents)
+            let hasReadable = desktopContents.contains { item in
+                let fullPath = (desktopPath as NSString).appendingPathComponent(item)
+                return fileManager.isReadableFile(atPath: fullPath)
+            }
+            if hasReadable { return true }
+        }
+
+        // Fallback 2: Safari Bookmarks (historically TCC-protected for some macOS versions)
+        let safariPath = "\(home)/Library/Safari/Bookmarks.plist"
+        if fileManager.isReadableFile(atPath: safariPath) {
             return true
         }
 
-        // Try listing Desktop - if TCC blocks it, we get an empty array or error
-        let desktopPath = "\(home)/Desktop"
-        do {
-            let contents = try FileManager.default.contentsOfDirectory(atPath: desktopPath)
-            // If Desktop exists and has files, FDA is likely granted
-            // (An empty Desktop is ambiguous, so we check more paths)
-            if !contents.isEmpty { return true }
-        } catch {
-            // Permission denied = no FDA
-            return false
+        // Fallback 3: Documents directory has readable files
+        let docsPath = "\(home)/Documents"
+        if let docsContents = try? fileManager.contentsOfDirectory(atPath: docsPath),
+           !docsContents.isEmpty {
+            let hasReadable = docsContents.contains { item in
+                let fullPath = (docsPath as NSString).appendingPathComponent(item)
+                return fileManager.isReadableFile(atPath: fullPath)
+            }
+            if hasReadable { return true }
         }
 
-        // Ambiguous - Desktop is empty, try one more path
-        let mailDir = "\(home)/Library/Mail"
-        if FileManager.default.fileExists(atPath: mailDir) {
-            return FileManager.default.isReadableFile(atPath: mailDir)
-        }
-
-        // Can't determine definitively - default to warning the user
+        // Cannot confirm FDA — assume not granted to be safe
         return false
     }
 
