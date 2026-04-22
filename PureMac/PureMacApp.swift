@@ -14,6 +14,7 @@ struct PureMacApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var appState = AppState()
     @AppStorage("PureMac.OnboardingComplete") private var onboardingComplete = false
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         // Enter CLI mode only when the first arg is a known command. Xcode and
@@ -41,6 +42,14 @@ struct PureMacApp: App {
         .defaultSize(width: 1000, height: 680)
         .commands {
             CommandGroup(replacing: .newItem) {}
+        }
+        // When the app becomes active (e.g., after returning from System Settings)
+        // re-check Full Disk Access immediately so permissions are detected
+        // without waiting for the 60 s periodic timer.
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase == .active {
+                appState.checkFullDiskAccess()
+            }
         }
 
         Settings {

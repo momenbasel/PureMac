@@ -48,6 +48,7 @@ final class AppState: ObservableObject {
     var scheduler = SchedulerService()
     private let scanEngine = ScanEngine()
     private let cleaningEngine = CleaningEngine()
+    private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Computed
 
@@ -72,6 +73,12 @@ final class AppState: ObservableObject {
     init() {
         loadDiskInfo()
         checkFullDiskAccess()
+        // Re-check FDA every 60 seconds to detect System Settings changes.
+        // If FDA is revoked mid-session, UI updates to reflect it immediately.
+        Timer.publish(every: 60, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in self?.checkFullDiskAccess() }
+            .store(in: &cancellables)
         loadInstalledApps()
         scheduler.setTrigger { [weak self] in
             await self?.runScheduledScan()
@@ -149,6 +156,16 @@ final class AppState: ObservableObject {
             }
             return
         }
+
+        // Pre-deletion FDA check — fail fast with a clearer message if FDA is off.
+        // This avoids invoking Finder only to get a cryptic error.
+        // Synchronous direct check for freshest status.
+        if !FullDiskAccessManager.shared.hasFullDiskAccess {
+            removalError = "Full Disk Access is required to delete files from protected locations. Open System Settings → Privacy & Security → Full Disk Access and ensure PureMac is enabled."
+            Logger.shared.log("Deletion blocked — FDA not available", level: .error)
+            return
+        }
+
         trashViaFinder(urls: urls) { [weak self] success in
             DispatchQueue.main.async {
                 guard let self else { return }
