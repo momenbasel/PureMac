@@ -11,6 +11,12 @@
 /* Sidebar */
 "CLEANING" = "クリーニング";
 "Last cleaned: %@" = "最終クリーン： %@";
+"Home" = "ホーム";
+"Applications" = "アプリケーション";
+"Cleaning" = "クリーニング";
+"Installed Apps" = "インストール済みアプリ";
+"Orphaned Files" = "孤立ファイル";
+"Select a category from the sidebar to get started." = "サイドバーからカテゴリを選択して始めてください。";
 
 /* Smart Scan */
 "Smart Scan" = "スマートスキャン";
