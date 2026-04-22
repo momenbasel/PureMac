@@ -76,7 +76,13 @@ final class AppState: ObservableObject {
         scheduler.setTrigger { [weak self] in
             await self?.runScheduledScan()
         }
-        scheduler.start()
+        // Only arm the scheduler once onboarding has completed. Before the
+        // first launch the defaults plist may have been attacker-planted with
+        // autoClean=true - waiting for onboarding ensures a human consents to
+        // auto-clean before we start honoring it.
+        if UserDefaults.standard.bool(forKey: "PureMac.OnboardingComplete") {
+            scheduler.start()
+        }
     }
 
     // MARK: - App Loading
@@ -115,8 +121,34 @@ final class AppState: ObservableObject {
     }
 
     func removeSelectedFiles() {
-        let urls = Array(selectedFiles)
+        // Safety guard: never allow a high-risk home dotpath (listed in
+        // Conditions.swift) to be sent to trashViaFinder no matter how it
+        // ended up in the selection. Catches selection-time additions that
+        // slipped past the scanner-side filters.
+        let allURLs = Array(selectedFiles)
+        let (urls, blocked): ([URL], [URL]) = allURLs.reduce(into: ([], [])) { acc, url in
+            let resolved = url.resolvingSymlinksInPath().path
+            let isBlocked = highRiskHomeDotPaths.contains { root in
+                resolved == root || resolved.hasPrefix(root + "/")
+            }
+            if isBlocked {
+                acc.1.append(url)
+            } else {
+                acc.0.append(url)
+            }
+        }
         removalError = nil
+        if !blocked.isEmpty {
+            let blockedList = blocked.map(\.path).joined(separator: ", ")
+            Logger.shared.log("Refused to delete \(blocked.count) high-risk home dotpath(s): \(blockedList)", level: .warning)
+            selectedFiles.subtract(blocked)
+        }
+        guard !urls.isEmpty else {
+            if !blocked.isEmpty {
+                removalError = "Refused to delete \(blocked.count) protected item(s) (home credential directory or similar)."
+            }
+            return
+        }
         trashViaFinder(urls: urls) { [weak self] success in
             DispatchQueue.main.async {
                 guard let self else { return }

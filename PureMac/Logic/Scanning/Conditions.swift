@@ -343,8 +343,51 @@ let skipConditions: [SkipCondition] = [
             "/System/Volumes/Preboot/Cryptexes/App/System/Library/CoreServices/PasswordManagerBrowserExtensionHelper.app/Contents/MacOS/PasswordManagerBrowserExtensionHelper",
             "\(home)/Library/Application Support/Chromium/NativeMessagingHosts/com.apple.passwordmanager.json",
             "\(home)/Library/Application Support/Google/Chrome/NativeMessagingHosts/com.apple.passwordmanager.json"
-        ]
+        ] + highRiskHomeDotPaths
     )
+]
+
+/// Home-directory dotdirs that must never be matched as app artifacts no
+/// matter how short or coincidental the app name is. Adding an entry here is
+/// the correct fix for "removing webapp X also deleted my CLI tool X config"
+/// (see issues #50 / #51).
+let highRiskHomeDotPaths: [String] = [
+    "\(home)/.claude",
+    "\(home)/.ssh",
+    "\(home)/.aws",
+    "\(home)/.gnupg",
+    "\(home)/.gpg",
+    "\(home)/.kube",
+    "\(home)/.docker",
+    "\(home)/.config",
+    "\(home)/.git",
+    "\(home)/.gitconfig",
+    "\(home)/.git-credentials",
+    "\(home)/.netrc",
+    "\(home)/.npmrc",
+    "\(home)/.yarnrc",
+    "\(home)/.pnpmrc",
+    "\(home)/.pip",
+    "\(home)/.pypirc",
+    "\(home)/.rbenv",
+    "\(home)/.pyenv",
+    "\(home)/.nvm",
+    "\(home)/.cargo",
+    "\(home)/.rustup",
+    "\(home)/.gem",
+    "\(home)/.local",
+    "\(home)/.password-store",
+    "\(home)/.mozilla",
+    "\(home)/.wine",
+    "\(home)/.vscode",
+    "\(home)/.vim",
+    "\(home)/.viminfo",
+    "\(home)/.zshrc",
+    "\(home)/.zsh_history",
+    "\(home)/.bash_history",
+    "\(home)/.bashrc",
+    "\(home)/.bash_profile",
+    "\(home)/.profile",
 ]
 
 // MARK: - Deep Search Exclusions

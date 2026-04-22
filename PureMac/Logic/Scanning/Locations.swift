@@ -40,8 +40,11 @@ class Locations: ObservableObject {
         self.tempDir = tempDir
 
         self.appSearch = SearchCategory(name: "Apps", paths: [
-            // User home
-            "\(home)",
+            // User home - bare "\(home)" is intentionally NOT scanned.
+            // Scanning bare $HOME matches top-level dotfiles like .claude,
+            // .ssh, .aws, .kube by normalized app-name ("claude" matching
+            // ".claude") and invites data loss when uninstalling unrelated
+            // webapps. Scoped subdirs below are still scanned.
             "\(home)/.config",
             "\(home)/Documents",
             "\(home)/Desktop",

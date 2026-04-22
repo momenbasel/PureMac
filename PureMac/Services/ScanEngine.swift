@@ -288,7 +288,19 @@ actor ScanEngine {
             "\(home)/Library/Caches/Homebrew",
         ]
 
-        // Detect custom HOMEBREW_CACHE via `brew --cache`
+        // Known-good Homebrew cache roots. Any path returned by `brew --cache`
+        // that is NOT inside one of these is refused - prevents an attacker
+        // setting HOMEBREW_CACHE=$HOME/Documents from steering our cleanup.
+        let knownBrewRoots = [
+            "\(home)/Library/Caches/Homebrew",
+            "/opt/homebrew/Library/Caches",
+            "/usr/local/Homebrew/Library/Caches",
+            "/Library/Caches/Homebrew",
+        ]
+
+        // Detect custom HOMEBREW_CACHE via `brew --cache`. Strip HOMEBREW_*
+        // from the child env so an attacker can't steer the output via
+        // launchctl setenv, then validate the output against knownBrewRoots.
         let brewBinPaths = ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"]
         var detectedCustomCache = false
         for brewBin in brewBinPaths {
@@ -296,6 +308,11 @@ actor ScanEngine {
             let task = Process()
             task.executableURL = URL(fileURLWithPath: brewBin)
             task.arguments = ["--cache"]
+            var sanitizedEnv = ProcessInfo.processInfo.environment
+            for key in Array(sanitizedEnv.keys) where key.hasPrefix("HOMEBREW_") {
+                sanitizedEnv.removeValue(forKey: key)
+            }
+            task.environment = sanitizedEnv
             let pipe = Pipe()
             task.standardOutput = pipe
             task.standardError = Pipe()
@@ -306,6 +323,13 @@ actor ScanEngine {
                 if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
                    !output.isEmpty {
                     let normalized = normalizePath(output)
+                    let isKnown = knownBrewRoots.contains { root in
+                        normalized == root || normalized.hasPrefix(root + "/")
+                    }
+                    guard isKnown else {
+                        Logger.shared.log("Refusing suspicious brew cache path: \(output)", level: .warning)
+                        break
+                    }
                     if !brewCachePaths.map(normalizePath).contains(normalized) {
                         brewCachePaths.append(output)
                     }

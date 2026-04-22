@@ -18,9 +18,14 @@ struct MainWindow: View {
         }
     }
 
-    // All sidebar items as a flat array so ForEach gives proper selectability
+    // All sidebar items as a flat array so ForEach gives proper selectability.
+    // Smart Scan is pinned to the top so users always have a path back to it -
+    // otherwise the landing page disappears after selecting another tab (#69).
     private var allSidebarItems: [SidebarItem] {
+        let smartSize = appState.categoryResults[.smartScan]?.totalSize ?? appState.totalJunkSize
+        let smartBadge = smartSize > 0 ? ByteCountFormatter.string(fromByteCount: smartSize, countStyle: .file) : nil
         var items: [SidebarItem] = [
+            SidebarItem(section: .cleaning(.smartScan), label: CleaningCategory.smartScan.rawValue, icon: CleaningCategory.smartScan.icon, badge: smartBadge, group: "Home"),
             SidebarItem(section: .apps, label: "Installed Apps", icon: "square.grid.2x2", badge: "\(appState.installedApps.count)", group: "Applications"),
             SidebarItem(section: .orphans, label: "Orphaned Files", icon: "doc.questionmark", badge: appState.orphanedFiles.count > 0 ? "\(appState.orphanedFiles.count)" : nil, group: "Applications"),
         ]
@@ -35,7 +40,7 @@ struct MainWindow: View {
     private var sidebar: some View {
         List(selection: $selectedSection) {
             let grouped = Dictionary(grouping: allSidebarItems, by: \.group)
-            let order = ["Applications", "Cleaning"]
+            let order = ["Home", "Applications", "Cleaning"]
             ForEach(order, id: \.self) { group in
                 Section(group) {
                     ForEach(grouped[group] ?? [], id: \.section) { item in

@@ -4,22 +4,30 @@ struct AppListView: View {
     @EnvironmentObject var appState: AppState
     @State private var searchText = ""
     @State private var selection: InstalledApp.ID?
+    @State private var sortOrder: [KeyPathComparator<InstalledApp>] = [
+        .init(\.appName, order: .forward)
+    ]
 
     private var filteredApps: [InstalledApp] {
+        let base: [InstalledApp]
         if searchText.isEmpty {
-            return appState.installedApps
+            base = appState.installedApps
+        } else {
+            let query = searchText.lowercased()
+            base = appState.installedApps.filter {
+                $0.appName.lowercased().contains(query) ||
+                $0.bundleIdentifier.lowercased().contains(query)
+            }
         }
-        let query = searchText.lowercased()
-        return appState.installedApps.filter {
-            $0.appName.lowercased().contains(query) ||
-            $0.bundleIdentifier.lowercased().contains(query)
-        }
+        return base.sorted(using: sortOrder)
     }
 
     var body: some View {
         HSplitView {
+            // Cap the left pane's maxWidth so dragging the splitter cannot
+            // push it past half the window and break the layout (#60).
             appTable
-                .frame(minWidth: 300, idealWidth: 380)
+                .frame(minWidth: 300, idealWidth: 380, maxWidth: 600)
 
             fileDetail
                 .frame(minWidth: 300)
@@ -63,8 +71,8 @@ struct AppListView: View {
                     actionLabel: "Retry"
                 )
             } else {
-                Table(filteredApps, selection: $selection) {
-                    TableColumn("Application") { app in
+                Table(filteredApps, selection: $selection, sortOrder: $sortOrder) {
+                    TableColumn("Application", value: \.appName) { app in
                         HStack(spacing: 8) {
                             Image(nsImage: app.icon)
                                 .resizable()
@@ -74,7 +82,7 @@ struct AppListView: View {
                     }
                     .width(min: 150)
 
-                    TableColumn("Size") { app in
+                    TableColumn("Size", value: \.size) { app in
                         Text(app.formattedSize)
                             .monospacedDigit()
                             .foregroundStyle(.secondary)

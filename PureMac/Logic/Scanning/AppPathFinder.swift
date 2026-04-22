@@ -193,18 +193,36 @@ class AppPathFinder {
 
     // MARK: - Matching Engine
 
+    // Minimum token length required for a name-based match to pass. Prevents
+    // a malicious app named "s-s-h" (normalized "ssh", 3 chars) from
+    // short-name-bombing home dotfiles like ~/.ssh into the uninstall list.
+    private static let minMatchTokenLength = 5
+
+    /// Anchored check for whether `self.normalizedBundleID` belongs to the
+    /// family identified by `conditionBundleID`. Accepts exact equality,
+    /// ".child" extension, or "parent." suffix - rejects a bundle ID that
+    /// merely contains the condition string as a substring. This prevents
+    /// `com.evil.jetbrainsapp` from hijacking the `jetbrains` rule.
+    private func bundleIDMatchesCondition(_ conditionBundleID: String) -> Bool {
+        guard !conditionBundleID.isEmpty else { return false }
+        if normalizedBundleID == conditionBundleID { return true }
+        if normalizedBundleID.hasPrefix(conditionBundleID + ".") { return true }
+        if normalizedBundleID.hasSuffix("." + conditionBundleID) { return true }
+        return false
+    }
+
     /// Multi-level heuristic matcher. Returns true if the normalized filename
     /// belongs to the target app at the current sensitivity level.
     private func matchesApp(normalizedName: String, itemURL: URL) -> Bool {
-        // Per-app condition overrides take priority
+        // Per-app condition overrides take priority. Anchor the bundle ID
+        // check (see bundleIDMatchesCondition above).
         for condition in appConditions {
-            if normalizedBundleID.contains(condition.bundleID) {
-                if condition.excludeTerms.contains(where: { normalizedName.contains($0) }) {
-                    return false
-                }
-                if condition.includeTerms.contains(where: { normalizedName.contains($0) }) {
-                    return true
-                }
+            guard bundleIDMatchesCondition(condition.bundleID) else { continue }
+            if condition.excludeTerms.contains(where: { normalizedName.contains($0) }) {
+                return false
+            }
+            if condition.includeTerms.contains(where: { normalizedName.contains($0) }) {
+                return true
             }
         }
 
@@ -221,17 +239,18 @@ class AppPathFinder {
 
         // Level 2: App name
         let isStrict = sensitivity == .strict
-        let appNameMatch = !normalizedAppName.isEmpty && (isStrict
+        let minLen = AppPathFinder.minMatchTokenLength
+        let appNameMatch = normalizedAppName.count >= minLen && (isStrict
             ? normalizedName == normalizedAppName
             : normalizedName.contains(normalizedAppName))
 
         // Level 3: Path component name (the .app directory name without extension)
-        let pathMatch = !pathComponentName.isEmpty && (isStrict
+        let pathMatch = pathComponentName.count >= minLen && (isStrict
             ? normalizedName == pathComponentName
             : normalizedName.contains(pathComponentName))
 
         // Level 4: Letters-only app name
-        let lettersMatch = !appNameLettersOnly.isEmpty && (isStrict
+        let lettersMatch = appNameLettersOnly.count >= minLen && (isStrict
             ? normalizedName == appNameLettersOnly
             : normalizedName.contains(appNameLettersOnly))
 
@@ -242,22 +261,22 @@ class AppPathFinder {
         // Enhanced mode: additional partial matching strategies
         if sensitivity != .strict {
             // Level 5: Last two bundle ID components
-            if normalizedName.contains(bundleLastTwo) { return true }
+            if bundleLastTwo.count >= minLen, normalizedName.contains(bundleLastTwo) { return true }
 
             // Level 6: Base bundle ID (strips .helper/.agent/.daemon suffixes)
-            if let base = baseBundleID, !base.isEmpty, normalizedName.contains(base) { return true }
+            if let base = baseBundleID, base.count >= minLen, normalizedName.contains(base) { return true }
 
             // Level 7: Version-stripped app name
-            if let stripped = strippedAppName, normalizedName.contains(stripped) { return true }
+            if let stripped = strippedAppName, stripped.count >= minLen, normalizedName.contains(stripped) { return true }
         }
 
         // Deep mode: broadest matching heuristics
         if sensitivity == .deep {
             // Level 8: Company name extracted from bundle ID
-            if let company = companyName, !company.isEmpty, normalizedName.contains(company) { return true }
+            if let company = companyName, company.count >= minLen, normalizedName.contains(company) { return true }
 
             // Level 9: Team identifier from code signature
-            if let teamID = normalizedTeamID, !teamID.isEmpty, normalizedName.contains(teamID) { return true }
+            if let teamID = normalizedTeamID, teamID.count >= minLen, normalizedName.contains(teamID) { return true }
         }
 
         return false
@@ -308,8 +327,11 @@ class AppPathFinder {
                 }
             }
 
-            // Named containers matching the bundle ID directly
-            if dirName.normalizedForMatching() == normalizedBundleID {
+            // Named containers matching the bundle ID directly. Require the
+            // bundle ID itself to be at least 5 chars to avoid picking up a
+            // container owned by an app with a degenerate bundle identifier.
+            if normalizedBundleID.count >= 5,
+               dirName.normalizedForMatching() == normalizedBundleID {
                 containers.append(dir)
             }
         }
@@ -323,18 +345,17 @@ class AppPathFinder {
     /// the main scan has completed.
     private func applyConditions() {
         for condition in appConditions {
-            if normalizedBundleID.contains(condition.bundleID) {
-                if let paths = condition.forceIncludePaths {
-                    for path in paths {
-                        if FileManager.default.fileExists(atPath: path.path) {
-                            collectionSet.insert(path)
-                        }
+            guard bundleIDMatchesCondition(condition.bundleID) else { continue }
+            if let paths = condition.forceIncludePaths {
+                for path in paths {
+                    if FileManager.default.fileExists(atPath: path.path) {
+                        collectionSet.insert(path)
                     }
                 }
-                if let paths = condition.forceExcludePaths {
-                    for path in paths {
-                        collectionSet.remove(path)
-                    }
+            }
+            if let paths = condition.forceExcludePaths {
+                for path in paths {
+                    collectionSet.remove(path)
                 }
             }
         }

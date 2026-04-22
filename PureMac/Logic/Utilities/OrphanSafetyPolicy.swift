@@ -38,7 +38,22 @@ enum OrphanSafetyPolicy {
         let path = normalizedPath(url)
         let lowerPath = path.lowercased()
 
-        guard allowedRoots.contains(where: { lowerPath.hasPrefix($0.lowercased()) }) else {
+        // Belt-and-suspenders: reject any high-risk home dotpath (defined in
+        // Conditions.swift). The allowedRoots filter below would catch most
+        // of these, but this early block keeps the rule obvious.
+        for root in highRiskHomeDotPaths {
+            if path == root || path.hasPrefix(root + "/") {
+                return false
+            }
+        }
+
+        // Require the match to land STRICTLY inside the allowed root, not at a
+        // sibling like /tmpfoo. Trailing "/" prevents hasPrefix from matching
+        // sibling directories whose names merely start with the root name.
+        guard allowedRoots.contains(where: { root in
+            let rootWithSlash = root.lowercased() + "/"
+            return lowerPath.hasPrefix(rootWithSlash)
+        }) else {
             return false
         }
 

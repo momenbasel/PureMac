@@ -13,7 +13,16 @@ class SchedulerService: ObservableObject {
 
     init() {
         if let data = UserDefaults.standard.data(forKey: configKey),
-           let saved = try? JSONDecoder().decode(ScheduleConfig.self, from: data) {
+           var saved = try? JSONDecoder().decode(ScheduleConfig.self, from: data) {
+            // Refuse to honor an already-past nextRunDate loaded from disk -
+            // otherwise an attacker who can write our plist (same-UID foothold)
+            // sets nextRunDate to a past timestamp and our first tick after
+            // launch triggers autoClean. Reset the schedule so the first run
+            // is always at least one full interval after launch.
+            if let next = saved.nextRunDate, next.timeIntervalSinceNow < 60 {
+                saved.nextRunDate = nil
+                saved.lastRunDate = nil
+            }
             self.config = saved
         } else {
             self.config = ScheduleConfig()
