@@ -1,6 +1,16 @@
 import Foundation
 
 struct CLI {
+    private static let knownCommands: Set<String> = [
+        "scan", "disk-info", "list",
+        "help", "--help", "-h",
+        "version", "--version", "-v",
+    ]
+
+    static func isKnownCommand(_ arg: String) -> Bool {
+        knownCommands.contains(arg)
+    }
+
     static func run() -> Never {
         let args = Array(CommandLine.arguments.dropFirst())
 
