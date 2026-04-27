@@ -231,3 +231,15 @@
 
 /* Notifications */
 "Found %@ of junk files." = "發現 %@ 的垃圾檔案。";
+
+/* Node Cache */
+"Node Cache" = "Node 快取";
+"npm, yarn, and pnpm download caches" = "npm、yarn 和 pnpm 下載快取";
+"npm cache" = "npm 快取";
+"yarn classic cache" = "yarn classic 快取";
+"pnpm content-addressable store" = "pnpm 內容定址儲存區";
+
+/* Docker Cache */
+"Docker Cache" = "Docker 快取";
+"Docker images, containers, and build cache" = "Docker 映像、容器與建置快取";
+"Reclaimable (run `docker system prune -af`)" = "可回收空間（執行 `docker system prune -af`）";
