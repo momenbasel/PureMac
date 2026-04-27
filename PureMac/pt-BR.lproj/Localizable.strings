@@ -231,3 +231,15 @@
 
 /* Notifications */
 "Found %@ of junk files." = "Foram encontrados %@ em arquivos desnecessários.";
+
+/* Node Cache */
+"Node Cache" = "Cache do Node";
+"npm, yarn, and pnpm download caches" = "Caches de download do npm, yarn e pnpm";
+"npm cache" = "cache do npm";
+"yarn classic cache" = "cache do yarn classic";
+"pnpm content-addressable store" = "armazenamento endereçável por conteúdo do pnpm";
+
+/* Docker Cache */
+"Docker Cache" = "Cache do Docker";
+"Docker images, containers, and build cache" = "Imagens, contêineres e cache de build do Docker";
+"Reclaimable (run `docker system prune -af`)" = "Recuperável (execute `docker system prune -af`)";
