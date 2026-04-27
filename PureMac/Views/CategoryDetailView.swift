@@ -25,7 +25,7 @@ struct CategoryDetailView: View {
             }
         }
         .searchable(text: $searchText, prompt: "Filter files")
-        .navigationTitle(category.rawValue)
+        .navigationTitle(Text(LocalizedStringKey(category.rawValue)))
         .toolbar {
             ToolbarItem(placement: .automatic) {
                 Button {
@@ -45,12 +45,13 @@ struct CategoryDetailView: View {
                         appState.deselectAllInCategory(category)
                     }
                     Button(action: { sortDescending.toggle() }) {
-                        Label(
-                            sortDescending ? "Largest First" : "Smallest First",
-                            systemImage: "arrow.up.arrow.down"
-                        )
+                        Label {
+                            Text(LocalizedStringKey(sortDescending ? "Largest First" : "Smallest First"))
+                        } icon: {
+                            Image(systemName: "arrow.up.arrow.down")
+                        }
                     }
-                    .help(sortDescending ? "Sorted: Largest First" : "Sorted: Smallest First")
+                    .help(NSLocalizedString(sortDescending ? "Sorted: Largest First" : "Sorted: Smallest First", comment: ""))
                 }
             }
 
@@ -62,16 +63,17 @@ struct CategoryDetailView: View {
                         Button {
                             showConfirmation = true
                         } label: {
-                            Label(
-                                "Clean \(selectedCount) items",
-                                systemImage: "trash"
-                            )
+                            Label {
+                                Text(String(format: String(localized: "Clean %lld items"), Int64(selectedCount)))
+                            } icon: {
+                                Image(systemName: "trash")
+                            }
                         }
                     }
                 }
             }
         }
-        .confirmationDialog("Clean \(ByteCountFormatter.string(fromByteCount: appState.selectedSizeInCategory(category), countStyle: .file))?", isPresented: $showConfirmation, titleVisibility: .visible) {
+        .confirmationDialog(cleanConfirmationTitle, isPresented: $showConfirmation, titleVisibility: .visible) {
             Button("Clean", role: .destructive) {
                 appState.cleanCategory(category)
             }
@@ -79,6 +81,13 @@ struct CategoryDetailView: View {
         } message: {
             Text("This will permanently delete the selected files. This cannot be undone.")
         }
+    }
+
+    private var cleanConfirmationTitle: String {
+        String(
+            format: String(localized: "Clean %@?"),
+            ByteCountFormatter.string(fromByteCount: appState.selectedSizeInCategory(category), countStyle: .file)
+        )
     }
 
     // MARK: - File List
@@ -95,7 +104,13 @@ struct CategoryDetailView: View {
             } header: {
                 let selectedCount = appState.selectedCountInCategory(category)
                 let totalCount = result.itemCount
-                Text("\(selectedCount) of \(totalCount) selected")
+                Text(
+                    String(
+                        format: String(localized: "%lld of %lld selected"),
+                        Int64(selectedCount),
+                        Int64(totalCount)
+                    )
+                )
             }
         }
     }

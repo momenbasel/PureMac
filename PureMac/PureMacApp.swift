@@ -16,6 +16,8 @@ struct PureMacApp: App {
     @AppStorage("PureMac.OnboardingComplete") private var onboardingComplete = false
 
     init() {
+        // XCTest injects launch arguments that should not trigger CLI mode.
+        guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else { return }
         // Enter CLI mode only when the first arg is a known command. Xcode and
         // LaunchServices inject args like -NSDocumentRevisionsDebugMode and
         // -psn_<pid> that must not be interpreted as CLI commands.

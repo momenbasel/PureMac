@@ -42,10 +42,14 @@ struct MainWindow: View {
             let grouped = Dictionary(grouping: allSidebarItems, by: \.group)
             let order = ["Home", "Applications", "Cleaning"]
             ForEach(order, id: \.self) { group in
-                Section(group) {
+                Section {
                     ForEach(grouped[group] ?? [], id: \.section) { item in
                         HStack {
-                            Label(item.label, systemImage: item.icon)
+                            Label {
+                                Text(LocalizedStringKey(item.label))
+                            } icon: {
+                                Image(systemName: item.icon)
+                            }
                             Spacer()
                             if let badge = item.badge {
                                 Text(badge)
@@ -55,6 +59,8 @@ struct MainWindow: View {
                         }
                         .tag(item.section)
                     }
+                } header: {
+                    Text(LocalizedStringKey(group))
                 }
             }
         }

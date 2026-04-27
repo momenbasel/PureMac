@@ -1,13 +1,13 @@
 import SwiftUI
 
 struct EmptyStateView: View {
-    let title: String
+    let title: LocalizedStringKey
     let systemImage: String
-    let description: String
+    let description: LocalizedStringKey
     var action: (() -> Void)?
-    var actionLabel: String?
+    var actionLabel: LocalizedStringKey?
 
-    init(_ title: String, systemImage: String, description: String, action: (() -> Void)? = nil, actionLabel: String? = nil) {
+    init(_ title: LocalizedStringKey, systemImage: String, description: LocalizedStringKey, action: (() -> Void)? = nil, actionLabel: LocalizedStringKey? = nil) {
         self.title = title
         self.systemImage = systemImage
         self.description = description
