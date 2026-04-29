@@ -30,6 +30,7 @@ final class AppState: ObservableObject {
     @Published var deselectedItems: Set<UUID> = []
     @Published var hasFullDiskAccess: Bool = true
     @Published var fdaBannerDismissed: Bool = false
+    @Published var cleanError: String?
 
     // MARK: - App Uninstaller State
 
@@ -122,9 +123,9 @@ final class AppState: ObservableObject {
 
     func removeSelectedFiles() {
         // Safety guard: never allow a high-risk home dotpath (listed in
-        // Conditions.swift) to be sent to trashViaFinder no matter how it
-        // ended up in the selection. Catches selection-time additions that
-        // slipped past the scanner-side filters.
+        // Conditions.swift) to be trashed no matter how it ended up in the
+        // selection. Catches selection-time additions that slipped past the
+        // scanner-side filters.
         let allURLs = Array(selectedFiles)
         let (urls, blocked): ([URL], [URL]) = allURLs.reduce(into: ([], [])) { acc, url in
             let resolved = url.resolvingSymlinksInPath().path
@@ -149,47 +150,42 @@ final class AppState: ObservableObject {
             }
             return
         }
-        trashViaFinder(urls: urls) { [weak self] success in
+        trashDirectly(urls: urls) { [weak self] removed, failed in
             DispatchQueue.main.async {
                 guard let self else { return }
-                // Check which files were actually removed from disk
-                let removed = urls.filter { !FileManager.default.fileExists(atPath: $0.path) }
                 if !removed.isEmpty {
                     self.discoveredFiles.removeAll { removed.contains($0) }
                     self.selectedFiles.subtract(removed)
                     Logger.shared.log("Removed \(removed.count) files", level: .info)
                 }
-                let failed = urls.count - removed.count
-                if failed > 0 {
-                    self.removalError = "\(failed) file\(failed == 1 ? "" : "s") could not be removed. Grant Full Disk Access in System Settings → Privacy & Security to allow PureMac to manage all files."
-                    Logger.shared.log("Failed to remove \(failed) files — likely missing FDA", level: .error)
+                if !failed.isEmpty {
+                    self.removalError = "\(failed.count) file\(failed.count == 1 ? "" : "s") could not be removed. Grant Full Disk Access in System Settings → Privacy & Security to allow PureMac to manage all files."
+                    Logger.shared.log("Failed to remove \(failed.count) files — likely missing FDA", level: .error)
                 }
             }
         }
     }
 
-    /// Uses Finder via AppleScript to move files to Trash.
-    /// This triggers the standard macOS authorization prompt for protected files.
-    private func trashViaFinder(urls: [URL], completion: @escaping (Bool) -> Void) {
-        let posixPaths = urls.map { "\"\($0.path)\"" }.joined(separator: ", ")
-        let script = """
-        tell application "Finder"
-            set theFiles to {}
-            repeat with p in {\(posixPaths)}
-                set end of theFiles to (POSIX file p as alias)
-            end repeat
-            delete theFiles
-        end tell
-        """
+    /// Move files to the Trash via FileManager.trashItem so the syscall
+    /// originates from PureMac itself — TCC then registers PureMac in the
+    /// Full Disk Access list. The previous AppleScript-via-Finder bridge
+    /// caused the syscall to originate from Finder, which is why granting
+    /// FDA to PureMac made no difference (issue #75).
+    private func trashDirectly(urls: [URL], completion: @escaping ([URL], [URL]) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
-            let appleScript = NSAppleScript(source: script)
-            var errorInfo: NSDictionary?
-            appleScript?.executeAndReturnError(&errorInfo)
-            let success = errorInfo == nil
-            if let errorInfo {
-                Logger.shared.log("Finder trash error: \(errorInfo)", level: .error)
+            var removed: [URL] = []
+            var failed: [URL] = []
+            for url in urls {
+                var resulting: NSURL?
+                do {
+                    try FileManager.default.trashItem(at: url, resultingItemURL: &resulting)
+                    removed.append(url)
+                } catch {
+                    Logger.shared.log("Trash failed for \(url.path): \(error.localizedDescription)", level: .error)
+                    failed.append(url)
+                }
             }
-            completion(success)
+            completion(removed, failed)
         }
     }
 
@@ -393,18 +389,44 @@ final class AppState: ObservableObject {
         cleanProgress = 0
 
         Task {
-            let result = await cleaningEngine.cleanItems(itemsToClean) { [weak self] progress in
+            var result = await cleaningEngine.cleanItems(itemsToClean) { [weak self] progress in
                 Task { @MainActor [weak self] in
                     self?.cleanProgress = progress
                     self?.scanState = .cleaning(progress: progress)
                 }
             }
 
+            // Escalate root-owned items via "with administrator privileges".
+            // One auth prompt covers the entire batch.
+            if !result.requiresAdmin.isEmpty {
+                let admin = await cleaningEngine.cleanWithAdminPrivileges(items: result.requiresAdmin)
+                result.cleanedPaths.formUnion(admin.cleanedPaths)
+                result.itemsCleaned += admin.itemsCleaned
+                result.freedSpace += admin.freedSpace
+                result.errors.append(contentsOf: admin.errors)
+            }
+
             totalFreedSpace = result.freedSpace
             lastCleanedDate = Date()
 
-            categoryResults = [:]
-            totalJunkSize = 0
+            for (cat, catResult) in categoryResults {
+                let remaining = catResult.items.filter { !result.cleanedPaths.contains($0.path) }
+                if remaining.isEmpty {
+                    categoryResults.removeValue(forKey: cat)
+                } else {
+                    categoryResults[cat] = CategoryResult(
+                        category: cat,
+                        items: remaining,
+                        totalSize: remaining.reduce(0) { $0 + $1.size }
+                    )
+                }
+            }
+            totalJunkSize = categoryResults.values.reduce(0) { $0 + $1.totalSize }
+
+            if !result.errors.isEmpty {
+                cleanError = "\(result.errors.count) item\(result.errors.count == 1 ? "" : "s") couldn't be removed. Check the log for details."
+            }
+
             scanState = .cleaned
             loadDiskInfo()
 
@@ -424,18 +446,42 @@ final class AppState: ObservableObject {
         cleanProgress = 0
 
         Task {
-            let cleanResult = await cleaningEngine.cleanItems(selectedItems) { [weak self] progress in
+            var cleanResult = await cleaningEngine.cleanItems(selectedItems) { [weak self] progress in
                 Task { @MainActor [weak self] in
                     self?.cleanProgress = progress
                     self?.scanState = .cleaning(progress: progress)
                 }
             }
 
+            if !cleanResult.requiresAdmin.isEmpty {
+                let admin = await cleaningEngine.cleanWithAdminPrivileges(items: cleanResult.requiresAdmin)
+                cleanResult.cleanedPaths.formUnion(admin.cleanedPaths)
+                cleanResult.itemsCleaned += admin.itemsCleaned
+                cleanResult.freedSpace += admin.freedSpace
+                cleanResult.errors.append(contentsOf: admin.errors)
+            }
+
             totalFreedSpace = cleanResult.freedSpace
             lastCleanedDate = Date()
 
-            categoryResults.removeValue(forKey: category)
+            if let existing = categoryResults[category] {
+                let remaining = existing.items.filter { !cleanResult.cleanedPaths.contains($0.path) }
+                if remaining.isEmpty {
+                    categoryResults.removeValue(forKey: category)
+                } else {
+                    categoryResults[category] = CategoryResult(
+                        category: category,
+                        items: remaining,
+                        totalSize: remaining.reduce(0) { $0 + $1.size }
+                    )
+                }
+            }
             totalJunkSize = categoryResults.values.reduce(0) { $0 + $1.totalSize }
+
+            if !cleanResult.errors.isEmpty {
+                cleanError = "\(cleanResult.errors.count) item\(cleanResult.errors.count == 1 ? "" : "s") couldn't be removed. Check the log for details."
+            }
+
             scanState = .cleaned
             loadDiskInfo()
 

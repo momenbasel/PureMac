@@ -182,11 +182,11 @@ actor ScanEngine {
                 options: [.skipsHiddenFiles, .skipsPackageDescendants]
             ) else { continue }
 
-            var depth = 0
+            // No entry cap. A 5k cap was here previously and meant any user
+            // with hundreds of thousands of small files (e.g. node_modules
+            // checkouts) would never see anything past entry 5k — the
+            // scattered 100+ MB files were always past that bound.
             for case let fileURL as URL in enumerator {
-                depth += 1
-                if depth > 5000 { break } // Safety limit
-
                 guard let resourceValues = try? fileURL.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey, .isRegularFileKey]),
                       let isFile = resourceValues.isRegularFile, isFile,
                       let fileSize = resourceValues.fileSize

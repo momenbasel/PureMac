@@ -106,6 +106,14 @@ struct OrphanListView: View {
     }
 
     private func fileSize(_ url: URL) -> Int64? {
+        if let values = try? url.resourceValues(forKeys: [.totalFileAllocatedSizeKey]),
+           let size = values.totalFileAllocatedSize, size > 0 {
+            return Int64(size)
+        }
+        if let values = try? url.resourceValues(forKeys: [.fileAllocatedSizeKey]),
+           let size = values.fileAllocatedSize {
+            return Int64(size)
+        }
         guard let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
               let size = attrs[.size] as? Int64 else { return nil }
         return size

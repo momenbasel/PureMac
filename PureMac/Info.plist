@@ -24,5 +24,17 @@
 	<string>public.app-category.utilities</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright 2026. MIT License.</string>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>PureMac needs access to your Desktop to find junk and orphaned files.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>PureMac needs access to your Documents to find junk and orphaned files.</string>
+	<key>NSDownloadsFolderUsageDescription</key>
+	<string>PureMac needs access to your Downloads to find junk and orphaned files.</string>
+	<key>NSRemovableVolumesUsageDescription</key>
+	<string>PureMac needs access to removable volumes to scan for junk files.</string>
+	<key>NSSystemAdministrationUsageDescription</key>
+	<string>PureMac needs system administration access to clean caches and uninstall apps completely.</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>PureMac uses Apple Events to interact with Finder when revealing files.</string>
 </dict>
 </plist>
