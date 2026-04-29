@@ -13,15 +13,22 @@ struct CategoryDetailView: View {
     }
 
     var body: some View {
-        Group {
-            if let result = result {
-                if result.items.isEmpty {
-                    EmptyStateView("All Clean", systemImage: "checkmark.circle", description: "No junk files found in this category.")
+        VStack(spacing: 0) {
+            heroCard
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                .padding(.bottom, 12)
+
+            Group {
+                if let result = result {
+                    if result.items.isEmpty {
+                        EmptyStateView("All Clean", systemImage: "checkmark.circle", description: "No junk files found in this category.")
+                    } else {
+                        fileList(result)
+                    }
                 } else {
-                    fileList(result)
+                    EmptyStateView("Not Scanned", systemImage: category.icon, description: "Run a scan to analyze this category.", action: { appState.scanSingleCategory(category) }, actionLabel: "Scan Now")
                 }
-            } else {
-                EmptyStateView("Not Scanned", systemImage: category.icon, description: "Run a scan to analyze this category.", action: { appState.scanSingleCategory(category) }, actionLabel: "Scan Now")
             }
         }
         .searchable(text: $searchText, prompt: "Filter files")
@@ -78,6 +85,47 @@ struct CategoryDetailView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will permanently delete the selected files. This cannot be undone.")
+        }
+    }
+
+    // MARK: - Hero
+
+    private var heroCard: some View {
+        let totalSize = result?.totalSize ?? 0
+        let itemCount = result?.itemCount ?? 0
+        let isScanning = appState.scanState.isActive
+
+        return CardSurface(padding: 18) {
+            HStack(alignment: .center, spacing: 16) {
+                IconTile(systemName: category.icon, tint: category.color, size: 56, corner: 14)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(category.rawValue)
+                        .font(.system(size: 22, weight: .bold))
+                    Text(category.description)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                    if itemCount > 0 {
+                        Text("\(itemCount) items · \(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))")
+                            .font(.system(size: 11.5, weight: .medium))
+                            .foregroundStyle(category.color)
+                            .padding(.top, 2)
+                    }
+                }
+
+                Spacer()
+
+                Button {
+                    appState.scanSingleCategory(category)
+                } label: {
+                    Label(isScanning ? "Scanning…" : (result == nil ? "Scan" : "Rescan"),
+                          systemImage: "arrow.clockwise")
+                        .font(.system(size: 12.5, weight: .semibold))
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                .disabled(isScanning)
+            }
         }
     }
 

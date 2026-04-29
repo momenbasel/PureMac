@@ -15,14 +15,16 @@
 		47C5ECD49C4DD75F271DB6CE /* StringNormalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D3AC5F17D7CA94FAB1E8D7A /* StringNormalization.swift */; };
 		48D1431A7C99C19EEBDB056B /* CleaningEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A8DE5D45BA19E2670B57DC5 /* CleaningEngine.swift */; };
 		4F754D89F4CE5142BE384062 /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31F91226CDCFBB8E303B7DA /* AppConstants.swift */; };
+		535B23C0108C06475215B8E8 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AB003A7751F05727DBFD1A5 /* AppTheme.swift */; };
 		75B5F0401D37F2872B1AD85A /* AppListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60E6BC61614B27C065BB18C9 /* AppListView.swift */; };
 		76B132F9C499225D33E0D075 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 424F7B28624C271620E13BBC /* EmptyStateView.swift */; };
 		826A750D2D7EC14C2AE306A3 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3667D46D8E2004EB4D73835A /* Models.swift */; };
 		8947F0CE448791BD50EECF46 /* Conditions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB94E06E145558123BB5BFB3 /* Conditions.swift */; };
 		93743B036059418560D876E6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A8D39C3C250F26302EC45AB /* SettingsView.swift */; };
+		95278ABDCF5F4D6AC60503B1 /* AppearancePill.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92259B3E9F4468865F15DEEC /* AppearancePill.swift */; };
 		9AA80E035DF7B33F6EE118DF /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED1B71D5F9510582E869CFD /* AppState.swift */; };
 		9BB5AAA574AFED6C27A3F8E2 /* AppPathFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0FEE7141871ED5F9E36121 /* AppPathFinder.swift */; };
-		A89DF967EC9E5E8123B2925A /* SmartScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BA091943263913276F3CCF /* SmartScanView.swift */; };
+		A2AE68CC75CB72D6B10CBDF5 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F661A0F64CF93E482CB1728F /* DashboardView.swift */; };
 		A9C3A1F643C26930F442E729 /* OrphanSafetyPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AE790496C936424EF98320A /* OrphanSafetyPolicy.swift */; };
 		B52938BBD11842631314543D /* CategoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B0AF194677EAC1D5568785 /* CategoryDetailView.swift */; };
 		BC6C800216343438413349A3 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D4FD34378988D430A582ED0 /* OnboardingView.swift */; };
@@ -42,7 +44,7 @@
 		01B2C5F66B6D812572BD4F05 /* CLI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLI.swift; sourceTree = "<group>"; };
 		02E502E2B5C6AECC76E5CFEF /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		10B0AF194677EAC1D5568785 /* CategoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryDetailView.swift; sourceTree = "<group>"; };
-		11BA091943263913276F3CCF /* SmartScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartScanView.swift; sourceTree = "<group>"; };
+		1AB003A7751F05727DBFD1A5 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		1D3AC5F17D7CA94FAB1E8D7A /* StringNormalization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringNormalization.swift; sourceTree = "<group>"; };
 		23486A54A82EE3865B784D1C /* AppInfoFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppInfoFetcher.swift; sourceTree = "<group>"; };
 		2641C6376DD6F5889F35510E /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
@@ -63,6 +65,7 @@
 		63581B70F9B10231964E3602 /* PureMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PureMacApp.swift; sourceTree = "<group>"; };
 		77D3D9A9BC52839E6D0A22BC /* Locations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Locations.swift; sourceTree = "<group>"; };
 		798B80977D14647A5691B0A0 /* AppFilesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFilesView.swift; sourceTree = "<group>"; };
+		92259B3E9F4468865F15DEEC /* AppearancePill.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearancePill.swift; sourceTree = "<group>"; };
 		9F04B811BB0012F6D2F07F91 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		9F510F232341EE18F11DC934 /* MainWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindow.swift; sourceTree = "<group>"; };
 		A711CDF5285F68775D9B5513 /* ScanEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanEngine.swift; sourceTree = "<group>"; };
@@ -75,6 +78,7 @@
 		E866A1541D289C69144A5E62 /* FullDiskAccessManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullDiskAccessManager.swift; sourceTree = "<group>"; };
 		EEF15CB1B8EFCA78EF491824 /* ScanError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanError.swift; sourceTree = "<group>"; };
 		F31F91226CDCFBB8E303B7DA /* AppConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstants.swift; sourceTree = "<group>"; };
+		F661A0F64CF93E482CB1728F /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -107,9 +111,9 @@
 			isa = PBXGroup;
 			children = (
 				10B0AF194677EAC1D5568785 /* CategoryDetailView.swift */,
+				F661A0F64CF93E482CB1728F /* DashboardView.swift */,
 				9F510F232341EE18F11DC934 /* MainWindow.swift */,
 				3D4FD34378988D430A582ED0 /* OnboardingView.swift */,
-				11BA091943263913276F3CCF /* SmartScanView.swift */,
 				DAD2EC78EB98016ADA27D114 /* Apps */,
 				8AE26715B5748307483A1A5E /* Components */,
 				9D3C2DC382F5D4B77DFD218B /* Orphans */,
@@ -148,6 +152,8 @@
 		8AE26715B5748307483A1A5E /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				92259B3E9F4468865F15DEEC /* AppearancePill.swift */,
+				1AB003A7751F05727DBFD1A5 /* AppTheme.swift */,
 				424F7B28624C271620E13BBC /* EmptyStateView.swift */,
 			);
 			path = Components;
@@ -201,11 +207,11 @@
 			children = (
 				B2EA41E1096FA8E3B916AD13 /* Assets.xcassets */,
 				46660271CFF167AB0FE7371D /* Info.plist */,
+				241E0895B09C71AB423B2F9E /* Localizable.strings */,
 				5664D2BDAEAA9AE3A53DB364 /* PureMac.entitlements */,
 				63581B70F9B10231964E3602 /* PureMacApp.swift */,
 				D4333B07691BD85CAE0E5B15 /* Core */,
 				7C1729F88C0E5563E1A3DB40 /* Extensions */,
-				241E0895B09C71AB423B2F9E /* Localizable.strings */,
 				F283C00EB52AB140F61500A3 /* Logic */,
 				3CF46713F75B81F0F86D1C6F /* Models */,
 				6184B2EC3D01E6E95633406E /* Services */,
@@ -273,6 +279,7 @@
 				};
 			};
 			buildConfigurationList = 2ABAFAE07AA42044AE58F688 /* Build configuration list for PBXProject "PureMac" */;
+			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -286,7 +293,6 @@
 			mainGroup = 13CF0676D0E93925F46C13AA;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 4562CA9E5625FA4EEEFECB6D /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -318,10 +324,13 @@
 				75B5F0401D37F2872B1AD85A /* AppListView.swift in Sources */,
 				9BB5AAA574AFED6C27A3F8E2 /* AppPathFinder.swift in Sources */,
 				9AA80E035DF7B33F6EE118DF /* AppState.swift in Sources */,
+				535B23C0108C06475215B8E8 /* AppTheme.swift in Sources */,
+				95278ABDCF5F4D6AC60503B1 /* AppearancePill.swift in Sources */,
 				F2FA881A4B2209CC2A6342FB /* CLI.swift in Sources */,
 				B52938BBD11842631314543D /* CategoryDetailView.swift in Sources */,
 				48D1431A7C99C19EEBDB056B /* CleaningEngine.swift in Sources */,
 				8947F0CE448791BD50EECF46 /* Conditions.swift in Sources */,
+				A2AE68CC75CB72D6B10CBDF5 /* DashboardView.swift in Sources */,
 				76B132F9C499225D33E0D075 /* EmptyStateView.swift in Sources */,
 				2253F11BDF561B617439C96B /* FullDiskAccessManager.swift in Sources */,
 				E60B0A2C5D0A6CAE35BF4DFB /* Locations.swift in Sources */,
@@ -336,7 +345,6 @@
 				D50EB059E741011EB2523731 /* ScanError.swift in Sources */,
 				27F449EDD1B082FE11FEC9DF /* SchedulerService.swift in Sources */,
 				93743B036059418560D876E6 /* SettingsView.swift in Sources */,
-				A89DF967EC9E5E8123B2925A /* SmartScanView.swift in Sources */,
 				47C5ECD49C4DD75F271DB6CE /* StringNormalization.swift in Sources */,
 				340E424F759ACCDE7372F99F /* Theme.swift in Sources */,
 			);
