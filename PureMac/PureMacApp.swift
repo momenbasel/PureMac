@@ -6,6 +6,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSWindow.allowsAutomaticWindowTabbing = false
+        // Touch TCC-protected paths so macOS registers PureMac in the
+        // Full Disk Access pane on first launch (fixes issue #75).
+        FullDiskAccessManager.shared.triggerRegistration()
     }
 }
 
@@ -13,6 +16,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 struct PureMacApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var appState = AppState()
+    @StateObject private var theme = ThemeManager.shared
     @AppStorage("PureMac.OnboardingComplete") private var onboardingComplete = false
 
     init() {
@@ -27,13 +31,17 @@ struct PureMacApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if onboardingComplete {
-                MainWindow()
-                    .environmentObject(appState)
-                    .frame(minWidth: 900, minHeight: 600)
-            } else {
-                OnboardingView(isComplete: $onboardingComplete)
+            Group {
+                if onboardingComplete {
+                    MainWindow()
+                        .environmentObject(appState)
+                        .frame(minWidth: 900, minHeight: 600)
+                } else {
+                    OnboardingView(isComplete: $onboardingComplete)
+                }
             }
+            .environmentObject(theme)
+            .preferredColorScheme(theme.appearance.colorScheme)
         }
         .windowStyle(.automatic)
         .windowToolbarStyle(.unified)

@@ -5,11 +5,13 @@ struct OnboardingView: View {
     @State private var currentPage = 0
     @State private var hasFullDiskAccess = false
     @State private var appeared = false
+    @State private var hasOpenedSettings = false
+    @State private var showDiagnostics = false
 
     // Per-path access checks
     @State private var accessResults: [ProtectedPath] = ProtectedPath.allPaths
 
-    private let timer = Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()
+    private let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -158,84 +160,180 @@ struct OnboardingView: View {
     // MARK: - Full Disk Access
 
     private var fdaPage: some View {
-        VStack(spacing: 16) {
-            Spacer()
-
+        VStack(spacing: 14) {
             Image(systemName: hasFullDiskAccess ? "checkmark.shield.fill" : "lock.shield")
-                .font(.system(size: 44))
+                .font(.system(size: 40))
                 .foregroundStyle(hasFullDiskAccess ? .green : .orange)
                 .animation(.easeInOut(duration: 0.3), value: hasFullDiskAccess)
+                .padding(.top, 8)
 
             Text("Full Disk Access")
                 .font(.title2.bold())
 
             if hasFullDiskAccess {
-                Text("All permissions granted. You're all set!")
-                    .foregroundStyle(.green)
-                    .transition(.opacity.combined(with: .scale))
+                grantedView
+            } else if hasOpenedSettings {
+                instructionsView
             } else {
-                Text("PureMac needs Full Disk Access to scan protected locations.")
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 400)
+                introView
             }
 
-            // Permission checklist
-            VStack(alignment: .leading, spacing: 6) {
-                ForEach(Array(accessResults.enumerated()), id: \.element.id) { index, path in
-                    HStack(spacing: 10) {
-                        Image(systemName: path.accessible ? "checkmark.circle.fill" : "xmark.circle.fill")
-                            .foregroundStyle(path.accessible ? .green : .red.opacity(0.7))
-                            .font(.system(size: 14))
-
-                        Image(systemName: path.icon)
-                            .foregroundStyle(.secondary)
-                            .frame(width: 16)
-
-                        Text(path.label)
-                            .font(.callout)
-
-                        Spacer()
-
-                        Text(path.accessible ? "Accessible" : "Blocked")
-                            .font(.caption)
-                            .foregroundStyle(path.accessible ? .green : .orange)
-                    }
-                    .padding(.vertical, 4)
-                    .padding(.horizontal, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(path.accessible ? Color.green.opacity(0.06) : Color.orange.opacity(0.06))
-                    )
-                    .opacity(appeared ? 1 : 0)
-                    .offset(x: appeared ? 0 : -20)
-                    .animation(.easeOut(duration: 0.4).delay(Double(index) * 0.05), value: appeared)
-                }
-            }
-            .frame(maxWidth: 400)
-            .padding(.vertical, 4)
-
-            if !hasFullDiskAccess {
-                Button {
-                    FullDiskAccessManager.shared.openFullDiskAccessSettings()
-                } label: {
-                    Label("Open System Settings", systemImage: "gear")
-                }
-                .buttonStyle(.borderedProminent)
-                .padding(.top, 4)
-
-                Text("Enable PureMac in Privacy & Security → Full Disk Access")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
+            Spacer(minLength: 0)
         }
-        .padding()
+        .padding(.horizontal)
+        .padding(.bottom, 8)
+        .onAppear {
+            FullDiskAccessManager.shared.triggerRegistration()
+            refreshAccessChecks()
+        }
+        .onChange(of: hasFullDiskAccess) { granted in
+            if granted, currentPage == 1 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                        currentPage = 2
+                    }
+                }
+            }
+        }
         .transition(.asymmetric(
             insertion: .move(edge: .trailing).combined(with: .opacity),
             removal: .move(edge: .leading).combined(with: .opacity)
         ))
+    }
+
+    private var introView: some View {
+        VStack(spacing: 12) {
+            Text("PureMac needs Full Disk Access to uninstall apps, find leftover files, and clean protected caches.")
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 420)
+
+            Button {
+                openSettingsAndAdvance()
+            } label: {
+                Label("Open System Settings", systemImage: "gear")
+                    .frame(minWidth: 200)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .keyboardShortcut(.defaultAction)
+            .padding(.top, 4)
+
+            Text("We'll guide you through the next steps.")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+        }
+    }
+
+    private var instructionsView: some View {
+        VStack(spacing: 10) {
+            Text("In System Settings, do this:")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+
+            VStack(alignment: .leading, spacing: 8) {
+                stepRow(number: 1, text: "Privacy & Security → Full Disk Access")
+                stepRow(number: 2, text: "Find **PureMac** and turn the toggle on")
+                stepRow(number: 3, text: "Authenticate with Touch ID or your password")
+            }
+            .frame(maxWidth: 420, alignment: .leading)
+
+            HStack(spacing: 8) {
+                Button {
+                    FullDiskAccessManager.shared.openFullDiskAccessSettings()
+                } label: {
+                    Label("Reopen Settings", systemImage: "gear")
+                }
+
+                Menu {
+                    Button("PureMac isn't in the list — reveal it") {
+                        FullDiskAccessManager.shared.revealAppInFinder()
+                    }
+                    Button("Reset permissions and re-prompt") {
+                        _ = FullDiskAccessManager.shared.resetFullDiskAccess()
+                        FullDiskAccessManager.shared.triggerRegistration()
+                        refreshAccessChecks()
+                    }
+                    Divider()
+                    Button(showDiagnostics ? "Hide diagnostics" : "Show diagnostics") {
+                        showDiagnostics.toggle()
+                    }
+                } label: {
+                    Label("Trouble?", systemImage: "questionmark.circle")
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+            }
+            .padding(.top, 4)
+
+            HStack(spacing: 6) {
+                ProgressView().controlSize(.small)
+                Text("Waiting for permission…")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.top, 2)
+
+            if showDiagnostics {
+                diagnosticsList
+            }
+        }
+    }
+
+    private var grantedView: some View {
+        VStack(spacing: 8) {
+            Text("Permission granted.")
+                .foregroundStyle(.green)
+                .font(.callout.weight(.semibold))
+            Text("PureMac can now manage protected files.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .transition(.opacity.combined(with: .scale))
+    }
+
+    private func stepRow(number: Int, text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Text("\(number)")
+                .font(.callout.bold())
+                .foregroundStyle(.white)
+                .frame(width: 22, height: 22)
+                .background(Circle().fill(Color.accentColor))
+            Text(.init(text))
+                .font(.callout)
+            Spacer()
+        }
+    }
+
+    private var diagnosticsList: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(accessResults) { path in
+                HStack(spacing: 8) {
+                    Image(systemName: path.accessible ? "checkmark.circle.fill" : "xmark.circle")
+                        .foregroundStyle(path.accessible ? .green : .red.opacity(0.7))
+                        .font(.system(size: 11))
+                    Image(systemName: path.icon)
+                        .foregroundStyle(.secondary)
+                        .frame(width: 14)
+                    Text(path.label)
+                        .font(.caption)
+                    Spacer()
+                    Text(path.accessible ? "OK" : "Blocked")
+                        .font(.caption2)
+                        .foregroundStyle(path.accessible ? .green : .orange)
+                }
+            }
+        }
+        .frame(maxWidth: 360)
+        .padding(8)
+        .background(RoundedRectangle(cornerRadius: 6).fill(Color.secondary.opacity(0.08)))
+    }
+
+    private func openSettingsAndAdvance() {
+        FullDiskAccessManager.shared.openFullDiskAccessSettings()
+        withAnimation(.easeInOut(duration: 0.25)) {
+            hasOpenedSettings = true
+        }
     }
 
     // MARK: - Ready
