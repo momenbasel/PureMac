@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<title>PureMac — Proposed UI</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f4f4f7;
+    --bg-elev: #ffffff;
+    --bg-glass: rgba(255,255,255,0.72);
+    --sidebar: #fafafa;
+    --border: rgba(0,0,0,0.08);
+    --border-strong: rgba(0,0,0,0.14);
+    --text: #1c1c1e;
+    --text-2: #6c6c70;
+    --text-3: #98989d;
+    --accent: #0a84ff;
+    --accent-soft: rgba(10,132,255,0.12);
+    --good: #30c779;
+    --warn: #ff9f0a;
+    --bad: #ff453a;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04), 0 0 0 0.5px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.06);
+    --shadow-lg: 0 16px 48px rgba(0,0,0,0.10), 0 0 0 0.5px rgba(0,0,0,0.08);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+    --grad-hero: radial-gradient(ellipse at top left, rgba(10,132,255,0.12), transparent 60%),
+                 radial-gradient(ellipse at bottom right, rgba(48,199,121,0.10), transparent 50%);
+  }
+  [data-theme="dark"] {
+    --bg: #1a1a1c;
+    --bg-elev: #232326;
+    --bg-glass: rgba(35,35,38,0.72);
+    --sidebar: #1f1f22;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.14);
+    --text: #f2f2f7;
+    --text-2: #a8a8ad;
+    --text-3: #6c6c70;
+    --accent: #409cff;
+    --accent-soft: rgba(64,156,255,0.18);
+    --good: #34d399;
+    --warn: #fbbf24;
+    --bad: #f87171;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(255,255,255,0.06);
+    --shadow-md: 0 8px 24px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(255,255,255,0.06);
+    --shadow-lg: 0 24px 64px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.08);
+    --grad-hero: radial-gradient(ellipse at top left, rgba(64,156,255,0.20), transparent 55%),
+                 radial-gradient(ellipse at bottom right, rgba(52,211,153,0.15), transparent 50%);
+  }
+
+  html, body {
+    height: 100%;
+    font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", sans-serif;
+    font-size: 13.5px;
+    color: var(--text);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  body { display: flex; align-items: center; justify-content: center; padding: 24px; }
+
+  .window {
+    width: 100%; max-width: 1180px; height: calc(100vh - 48px); max-height: 760px;
+    display: flex; flex-direction: column;
+    background: var(--bg-elev);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .titlebar {
+    height: 44px; flex-shrink: 0;
+    display: flex; align-items: center;
+    padding: 0 14px;
+    background: var(--bg-glass);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 0.5px solid var(--border);
+    gap: 14px;
+  }
+  .traffic { display: flex; gap: 8px; }
+  .traffic .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .traffic .red { background: #ff5f57; }
+  .traffic .yellow { background: #febc2e; }
+  .traffic .green { background: #28c840; }
+  .titlebar .brand {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 600;
+    color: var(--text);
+  }
+  .brand-mark {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, var(--accent), #30c779);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 6px rgba(10,132,255,0.4);
+  }
+  .titlebar .spacer { flex: 1; }
+  .theme-toggle {
+    display: flex; gap: 2px; padding: 2px;
+    background: var(--bg);
+    border-radius: 8px; border: 0.5px solid var(--border);
+  }
+  .theme-toggle button {
+    border: 0; background: transparent; color: var(--text-2);
+    padding: 5px 9px; border-radius: 6px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .theme-toggle button.active { background: var(--bg-elev); color: var(--text); box-shadow: var(--shadow-sm); }
+  .icon-btn {
+    border: 0; background: transparent; color: var(--text-2);
+    width: 30px; height: 30px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .icon-btn:hover { background: var(--accent-soft); color: var(--accent); }
+
+  .body { flex: 1; display: flex; min-height: 0; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 232px; flex-shrink: 0;
+    background: var(--sidebar);
+    border-right: 0.5px solid var(--border);
+    overflow-y: auto;
+    padding: 8px 8px 14px;
+    display: flex; flex-direction: column;
+  }
+  .sidebar h6 {
+    font-size: 10.5px; font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-3);
+    padding: 14px 12px 6px;
+    letter-spacing: 0.5px;
+  }
+  .nav-row {
+    display: flex; align-items: center;
+    padding: 7px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text);
+    gap: 10px;
+    margin: 1px 0;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .nav-row:hover { background: var(--accent-soft); }
+  .nav-row.active { background: var(--accent); color: white; box-shadow: 0 4px 12px rgba(10,132,255,0.35); }
+  .nav-row.active .nav-icon { color: white; background: rgba(255,255,255,0.18); }
+  .nav-row.active .badge { background: rgba(255,255,255,0.22); color: white; }
+  .nav-icon {
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s ease;
+  }
+  .nav-icon svg { width: 14px; height: 14px; }
+  .nav-row .label { flex: 1; }
+  .nav-row .badge {
+    font-size: 11px;
+    background: var(--bg);
+    color: var(--text-2);
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+  }
+
+  .sidebar-footer {
+    margin-top: auto; padding: 12px 8px 4px;
+    border-top: 0.5px solid var(--border);
+  }
+  .sidebar-footer .health {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px;
+  }
+  .sidebar-footer .health .dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--good);
+    box-shadow: 0 0 0 4px rgba(48,199,121,0.18);
+  }
+  .sidebar-footer .health .meta { display: flex; flex-direction: column; gap: 1px; flex: 1; }
+  .sidebar-footer .health .label { font-size: 11px; color: var(--text-3); }
+  .sidebar-footer .health .value { font-size: 13px; font-weight: 600; }
+
+  /* Detail */
+  .detail {
+    flex: 1; overflow-y: auto;
+    background: var(--bg);
+  }
+  .page {
+    padding: 28px 32px 40px;
+    max-width: 880px;
+    margin: 0 auto;
+  }
+
+  /* Hero */
+  .hero {
+    background: var(--bg-elev);
+    border-radius: var(--radius-lg);
+    border: 0.5px solid var(--border);
+    box-shadow: var(--shadow-md);
+    padding: 28px;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 28px;
+    align-items: center;
+    background-image: var(--grad-hero);
+    background-color: var(--bg-elev);
+  }
+  .gauge-wrap { display: flex; align-items: center; justify-content: center; }
+  .gauge {
+    position: relative; width: 180px; height: 180px;
+  }
+  .gauge svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .gauge .track { stroke: var(--border); stroke-width: 14; fill: none; }
+  .gauge .progress {
+    stroke: url(#gradGauge);
+    stroke-width: 14; fill: none;
+    stroke-linecap: round;
+    stroke-dasharray: 502;
+    stroke-dashoffset: 90;
+    filter: drop-shadow(0 4px 12px rgba(10,132,255,0.4));
+  }
+  .gauge .center {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .gauge .score { font-size: 48px; font-weight: 700; letter-spacing: -1px; }
+  .gauge .score-label { font-size: 11px; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .hero-info h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.4px; }
+  .hero-info .sub { color: var(--text-2); margin-bottom: 18px; }
+  .hero-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 0; padding: 9px 16px;
+    border-radius: 9px;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s ease, background 0.15s ease;
+  }
+  .btn svg { width: 14px; height: 14px; }
+  .btn-primary {
+    background: var(--accent); color: white;
+    box-shadow: 0 4px 12px rgba(10,132,255,0.35);
+  }
+  .btn-primary:hover { transform: translateY(-1px); }
+  .btn-ghost {
+    background: var(--bg);
+    color: var(--text);
+    border: 0.5px solid var(--border-strong);
+  }
+  .btn-ghost:hover { background: var(--accent-soft); color: var(--accent); }
+
+  /* Stats grid */
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    margin-top: 20px;
+  }
+  .stat {
+    background: var(--bg-elev);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .stat:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .stat .stat-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .stat .icon-tile {
+    width: 26px; height: 26px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .stat .icon-tile svg { width: 14px; height: 14px; }
+  .stat .label { font-size: 12px; color: var(--text-2); }
+  .stat .value { font-size: 22px; font-weight: 700; letter-spacing: -0.4px; font-variant-numeric: tabular-nums; }
+  .stat .delta { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+  .tile-blue { background: rgba(10,132,255,0.14); color: var(--accent); }
+  .tile-green { background: rgba(48,199,121,0.14); color: var(--good); }
+  .tile-orange { background: rgba(255,159,10,0.14); color: var(--warn); }
+  .tile-purple { background: rgba(175,82,222,0.14); color: #af52de; }
+
+  /* Section header */
+  .section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 28px 0 12px;
+  }
+  .section-head h2 { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; }
+  .section-head .link { color: var(--accent); font-size: 12px; cursor: pointer; }
+
+  /* Quick actions */
+  .quick-actions {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  }
+  .qa {
+    background: var(--bg-elev);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px 14px 14px 14px;
+    cursor: pointer;
+    display: flex; flex-direction: column;
+    gap: 10px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: var(--shadow-sm);
+  }
+  .qa:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .qa .icon-tile { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+  .qa .icon-tile svg { width: 16px; height: 16px; }
+  .qa .qa-title { font-size: 13.5px; font-weight: 600; }
+  .qa .qa-sub { font-size: 11.5px; color: var(--text-2); }
+
+  /* Suggestion cards */
+  .suggestions { display: flex; flex-direction: column; gap: 10px; }
+  .suggestion {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--bg-elev);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .suggestion .icon-tile { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0; }
+  .suggestion .icon-tile svg { width: 16px; height: 16px; }
+  .suggestion .body-text { flex: 1; }
+  .suggestion .body-text .t { font-size: 13.5px; font-weight: 600; }
+  .suggestion .body-text .s { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+  .suggestion .size-pill {
+    padding: 4px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 600;
+    background: var(--accent-soft); color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Generic page */
+  .page-header { margin-bottom: 18px; }
+  .page-header h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.3px; }
+  .page-header p { color: var(--text-2); font-size: 13px; margin-top: 2px; }
+
+  /* List */
+  .list-card {
+    background: var(--bg-elev);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .list-row {
+    display: flex; align-items: center;
+    padding: 12px 16px; gap: 12px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .list-row:last-child { border-bottom: 0; }
+  .list-row .check {
+    width: 16px; height: 16px; border-radius: 4px;
+    border: 1.5px solid var(--border-strong);
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+    cursor: pointer;
+  }
+  .list-row .check.on { background: var(--accent); border-color: var(--accent); }
+  .list-row .check.on::after { content: "✓"; font-size: 11px; font-weight: bold; }
+  .list-row .name { flex: 1; font-size: 13.5px; }
+  .list-row .meta { font-size: 12px; color: var(--text-3); }
+  .list-row .size { font-size: 12.5px; font-weight: 600; color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+  /* FDA banner */
+  .toast {
+    position: relative;
+    background: linear-gradient(135deg, #ff9f0a, #ff6a00);
+    color: white;
+    padding: 14px 18px;
+    border-radius: var(--radius-md);
+    display: flex; align-items: center; gap: 14px;
+    box-shadow: 0 8px 24px rgba(255,159,10,0.35);
+    margin-bottom: 18px;
+  }
+  .toast .icon-tile { background: rgba(255,255,255,0.18); width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+  .toast .body-text { flex: 1; }
+  .toast .body-text .t { font-weight: 700; }
+  .toast .body-text .s { font-size: 12px; opacity: 0.9; margin-top: 1px; }
+  .toast button { background: white; color: #ff6a00; border: 0; padding: 7px 14px; font-size: 12px; font-weight: 700; border-radius: 8px; cursor: pointer; }
+
+  /* Animated scan ring shimmer */
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  .gauge .progress.scanning { animation: pulse 1.6s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="gradGauge" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a84ff" />
+      <stop offset="100%" stop-color="#30c779" />
+    </linearGradient>
+  </defs>
+  <symbol id="i-sparkles" viewBox="0 0 16 16"><path fill="currentColor" d="M8 1l1.4 3.6L13 6l-3.6 1.4L8 11 6.6 7.4 3 6l3.6-1.4zM2 11l.7 1.3L4 13l-1.3.7L2 15l-.7-1.3L0 13l1.3-.7zm12-1l.7 1.3L16 12l-1.3.7L14 14l-.7-1.3L12 12l1.3-.7z"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 16 16"><path fill="currentColor" d="M2 2h5v5H2zm7 0h5v5H9zM2 9h5v5H2zm7 0h5v5H9z"/></symbol>
+  <symbol id="i-broom" viewBox="0 0 16 16"><path fill="currentColor" d="M11 1h2v6l-1 4H4l-1-4V7h2v3h5V7zm-7 11h8v3H4z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 16 16"><path fill="currentColor" d="M5 3V1.5A.5.5 0 015.5 1h5a.5.5 0 01.5.5V3h3v1H2V3h3zm-1 2h8l-1 9.5a1 1 0 01-1 .9H6a1 1 0 01-1-.9z"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 16 16"><path fill="currentColor" d="M3 1h7l3 3v11a1 1 0 01-1 1H3a1 1 0 01-1-1V2a1 1 0 011-1zm7 0v3h3z"/></symbol>
+  <symbol id="i-cpu" viewBox="0 0 16 16"><path fill="currentColor" d="M5 5h6v6H5zM3 6v1H1V6zm0 3v1H1V9zm10-3v1h2V6zm0 3v1h2V9zM6 1h1v2H6zm3 0h1v2H9zM6 13h1v2H6zm3 0h1v2H9z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 16 16"><path fill="currentColor" d="M8 1l6 2v5c0 4-2.7 6.5-6 7-3.3-.5-6-3-6-7V3z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 16 16"><path fill="currentColor" d="M5 6V4a3 3 0 016 0v2h1v9H4V6zm2 0h2V4a1 1 0 00-2 0z"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 16 16"><path fill="currentColor" d="M2 3h4l1.5 1.5H14a1 1 0 011 1V12a1 1 0 01-1 1H2a1 1 0 01-1-1V4a1 1 0 011-1z"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 16 16"><path fill="currentColor" d="M2 3h12v10H2zm.5 1.5L8 9l5.5-4.5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 16 16"><path fill="currentColor" d="M8 1a7 7 0 100 14A7 7 0 008 1zm-.5 3h1v4.3l3 1.7-.5.9L7.5 9z"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 16 16"><path fill="currentColor" d="M8 1c2 3 5 4 5 8a5 5 0 01-10 0c0-2 1-3 2-4 0 2 1 3 2 3-1-3 0-5 1-7z"/></symbol>
+  <symbol id="i-disk" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="currentColor"/><circle cx="8" cy="8" r="2" fill="white"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 16 16"><path fill="currentColor" d="M9 1L3 9h4l-1 6 6-8H8z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="1.5"/><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M11 11l4 4"/></symbol>
+  <symbol id="i-arrow-up" viewBox="0 0 16 16"><path fill="currentColor" d="M8 2l5 5h-3v7H6V7H3z"/></symbol>
+  <symbol id="i-app-grid" viewBox="0 0 16 16"><rect x="2" y="2" width="4" height="4" rx="1" fill="currentColor"/><rect x="10" y="2" width="4" height="4" rx="1" fill="currentColor"/><rect x="2" y="10" width="4" height="4" rx="1" fill="currentColor"/><rect x="10" y="10" width="4" height="4" rx="1" fill="currentColor"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.3"/><path fill="none" stroke="currentColor" stroke-width="1.3" d="M2 8h12M8 2c2 2 2 10 0 12M8 2c-2 2-2 10 0 12"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 16 16"><circle cx="8" cy="8" r="3" fill="currentColor"/><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M3 13l1.5-1.5M11.5 4.5L13 3"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 16 16"><path fill="currentColor" d="M14 10A6 6 0 016 2a7 7 0 108 8z"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M3 13l1.5-1.5M11.5 4.5L13 3"/></symbol>
+</svg>
+
+<div class="window">
+  <div class="titlebar">
+    <div class="traffic">
+      <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
+    </div>
+    <div class="brand">
+      <div class="brand-mark"><svg width="14" height="14"><use href="#i-sparkles"/></svg></div>
+      PureMac
+    </div>
+    <div class="spacer"></div>
+    <div class="theme-toggle" id="themeToggle">
+      <button class="active" data-theme="light"><svg width="14" height="14"><use href="#i-sun"/></svg></button>
+      <button data-theme="dark"><svg width="14" height="14"><use href="#i-moon"/></svg></button>
+    </div>
+    <button class="icon-btn"><svg width="16" height="16"><use href="#i-search"/></svg></button>
+    <button class="icon-btn"><svg width="16" height="16"><use href="#i-gear"/></svg></button>
+  </div>
+
+  <div class="body">
+    <div class="sidebar">
+      <h6>Overview</h6>
+      <div class="nav-row active" data-page="dashboard">
+        <div class="nav-icon"><svg><use href="#i-grid"/></svg></div>
+        <span class="label">Dashboard</span>
+      </div>
+      <div class="nav-row" data-page="smart">
+        <div class="nav-icon"><svg><use href="#i-sparkles"/></svg></div>
+        <span class="label">Smart Scan</span>
+      </div>
+      <div class="nav-row" data-page="lens">
+        <div class="nav-icon"><svg><use href="#i-disk"/></svg></div>
+        <span class="label">Space Lens</span>
+        <span class="badge">new</span>
+      </div>
+
+      <h6>Cleanup</h6>
+      <div class="nav-row" data-page="systemJunk"><div class="nav-icon"><svg><use href="#i-broom"/></svg></div><span class="label">System Junk</span><span class="badge">2.3 GB</span></div>
+      <div class="nav-row" data-page="userCache"><div class="nav-icon"><svg><use href="#i-folder"/></svg></div><span class="label">User Caches</span><span class="badge">1.8 GB</span></div>
+      <div class="nav-row" data-page="mail"><div class="nav-icon"><svg><use href="#i-mail"/></svg></div><span class="label">Mail Attachments</span></div>
+      <div class="nav-row" data-page="trash"><div class="nav-icon"><svg><use href="#i-trash"/></svg></div><span class="label">Trash Bins</span></div>
+      <div class="nav-row" data-page="large"><div class="nav-icon"><svg><use href="#i-doc"/></svg></div><span class="label">Large &amp; Old Files</span></div>
+
+      <h6>Applications</h6>
+      <div class="nav-row" data-page="apps"><div class="nav-icon"><svg><use href="#i-app-grid"/></svg></div><span class="label">Uninstaller</span><span class="badge">142</span></div>
+      <div class="nav-row" data-page="updater"><div class="nav-icon"><svg><use href="#i-arrow-up"/></svg></div><span class="label">Updater</span><span class="badge">7</span></div>
+      <div class="nav-row" data-page="login"><div class="nav-icon"><svg><use href="#i-bolt"/></svg></div><span class="label">Login Items</span></div>
+
+      <h6>Privacy</h6>
+      <div class="nav-row" data-page="privacy"><div class="nav-icon"><svg><use href="#i-shield"/></svg></div><span class="label">Browser Data</span></div>
+      <div class="nav-row" data-page="malware"><div class="nav-icon"><svg><use href="#i-lock"/></svg></div><span class="label">Malware Scan</span></div>
+
+      <h6>Performance</h6>
+      <div class="nav-row" data-page="perf"><div class="nav-icon"><svg><use href="#i-cpu"/></svg></div><span class="label">Free Up RAM</span></div>
+      <div class="nav-row" data-page="maintenance"><div class="nav-icon"><svg><use href="#i-flame"/></svg></div><span class="label">Maintenance</span></div>
+
+      <div class="sidebar-footer">
+        <div class="health">
+          <div class="dot"></div>
+          <div class="meta">
+            <span class="label">System Health</span>
+            <span class="value">Excellent</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail" id="detail"></div>
+  </div>
+</div>
+
+<script>
+const dashboard = `
+  <div class="page">
+    <div class="toast">
+      <div class="icon-tile"><svg width="16" height="16"><use href="#i-shield"/></svg></div>
+      <div class="body-text">
+        <div class="t">Full Disk Access required</div>
+        <div class="s">macOS blocks PureMac from cleaning caches and uninstalling apps until you grant access.</div>
+      </div>
+      <button>Grant Access</button>
+    </div>
+
+    <div class="hero">
+      <div class="gauge-wrap">
+        <div class="gauge">
+          <svg viewBox="0 0 180 180">
+            <circle class="track" cx="90" cy="90" r="80"/>
+            <circle class="progress" cx="90" cy="90" r="80"/>
+          </svg>
+          <div class="center">
+            <div class="score">82</div>
+            <div class="score-label">Health Score</div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-info">
+        <h1>Looks healthy.</h1>
+        <p class="sub">We found <strong>4.1 GB</strong> of junk you can clear and <strong>7 apps</strong> with available updates.</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary"><svg><use href="#i-sparkles"/></svg>Smart Scan</button>
+          <button class="btn btn-ghost"><svg><use href="#i-bolt"/></svg>Free Up RAM</button>
+          <button class="btn btn-ghost"><svg><use href="#i-trash"/></svg>Empty Trash</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-head"><div class="icon-tile tile-blue"><svg><use href="#i-disk"/></svg></div><div class="label">Free Space</div></div>
+        <div class="value">312 GB</div>
+        <div class="delta">of 500 GB · 38% used</div>
+      </div>
+      <div class="stat">
+        <div class="stat-head"><div class="icon-tile tile-orange"><svg><use href="#i-broom"/></svg></div><div class="label">Junk Found</div></div>
+        <div class="value">4.1 GB</div>
+        <div class="delta">across 6 categories</div>
+      </div>
+      <div class="stat">
+        <div class="stat-head"><div class="icon-tile tile-purple"><svg><use href="#i-app-grid"/></svg></div><div class="label">Apps</div></div>
+        <div class="value">142</div>
+        <div class="delta">7 updates available</div>
+      </div>
+      <div class="stat">
+        <div class="stat-head"><div class="icon-tile tile-green"><svg><use href="#i-cpu"/></svg></div><div class="label">Memory</div></div>
+        <div class="value">12.4 GB</div>
+        <div class="delta">free of 32 GB</div>
+      </div>
+    </div>
+
+    <div class="section-head"><h2>Quick Actions</h2></div>
+    <div class="quick-actions">
+      <div class="qa">
+        <div class="icon-tile tile-blue"><svg><use href="#i-bolt"/></svg></div>
+        <div>
+          <div class="qa-title">Free Up RAM</div>
+          <div class="qa-sub">Force unused memory back to the OS</div>
+        </div>
+      </div>
+      <div class="qa">
+        <div class="icon-tile tile-orange"><svg><use href="#i-trash"/></svg></div>
+        <div>
+          <div class="qa-title">Empty Trash</div>
+          <div class="qa-sub">All trashes across volumes</div>
+        </div>
+      </div>
+      <div class="qa">
+        <div class="icon-tile tile-green"><svg><use href="#i-flame"/></svg></div>
+        <div>
+          <div class="qa-title">Run Maintenance</div>
+          <div class="qa-sub">periodic, font cache, Spotlight</div>
+        </div>
+      </div>
+      <div class="qa">
+        <div class="icon-tile tile-purple"><svg><use href="#i-globe"/></svg></div>
+        <div>
+          <div class="qa-title">Flush DNS</div>
+          <div class="qa-sub">Clear name resolution cache</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head"><h2>Suggested for you</h2><span class="link">See all →</span></div>
+    <div class="suggestions">
+      <div class="suggestion">
+        <div class="icon-tile tile-orange"><svg><use href="#i-folder"/></svg></div>
+        <div class="body-text">
+          <div class="t">Slack stored 2.4 GB of cache</div>
+          <div class="s">Last cleared 6 months ago. Safe to remove — Slack will rebuild it.</div>
+        </div>
+        <span class="size-pill">2.4 GB</span>
+      </div>
+      <div class="suggestion">
+        <div class="icon-tile tile-purple"><svg><use href="#i-app-grid"/></svg></div>
+        <div class="body-text">
+          <div class="t">5 apps haven't been opened in 6+ months</div>
+          <div class="s">Adobe Audition, Final Cut Pro, Keynote, Pages, Numbers</div>
+        </div>
+        <span class="size-pill">12.8 GB</span>
+      </div>
+      <div class="suggestion">
+        <div class="icon-tile tile-blue"><svg><use href="#i-clock"/></svg></div>
+        <div class="body-text">
+          <div class="t">DerivedData hasn't been touched in 30 days</div>
+          <div class="s">Xcode will rebuild incrementally on next launch.</div>
+        </div>
+        <span class="size-pill">3.1 GB</span>
+      </div>
+    </div>
+  </div>
+`;
+
+const smart = `
+  <div class="page">
+    <div class="page-header">
+      <h1>Smart Scan</h1>
+      <p>One pass that finds junk, leftovers, and large files in every category.</p>
+    </div>
+    <div class="hero">
+      <div class="gauge-wrap">
+        <div class="gauge">
+          <svg viewBox="0 0 180 180">
+            <circle class="track" cx="90" cy="90" r="80"/>
+            <circle class="progress scanning" cx="90" cy="90" r="80" style="stroke-dashoffset: 240"/>
+          </svg>
+          <div class="center">
+            <div class="score" style="font-size:28px">2.4 GB</div>
+            <div class="score-label">scanning…</div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-info">
+        <h1>Scanning your Mac</h1>
+        <p class="sub">Currently in: <strong>User Caches</strong> · 12 of 24 categories</p>
+        <div class="hero-actions">
+          <button class="btn btn-ghost">Pause</button>
+          <button class="btn btn-ghost">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <div class="section-head"><h2>What we'll check</h2></div>
+    <div class="quick-actions">
+      ${[
+        ['i-broom','System Junk','/Library/Caches, logs'],
+        ['i-folder','User Caches','~/Library/Caches'],
+        ['i-mail','Mail Attachments','Cached Mail downloads'],
+        ['i-trash','Trash','User and per-volume'],
+        ['i-doc','Large & Old','Files over 100 MB'],
+        ['i-cpu','Xcode','DerivedData, archives'],
+        ['i-globe','Browser Data','Caches, history'],
+        ['i-bolt','Login Items','LaunchAgents/Daemons'],
+      ].map(([icon, t, s]) => `
+        <div class="qa">
+          <div class="icon-tile tile-blue"><svg><use href="#${icon}"/></svg></div>
+          <div>
+            <div class="qa-title">${t}</div>
+            <div class="qa-sub">${s}</div>
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>
+`;
+
+const lens = `
+  <div class="page">
+    <div class="page-header">
+      <h1>Space Lens</h1>
+      <p>Visual map of every byte on your disk. Click any tile to drill down.</p>
+    </div>
+    <div style="background: var(--bg-elev); border:0.5px solid var(--border); border-radius: 14px; padding: 16px; box-shadow: var(--shadow-md);">
+      <div style="display:grid; grid-template-columns: 2fr 1fr; gap: 8px; height: 380px;">
+        <div style="display:grid; grid-template-rows: 2fr 1fr; gap: 8px;">
+          <div style="background: linear-gradient(135deg, rgba(10,132,255,0.6), rgba(10,132,255,0.3)); border-radius: 10px; padding: 14px; color: white; display:flex; flex-direction: column; justify-content:flex-end;">
+            <div style="font-weight:700">Applications</div>
+            <div style="opacity:0.85; font-size: 12px">82 GB · 26%</div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div style="background: linear-gradient(135deg, rgba(48,199,121,0.6), rgba(48,199,121,0.3)); border-radius: 10px; padding: 12px; color: white;">
+              <div style="font-weight:700">Photos</div><div style="opacity:0.85; font-size: 12px">42 GB</div>
+            </div>
+            <div style="background: linear-gradient(135deg, rgba(175,82,222,0.6), rgba(175,82,222,0.3)); border-radius: 10px; padding: 12px; color: white;">
+              <div style="font-weight:700">Music</div><div style="opacity:0.85; font-size: 12px">28 GB</div>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="background: linear-gradient(135deg, rgba(255,159,10,0.6), rgba(255,159,10,0.3)); flex: 2; border-radius: 10px; padding: 12px; color: white; display:flex; flex-direction: column; justify-content:flex-end;">
+            <div style="font-weight:700">System</div><div style="opacity:0.85; font-size: 12px">38 GB · 12%</div>
+          </div>
+          <div style="background: linear-gradient(135deg, rgba(255,69,58,0.6), rgba(255,69,58,0.3)); flex: 1.4; border-radius: 10px; padding: 12px; color: white; display:flex; flex-direction: column; justify-content:flex-end;">
+            <div style="font-weight:700">Caches</div><div style="opacity:0.85; font-size: 12px">22 GB</div>
+          </div>
+          <div style="background: rgba(120,120,128,0.4); flex: 1; border-radius: 10px; padding: 12px; color: white; display:flex; flex-direction: column; justify-content:flex-end;">
+            <div style="font-weight:700">Other</div><div style="opacity:0.85; font-size: 12px">16 GB</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+
+const generic = (title, sub, items) => `
+  <div class="page">
+    <div class="page-header">
+      <h1>${title}</h1>
+      <p>${sub}</p>
+    </div>
+    <div class="list-card">
+      ${items.map(([name, meta, size, on]) => `
+        <div class="list-row">
+          <div class="check ${on ? 'on' : ''}"></div>
+          <div class="name">${name}</div>
+          <div class="meta">${meta}</div>
+          <div class="size">${size}</div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+`;
+
+const pages = {
+  dashboard,
+  smart,
+  lens,
+  systemJunk: generic("System Junk", "Caches, logs and temp files. Some require admin rights to delete.", [
+    ["/Library/Caches/com.apple.bird", "Apr 12", "412 MB", true],
+    ["/Library/Logs/CrashReporter", "Apr 14", "184 MB", true],
+    ["/private/var/log/system.log.0.gz", "Apr 28", "92 MB", true],
+    ["/private/var/log/wifi.log", "Apr 29", "44 MB", false],
+  ]),
+  userCache: generic("User Caches", "Cached data your apps regenerate as needed.", [
+    ["com.apple.dt.Xcode", "Apr 28", "1.2 GB", true],
+    ["com.spotify.client", "Apr 29", "412 MB", true],
+    ["com.tinyspeck.slackmacgap", "Apr 28", "2.4 GB", true],
+    ["com.figma.Desktop", "Apr 28", "180 MB", true],
+  ]),
+  mail: generic("Mail Attachments", "Files Mail.app downloaded for messages.", []),
+  trash: generic("Trash Bins", "Files in user and per-volume trashes.", []),
+  large: generic("Large & Old Files", "Files over 100 MB or older than 1 year.", [
+    ["WWDC2025_Keynote.mp4", "~/Downloads · Jun 2025", "1.8 GB", false],
+    ["Untitled.sketch", "~/Documents · Jan 2024", "412 MB", false],
+    ["backup_oct.zip", "~/Desktop · Oct 2024", "3.2 GB", false],
+  ]),
+  apps: generic("Uninstaller", "Apps installed on this Mac with leftover detection.", [
+    ["Xcode", "1d ago", "16.8 GB", false],
+    ["Adobe Audition", "8mo ago", "3.4 GB", false],
+    ["Slack", "today", "412 MB", false],
+    ["Final Cut Pro", "1y ago", "4.1 GB", false],
+  ]),
+  updater: generic("Updater", "App updates available.", [
+    ["Visual Studio Code", "1.95 → 1.97", "—", true],
+    ["Slack", "4.40 → 4.42", "—", true],
+    ["Docker Desktop", "4.34 → 4.38", "—", true],
+  ]),
+  login: generic("Login Items", "LaunchAgents and LaunchDaemons that run at login.", [
+    ["com.adobe.acc.installer.v2", "—", "active", false],
+    ["com.docker.helper", "—", "active", true],
+    ["com.microsoft.update.agent", "—", "active", false],
+  ]),
+  privacy: generic("Browser Data", "History, cookies and caches across browsers.", [
+    ["Safari · history.db", "—", "84 MB", false],
+    ["Chrome · cache", "—", "612 MB", true],
+    ["Arc · cookies", "—", "12 MB", false],
+  ]),
+  malware: generic("Malware Scan", "Match running launchd entries against Objective-See's signatures.", []),
+  perf: generic("Free Up RAM", "Force inactive memory back to the OS.", []),
+  maintenance: generic("Maintenance", "Periodic scripts, cache rebuilds, font cache.", []),
+};
+
+const detail = document.getElementById('detail');
+function show(key){ detail.innerHTML = pages[key] || pages.dashboard; }
+document.querySelectorAll('.nav-row').forEach(row => {
+  row.addEventListener('click', () => {
+    document.querySelectorAll('.nav-row').forEach(r => r.classList.remove('active'));
+    row.classList.add('active');
+    show(row.dataset.page);
+  });
+});
+show('dashboard');
+
+// Theme toggle
+const root = document.documentElement;
+document.querySelectorAll('#themeToggle button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#themeToggle button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    root.setAttribute('data-theme', b.dataset.theme);
+  });
+});
+// Default to dark on first load to show off the polish
+(function(){
+  document.querySelectorAll('#themeToggle button').forEach(x => x.classList.remove('active'));
+  document.querySelector('#themeToggle button[data-theme="dark"]').classList.add('active');
+  root.setAttribute('data-theme', 'dark');
+})();
+</script>
+</body>
+</html>

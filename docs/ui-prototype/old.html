@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PureMac — Current UI (faithful prototype)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    font-size: 13px;
+    color: #1d1d1f;
+    background: #ececec;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+  }
+  .window {
+    width: 100vw; height: 100vh;
+    display: flex; flex-direction: column;
+    background: #f5f5f7;
+    border-radius: 0;
+    overflow: hidden;
+  }
+  .titlebar {
+    height: 38px; flex-shrink: 0;
+    display: flex; align-items: center;
+    padding: 0 12px;
+    background: linear-gradient(#e8e8ea, #d8d8da);
+    border-bottom: 1px solid #c8c8cc;
+  }
+  .traffic { display: flex; gap: 8px; align-items: center; }
+  .traffic .dot { width: 12px; height: 12px; border-radius: 50%; border: 0.5px solid rgba(0,0,0,0.15); }
+  .traffic .red { background: #ff5f57; }
+  .traffic .yellow { background: #febc2e; }
+  .traffic .green { background: #28c840; }
+  .titlebar .title { flex: 1; text-align: center; font-weight: 600; font-size: 13px; color: #3a3a3c; }
+  .body { flex: 1; display: flex; min-height: 0; }
+
+  .sidebar {
+    width: 250px; flex-shrink: 0;
+    background: #ebebeb;
+    border-right: 1px solid #d0d0d4;
+    overflow-y: auto;
+    padding: 8px 0;
+  }
+  .sidebar h6 {
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase;
+    color: #86868b;
+    padding: 8px 16px 4px;
+    letter-spacing: 0.3px;
+  }
+  .nav-row {
+    display: flex; align-items: center;
+    padding: 5px 16px;
+    margin: 0 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #1d1d1f;
+    gap: 8px;
+  }
+  .nav-row:hover { background: rgba(0,0,0,0.04); }
+  .nav-row.active { background: #007aff; color: white; }
+  .nav-row.active .badge { color: rgba(255,255,255,0.85); }
+  .nav-row .icon { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.85; }
+  .nav-row .label { flex: 1; }
+  .nav-row .badge { font-size: 11px; color: #86868b; }
+
+  .detail {
+    flex: 1; display: flex; flex-direction: column;
+    background: #ffffff;
+    overflow-y: auto;
+  }
+  .fda-banner {
+    background: #ff9500;
+    color: white;
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px;
+  }
+  .fda-banner .title { font-weight: 600; }
+  .fda-banner .grant {
+    margin-left: auto;
+    background: white; color: #ff9500;
+    border: 0; padding: 5px 12px;
+    border-radius: 6px; font-weight: 600; font-size: 12px;
+    cursor: pointer;
+  }
+  .fda-banner .dismiss {
+    background: transparent; color: rgba(255,255,255,0.85);
+    border: 0; cursor: pointer;
+    font-size: 13px;
+  }
+  .detail-inner { flex: 1; padding: 24px 32px; }
+
+  /* Smart Scan landing */
+  .scan-hero { text-align: center; padding: 40px 20px; }
+  .scan-hero .ring {
+    width: 180px; height: 180px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    border: 12px solid #d2d2d7;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+  }
+  .scan-hero .ring .number { font-size: 32px; font-weight: 600; color: #1d1d1f; }
+  .scan-hero .ring .label { font-size: 11px; color: #86868b; margin-top: 4px; }
+  .scan-hero h1 { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+  .scan-hero p { color: #86868b; font-size: 13px; margin-bottom: 24px; }
+  .btn-primary {
+    background: #007aff; color: white;
+    border: 0; padding: 8px 22px;
+    border-radius: 6px; font-weight: 600; font-size: 13px;
+    cursor: pointer;
+  }
+  .btn-primary:hover { background: #006ae0; }
+  .btn-secondary {
+    background: #fff; color: #1d1d1f;
+    border: 0.5px solid #c8c8cc;
+    padding: 7px 18px; border-radius: 6px;
+    font-size: 13px; cursor: pointer;
+  }
+
+  /* Generic detail page */
+  .page-title { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+  .page-sub { color: #86868b; margin-bottom: 24px; font-size: 13px; }
+
+  .item-list { border: 0.5px solid #d2d2d7; border-radius: 6px; overflow: hidden; }
+  .item-row {
+    display: flex; align-items: center;
+    padding: 8px 14px;
+    border-bottom: 0.5px solid #e5e5e7;
+    font-size: 13px;
+    gap: 10px;
+  }
+  .item-row:last-child { border-bottom: 0; }
+  .item-row input[type="checkbox"] { width: 14px; height: 14px; }
+  .item-row .name { flex: 1; }
+  .item-row .size { color: #86868b; font-variant-numeric: tabular-nums; }
+
+  .actionbar {
+    display: flex; gap: 8px; padding: 16px 0 0;
+    border-top: 0.5px solid #e5e5e7; margin-top: 16px;
+    align-items: center;
+  }
+  .actionbar .spacer { flex: 1; }
+  .danger { background: #ff3b30; color: white; }
+  .danger:hover { background: #db3025; }
+
+  .empty { text-align: center; padding: 60px 20px; color: #86868b; }
+  .empty .icon-large { font-size: 38px; margin-bottom: 12px; }
+
+  /* Light SF-symbol style icons (drawn with unicode boxes for fidelity) */
+  .glyph {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 16px; height: 16px;
+    color: currentColor;
+  }
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <div class="traffic">
+      <div class="dot red"></div>
+      <div class="dot yellow"></div>
+      <div class="dot green"></div>
+    </div>
+    <div class="title">PureMac</div>
+    <div style="width: 50px"></div>
+  </div>
+
+  <div class="body">
+    <div class="sidebar">
+      <h6>Home</h6>
+      <div class="nav-row active" data-page="smart">
+        <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l1.7 4.3L14 6l-3.4 2.5.8 4.5L8 11l-3.4 2 .8-4.5L2 6l4.3-.7z"/></svg>
+        <span class="label">Smart Scan</span>
+      </div>
+
+      <h6>Applications</h6>
+      <div class="nav-row" data-page="apps">
+        <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+        <span class="label">Installed Apps</span>
+        <span class="badge">142</span>
+      </div>
+      <div class="nav-row" data-page="orphans">
+        <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 14a6 6 0 110-12 6 6 0 010 12zm0-2a4 4 0 100-8 4 4 0 000 8zm-.5-7h1v3h-1V5zm0 4h1v1h-1V9z"/></svg>
+        <span class="label">Orphaned Files</span>
+      </div>
+
+      <h6>Cleaning</h6>
+      <div class="nav-row" data-page="systemJunk"><svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M3 3h10v2H3zm1 3h8v8H4z"/></svg><span class="label">System Junk</span><span class="badge">—</span></div>
+      <div class="nav-row" data-page="userCache"><svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M2 4h12v9H2z" fill="none" stroke="currentColor"/><path d="M2 4h12v3H2z"/></svg><span class="label">User Cache</span><span class="badge">—</span></div>
+      <div class="nav-row" data-page="mail"><svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h12v10H2zm1 1l5 4 5-4"/></svg><span class="label">Mail Attachments</span></div>
+      <div class="nav-row" data-page="trash"><svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3V2h6v1h3v1H2V3h3zm-1 2h8l-1 9H5z"/></svg><span class="label">Trash Bins</span></div>
+      <div class="nav-row" data-page="large"><svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M3 1h7l3 3v11H3z"/></svg><span class="label">Large &amp; Old Files</span></div>
+      <div class="nav-row" data-page="purgeable"><svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 4v4l3 2"/></svg><span class="label">Purgeable Space</span></div>
+      <div class="nav-row" data-page="xcode"><svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h12v10H2zm2 2h8v6H4z" fill="none" stroke="currentColor" stroke-width="1"/></svg><span class="label">Xcode Junk</span></div>
+      <div class="nav-row" data-page="brew"><svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M5 2h6v3H5zm-1 3h8v9H4z"/></svg><span class="label">Homebrew Cache</span></div>
+      <div class="nav-row" data-page="node"><svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor"/></svg><span class="label">Node Cache</span></div>
+      <div class="nav-row" data-page="docker"><svg class="icon" viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="6" width="12" height="6"/></svg><span class="label">Docker Cache</span></div>
+    </div>
+
+    <div class="detail">
+      <div class="fda-banner">
+        <span>⚠</span>
+        <div>
+          <div class="title">Full Disk Access required</div>
+          <div>macOS blocks PureMac from cleaning caches and uninstalling apps until you grant access.</div>
+        </div>
+        <button class="grant">Grant Access</button>
+        <button class="dismiss">✕</button>
+      </div>
+
+      <div class="detail-inner" id="content">
+        <!-- populated by JS -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const pages = {
+    smart: `
+      <div class="scan-hero">
+        <div class="ring"><div class="number">0 B</div><div class="label">junk found</div></div>
+        <h1>Run a Smart Scan</h1>
+        <p>Scan your Mac for caches, logs, leftover files and large media.</p>
+        <button class="btn-primary">Scan</button>
+      </div>`,
+    apps: `
+      <div class="page-title">Installed Apps</div>
+      <div class="page-sub">142 apps · click an app to uninstall</div>
+      <div class="item-list">
+        ${['Xcode','Slack','Visual Studio Code','Docker Desktop','Figma','Spotify','Discord','Notion','Arc','Chrome'].map(a=>`<div class="item-row"><span class="name">${a}</span><span class="size">— MB</span></div>`).join('')}
+      </div>`,
+    orphans: `
+      <div class="page-title">Orphaned Files</div>
+      <div class="page-sub">Leftover files from apps you've uninstalled.</div>
+      <div class="empty"><div class="icon-large">🔍</div>No orphaned files found.<br><small>Run a scan to look for leftovers.</small></div>`,
+    systemJunk: page("System Junk", "Caches, logs and temp files in /Library and /var.", []),
+    userCache: page("User Cache", "Cached data from your apps in ~/Library/Caches.", []),
+    mail: page("Mail Attachments", "Cached attachments downloaded by Mail.app.", []),
+    trash: page("Trash Bins", "Files in your user and per-volume trashes.", []),
+    large: page("Large &amp; Old Files", "Files over 100 MB or older than 1 year.", []),
+    purgeable: page("Purgeable Space", "APFS purgeable space and Time Machine snapshots.", []),
+    xcode: page("Xcode Junk", "DerivedData, archives, simulator caches.", []),
+    brew: page("Homebrew Cache", "Cached download artifacts from brew.", []),
+    node: page("Node Cache", "npm, yarn, pnpm, pip download caches.", []),
+    docker: page("Docker Cache", "Unused Docker images, layers and containers.", []),
+  };
+
+  function page(title, sub, items) {
+    return `
+      <div class="page-title">${title}</div>
+      <div class="page-sub">${sub}</div>
+      <div class="empty"><div class="icon-large">📂</div>Nothing scanned yet.<br><small>Click Smart Scan to populate.</small></div>`;
+  }
+
+  const content = document.getElementById('content');
+  document.querySelectorAll('.nav-row').forEach(row => {
+    row.addEventListener('click', () => {
+      document.querySelectorAll('.nav-row').forEach(r => r.classList.remove('active'));
+      row.classList.add('active');
+      content.innerHTML = pages[row.dataset.page] || '';
+    });
+  });
+  // initial
+  content.innerHTML = pages.smart;
+</script>
+</body>
+</html>
