@@ -82,6 +82,7 @@ open build/Build/Products/Release/PureMac.app
 - **Análisis inteligente** — análisis de un clic en todas las categorías
 - **Basura del sistema** — cachés del sistema, registros y archivos temporales
 - **Caché de usuario** — descubre dinámicamente todos los cachés de apps (sin lista predefinida)
+- **Apps de IA** — registros, cachés y limpieza opcional del historial local de Ollama y LM Studio
 - **Adjuntos de correo** — adjuntos de correo descargados
 - **Papeleras** — vacía todas las papeleras
 - **Archivos grandes y antiguos** — archivos de más de 100 MB o con más de 1 año
@@ -102,6 +103,7 @@ open build/Build/Products/Release/PureMac.app
 - Prevención de ataques por enlaces simbólicos — resuelve y valida rutas antes de eliminar
 - Protección de apps del sistema — las apps de Apple no se pueden desinstalar
 - Los archivos grandes y antiguos nunca se seleccionan automáticamente
+- El historial de prompts y conversaciones de IA se muestra para revisión, pero nunca se selecciona automáticamente
 - Registro estructurado con `os.log` (visible en Consola.app)
 
 ## Capturas

@@ -97,6 +97,7 @@
 "System caches, logs, and temporary files" = "System caches, logs, and temporary files";
 "Application caches and browser data" = "Application caches and browser data";
 "Logs, caches, and temporary files from local AI apps" = "Logs, caches, and temporary files from local AI apps";
+"Local AI app logs, caches, and optional history" = "Local AI app logs, caches, and optional history";
 "Downloaded mail attachments" = "Downloaded mail attachments";
 "Files in your Trash" = "Files in your Trash";
 "Files over 100 MB or older than 1 year" = "Files over 100 MB or older than 1 year";

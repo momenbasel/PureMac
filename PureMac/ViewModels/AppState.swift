@@ -27,6 +27,7 @@ final class AppState: ObservableObject {
     @Published var currentScanCategory: String = ""
     @Published var showCleanConfirmation = false
     @Published var lastCleanedDate: Date?
+    @Published var selectedCleanupItems: Set<UUID> = []
     @Published var deselectedItems: Set<UUID> = []
     @Published var hasFullDiskAccess: Bool = true
     @Published var fdaBannerDismissed: Bool = false
@@ -237,28 +238,47 @@ final class AppState: ObservableObject {
     // MARK: - Selection
 
     func isItemSelected(_ item: CleanableItem) -> Bool {
-        !deselectedItems.contains(item.id)
+        if item.isSelected {
+            return !deselectedItems.contains(item.id)
+        }
+        return selectedCleanupItems.contains(item.id)
     }
 
     func toggleItem(_ item: CleanableItem) {
-        if deselectedItems.contains(item.id) {
-            deselectedItems.remove(item.id)
+        if isItemSelected(item) {
+            if item.isSelected {
+                deselectedItems.insert(item.id)
+            } else {
+                selectedCleanupItems.remove(item.id)
+            }
         } else {
-            deselectedItems.insert(item.id)
+            if item.isSelected {
+                deselectedItems.remove(item.id)
+            } else {
+                selectedCleanupItems.insert(item.id)
+            }
         }
     }
 
     func selectAllInCategory(_ category: CleaningCategory) {
         guard let result = categoryResults[category] else { return }
         for item in result.items {
-            deselectedItems.remove(item.id)
+            if item.isSelected {
+                deselectedItems.remove(item.id)
+            } else {
+                selectedCleanupItems.insert(item.id)
+            }
         }
     }
 
     func deselectAllInCategory(_ category: CleaningCategory) {
         guard let result = categoryResults[category] else { return }
         for item in result.items {
-            deselectedItems.insert(item.id)
+            if item.isSelected {
+                deselectedItems.insert(item.id)
+            } else {
+                selectedCleanupItems.remove(item.id)
+            }
         }
     }
 
@@ -307,6 +327,19 @@ final class AppState: ObservableObject {
         )
     }
 
+    private func clearSelectionState() {
+        selectedCleanupItems.removeAll()
+        deselectedItems.removeAll()
+    }
+
+    private func clearSelectionState(for category: CleaningCategory) {
+        guard let result = categoryResults[category] else { return }
+        for item in result.items {
+            selectedCleanupItems.remove(item.id)
+            deselectedItems.remove(item.id)
+        }
+    }
+
     // MARK: - Full Disk Access
 
     func checkFullDiskAccess() {
@@ -340,7 +373,7 @@ final class AppState: ObservableObject {
         categoryResults = [:]
         totalJunkSize = 0
         scanProgress = 0
-        deselectedItems.removeAll()
+        clearSelectionState()
 
         Task {
             let categories = CleaningCategory.scannable
@@ -371,7 +404,7 @@ final class AppState: ObservableObject {
 
         Task {
             scanProgress = 0.5
-            deselectedItems.removeAll()
+            clearSelectionState(for: category)
             let result = await scanEngine.scanCategory(category)
             categoryResults[category] = result
 
@@ -405,6 +438,7 @@ final class AppState: ObservableObject {
 
             categoryResults = [:]
             totalJunkSize = 0
+            clearSelectionState()
             scanState = .cleaned
             loadDiskInfo()
 
@@ -434,6 +468,7 @@ final class AppState: ObservableObject {
             totalFreedSpace = cleanResult.freedSpace
             lastCleanedDate = Date()
 
+            clearSelectionState(for: category)
             categoryResults.removeValue(forKey: category)
             totalJunkSize = categoryResults.values.reduce(0) { $0 + $1.totalSize }
             scanState = .cleaned
@@ -470,6 +505,8 @@ final class AppState: ObservableObject {
     private func runScheduledScan() async {
         let categories = scheduler.config.categoriesToScan
         var totalFound: Int64 = 0
+        clearSelectionState()
+        categoryResults = [:]
 
         for category in categories {
             let result = await scanEngine.scanCategory(category)
