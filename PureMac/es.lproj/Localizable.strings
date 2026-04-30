@@ -97,6 +97,7 @@
 "System caches, logs, and temporary files" = "Cachés del sistema, registros y archivos temporales";
 "Application caches and browser data" = "Cachés de aplicaciones y datos del navegador";
 "Logs, caches, and temporary files from local AI apps" = "Registros, cachés y archivos temporales de apps de IA locales";
+"Local AI app logs, caches, and optional history" = "Registros, cachés e historial opcional de apps de IA locales";
 "Downloaded mail attachments" = "Adjuntos de correo descargados";
 "Files in your Trash" = "Archivos en tu Papelera";
 "Files over 100 MB or older than 1 year" = "Archivos de más de 100 MB o con más de 1 año";

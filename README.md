@@ -82,6 +82,7 @@ open build/Build/Products/Release/PureMac.app
 - **Smart Scan** - one-click scan across all categories
 - **System Junk** - system caches, logs, and temporary files
 - **User Cache** - dynamically discovers all app caches (no hardcoded app list)
+- **AI Apps** - Ollama and LM Studio logs, caches, and opt-in local history cleanup
 - **Mail Attachments** - downloaded mail attachments
 - **Trash Bins** - empty all Trash
 - **Large & Old Files** - files over 100 MB or older than 1 year
@@ -102,6 +103,7 @@ open build/Build/Products/Release/PureMac.app
 - Symlink attack prevention - resolves and validates paths before deletion
 - System app protection - Apple apps cannot be uninstalled
 - Large & Old Files are never auto-selected
+- AI prompt and conversation history is visible for review but never selected automatically
 - Structured logging via `os.log` (visible in Console.app)
 
 ## Screenshots

@@ -97,6 +97,7 @@
 "System caches, logs, and temporary files" = "システムキャッシュ、ログ、一時ファイル";
 "Application caches and browser data" = "アプリキャッシュとブラウザデータ";
 "Logs, caches, and temporary files from local AI apps" = "ローカルAIアプリのログ、キャッシュ、一時ファイル";
+"Local AI app logs, caches, and optional history" = "ローカルAIアプリのログ、キャッシュ、任意の履歴";
 "Downloaded mail attachments" = "ダウンロードしたメール添付ファイル";
 "Files in your Trash" = "ゴミ箱内のファイル";
 "Files over 100 MB or older than 1 year" = "100 MB超または1年以上前のファイル";

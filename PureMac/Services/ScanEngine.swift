@@ -7,6 +7,15 @@ actor ScanEngine {
     private struct CleanupTarget {
         let name: String
         let path: String
+        let isSelected: Bool
+        let minimumSize: Int64
+
+        init(name: String, path: String, isSelected: Bool = true, minimumSize: Int64 = 1024) {
+            self.name = name
+            self.path = path
+            self.isSelected = isSelected
+            self.minimumSize = minimumSize
+        }
     }
 
     // MARK: - Public API
@@ -19,6 +28,8 @@ actor ScanEngine {
             return scanSystemJunk()
         case .userCache:
             return scanUserCache()
+        case .aiApps:
+            return scanAIApps()
         case .mailAttachments:
             return scanMailAttachments()
         case .trashBins:
@@ -96,9 +107,11 @@ actor ScanEngine {
 
     private func scanUserCache() -> CategoryResult {
         var items: [CleanableItem] = []
-        // Only exclude Homebrew since it has its own dedicated scan category
+        // Exclude cache roots claimed by dedicated categories to avoid double-counting.
         let excludedRootPaths = Set([
             "\(home)/Library/Caches/Homebrew",
+            "\(home)/Library/Caches/com.electron.ollama",
+            "\(home)/Library/Caches/ollama",
         ].map(normalizePath))
 
         // Dynamically enumerate ~/Library/Caches/ so every subdirectory is visible
@@ -134,6 +147,59 @@ actor ScanEngine {
         let uniqueItems = deduplicatedItems(items)
         let totalSize = uniqueItems.reduce(0) { $0 + $1.size }
         return CategoryResult(category: .userCache, items: uniqueItems, totalSize: totalSize)
+    }
+
+    private func scanAIApps() -> CategoryResult {
+        let targets = [
+            CleanupTarget(
+                name: "Ollama Logs",
+                path: "\(home)/.ollama/logs"
+            ),
+            CleanupTarget(
+                name: "Ollama Cache",
+                path: "\(home)/Library/Caches/ollama"
+            ),
+            CleanupTarget(
+                name: "Ollama Electron Cache",
+                path: "\(home)/Library/Caches/com.electron.ollama"
+            ),
+            CleanupTarget(
+                name: "Ollama WebKit Data",
+                path: "\(home)/Library/WebKit/com.electron.ollama"
+            ),
+            CleanupTarget(
+                name: "Ollama Saved State",
+                path: "\(home)/Library/Saved Application State/com.electron.ollama.savedState"
+            ),
+            CleanupTarget(
+                name: "Ollama CLI Prompt History (Optional)",
+                path: "\(home)/.ollama/history",
+                isSelected: false,
+                minimumSize: 0
+            ),
+            CleanupTarget(
+                name: "LM Studio Server Logs",
+                path: "\(home)/.lmstudio/server-logs"
+            ),
+            CleanupTarget(
+                name: "LM Studio Conversations (Optional)",
+                path: "\(home)/.lmstudio/conversations",
+                isSelected: false,
+                minimumSize: 0
+            ),
+        ]
+
+        let items = deduplicatedItems(targets.compactMap { target in
+            makeCleanupItem(
+                name: target.name,
+                path: target.path,
+                category: .aiApps,
+                isSelected: target.isSelected,
+                minimumSize: target.minimumSize
+            )
+        })
+        let totalSize = items.reduce(0) { $0 + $1.size }
+        return CategoryResult(category: .aiApps, items: items.sorted { $0.size > $1.size }, totalSize: totalSize)
     }
 
     private func scanMailAttachments() -> CategoryResult {
@@ -660,34 +726,40 @@ actor ScanEngine {
         return items
     }
 
-    private func makeCleanupItem(name: String, path: String, category: CleaningCategory) -> CleanableItem? {
+    private func makeCleanupItem(
+        name: String,
+        path: String,
+        category: CleaningCategory,
+        isSelected: Bool = true,
+        minimumSize: Int64 = 1024
+    ) -> CleanableItem? {
         var isDirectory: ObjCBool = false
         guard fileManager.fileExists(atPath: path, isDirectory: &isDirectory),
               fileManager.isReadableFile(atPath: path) else { return nil }
 
         if isDirectory.boolValue {
             let size = directorySize(path: path)
-            guard size > 1024 else { return nil }
+            guard size > minimumSize else { return nil }
             return CleanableItem(
                 name: name,
                 path: path,
                 size: size,
                 category: category,
-                isSelected: true,
+                isSelected: isSelected,
                 lastModified: fileModDate(path: path)
             )
         }
 
         guard let attrs = try? fileManager.attributesOfItem(atPath: path),
               let size = attrs[.size] as? Int64,
-              size > 1024 else { return nil }
+              size > minimumSize else { return nil }
 
         return CleanableItem(
             name: name,
             path: path,
             size: size,
             category: category,
-            isSelected: true,
+            isSelected: isSelected,
             lastModified: attrs[.modificationDate] as? Date
         )
     }

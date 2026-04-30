@@ -6,6 +6,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
     case smartScan = "Smart Scan"
     case systemJunk = "System Junk"
     case userCache = "User Cache"
+    case aiApps = "AI Apps"
     case mailAttachments = "Mail Files"
     case trashBins = "Trash Bins"
     case largeFiles = "Large & Old Files"
@@ -22,6 +23,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .smartScan: return "sparkles"
         case .systemJunk: return "gearshape.fill"
         case .userCache: return "internaldrive.fill"
+        case .aiApps: return "cpu.fill"
         case .mailAttachments: return "envelope.fill"
         case .trashBins: return "trash.fill"
         case .largeFiles: return "doc.fill"
@@ -38,6 +40,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .smartScan: return "Scan everything at once"
         case .systemJunk: return "System caches, logs, and temporary files"
         case .userCache: return "Application caches and browser data"
+        case .aiApps: return "Local AI app logs, caches, and optional history"
         case .mailAttachments: return "Downloaded mail attachments"
         case .trashBins: return "Files in your Trash"
         case .largeFiles: return "Files over 100 MB or older than 1 year"
@@ -54,6 +57,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .smartScan: return .accentColor
         case .systemJunk: return .purple
         case .userCache: return .blue
+        case .aiApps: return .teal
         case .mailAttachments: return .orange
         case .trashBins: return .red
         case .largeFiles: return .yellow
