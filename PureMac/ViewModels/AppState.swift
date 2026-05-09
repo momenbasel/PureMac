@@ -157,12 +157,36 @@ final class AppState: ObservableObject {
                 if !removed.isEmpty {
                     self.discoveredFiles.removeAll { removed.contains($0) }
                     self.selectedFiles.subtract(removed)
-                    Logger.shared.log("Removed \(removed.count) files", level: .info)
+                    Logger.shared.log("Removed \(removed.count) files via Finder", level: .info)
+                    self.removeDeletedAppsFromList(removedURLs: removed)
                 }
-                let failed = urls.count - removed.count
-                if failed > 0 {
-                    self.removalError = "\(failed) file\(failed == 1 ? "" : "s") could not be removed. Grant Full Disk Access in System Settings → Privacy & Security to allow PureMac to manage all files."
-                    Logger.shared.log("Failed to remove \(failed) files — likely missing FDA", level: .error)
+
+                let failedURLs = urls.filter { FileManager.default.fileExists(atPath: $0.path) }
+                if failedURLs.isEmpty { return }
+
+                // Fallback: try removing failed files with administrator privileges
+                Logger.shared.log("Attempting admin-privileged removal for \(failedURLs.count) files", level: .info)
+                DispatchQueue.global(qos: .userInitiated).async {
+                    let adminSuccess = self.removeWithAdminPrivileges(failedURLs)
+                    DispatchQueue.main.async {
+                        let adminRemoved = failedURLs.filter { !FileManager.default.fileExists(atPath: $0.path) }
+                        if !adminRemoved.isEmpty {
+                            self.discoveredFiles.removeAll { adminRemoved.contains($0) }
+                            self.selectedFiles.subtract(adminRemoved)
+                            Logger.shared.log("Removed \(adminRemoved.count) files with admin privileges", level: .info)
+                            self.removeDeletedAppsFromList(removedURLs: adminRemoved)
+                        }
+
+                        let finalFailed = failedURLs.count - adminRemoved.count
+                        if finalFailed > 0 {
+                            if adminSuccess {
+                                self.removalError = "\(finalFailed) file\(finalFailed == 1 ? "" : "s") could not be removed. The file may be protected by System Integrity Protection (SIP) or currently in use."
+                            } else {
+                                self.removalError = "\(finalFailed) file\(finalFailed == 1 ? "" : "s") could not be removed. Grant Full Disk Access in System Settings → Privacy & Security, or the file may be protected by SIP."
+                            }
+                            Logger.shared.log("Failed to remove \(finalFailed) files after admin fallback", level: .error)
+                        }
+                    }
                 }
             }
         }
@@ -191,6 +215,55 @@ final class AppState: ObservableObject {
             }
             completion(success)
         }
+    }
+
+    /// Attempts to delete files using administrator privileges via AppleScript.
+    /// Used as a fallback when Finder trash or FileManager fails due to permission errors.
+    private func removeWithAdminPrivileges(_ urls: [URL]) -> Bool {
+        guard !urls.isEmpty else { return true }
+
+        let quotedPaths = urls.map { url in
+            "'\(url.path.replacingOccurrences(of: "'", with: "'\\\"'\\\"'"))'"
+        }
+        let shellCommand = "rm -rf -- \(quotedPaths.joined(separator: " "))"
+        let appleScriptCommand = shellCommand
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+        let script = "do shell script \"\(appleScriptCommand)\" with administrator privileges"
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        process.arguments = ["-e", script]
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+            if process.terminationStatus != 0 {
+                Logger.shared.log("Admin remove failed with exit code \(process.terminationStatus)", level: .error)
+                return false
+            }
+            return true
+        } catch {
+            Logger.shared.log("Admin remove error: \(error)", level: .error)
+            return false
+        }
+    }
+
+    /// Removes apps from the installed list whose .app bundle was deleted.
+    private func removeDeletedAppsFromList(removedURLs: [URL]) {
+        let removedPaths = Set(removedURLs.map { $0.resolvingSymlinksInPath().path })
+        let appsToRemove = installedApps.filter { removedPaths.contains($0.path.resolvingSymlinksInPath().path) }
+        if appsToRemove.isEmpty { return }
+
+        for app in appsToRemove {
+            installedApps.removeAll { $0.id == app.id }
+            if selectedApp?.id == app.id {
+                selectedApp = nil
+                discoveredFiles = []
+                selectedFiles = []
+            }
+        }
+        Logger.shared.log("Removed \(appsToRemove.count) app(s) from installed list", level: .info)
     }
 
     func findOrphans() {
