@@ -1,0 +1,311 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 2.2.0). Must match project.yml MARKETING_VERSION.'
+        required: true
+        type: string
+      dry_run:
+        description: 'Build + sign + notarize but skip release upload + homebrew bump.'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+env:
+  APP_NAME: PureMac
+  BUNDLE_ID: com.puremac.app
+  TEAM_ID: H3WXHVTP97
+  SCHEME: PureMac
+  PROJECT: PureMac.xcodeproj
+  CONFIGURATION: Release
+
+jobs:
+  release:
+    name: Build, sign, notarize, release
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version
+        id: ver
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Releasing version: ${VERSION}"
+
+      - name: Verify version matches project.yml
+        run: |
+          PROJ_VERSION=$(grep -E '^\s*MARKETING_VERSION:' project.yml | sed -E 's/.*"([^"]+)".*/\1/')
+          if [[ "${PROJ_VERSION}" != "${{ steps.ver.outputs.version }}" ]]; then
+            echo "::error::project.yml MARKETING_VERSION (${PROJ_VERSION}) != release version (${{ steps.ver.outputs.version }}). Bump project.yml first."
+            exit 1
+          fi
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+
+      - name: Install xcodegen + create-dmg
+        run: |
+          brew install xcodegen create-dmg
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Import Developer ID signing certificate
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          CERT_PATH="${RUNNER_TEMP}/certificate.p12"
+          KEYCHAIN_PATH="${RUNNER_TEMP}/app-signing.keychain-db"
+          echo -n "${BUILD_CERTIFICATE_BASE64}" | base64 --decode -o "${CERT_PATH}"
+          security create-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
+          security set-keychain-settings -lut 21600 "${KEYCHAIN_PATH}"
+          security unlock-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
+          security import "${CERT_PATH}" -P "${P12_PASSWORD}" -A -t cert -f pkcs12 -k "${KEYCHAIN_PATH}"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}" >/dev/null
+          security list-keychain -d user -s "${KEYCHAIN_PATH}" $(security list-keychain -d user | xargs)
+          # Verify identity loaded
+          security find-identity -v -p codesigning "${KEYCHAIN_PATH}" | grep "Developer ID Application: Moamen Basel"
+
+      - name: Archive (universal arm64 + x86_64)
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project "${PROJECT}" \
+            -scheme "${SCHEME}" \
+            -configuration "${CONFIGURATION}" \
+            -destination 'generic/platform=macOS' \
+            -archivePath build/PureMac.xcarchive \
+            ARCHS="arm64 x86_64" \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Developer ID Application: Moamen Basel (H3WXHVTP97)" \
+            DEVELOPMENT_TEAM="${TEAM_ID}" \
+            OTHER_CODE_SIGN_FLAGS="--timestamp --options=runtime" \
+            archive | xcbeautify
+
+      - name: Export signed app
+        run: |
+          set -euo pipefail
+          cat > build/ExportOptions.plist <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>developer-id</string>
+            <key>teamID</key><string>H3WXHVTP97</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>signingCertificate</key><string>Developer ID Application</string>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath build/PureMac.xcarchive \
+            -exportPath build/export \
+            -exportOptionsPlist build/ExportOptions.plist | xcbeautify
+
+      - name: Verify codesign + hardened runtime
+        run: |
+          set -euo pipefail
+          APP="build/export/PureMac.app"
+          codesign --verify --deep --strict --verbose=2 "${APP}"
+          codesign -dvv "${APP}" 2>&1 | tee /tmp/cs-info.txt
+          grep -q "flags=0x10000(runtime)" /tmp/cs-info.txt || { echo "::error::Hardened runtime missing"; exit 1; }
+          spctl --assess --type execute --verbose=4 "${APP}" || true
+          # Universal arch check
+          lipo -archs "${APP}/Contents/MacOS/PureMac" | grep -q "x86_64" && lipo -archs "${APP}/Contents/MacOS/PureMac" | grep -q "arm64"
+
+      - name: Build DMG
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -euo pipefail
+          DMG="build/PureMac-${VERSION}.dmg"
+          create-dmg \
+            --volname "PureMac ${VERSION}" \
+            --window-size 540 360 \
+            --icon-size 100 \
+            --icon "PureMac.app" 140 180 \
+            --hide-extension "PureMac.app" \
+            --app-drop-link 400 180 \
+            --no-internet-enable \
+            "${DMG}" \
+            build/export/PureMac.app
+          codesign --sign "Developer ID Application: Moamen Basel (H3WXHVTP97)" --timestamp "${DMG}"
+          codesign --verify --verbose=2 "${DMG}"
+
+      - name: Notarize DMG
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -euo pipefail
+          DMG="build/PureMac-${VERSION}.dmg"
+          xcrun notarytool submit "${DMG}" \
+            --apple-id "${APPLE_ID}" \
+            --password "${APPLE_APP_PASSWORD}" \
+            --team-id "${TEAM_ID}" \
+            --wait \
+            --timeout 30m
+          xcrun stapler staple "${DMG}"
+          xcrun stapler validate "${DMG}"
+          spctl --assess --type install --verbose=4 "${DMG}"
+
+      - name: Build notarized zip
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -euo pipefail
+          ZIP="build/PureMac-${VERSION}.zip"
+          # Notarize the .app inside a zip too (homebrew cask uses zip)
+          ditto -c -k --keepParent --sequesterRsrc build/export/PureMac.app build/PureMac-app.zip
+          xcrun notarytool submit build/PureMac-app.zip \
+            --apple-id "${{ secrets.APPLE_ID }}" \
+            --password "${{ secrets.APPLE_APP_PASSWORD }}" \
+            --team-id "${TEAM_ID}" \
+            --wait --timeout 30m
+          xcrun stapler staple build/export/PureMac.app
+          # Final shippable zip with stapled ticket
+          ditto -c -k --keepParent --sequesterRsrc build/export/PureMac.app "${ZIP}"
+
+      - name: Compute SHA256 checksums
+        id: sha
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -euo pipefail
+          DMG_SHA=$(shasum -a 256 "build/PureMac-${VERSION}.dmg" | awk '{print $1}')
+          ZIP_SHA=$(shasum -a 256 "build/PureMac-${VERSION}.zip" | awk '{print $1}')
+          echo "dmg=${DMG_SHA}" >> "$GITHUB_OUTPUT"
+          echo "zip=${ZIP_SHA}" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Checksums"
+            echo ""
+            echo "| Asset | SHA-256 |"
+            echo "|-------|---------|"
+            echo "| PureMac-${VERSION}.dmg | \`${DMG_SHA}\` |"
+            echo "| PureMac-${VERSION}.zip | \`${ZIP_SHA}\` |"
+          } > build/CHECKSUMS.md
+
+      - name: Upload artifacts (always, for inspection)
+        uses: actions/upload-artifact@v4
+        with:
+          name: puremac-${{ steps.ver.outputs.version }}
+          path: |
+            build/PureMac-${{ steps.ver.outputs.version }}.dmg
+            build/PureMac-${{ steps.ver.outputs.version }}.zip
+            build/CHECKSUMS.md
+          retention-days: 14
+
+      - name: Create or update GitHub release
+        if: ${{ github.event_name == 'push' || inputs.dry_run == false }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.ver.outputs.version }}
+          TAG: ${{ steps.ver.outputs.tag }}
+        run: |
+          set -euo pipefail
+          NOTES_FILE=build/release-notes.md
+          {
+            echo "## PureMac ${VERSION}"
+            echo ""
+            echo "Universal binary (Intel + Apple Silicon). Signed with Developer ID + notarized + stapled by Apple."
+            echo ""
+            cat build/CHECKSUMS.md
+            echo ""
+            echo "### Install"
+            echo ""
+            echo "\`\`\`"
+            echo "brew tap momenbasel/tap"
+            echo "brew install --cask puremac"
+            echo "\`\`\`"
+          } > "${NOTES_FILE}"
+
+          if gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            gh release upload "${TAG}" \
+              "build/PureMac-${VERSION}.dmg" \
+              "build/PureMac-${VERSION}.zip" \
+              --repo "${GITHUB_REPOSITORY}" --clobber
+          else
+            gh release create "${TAG}" \
+              "build/PureMac-${VERSION}.dmg" \
+              "build/PureMac-${VERSION}.zip" \
+              --title "PureMac ${TAG}" \
+              --notes-file "${NOTES_FILE}" \
+              --repo "${GITHUB_REPOSITORY}"
+          fi
+
+      - name: Bump in-repo homebrew formula
+        if: ${{ github.event_name == 'push' || inputs.dry_run == false }}
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+          ZIP_SHA: ${{ steps.sha.outputs.zip }}
+        run: |
+          set -euo pipefail
+          FORMULA=homebrew/puremac.rb
+          /usr/bin/sed -i '' -E "s/^  version \".*\"/  version \"${VERSION}\"/" "${FORMULA}"
+          /usr/bin/sed -i '' -E "s/^  sha256 \".*\"/  sha256 \"${ZIP_SHA}\"/" "${FORMULA}"
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "${FORMULA}"
+          if git diff --cached --quiet; then
+            echo "No formula changes to commit."
+          else
+            git commit -m "homebrew: bump to ${VERSION} (sha256 ${ZIP_SHA:0:12})"
+            git push origin HEAD:main
+          fi
+
+      - name: Bump tap formula (momenbasel/homebrew-tap)
+        if: ${{ (github.event_name == 'push' || inputs.dry_run == false) && env.HOMEBREW_TAP_TOKEN != '' }}
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          VERSION: ${{ steps.ver.outputs.version }}
+          ZIP_SHA: ${{ steps.sha.outputs.zip }}
+        run: |
+          set -euo pipefail
+          TAP_DIR="${RUNNER_TEMP}/homebrew-tap"
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/momenbasel/homebrew-tap.git" "${TAP_DIR}"
+          cd "${TAP_DIR}"
+          # Cask path may be Casks/puremac.rb or puremac.rb depending on tap layout
+          FORMULA=$(find . -name 'puremac.rb' -not -path './.git/*' | head -1)
+          if [[ -z "${FORMULA}" ]]; then
+            echo "::error::puremac.rb not found in tap"
+            exit 1
+          fi
+          /usr/bin/sed -i '' -E "s/^  version \".*\"/  version \"${VERSION}\"/" "${FORMULA}"
+          /usr/bin/sed -i '' -E "s/^  sha256 \".*\"/  sha256 \"${ZIP_SHA}\"/" "${FORMULA}"
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "${FORMULA}"
+          if git diff --cached --quiet; then
+            echo "No tap formula changes."
+          else
+            git commit -m "puremac: bump to ${VERSION}"
+            git push origin HEAD
+          fi
+
+      - name: Cleanup keychain
+        if: always()
+        run: security delete-keychain "${RUNNER_TEMP}/app-signing.keychain-db" || true
