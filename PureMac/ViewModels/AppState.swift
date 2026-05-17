@@ -182,7 +182,9 @@ final class AppState: ObservableObject {
                     try FileManager.default.trashItem(at: url, resultingItemURL: &resulting)
                     removed.append(url)
                 } catch {
-                    Logger.shared.log("Trash failed for \(url.path): \(error.localizedDescription)", level: .error)
+                        Task { @MainActor in
+                        Logger.shared.log("Trash failed for \(url.path): \(error.localizedDescription)", level: .error)
+                        }
                     failed.append(url)
                 }
             }
