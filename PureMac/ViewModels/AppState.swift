@@ -151,7 +151,7 @@ final class AppState: ObservableObject {
             }
             return
         }
-        trashDirectly(urls: urls) { [weak self] removed, failed in
+        trashDirectly(urls: urls) { [weak self] removed, needsAdmin, failed in
             DispatchQueue.main.async {
                 guard let self else { return }
                 if !removed.isEmpty {
@@ -159,9 +159,28 @@ final class AppState: ObservableObject {
                     self.selectedFiles.subtract(removed)
                     Logger.shared.log("Removed \(removed.count) files", level: .info)
                 }
-                if !failed.isEmpty {
-                    self.removalError = "\(failed.count) file\(failed.count == 1 ? "" : "s") could not be removed. Grant Full Disk Access in System Settings → Privacy & Security to allow PureMac to manage all files."
-                    Logger.shared.log("Failed to remove \(failed.count) files — likely missing FDA", level: .error)
+                var failedPaths = failed
+                if !needsAdmin.isEmpty {
+                    if self.removeWithAdminPrivileges(needsAdmin) {
+                        for url in needsAdmin {
+                            if !FileManager.default.fileExists(atPath: url.path) {
+                                self.discoveredFiles.removeAll { $0 == url }
+                                self.selectedFiles.remove(url)
+                                Logger.shared.log("Removed \(url.path) with administrator privileges", level: .info)
+                            } else {
+                                failedPaths.append(url)
+                            }
+                        }
+                    } else {
+                        failedPaths.append(contentsOf: needsAdmin)
+                    }
+                }
+                if !failedPaths.isEmpty {
+                    self.removalError = "\(failedPaths.count) file\(failedPaths.count == 1 ? "" : "s") could not be removed. Some items may require administrator privileges."
+                    Logger.shared.log("Failed to remove \(failedPaths.count) files — likely missing FDA or admin privileges", level: .error)
+                }
+                if !removed.isEmpty || !needsAdmin.isEmpty {
+                    self.pruneMissingInstalledApps()
                 }
             }
         }
@@ -172,9 +191,10 @@ final class AppState: ObservableObject {
     /// Full Disk Access list. The previous AppleScript-via-Finder bridge
     /// caused the syscall to originate from Finder, which is why granting
     /// FDA to PureMac made no difference (issue #75).
-    private func trashDirectly(urls: [URL], completion: @escaping ([URL], [URL]) -> Void) {
+    private func trashDirectly(urls: [URL], completion: @escaping ([URL], [URL], [URL]) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
             var removed: [URL] = []
+            var needsAdmin: [URL] = []
             var failed: [URL] = []
             for url in urls {
                 var resulting: NSURL?
@@ -182,11 +202,68 @@ final class AppState: ObservableObject {
                     try FileManager.default.trashItem(at: url, resultingItemURL: &resulting)
                     removed.append(url)
                 } catch {
-                    Logger.shared.log("Trash failed for \(url.path): \(error.localizedDescription)", level: .error)
-                    failed.append(url)
+                    let nsError = error as NSError
+                    let isMissingFile =
+                        nsError.domain == NSCocoaErrorDomain &&
+                        (nsError.code == NSFileNoSuchFileError || nsError.code == NSFileReadNoSuchFileError)
+                        || (nsError.domain == NSPOSIXErrorDomain && nsError.code == Int(ENOENT))
+                    let permissionDeniedCodes = [
+                        NSFileReadNoPermissionError,
+                        NSFileWriteNoPermissionError,
+                        NSFileWriteUnknownError,
+                        257,
+                        513,
+                    ]
+
+                    if isMissingFile {
+                        Logger.shared.log("Trash skipped for \(url.path): file no longer exists", level: .info)
+                        removed.append(url)
+                    } else
+                    if permissionDeniedCodes.contains(nsError.code) {
+                        needsAdmin.append(url)
+                    } else {
+                        Logger.shared.log("Trash failed for \(url.path): \(error.localizedDescription)", level: .error)
+                        failed.append(url)
+                    }
                 }
             }
-            completion(removed, failed)
+            completion(removed, needsAdmin, failed)
+        }
+    }
+
+    private func removeWithAdminPrivileges(_ urls: [URL]) -> Bool {
+        guard !urls.isEmpty else { return true }
+
+        let quotedPaths = urls.map { url in
+            "'\(url.path.replacingOccurrences(of: "'", with: "'\\\"'\\\"'"))'"
+        }
+        let shellCommand = "rm -rf -- \(quotedPaths.joined(separator: " "))"
+        let appleScriptCommand = shellCommand
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+        let script = "do shell script \"\(appleScriptCommand)\" with administrator privileges"
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        process.arguments = ["-e", script]
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+            return process.terminationStatus == 0
+        } catch {
+            return false
+        }
+    }
+
+    private func pruneMissingInstalledApps() {
+        let fileManager = FileManager.default
+        installedApps.removeAll { !fileManager.fileExists(atPath: $0.path.path) }
+
+        if let selectedApp, !fileManager.fileExists(atPath: selectedApp.path.path) {
+            self.selectedApp = nil
+            discoveredFiles = []
+            selectedFiles = []
         }
     }
 
