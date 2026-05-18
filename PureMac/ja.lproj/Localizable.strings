@@ -1,117 +1,245 @@
-/* Full Disk Access Banner */
-"Full Disk Access Required" = "フルディスクアクセスが必要です";
-"PureMac needs Full Disk Access to scan Trash, Mail, Desktop, Documents, and Homebrew cache." = "PureMacがゴミ箱、メール、デスクトップ、書類、Homebrewキャッシュをスキャンするにはフルディスクアクセスが必要です。";
-"Open Settings" = "設定を開く";
-
-/* Top Bar */
-"Macintosh HD" = "Macintosh HD";
-"%@ free" = "%@ 空き";
-"Auto-clean: " = "自動クリーン： ";
-
-/* Sidebar */
-"CLEANING" = "クリーニング";
-"Last cleaned: %@" = "最終クリーン： %@";
-"Home" = "ホーム";
+/* Sidebar (MainWindow) */
+"Overview" = "概要";
 "Applications" = "アプリケーション";
-"Cleaning" = "クリーニング";
+"Cleanup" = "クリーンアップ";
+"Dashboard" = "ダッシュボード";
 "Installed Apps" = "インストール済みアプリ";
 "Orphaned Files" = "孤立ファイル";
+"PureMac" = "PureMac";
+"Ready to clean" = "クリーンアップ可能";
+"Limited access" = "アクセスが制限されています";
+"Full Disk Access granted" = "フルディスクアクセスが許可されています";
+"Grant FDA in Settings" = "設定でフルディスクアクセスを許可";
 "Select a category from the sidebar to get started." = "サイドバーからカテゴリを選択して始めてください。";
 
-/* Smart Scan */
+/* FDA toast + clean error alert (MainWindow) */
+"Couldn't clean everything" = "すべてを削除できませんでした";
+"Open System Settings" = "システム設定を開く";
+"OK" = "OK";
+"Full Disk Access required" = "フルディスクアクセスが必要です";
+"macOS blocks PureMac from cleaning caches and uninstalling apps until you grant access." = "アクセスを許可するまで、macOSはPureMacによるキャッシュの削除やアプリのアンインストールをブロックします。";
+"Grant Access" = "アクセスを許可";
+
+/* Dashboard */
+"Storage" = "ストレージ";
 "Smart Scan" = "スマートスキャン";
-"Click Scan to start" = "スキャンをクリックして開始";
-"Total" = "合計";
-"Used" = "使用済み";
-"Free" = "空き";
+"free of %@" = "%@中の空き容量";
+"%lld%% used" = "%lld%% 使用中";
+"Used" = "使用中";
+"Junk" = "ジャンク";
 "Purgeable" = "削除可能";
-"junk found" = "ジャンクを検出";
-"Your Mac is clean!" = "お使いのMacはクリーンです！";
-"freed up" = "解放済み";
-"Cleaning..." = "クリーン中…";
-"Scanning..." = "スキャン中…";
-"%lld/%lld items" = "%lld/%lld 件";
+"USED" = "使用中";
+"SCANNING" = "スキャン中";
+"Free Space" = "空き容量";
+"Junk Found" = "見つかったジャンク";
+"Apps" = "アプリ";
+"of %@ · %lld%% used" = "%@中 · %lld%% 使用中";
+"Run a scan" = "スキャンを実行";
+"across %lld categories" = "%lld カテゴリ";
+"installed" = "インストール済み";
+"APFS reclaimable" = "APFSで再利用可能";
+"Suggested for you" = "あなたへのおすすめ";
+"Found so far" = "これまでに見つかったもの";
+"By category" = "カテゴリ別";
+"%@ is using %@" = "%@ は %@ を使用しています";
+"Grant Full Disk Access for full results" = "完全な結果を得るためにフルディスクアクセスを許可してください";
+"Without it, most caches and uninstall flows fail." = "許可しないと、ほとんどのキャッシュ削除やアンインストールに失敗します。";
+"Action" = "アクション";
+"Scanning your Mac" = "Macをスキャン中";
+"Currently in: %@" = "現在: %@";
+"found" = "見つかりました";
+"Your Mac is clean" = "Macはクリーンです";
+"Scan Again" = "再スキャン";
+"Clean %@" = "%@ をクリーンアップ";
+"Clean %@?" = "%@ をクリーンアップしますか?";
+"Cleaning…" = "クリーンアップ中…";
+"%lld%% complete" = "%lld%% 完了";
+"freed" = "解放";
+"Done" = "完了";
+"%lld items" = "%lld 個";
+
+/* Common destructive dialog */
+"Clean" = "クリーンアップ";
+"Cancel" = "キャンセル";
+"This will permanently delete the selected files. This cannot be undone." = "選択したファイルが完全に削除されます。この操作は取り消せません。";
 
 /* Category Detail */
-"All Clean!" = "すべてクリーン！";
-"No junk files found in this category." = "このカテゴリにジャンクファイルはありません。";
-"Not scanned yet" = "未スキャン";
-"Click Scan to analyze this category" = "スキャンをクリックしてこのカテゴリを分析";
-"%lld of %lld selected" = "%lld / %lld 件を選択中";
-"Select All" = "すべて選択";
-"Deselect All" = "すべて選択解除";
-"%lld items" = "%lld 件";
-
-/* Buttons */
+"All Clean" = "すべてクリーン";
+"No junk files found in this category." = "このカテゴリにはジャンクファイルが見つかりませんでした。";
+"Not Scanned" = "未スキャン";
+"Run a scan to analyze this category." = "スキャンを実行してこのカテゴリを分析します。";
+"Scan Now" = "今すぐスキャン";
+"Filter files" = "ファイルを絞り込む";
 "Scan" = "スキャン";
-"Re-scan" = "再スキャン";
-"Scan Again" = "もう一度スキャン";
-"Done" = "完了";
-"Clean (%@)" = "クリーン（%@）";
-"Clean %lld items (%@)" = "%lld 件をクリーン（%@）";
+"Select All" = "すべて選択";
+"Deselect All" = "選択解除";
+"Largest First" = "大きい順";
+"Smallest First" = "小さい順";
+"Sorted: Largest First" = "並び順: 大きい順";
+"Sorted: Smallest First" = "並び順: 小さい順";
+"Clean %lld items" = "%lld 項目をクリーンアップ";
+"%lld items · %@" = "%lld 項目 · %@";
+"Scanning…" = "スキャン中…";
+"Rescan" = "再スキャン";
+"%lld of %lld selected" = "%lld / %lld 個を選択中";
+"Reveal in Finder" = "Finderで表示";
 
-/* Settings - Schedule */
-"Schedule" = "スケジュール";
-"Automatic Cleaning" = "自動クリーン";
-"Automatically scan and clean your Mac on a schedule" = "スケジュールに従ってお使いのMacを自動スキャン・クリーン";
-"Scan Interval" = "スキャン間隔";
-"Automation" = "自動化";
-"Auto-clean after scan" = "スキャン後に自動クリーン";
-"Minimum junk size to trigger clean:" = "クリーンを実行する最小ジャンクサイズ：";
-"50 MB" = "50 MB";
-"100 MB" = "100 MB";
-"250 MB" = "250 MB";
-"500 MB" = "500 MB";
-"1 GB" = "1 GB";
-"Auto-purge purgeable space" = "削除可能な領域を自動クリア";
-"Show notification on completion" = "完了時に通知を表示";
-"Status" = "ステータス";
-"Last run" = "最終実行";
-"Next run" = "次回実行";
-"Never" = "なし";
-"Not scheduled" = "未設定";
+/* Apps (AppListView) */
+"Search apps" = "アプリを検索";
+"Refresh" = "更新";
+"Installed Apps (%lld)" = "インストール済みアプリ (%lld)";
+"Uninstall (%lld files)" = "アンインストール (%lld ファイル)";
+"Loading installed apps..." = "インストール済みアプリを読み込み中...";
+"No Apps Found" = "アプリが見つかりません";
+"Could not find any installed applications." = "インストール済みアプリケーションが見つかりませんでした。";
+"Retry" = "再試行";
+"Application" = "アプリケーション";
+"Size" = "サイズ";
+"Select an App" = "アプリを選択";
+"Select an app from the list to see all its related files across your system." = "リストからアプリを選択すると、システム全体の関連ファイルが表示されます。";
 
-/* Settings - General */
+/* App Files (AppFilesView) */
+"%lld files" = "%lld ファイル";
+"Scanning for related files..." = "関連ファイルをスキャン中...";
+"Checking %lld locations..." = "%lld 個の場所を確認中...";
+"No Related Files" = "関連ファイルがありません";
+"No additional files found for %@." = "%@ の追加ファイルは見つかりませんでした。";
+"Remove %lld files (%@)" = "%lld ファイルを削除 (%@)";
+"Removal Failed" = "削除に失敗しました";
+"Remove this file" = "このファイルを削除";
+"Remove %@?" = "%@ を削除しますか?";
+"Remove" = "削除";
+"This will permanently delete this file. This action cannot be undone." = "このファイルが完全に削除されます。この操作は取り消せません。";
+
+/* Orphans */
+"Scanning for orphaned files..." = "孤立ファイルをスキャン中...";
+"No Orphaned Files" = "孤立ファイルはありません";
+"No leftover files from uninstalled apps were found." = "アンインストール済みアプリの残存ファイルは見つかりませんでした。";
+"Scan for Orphans" = "孤立ファイルをスキャン";
+"Orphaned Files (%lld)" = "孤立ファイル (%lld)";
+"Remove Selected (%lld)" = "選択した項目を削除 (%lld)";
+"Some files could not be removed" = "一部のファイルを削除できませんでした";
+
+/* Onboarding */
+"Back" = "戻る";
+"Next" = "次へ";
+"Get Started" = "始める";
+"Welcome to PureMac" = "PureMacへようこそ";
+"Free, open-source macOS app manager and system cleaner." = "無料・オープンソースのmacOSアプリ管理&システムクリーナー。";
+"Find junk files across your system" = "システム全体のジャンクファイルを検出";
+"App Uninstaller" = "アプリアンインストーラ";
+"Remove apps and all their files" = "アプリと関連ファイルをすべて削除";
+"Orphan Finder" = "孤立ファイル検出";
+"Find leftovers from deleted apps" = "削除済みアプリの残存物を検出";
+"Full Disk Access" = "フルディスクアクセス";
+"PureMac needs Full Disk Access to uninstall apps, find leftover files, and clean protected caches." = "アプリのアンインストール、残存ファイルの検出、保護されたキャッシュのクリーンアップにはフルディスクアクセスが必要です。";
+"We'll guide you through the next steps." = "次のステップへご案内します。";
+"In System Settings, do this:" = "システム設定で次の操作を行ってください:";
+"Privacy & Security → Full Disk Access" = "プライバシーとセキュリティ → フルディスクアクセス";
+"Find **PureMac** and turn the toggle on" = "**PureMac** を見つけてスイッチをオンにする";
+"Authenticate with Touch ID or your password" = "Touch IDまたはパスワードで認証";
+"Reopen Settings" = "設定を再度開く";
+"PureMac isn't in the list — reveal it" = "PureMacがリストにない — 表示する";
+"Reset permissions and re-prompt" = "アクセス権をリセットして再度求める";
+"Hide diagnostics" = "診断情報を隠す";
+"Show diagnostics" = "診断情報を表示";
+"Trouble?" = "問題が発生しましたか?";
+"Waiting for permission…" = "許可を待っています…";
+"Permission granted." = "アクセスが許可されました。";
+"PureMac can now manage protected files." = "PureMacは保護されたファイルを管理できるようになりました。";
+"You're Ready" = "準備完了";
+"%lld/%lld protected locations accessible" = "%lld/%lld の保護された場所にアクセス可能";
+"Some features will be limited. You can grant Full Disk Access later in System Settings." = "一部の機能は制限されます。フルディスクアクセスは後でシステム設定から許可できます。";
+"Trash" = "ゴミ箱";
+"Mail Data" = "メールデータ";
+"Safari Data" = "Safariデータ";
+"Desktop" = "デスクトップ";
+"Documents" = "書類";
+"TCC Database" = "TCCデータベース";
+"Blocked" = "ブロック";
+
+/* Settings */
 "General" = "一般";
-"App Behavior" = "アプリの動作";
-"Launch at login" = "ログイン時に起動";
-"Show in Dock" = "Dockに表示";
-"Show menu bar icon" = "メニューバーアイコンを表示";
-"Safety" = "安全性";
-"PureMac will never delete system-critical files. Only caches, logs, temporary files, and user-selected items are removed." = "PureMacはシステムの重要なファイルを削除しません。キャッシュ、ログ、一時ファイル、ユーザーが選択した項目のみ削除されます。";
+"Cleaning" = "クリーニング";
+"Schedule" = "スケジュール";
+"About" = "PureMacについて";
+"Startup" = "起動";
+"Launch PureMac at login" = "ログイン時にPureMacを起動";
+"App Scanning" = "アプリスキャン";
+"Search sensitivity" = "検索の精度";
+"Strict" = "厳格";
+"Enhanced" = "拡張";
+"Deep" = "詳細";
+"Exact bundle ID and name matches only. Safest option." = "バンドルIDと名前が完全一致するもののみ。最も安全。";
+"Includes partial name matching and bundle ID components." = "部分的な名前一致やバンドルID要素も含めます。";
+"Includes company name, entitlements, and team identifier matching." = "会社名、エンタイトルメント、チームIDの一致を含めます。";
+"Language" = "言語";
+"Restart PureMac to apply the selected language." = "選択した言語を適用するにはPureMacを再起動してください。";
+"Relaunch Now" = "今すぐ再起動";
+"System Default" = "システムデフォルト";
+"English" = "英語";
+"Spanish" = "スペイン語";
+"Japanese" = "日本語";
+"Arabic" = "アラビア語";
+"Portuguese (Brazil)" = "ポルトガル語(ブラジル)";
+"Chinese (Simplified)" = "中国語(簡体字)";
+"Chinese (Traditional)" = "中国語(繁体字)";
+"Safety" = "安全";
+"Confirm before deleting files" = "ファイル削除前に確認";
+"File Discovery" = "ファイル検出";
+"Skip hidden files during scan" = "スキャン時に隠しファイルをスキップ";
+"Large Files" = "大きなファイル";
+"Minimum size: %lld MB" = "最小サイズ: %lld MB";
+"Files older than: %lld months" = "%lld か月以上前のファイル";
+"Automatic Scanning" = "自動スキャン";
+"Enable scheduled scanning" = "スケジュールスキャンを有効化";
+"Scan interval" = "スキャン間隔";
+"Auto-clean after scan" = "スキャン後に自動クリーンアップ";
+"Auto-purge purgeable space" = "削除可能領域を自動パージ";
+"Notify on completion" = "完了時に通知";
+"Last run" = "前回実行";
+"Version %@" = "バージョン %@";
+"Free, open-source macOS app manager." = "無料・オープンソースのmacOSアプリ管理ツール。";
+"GitHub Repository" = "GitHubリポジトリ";
+"Report an Issue" = "問題を報告";
+"MIT License" = "MITライセンス";
 
-/* Settings - About */
-"About" = "概要";
-"Version 1.0.0" = "バージョン 1.0.0";
-"A free, open-source Mac cleaning utility.\nKeep your Mac fast, clean, and optimized." = "無料のオープンソースMacクリーニングツール。\nお使いのMacを高速・クリーン・最適な状態に保ちます。";
-"GitHub Repository" = "GitHub リポジトリ";
-"MIT License" = "MIT License";
-
-/* Cleaning Categories */
+/* Cleaning categories (CleaningCategory.rawValue) */
 "System Junk" = "システムジャンク";
 "User Cache" = "ユーザーキャッシュ";
 "AI Apps" = "AIアプリ";
 "Mail Files" = "メールファイル";
 "Trash Bins" = "ゴミ箱";
-"Large & Old Files" = "大きいファイルと古いファイル";
-"Purgeable Space" = "削除可能な領域";
+"Large & Old Files" = "大きい・古いファイル";
+"Purgeable Space" = "削除可能領域";
 "Xcode Junk" = "Xcodeジャンク";
 "Brew Cache" = "Brewキャッシュ";
+"Node Cache" = "Nodeキャッシュ";
+"Docker Cache" = "Dockerキャッシュ";
 
-/* Category Descriptions */
+/* Cleaning category descriptions */
 "Scan everything at once" = "すべてを一度にスキャン";
 "System caches, logs, and temporary files" = "システムキャッシュ、ログ、一時ファイル";
-"Application caches and browser data" = "アプリキャッシュとブラウザデータ";
-"Logs, caches, and temporary files from local AI apps" = "ローカルAIアプリのログ、キャッシュ、一時ファイル";
+"Application caches and browser data" = "アプリケーションキャッシュとブラウザデータ";
 "Local AI app logs, caches, and optional history" = "ローカルAIアプリのログ、キャッシュ、任意の履歴";
 "Downloaded mail attachments" = "ダウンロードしたメール添付ファイル";
 "Files in your Trash" = "ゴミ箱内のファイル";
-"Files over 100 MB or older than 1 year" = "100 MB超または1年以上前のファイル";
-"APFS purgeable disk space" = "APFSの削除可能なディスク領域";
+"Files over 100 MB or older than 1 year" = "100MB以上または1年以上前のファイル";
+"APFS purgeable disk space" = "APFSの削除可能ディスク領域";
 "Derived data, archives, and simulators" = "派生データ、アーカイブ、シミュレータ";
 "Homebrew download cache" = "Homebrewのダウンロードキャッシュ";
+"npm, yarn, and pnpm download caches" = "npm、yarn、pnpm のダウンロードキャッシュ";
+"Docker images, containers, and build cache" = "Dockerイメージ、コンテナ、ビルドキャッシュ";
 
-/* Schedule Intervals */
+/* Node Cache subcategories */
+"npm cache" = "npmキャッシュ";
+"yarn classic cache" = "yarnクラシックキャッシュ";
+"pnpm content-addressable store" = "pnpmコンテンツアドレッサブルストア";
+
+/* Docker Cache helper */
+"Reclaimable (run `docker system prune -af`)" = "再利用可能 ( `docker system prune -af` を実行)";
+
+/* Schedule intervals (ScheduleInterval.rawValue) */
 "Every Hour" = "1時間ごと";
 "Every 3 Hours" = "3時間ごと";
 "Every 6 Hours" = "6時間ごと";
@@ -121,5 +249,14 @@
 "Every 2 Weeks" = "2週間ごと";
 "Monthly" = "毎月";
 
+/* Schedule status */
+"Never" = "なし";
+"Not scheduled" = "未スケジュール";
+
+/* Appearance modes (AppearanceMode.label) */
+"System" = "システム";
+"Light" = "ライト";
+"Dark" = "ダーク";
+
 /* Notifications */
-"Found %@ of junk files." = "%@ のジャンクファイルを検出しました。";
+"Found %@ of junk files." = "%@ のジャンクファイルが見つかりました。";

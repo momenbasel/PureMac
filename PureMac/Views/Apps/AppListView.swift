@@ -33,7 +33,7 @@ struct AppListView: View {
                 .frame(minWidth: 300)
         }
         .searchable(text: $searchText, prompt: "Search apps")
-        .navigationTitle("Installed Apps (\(appState.installedApps.count))")
+        .navigationTitle(installedAppsTitle)
         .toolbar {
             ToolbarItemGroup {
                 Button {
@@ -43,7 +43,7 @@ struct AppListView: View {
                 }
 
                 if !appState.selectedFiles.isEmpty {
-                    Button("Uninstall (\(appState.selectedFiles.count) files)", role: .destructive) {
+                    Button(uninstallLabel(count: appState.selectedFiles.count), role: .destructive) {
                         appState.removeSelectedFiles()
                     }
                     .buttonStyle(.borderedProminent)
@@ -53,13 +53,21 @@ struct AppListView: View {
         }
     }
 
+    private var installedAppsTitle: String {
+        String(format: String(localized: "Installed Apps (%lld)"), Int64(appState.installedApps.count))
+    }
+
+    private func uninstallLabel(count: Int) -> String {
+        String(format: String(localized: "Uninstall (%lld files)"), Int64(count))
+    }
+
     // MARK: - App Table (left side)
 
     private var appTable: some View {
         Group {
             if appState.isLoadingApps {
                 VStack(spacing: 12) {
-                    ProgressView("Loading installed apps...")
+                    ProgressView(LocalizedStringKey("Loading installed apps..."))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if appState.installedApps.isEmpty {

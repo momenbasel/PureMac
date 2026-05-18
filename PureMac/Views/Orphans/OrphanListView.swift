@@ -10,7 +10,7 @@ struct OrphanListView: View {
         Group {
             if appState.isSearchingOrphans {
                 VStack(spacing: 16) {
-                    ProgressView("Scanning for orphaned files...")
+                    ProgressView(LocalizedStringKey("Scanning for orphaned files..."))
                         .progressViewStyle(.linear)
                         .frame(maxWidth: 300)
                 }
@@ -53,11 +53,11 @@ struct OrphanListView: View {
                 }
             }
         }
-        .navigationTitle("Orphaned Files (\(appState.orphanedFiles.count))")
+        .navigationTitle(orphanedFilesTitle)
         .toolbar {
             ToolbarItemGroup {
                 if !appState.orphanedFiles.isEmpty {
-                    Button(selectedOrphans.count == appState.orphanedFiles.count ? "Deselect All" : "Select All") {
+                    Button(LocalizedStringKey(selectedOrphans.count == appState.orphanedFiles.count ? "Deselect All" : "Select All")) {
                         if selectedOrphans.count == appState.orphanedFiles.count {
                             selectedOrphans.removeAll()
                         } else {
@@ -71,7 +71,7 @@ struct OrphanListView: View {
                 }
 
                 if !selectedOrphans.isEmpty {
-                    Button("Remove Selected (\(selectedOrphans.count))", role: .destructive) {
+                    Button(removeSelectedLabel, role: .destructive) {
                         Task {
                             await removeSelectedOrphans()
                         }
@@ -90,6 +90,14 @@ struct OrphanListView: View {
         } message: {
             Text(removalErrorMessage ?? "")
         }
+    }
+
+    private var orphanedFilesTitle: String {
+        String(format: String(localized: "Orphaned Files (%lld)"), Int64(appState.orphanedFiles.count))
+    }
+
+    private var removeSelectedLabel: String {
+        String(format: String(localized: "Remove Selected (%lld)"), Int64(selectedOrphans.count))
     }
 
     private func orphanBinding(for url: URL) -> Binding<Bool> {
