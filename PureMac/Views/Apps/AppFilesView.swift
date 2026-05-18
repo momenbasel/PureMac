@@ -30,7 +30,7 @@ struct AppFilesView: View {
 
                 if !appState.discoveredFiles.isEmpty {
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text("\(appState.discoveredFiles.count) files")
+                        Text(filesCountText(count: appState.discoveredFiles.count))
                             .font(.callout)
                             .foregroundStyle(.secondary)
                         Text(ByteCountFormatter.string(fromByteCount: totalSelectedSize, countStyle: .file))
@@ -46,8 +46,8 @@ struct AppFilesView: View {
             if appState.isScanningAppFiles {
                 VStack(spacing: 12) {
                     Spacer()
-                    ProgressView("Scanning for related files...")
-                    Text("Checking \(appState.discoveredFiles.count) locations...")
+                    ProgressView(LocalizedStringKey("Scanning for related files..."))
+                    Text(checkingLocationsText(count: appState.currentAppFileSearchLocationCount))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer()
@@ -57,7 +57,9 @@ struct AppFilesView: View {
                 EmptyStateView(
                     "No Related Files",
                     systemImage: "checkmark.circle",
-                    description: "No additional files found for \(app.appName)."
+                    description: LocalizedStringKey(
+                        String(format: String(localized: "No additional files found for %@."), app.appName)
+                    )
                 )
             } else {
                 List(appState.discoveredFiles, id: \.self) { fileURL in
@@ -81,7 +83,7 @@ struct AppFilesView: View {
                     Spacer()
 
                     if !appState.selectedFiles.isEmpty {
-                        Button("Remove \(appState.selectedFiles.count) files (\(ByteCountFormatter.string(fromByteCount: totalSelectedSize, countStyle: .file)))", role: .destructive) {
+                        Button(removeFilesLabel, role: .destructive) {
                             appState.removeSelectedFiles()
                         }
                         .buttonStyle(.borderedProminent)
@@ -105,6 +107,22 @@ struct AppFilesView: View {
         } message: {
             Text(appState.removalError ?? "")
         }
+    }
+
+    private func filesCountText(count: Int) -> String {
+        String(format: String(localized: "%lld files"), Int64(count))
+    }
+
+    private func checkingLocationsText(count: Int) -> String {
+        String(format: String(localized: "Checking %lld locations..."), Int64(count))
+    }
+
+    private var removeFilesLabel: String {
+        String(
+            format: String(localized: "Remove %lld files (%@)"),
+            Int64(appState.selectedFiles.count),
+            ByteCountFormatter.string(fromByteCount: totalSelectedSize, countStyle: .file)
+        )
     }
 
     private func fileSelectionBinding(for url: URL) -> Binding<Bool> {
@@ -214,7 +232,12 @@ struct FileRow: View {
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.15)) { isHovering = hovering }
         }
-        .alert("Remove \(fileURL.lastPathComponent)?", isPresented: $showConfirmation) {
+        .alert(
+            Text(
+                String(format: String(localized: "Remove %@?"), fileURL.lastPathComponent)
+            ),
+            isPresented: $showConfirmation
+        ) {
             Button("Cancel", role: .cancel) {}
             Button("Remove", role: .destructive) { onRemove() }
         } message: {

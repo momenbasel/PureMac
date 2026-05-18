@@ -31,7 +31,7 @@ struct AppearancePill: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .help(mode.label)
+                .help(LocalizedStringKey(mode.label))
             }
         }
     }

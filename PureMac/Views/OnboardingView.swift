@@ -139,7 +139,7 @@ struct OnboardingView: View {
         ))
     }
 
-    private func featureCard(icon: String, title: String, desc: String, delay: Double) -> some View {
+    private func featureCard(icon: String, title: LocalizedStringKey, desc: LocalizedStringKey, delay: Double) -> some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.title2)
@@ -255,7 +255,7 @@ struct OnboardingView: View {
                         refreshAccessChecks()
                     }
                     Divider()
-                    Button(showDiagnostics ? "Hide diagnostics" : "Show diagnostics") {
+                    Button(LocalizedStringKey(showDiagnostics ? "Hide diagnostics" : "Show diagnostics")) {
                         showDiagnostics.toggle()
                     }
                 } label: {
@@ -292,14 +292,14 @@ struct OnboardingView: View {
         .transition(.opacity.combined(with: .scale))
     }
 
-    private func stepRow(number: Int, text: String) -> some View {
+    private func stepRow(number: Int, text: LocalizedStringKey) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
             Text("\(number)")
                 .font(.callout.bold())
                 .foregroundStyle(.white)
                 .frame(width: 22, height: 22)
                 .background(Circle().fill(Color.accentColor))
-            Text(.init(text))
+            Text(text)
                 .font(.callout)
             Spacer()
         }
@@ -315,10 +315,10 @@ struct OnboardingView: View {
                     Image(systemName: path.icon)
                         .foregroundStyle(.secondary)
                         .frame(width: 14)
-                    Text(path.label)
+                    Text(LocalizedStringKey(path.label))
                         .font(.caption)
                     Spacer()
-                    Text(path.accessible ? "OK" : "Blocked")
+                    Text(LocalizedStringKey(path.accessible ? "OK" : "Blocked"))
                         .font(.caption2)
                         .foregroundStyle(path.accessible ? .green : .orange)
                 }
@@ -359,7 +359,7 @@ struct OnboardingView: View {
                 HStack(spacing: 8) {
                     Image(systemName: hasFullDiskAccess ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
                         .foregroundStyle(hasFullDiskAccess ? .green : .orange)
-                    Text("\(granted)/\(total) protected locations accessible")
+                    Text(grantedSummary(granted: granted, total: total))
                         .foregroundStyle(.secondary)
                 }
 
@@ -379,6 +379,14 @@ struct OnboardingView: View {
             insertion: .move(edge: .trailing).combined(with: .opacity),
             removal: .move(edge: .leading).combined(with: .opacity)
         ))
+    }
+
+    private func grantedSummary(granted: Int, total: Int) -> String {
+        String(
+            format: String(localized: "%lld/%lld protected locations accessible"),
+            Int64(granted),
+            Int64(total)
+        )
     }
 
     // MARK: - Permission Checking

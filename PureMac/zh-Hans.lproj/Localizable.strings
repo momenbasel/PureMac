@@ -1,137 +1,262 @@
-/* Full Disk Access Banner */
-"Full Disk Access Required" = "需要完整磁盘访问权限";
-"PureMac needs Full Disk Access to scan Trash, Mail, Desktop, Documents, and Homebrew cache." = "PureMac 需要完整磁盘访问权限才能扫描废纸篓、邮件、桌面、文稿和 Homebrew 缓存。";
-"Open Settings" = "打开设置";
-
-/* Top Bar */
-"Macintosh HD" = "Macintosh HD";
-"%@ free" = "%@ 可用";
-"Auto-clean: " = "自动清理：";
-
-/* Sidebar */
-"CLEANING" = "清理";
-"Last cleaned: %@" = "上次清理：%@";
-"Home" = "主页";
+/* Sidebar (MainWindow) */
+"Overview" = "概览";
 "Applications" = "应用程序";
-"Cleaning" = "清理";
-"Installed Apps" = "已安装应用";
+"Cleanup" = "清理";
+"Dashboard" = "仪表盘";
+"Installed Apps" = "已安装的应用";
 "Orphaned Files" = "孤立文件";
-"Select a category from the sidebar to get started." = "从侧边栏选择一个类别开始。";
+"PureMac" = "PureMac";
+"Ready to clean" = "可以清理";
+"Limited access" = "访问受限";
+"Full Disk Access granted" = "已授予完整磁盘访问权限";
+"Grant FDA in Settings" = "在“设置”中授予完整磁盘访问";
+"Select a category from the sidebar to get started." = "从侧边栏选择一个类别开始使用。";
 
-/* Smart Scan */
+/* FDA toast + clean error alert (MainWindow) */
+"Couldn't clean everything" = "无法清理全部";
+"Open System Settings" = "打开“系统设置”";
+"OK" = "好";
+"Full Disk Access required" = "需要完整磁盘访问权限";
+"macOS blocks PureMac from cleaning caches and uninstalling apps until you grant access." = "在你授予访问权限之前,macOS 会阻止 PureMac 清理缓存和卸载应用。";
+"Grant Access" = "授予访问";
+
+/* Dashboard */
+"Storage" = "存储";
 "Smart Scan" = "智能扫描";
-"Click Scan to start" = "点击扫描开始";
-"Total" = "总计";
+"free of %@" = "%@ 中的可用空间";
+"%lld%% used" = "已使用 %lld%%";
 "Used" = "已用";
-"Free" = "可用";
-"Purgeable" = "可清除";
-"junk found" = "垃圾文件";
-"Your Mac is clean!" = "您的 Mac 很干净！";
-"freed up" = "已释放";
-"Cleaning..." = "正在清理...";
-"Scanning..." = "正在扫描...";
-"%lld/%lld items" = "%lld/%lld 个项目";
+"Junk" = "垃圾";
+"Purgeable" = "可清理";
+"USED" = "已用";
+"SCANNING" = "扫描中";
+"Free Space" = "可用空间";
+"Junk Found" = "发现的垃圾";
+"Apps" = "应用";
+"of %@ · %lld%% used" = "总计 %@ · 已使用 %lld%%";
+"Run a scan" = "运行扫描";
+"across %lld categories" = "跨 %lld 个类别";
+"installed" = "已安装";
+"APFS reclaimable" = "APFS 可回收";
+"Suggested for you" = "推荐";
+"Found so far" = "目前发现";
+"By category" = "按类别";
+"%@ is using %@" = "%@ 占用 %@";
+"Grant Full Disk Access for full results" = "授予完整磁盘访问以获得完整结果";
+"Without it, most caches and uninstall flows fail." = "没有它,大多数缓存清理和卸载流程都会失败。";
+"Action" = "操作";
+"Scanning your Mac" = "正在扫描你的 Mac";
+"Currently in: %@" = "当前: %@";
+"found" = "已发现";
+"Your Mac is clean" = "你的 Mac 很干净";
+"Scan Again" = "重新扫描";
+"Clean %@" = "清理 %@";
+"Clean %@?" = "清理 %@?";
+"Cleaning…" = "正在清理…";
+"%lld%% complete" = "%lld%% 完成";
+"freed" = "已释放";
+"Done" = "完成";
+"%lld items" = "%lld 项";
+
+/* Common destructive dialog */
+"Clean" = "清理";
+"Cancel" = "取消";
+"This will permanently delete the selected files. This cannot be undone." = "这将永久删除选中的文件。此操作无法撤销。";
 
 /* Category Detail */
-"All Clean!" = "全部干净！";
-"No junk files found in this category." = "此类别未发现垃圾文件。";
-"Not scanned yet" = "尚未扫描";
-"Click Scan to analyze this category" = "点击扫描分析此类别";
-"%lld of %lld selected" = "已选 %lld / %lld";
+"All Clean" = "已全部清理";
+"No junk files found in this category." = "此类别中未发现垃圾文件。";
+"Not Scanned" = "未扫描";
+"Run a scan to analyze this category." = "运行扫描以分析此类别。";
+"Scan Now" = "立即扫描";
+"Filter files" = "过滤文件";
+"Scan" = "扫描";
 "Select All" = "全选";
 "Deselect All" = "取消全选";
-"%lld items" = "%lld 个项目";
+"Largest First" = "最大优先";
+"Smallest First" = "最小优先";
+"Sorted: Largest First" = "排序:最大优先";
+"Sorted: Smallest First" = "排序:最小优先";
+"Clean %lld items" = "清理 %lld 项";
+"%lld items · %@" = "%lld 项 · %@";
+"Scanning…" = "扫描中…";
+"Rescan" = "重新扫描";
+"%lld of %lld selected" = "已选 %lld / %lld";
+"Reveal in Finder" = "在访达中显示";
 
-/* Buttons */
-"Scan" = "扫描";
-"Re-scan" = "重新扫描";
-"Scan Again" = "再次扫描";
-"Done" = "完成";
-"Clean (%@)" = "清理（%@）";
-"Clean %lld items (%@)" = "清理 %lld 个项目（%@）";
+/* Apps (AppListView) */
+"Search apps" = "搜索应用";
+"Refresh" = "刷新";
+"Installed Apps (%lld)" = "已安装应用 (%lld)";
+"Uninstall (%lld files)" = "卸载 (%lld 个文件)";
+"Loading installed apps..." = "正在加载已安装应用...";
+"No Apps Found" = "未找到应用";
+"Could not find any installed applications." = "未能找到任何已安装的应用程序。";
+"Retry" = "重试";
+"Application" = "应用程序";
+"Size" = "大小";
+"Select an App" = "选择一个应用";
+"Select an app from the list to see all its related files across your system." = "从列表中选择一个应用以查看系统中所有相关文件。";
 
-/* Settings - Schedule */
-"Schedule" = "计划";
-"Automatic Cleaning" = "自动清理";
-"Automatically scan and clean your Mac on a schedule" = "按计划自动扫描和清理您的 Mac";
-"Scan Interval" = "扫描间隔";
-"Automation" = "自动化";
-"Auto-clean after scan" = "扫描后自动清理";
-"Minimum junk size to trigger clean:" = "触发清理的最小垃圾大小：";
-"50 MB" = "50 MB";
-"100 MB" = "100 MB";
-"250 MB" = "250 MB";
-"500 MB" = "500 MB";
-"1 GB" = "1 GB";
-"Auto-purge purgeable space" = "自动清除可清除空间";
-"Show notification on completion" = "完成时显示通知";
-"Status" = "状态";
-"Last run" = "上次运行";
-"Next run" = "下次运行";
-"Never" = "从未";
-"Not scheduled" = "未计划";
+/* App Files (AppFilesView) */
+"%lld files" = "%lld 个文件";
+"Scanning for related files..." = "正在扫描相关文件...";
+"Checking %lld locations..." = "正在检查 %lld 个位置...";
+"No Related Files" = "没有相关文件";
+"No additional files found for %@." = "未找到 %@ 的额外文件。";
+"Remove %lld files (%@)" = "删除 %lld 个文件 (%@)";
+"Removal Failed" = "删除失败";
+"Remove this file" = "删除此文件";
+"Remove %@?" = "删除 %@?";
+"Remove" = "删除";
+"This will permanently delete this file. This action cannot be undone." = "这将永久删除此文件。此操作无法撤销。";
 
-/* Settings - General */
+/* Orphans */
+"Scanning for orphaned files..." = "正在扫描孤立文件...";
+"No Orphaned Files" = "没有孤立文件";
+"No leftover files from uninstalled apps were found." = "未发现已卸载应用的残留文件。";
+"Scan for Orphans" = "扫描孤立文件";
+"Orphaned Files (%lld)" = "孤立文件 (%lld)";
+"Remove Selected (%lld)" = "删除所选 (%lld)";
+"Some files could not be removed" = "部分文件无法删除";
+
+/* Onboarding */
+"Back" = "返回";
+"Next" = "下一步";
+"Get Started" = "开始使用";
+"Welcome to PureMac" = "欢迎使用 PureMac";
+"Free, open-source macOS app manager and system cleaner." = "免费、开源的 macOS 应用管理和系统清理工具。";
+"Find junk files across your system" = "在系统中查找垃圾文件";
+"App Uninstaller" = "应用卸载器";
+"Remove apps and all their files" = "删除应用及其所有文件";
+"Orphan Finder" = "孤立文件查找";
+"Find leftovers from deleted apps" = "查找已删除应用的残留";
+"Full Disk Access" = "完整磁盘访问";
+"PureMac needs Full Disk Access to uninstall apps, find leftover files, and clean protected caches." = "PureMac 需要完整磁盘访问以卸载应用、查找残留文件并清理受保护的缓存。";
+"We'll guide you through the next steps." = "我们将引导你完成接下来的步骤。";
+"In System Settings, do this:" = "在“系统设置”中执行以下操作:";
+"Privacy & Security → Full Disk Access" = "隐私与安全性 → 完整磁盘访问";
+"Find **PureMac** and turn the toggle on" = "找到 **PureMac** 并打开开关";
+"Authenticate with Touch ID or your password" = "使用触控 ID 或密码进行验证";
+"Reopen Settings" = "重新打开“设置”";
+"PureMac isn't in the list — reveal it" = "PureMac 不在列表中 — 显示";
+"Reset permissions and re-prompt" = "重置权限并再次提示";
+"Hide diagnostics" = "隐藏诊断";
+"Show diagnostics" = "显示诊断";
+"Trouble?" = "遇到问题?";
+"Waiting for permission…" = "等待授权…";
+"Permission granted." = "已授予权限。";
+"PureMac can now manage protected files." = "PureMac 现在可以管理受保护的文件。";
+"You're Ready" = "已准备就绪";
+"%lld/%lld protected locations accessible" = "可访问的受保护位置 %lld/%lld";
+"Some features will be limited. You can grant Full Disk Access later in System Settings." = "部分功能将受限。你可以稍后在“系统设置”中授予完整磁盘访问。";
+"Trash" = "废纸篓";
+"Mail Data" = "邮件数据";
+"Safari Data" = "Safari 数据";
+"Desktop" = "桌面";
+"Documents" = "文稿";
+"TCC Database" = "TCC 数据库";
+"Blocked" = "已阻止";
+
+/* Settings */
 "General" = "通用";
-"App Behavior" = "应用程序行为";
-"Launch at login" = "登录时启动";
-"Show in Dock" = "在程序坞中显示";
-"Show menu bar icon" = "显示菜单栏图标";
-"Safety" = "安全";
-"PureMac will never delete system-critical files. Only caches, logs, temporary files, and user-selected items are removed." = "PureMac 永远不会删除系统关键文件。只会删除缓存、日志、临时文件和用户选择的项目。";
-
-/* Settings - About */
+"Cleaning" = "清理";
+"Schedule" = "计划";
 "About" = "关于";
-"Version 1.0.0" = "版本 1.0.0";
-"A free, open-source Mac cleaning utility.\nKeep your Mac fast, clean, and optimized." = "免费、开源的 Mac 清理工具。\n让您的 Mac 保持快速、干净和优化。";
+"Startup" = "启动";
+"Launch PureMac at login" = "登录时启动 PureMac";
+"App Scanning" = "应用扫描";
+"Search sensitivity" = "搜索灵敏度";
+"Strict" = "严格";
+"Enhanced" = "增强";
+"Deep" = "深度";
+"Exact bundle ID and name matches only. Safest option." = "仅精确匹配套件 ID 和名称。最安全。";
+"Includes partial name matching and bundle ID components." = "包含部分名称匹配和套件 ID 组件。";
+"Includes company name, entitlements, and team identifier matching." = "包含公司名称、授权和团队标识符匹配。";
+"Language" = "语言";
+"Restart PureMac to apply the selected language." = "请重新启动 PureMac 以应用所选语言。";
+"Relaunch Now" = "立即重新启动";
+"System Default" = "系统默认";
+"English" = "英语";
+"Spanish" = "西班牙语";
+"Japanese" = "日语";
+"Arabic" = "阿拉伯语";
+"Portuguese (Brazil)" = "葡萄牙语(巴西)";
+"Chinese (Simplified)" = "简体中文";
+"Chinese (Traditional)" = "繁体中文";
+"Safety" = "安全";
+"Confirm before deleting files" = "删除文件前确认";
+"File Discovery" = "文件发现";
+"Skip hidden files during scan" = "扫描时跳过隐藏文件";
+"Large Files" = "大文件";
+"Minimum size: %lld MB" = "最小大小: %lld MB";
+"Files older than: %lld months" = "早于: %lld 个月的文件";
+"Automatic Scanning" = "自动扫描";
+"Enable scheduled scanning" = "启用计划扫描";
+"Scan interval" = "扫描间隔";
+"Auto-clean after scan" = "扫描后自动清理";
+"Auto-purge purgeable space" = "自动清除可清理空间";
+"Notify on completion" = "完成时通知";
+"Last run" = "上次运行";
+"Version %@" = "版本 %@";
+"Free, open-source macOS app manager." = "免费、开源的 macOS 应用管理工具。";
 "GitHub Repository" = "GitHub 仓库";
-"MIT License" = "MIT 许可证";
+"Report an Issue" = "报告问题";
+"MIT License" = "MIT 许可";
 
-/* Cleaning Categories */
+/* Cleaning categories (CleaningCategory.rawValue) */
 "System Junk" = "系统垃圾";
 "User Cache" = "用户缓存";
 "AI Apps" = "AI 应用";
 "Mail Files" = "邮件文件";
 "Trash Bins" = "废纸篓";
-"Large & Old Files" = "大型旧文件";
-"Purgeable Space" = "可清除空间";
+"Large & Old Files" = "大文件和旧文件";
+"Purgeable Space" = "可清理空间";
 "Xcode Junk" = "Xcode 垃圾";
 "Brew Cache" = "Brew 缓存";
+"Node Cache" = "Node 缓存";
+"Docker Cache" = "Docker 缓存";
 
-/* Category Descriptions */
-"Scan everything at once" = "一次性扫描所有内容";
+/* Cleaning category descriptions */
+"Scan everything at once" = "一次扫描所有内容";
 "System caches, logs, and temporary files" = "系统缓存、日志和临时文件";
 "Application caches and browser data" = "应用程序缓存和浏览器数据";
-"Logs, caches, and temporary files from local AI apps" = "本地 AI 应用的日志、缓存和临时文件";
-"Local AI app logs, caches, and optional history" = "本地 AI 应用的日志、缓存和可选历史记录";
-"Downloaded mail attachments" = "下载的邮件附件";
+"Local AI app logs, caches, and optional history" = "本地 AI 应用的日志、缓存和可选历史";
+"Downloaded mail attachments" = "已下载的邮件附件";
 "Files in your Trash" = "废纸篓中的文件";
-"Files over 100 MB or older than 1 year" = "超过 100 MB 或一年以上的文件";
-"APFS purgeable disk space" = "APFS 可清除磁盘空间";
-"Derived data, archives, and simulators" = "衍生数据、归档和模拟器";
+"Files over 100 MB or older than 1 year" = "大于 100 MB 或超过 1 年的文件";
+"APFS purgeable disk space" = "APFS 可清理磁盘空间";
+"Derived data, archives, and simulators" = "派生数据、归档和模拟器";
 "Homebrew download cache" = "Homebrew 下载缓存";
+"npm, yarn, and pnpm download caches" = "npm、yarn 和 pnpm 下载缓存";
+"Docker images, containers, and build cache" = "Docker 镜像、容器和构建缓存";
 
-/* Schedule Intervals */
+/* Node Cache subcategories */
+"npm cache" = "npm 缓存";
+"yarn classic cache" = "yarn 经典缓存";
+"pnpm content-addressable store" = "pnpm 内容寻址存储";
+
+/* Docker Cache helper */
+"Reclaimable (run `docker system prune -af`)" = "可回收(运行 `docker system prune -af`)";
+
+/* Schedule intervals (ScheduleInterval.rawValue) */
 "Every Hour" = "每小时";
 "Every 3 Hours" = "每 3 小时";
 "Every 6 Hours" = "每 6 小时";
 "Every 12 Hours" = "每 12 小时";
 "Daily" = "每天";
 "Weekly" = "每周";
-"Every 2 Weeks" = "每两周";
+"Every 2 Weeks" = "每 2 周";
 "Monthly" = "每月";
 
+/* Schedule status */
+"Never" = "从不";
+"Not scheduled" = "未计划";
+
+/* Appearance modes (AppearanceMode.label) */
+"System" = "系统";
+"Light" = "浅色";
+"Dark" = "深色";
+
 /* Notifications */
-"Found %@ of junk files." = "发现了 %@ 的垃圾文件。";
-
-/* Node Cache */
-"Node Cache" = "Node 缓存";
-"npm, yarn, and pnpm download caches" = "npm、yarn 和 pnpm 下载缓存";
-"npm cache" = "npm 缓存";
-"yarn classic cache" = "yarn 经典缓存";
-"pnpm content-addressable store" = "pnpm 内容寻址存储";
-
-/* Docker Cache */
-"Docker Cache" = "Docker 缓存";
-"Docker images, containers, and build cache" = "Docker 镜像、容器和构建缓存";
-"Reclaimable (run `docker system prune -af`)" = "可回收空间（运行 `docker system prune -af`）";
+"Found %@ of junk files." = "发现 %@ 的垃圾文件。";

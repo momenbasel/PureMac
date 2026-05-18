@@ -58,7 +58,7 @@ struct MainWindow: View {
             Section {
                 ForEach(CleaningCategory.scannable) { category in
                     navRow(section: .cleaning(category),
-                           label: category.rawValue,
+                           label: LocalizedStringKey(category.rawValue),
                            icon: category.icon,
                            tint: category.color,
                            badge: sizeBadge(for: category))
@@ -72,7 +72,7 @@ struct MainWindow: View {
         }
     }
 
-    private func sectionLabel(_ text: String) -> some View {
+    private func sectionLabel(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .font(.system(size: 10.5, weight: .semibold))
             .tracking(0.5)
@@ -80,7 +80,7 @@ struct MainWindow: View {
             .textCase(.uppercase)
     }
 
-    private func navRow(section: AppSection, label: String, icon: String,
+    private func navRow(section: AppSection, label: LocalizedStringKey, icon: String,
                         tint: Color, badge: String?) -> some View {
         HStack(spacing: 10) {
             IconTile(systemName: icon, tint: tint, size: 24)
@@ -125,9 +125,9 @@ struct MainWindow: View {
                         .frame(width: 18, height: 18)
                 )
             VStack(alignment: .leading, spacing: 1) {
-                Text(appState.hasFullDiskAccess ? "Ready to clean" : "Limited access")
+                Text(LocalizedStringKey(appState.hasFullDiskAccess ? "Ready to clean" : "Limited access"))
                     .font(.system(size: 12, weight: .semibold))
-                Text(appState.hasFullDiskAccess ? "Full Disk Access granted" : "Grant FDA in Settings")
+                Text(LocalizedStringKey(appState.hasFullDiskAccess ? "Full Disk Access granted" : "Grant FDA in Settings"))
                     .font(.system(size: 10.5))
                     .foregroundStyle(.secondary)
             }
