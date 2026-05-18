@@ -161,18 +161,44 @@ final class AppState: ObservableObject {
                 }
                 var failedPaths = failed
                 if !needsAdmin.isEmpty {
-                    if self.removeWithAdminPrivileges(needsAdmin) {
-                        for url in needsAdmin {
-                            if !FileManager.default.fileExists(atPath: url.path) {
-                                self.discoveredFiles.removeAll { $0 == url }
-                                self.selectedFiles.remove(url)
-                                Logger.shared.log("Removed \(url.path) with administrator privileges", level: .info)
-                            } else {
-                                failedPaths.append(url)
+                    // Convert URLs to CleanableItem to use CleaningEngine's
+                    // vetted admin-clean path which performs allow-list
+                    // validation and uses a NUL-separated temp file consumed
+                    // by `xargs -0 rm -rf` (no quoting issues).
+                    let items: [CleanableItem] = needsAdmin.map { url in
+                        var size: Int64 = 0
+                        var modified: Date? = nil
+                        if let attrs = try? FileManager.default.attributesOfItem(atPath: url.path) {
+                            size = (attrs[.size] as? Int64) ?? 0
+                            modified = attrs[.modificationDate] as? Date
+                        }
+                        return CleanableItem(name: url.lastPathComponent, path: url.path, size: size, category: .systemJunk, isSelected: true, lastModified: modified)
+                    }
+
+                    Task { [weak self] in
+                        guard let self else { return }
+                        let adminResult = await self.cleaningEngine.cleanWithAdminPrivileges(items: items)
+                        DispatchQueue.main.async {
+                            for url in needsAdmin {
+                                if adminResult.cleanedPaths.contains(url.path) {
+                                    self.discoveredFiles.removeAll { $0 == url }
+                                    self.selectedFiles.remove(url)
+                                    Logger.shared.log("Removed \(url.path) with administrator privileges", level: .info)
+                                } else {
+                                    failedPaths.append(url)
+                                }
+                            }
+                            if !adminResult.errors.isEmpty {
+                                self.removalError = adminResult.errors.joined(separator: "; ")
+                            }
+                            if !failedPaths.isEmpty {
+                                self.removalError = "\(failedPaths.count) file\(failedPaths.count == 1 ? "" : "s") could not be removed. Some items may require administrator privileges."
+                                Logger.shared.log("Failed to remove \(failedPaths.count) files — likely missing FDA or admin privileges", level: .error)
+                            }
+                            if !removed.isEmpty || !needsAdmin.isEmpty {
+                                self.pruneMissingInstalledApps()
                             }
                         }
-                    } else {
-                        failedPaths.append(contentsOf: needsAdmin)
                     }
                 }
                 if !failedPaths.isEmpty {
@@ -210,9 +236,8 @@ final class AppState: ObservableObject {
                     let permissionDeniedCodes = [
                         NSFileReadNoPermissionError,
                         NSFileWriteNoPermissionError,
-                        NSFileWriteUnknownError,
-                        257,
-                        513,
+                        Int(EACCES),
+                        Int(EPERM),
                     ]
 
                     if isMissingFile {
@@ -231,30 +256,11 @@ final class AppState: ObservableObject {
         }
     }
 
-    private func removeWithAdminPrivileges(_ urls: [URL]) -> Bool {
-        guard !urls.isEmpty else { return true }
-
-        let quotedPaths = urls.map { url in
-            "'\(url.path.replacingOccurrences(of: "'", with: "'\\\"'\\\"'"))'"
-        }
-        let shellCommand = "rm -rf -- \(quotedPaths.joined(separator: " "))"
-        let appleScriptCommand = shellCommand
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
-        let script = "do shell script \"\(appleScriptCommand)\" with administrator privileges"
-
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        process.arguments = ["-e", script]
-
-        do {
-            try process.run()
-            process.waitUntilExit()
-            return process.terminationStatus == 0
-        } catch {
-            return false
-        }
-    }
+    // Use the vetted admin-clean path provided by `CleaningEngine` instead
+    // of building ad-hoc shell commands. The engine stages paths to a
+    // NUL-separated temp file and calls `xargs -0 rm -rf` via AppleScript
+    // with administrator privileges which avoids shell quoting issues and
+    // re-validates each path against the allow-list.
 
     private func pruneMissingInstalledApps() {
         let fileManager = FileManager.default
