@@ -151,7 +151,7 @@ final class AppState: ObservableObject {
             }
             return
         }
-        trashDirectly(urls: urls) { [weak self] removed, failed in
+        trashDirectly(urls: urls) { [weak self] removed, needsAdmin, failed in
             DispatchQueue.main.async {
                 guard let self else { return }
                 if !removed.isEmpty {
@@ -159,9 +159,54 @@ final class AppState: ObservableObject {
                     self.selectedFiles.subtract(removed)
                     Logger.shared.log("Removed \(removed.count) files", level: .info)
                 }
-                if !failed.isEmpty {
-                    self.removalError = "\(failed.count) file\(failed.count == 1 ? "" : "s") could not be removed. Grant Full Disk Access in System Settings → Privacy & Security to allow PureMac to manage all files."
-                    Logger.shared.log("Failed to remove \(failed.count) files — likely missing FDA", level: .error)
+                var failedPaths = failed
+                if !needsAdmin.isEmpty {
+                    // Convert URLs to CleanableItem to use CleaningEngine's
+                    // vetted admin-clean path which performs allow-list
+                    // validation and uses a NUL-separated temp file consumed
+                    // by `xargs -0 rm -rf` (no quoting issues).
+                    let items: [CleanableItem] = needsAdmin.map { url in
+                        var size: Int64 = 0
+                        var modified: Date? = nil
+                        if let attrs = try? FileManager.default.attributesOfItem(atPath: url.path) {
+                            size = (attrs[.size] as? Int64) ?? 0
+                            modified = attrs[.modificationDate] as? Date
+                        }
+                        return CleanableItem(name: url.lastPathComponent, path: url.path, size: size, category: .systemJunk, isSelected: true, lastModified: modified)
+                    }
+
+                    Task { [weak self] in
+                        guard let self else { return }
+                        let adminResult = await self.cleaningEngine.cleanWithAdminPrivileges(items: items)
+                        DispatchQueue.main.async {
+                            for url in needsAdmin {
+                                if adminResult.cleanedPaths.contains(url.path) {
+                                    self.discoveredFiles.removeAll { $0 == url }
+                                    self.selectedFiles.remove(url)
+                                    Logger.shared.log("Removed \(url.path) with administrator privileges", level: .info)
+                                } else {
+                                    failedPaths.append(url)
+                                }
+                            }
+                            if !adminResult.errors.isEmpty {
+                                self.removalError = adminResult.errors.joined(separator: "; ")
+                            }
+                            if !failedPaths.isEmpty {
+                                self.removalError = "\(failedPaths.count) file\(failedPaths.count == 1 ? "" : "s") could not be removed. Some items may require administrator privileges."
+                                Logger.shared.log("Failed to remove \(failedPaths.count) files — likely missing FDA or admin privileges", level: .error)
+                            }
+                            if !removed.isEmpty || !needsAdmin.isEmpty {
+                                self.pruneMissingInstalledApps()
+                            }
+                        }
+                    }
+                }
+                if !failedPaths.isEmpty {
+                    self.removalError = "\(failedPaths.count) file\(failedPaths.count == 1 ? "" : "s") could not be removed. Some items may require administrator privileges."
+                    Logger.shared.log("Failed to remove \(failedPaths.count) files — likely missing FDA or admin privileges", level: .error)
+                }
+                if !removed.isEmpty || !needsAdmin.isEmpty {
+                    self.pruneMissingInstalledApps()
                 }
             }
         }
@@ -172,9 +217,10 @@ final class AppState: ObservableObject {
     /// Full Disk Access list. The previous AppleScript-via-Finder bridge
     /// caused the syscall to originate from Finder, which is why granting
     /// FDA to PureMac made no difference (issue #75).
-    private func trashDirectly(urls: [URL], completion: @escaping ([URL], [URL]) -> Void) {
+    private func trashDirectly(urls: [URL], completion: @escaping ([URL], [URL], [URL]) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
             var removed: [URL] = []
+            var needsAdmin: [URL] = []
             var failed: [URL] = []
             for url in urls {
                 var resulting: NSURL?
@@ -182,11 +228,48 @@ final class AppState: ObservableObject {
                     try FileManager.default.trashItem(at: url, resultingItemURL: &resulting)
                     removed.append(url)
                 } catch {
-                    Logger.shared.log("Trash failed for \(url.path): \(error.localizedDescription)", level: .error)
-                    failed.append(url)
+                    let nsError = error as NSError
+                    let isMissingFile =
+                        nsError.domain == NSCocoaErrorDomain &&
+                        (nsError.code == NSFileNoSuchFileError || nsError.code == NSFileReadNoSuchFileError)
+                        || (nsError.domain == NSPOSIXErrorDomain && nsError.code == Int(ENOENT))
+                    let permissionDeniedCodes = [
+                        NSFileReadNoPermissionError,
+                        NSFileWriteNoPermissionError,
+                        Int(EACCES),
+                        Int(EPERM),
+                    ]
+
+                    if isMissingFile {
+                        Logger.shared.log("Trash skipped for \(url.path): file no longer exists", level: .info)
+                        removed.append(url)
+                    } else
+                    if permissionDeniedCodes.contains(nsError.code) {
+                        needsAdmin.append(url)
+                    } else {
+                        Logger.shared.log("Trash failed for \(url.path): \(error.localizedDescription)", level: .error)
+                        failed.append(url)
+                    }
                 }
             }
-            completion(removed, failed)
+            completion(removed, needsAdmin, failed)
+        }
+    }
+
+    // Use the vetted admin-clean path provided by `CleaningEngine` instead
+    // of building ad-hoc shell commands. The engine stages paths to a
+    // NUL-separated temp file and calls `xargs -0 rm -rf` via AppleScript
+    // with administrator privileges which avoids shell quoting issues and
+    // re-validates each path against the allow-list.
+
+    private func pruneMissingInstalledApps() {
+        let fileManager = FileManager.default
+        installedApps.removeAll { !fileManager.fileExists(atPath: $0.path.path) }
+
+        if let selectedApp, !fileManager.fileExists(atPath: selectedApp.path.path) {
+            self.selectedApp = nil
+            discoveredFiles = []
+            selectedFiles = []
         }
     }
 

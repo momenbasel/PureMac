@@ -123,7 +123,26 @@ actor CleaningEngine {
                 if item.category == .largeFiles {
                     return isExplicitSingleFileDeletable(resolvedPath: resolved)
                 }
-                return isSafeToDelete(resolvedPath: resolved)
+                // Allow-list for typical uninstall roots (narrow and explicit).
+                func isUninstallRoot(_ path: String) -> Bool {
+                    let home = fileManager.homeDirectoryForCurrentUser.path
+                    // /Applications/*.app and ~/Applications/*.app
+                    if path.hasPrefix("/Applications/") || path.hasPrefix("\(home)/Applications/") {
+                        if path.hasSuffix(".app") { return true }
+                    }
+                    // /var/db/receipts/com.*.{plist,bom}
+                    if path.hasPrefix("/var/db/receipts/") {
+                        let name = (path as NSString).lastPathComponent.lowercased()
+                        if name.hasSuffix(".plist") || name.hasSuffix(".bom") { return true }
+                    }
+                    // /Library/LaunchDaemons/*.plist and /Library/LaunchAgents/*.plist
+                    if path.hasPrefix("/Library/LaunchDaemons/") || path.hasPrefix("/Library/LaunchAgents/") {
+                        if path.hasSuffix(".plist") { return true }
+                    }
+                    return false
+                }
+
+                return isSafeToDelete(resolvedPath: resolved) || isUninstallRoot(resolved)
             }()
             if !accepted {
                 Logger.shared.log("Refusing admin escalation for unsafe path: \(item.path)", level: .warning)
