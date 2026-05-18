@@ -1,117 +1,245 @@
-/* Full Disk Access Banner */
-"Full Disk Access Required" = "Se requiere acceso total al disco";
-"PureMac needs Full Disk Access to scan Trash, Mail, Desktop, Documents, and Homebrew cache." = "PureMac necesita acceso total al disco para analizar la Papelera, Mail, Escritorio, Documentos y la caché de Homebrew.";
-"Open Settings" = "Abrir Ajustes";
-
-/* Top Bar */
-"Macintosh HD" = "Macintosh HD";
-"%@ free" = "%@ libres";
-"Auto-clean: " = "Limpieza automática: ";
-
-/* Sidebar */
-"CLEANING" = "LIMPIEZA";
-"Last cleaned: %@" = "Última limpieza: %@";
-"Home" = "Inicio";
+/* Sidebar (MainWindow) */
+"Overview" = "Resumen";
 "Applications" = "Aplicaciones";
-"Cleaning" = "Limpieza";
+"Cleanup" = "Limpieza";
+"Dashboard" = "Panel";
 "Installed Apps" = "Apps instaladas";
 "Orphaned Files" = "Archivos huérfanos";
-"Select a category from the sidebar to get started." = "Selecciona una categoría en la barra lateral para comenzar.";
+"PureMac" = "PureMac";
+"Ready to clean" = "Listo para limpiar";
+"Limited access" = "Acceso limitado";
+"Full Disk Access granted" = "Acceso total al disco concedido";
+"Grant FDA in Settings" = "Concede el acceso en Ajustes";
+"Select a category from the sidebar to get started." = "Selecciona una categoría en la barra lateral para empezar.";
 
-/* Smart Scan */
+/* FDA toast + clean error alert (MainWindow) */
+"Couldn't clean everything" = "No se pudo limpiar todo";
+"Open System Settings" = "Abrir Ajustes del Sistema";
+"OK" = "OK";
+"Full Disk Access required" = "Se requiere acceso total al disco";
+"macOS blocks PureMac from cleaning caches and uninstalling apps until you grant access." = "macOS impide que PureMac limpie cachés y desinstale apps hasta que concedas el acceso.";
+"Grant Access" = "Conceder acceso";
+
+/* Dashboard */
+"Storage" = "Almacenamiento";
 "Smart Scan" = "Análisis inteligente";
-"Click Scan to start" = "Haz clic en Analizar para empezar";
-"Total" = "Total";
-"Used" = "Usado";
-"Free" = "Libre";
-"Purgeable" = "Purgable";
-"junk found" = "archivos basura encontrados";
-"Your Mac is clean!" = "¡Tu Mac está limpio!";
-"freed up" = "liberados";
-"Cleaning..." = "Limpiando...";
-"Scanning..." = "Analizando...";
-"%lld/%lld items" = "%lld/%lld elementos";
-
-/* Category Detail */
-"All Clean!" = "¡Todo limpio!";
-"No junk files found in this category." = "No se encontraron archivos basura en esta categoría.";
-"Not scanned yet" = "Aún no analizado";
-"Click Scan to analyze this category" = "Haz clic en Analizar para revisar esta categoría";
-"%lld of %lld selected" = "%lld de %lld seleccionados";
-"Select All" = "Seleccionar todo";
-"Deselect All" = "Deseleccionar todo";
+"free of %@" = "libres de %@";
+"%lld%% used" = "%lld%% en uso";
+"Used" = "En uso";
+"Junk" = "Basura";
+"Purgeable" = "Liberable";
+"USED" = "EN USO";
+"SCANNING" = "ANALIZANDO";
+"Free Space" = "Espacio libre";
+"Junk Found" = "Basura encontrada";
+"Apps" = "Apps";
+"of %@ · %lld%% used" = "de %@ · %lld%% en uso";
+"Run a scan" = "Realiza un análisis";
+"across %lld categories" = "en %lld categorías";
+"installed" = "instaladas";
+"APFS reclaimable" = "Recuperable por APFS";
+"Suggested for you" = "Sugerencias para ti";
+"Found so far" = "Encontrado hasta ahora";
+"By category" = "Por categoría";
+"%@ is using %@" = "%@ está usando %@";
+"Grant Full Disk Access for full results" = "Concede acceso total al disco para obtener resultados completos";
+"Without it, most caches and uninstall flows fail." = "Sin él, la mayoría de cachés y desinstalaciones fallan.";
+"Action" = "Acción";
+"Scanning your Mac" = "Analizando tu Mac";
+"Currently in: %@" = "Actualmente en: %@";
+"found" = "encontrado";
+"Your Mac is clean" = "Tu Mac está limpio";
+"Scan Again" = "Volver a analizar";
+"Clean %@" = "Limpiar %@";
+"Clean %@?" = "¿Limpiar %@?";
+"Cleaning…" = "Limpiando…";
+"%lld%% complete" = "%lld%% completado";
+"freed" = "liberado";
+"Done" = "Listo";
 "%lld items" = "%lld elementos";
 
-/* Buttons */
+/* Common destructive dialog */
+"Clean" = "Limpiar";
+"Cancel" = "Cancelar";
+"This will permanently delete the selected files. This cannot be undone." = "Esto eliminará permanentemente los archivos seleccionados. No se puede deshacer.";
+
+/* Category Detail */
+"All Clean" = "Todo limpio";
+"No junk files found in this category." = "No se encontraron archivos basura en esta categoría.";
+"Not Scanned" = "Sin analizar";
+"Run a scan to analyze this category." = "Realiza un análisis para evaluar esta categoría.";
+"Scan Now" = "Analizar ahora";
+"Filter files" = "Filtrar archivos";
 "Scan" = "Analizar";
-"Re-scan" = "Volver a analizar";
-"Scan Again" = "Analizar de nuevo";
-"Done" = "Listo";
-"Clean (%@)" = "Limpiar (%@)";
-"Clean %lld items (%@)" = "Limpiar %lld elementos (%@)";
+"Select All" = "Seleccionar todo";
+"Deselect All" = "Deseleccionar todo";
+"Largest First" = "Más grandes primero";
+"Smallest First" = "Más pequeños primero";
+"Sorted: Largest First" = "Orden: más grandes primero";
+"Sorted: Smallest First" = "Orden: más pequeños primero";
+"Clean %lld items" = "Limpiar %lld elementos";
+"%lld items · %@" = "%lld elementos · %@";
+"Scanning…" = "Analizando…";
+"Rescan" = "Volver a analizar";
+"%lld of %lld selected" = "%lld de %lld seleccionados";
+"Reveal in Finder" = "Mostrar en el Finder";
 
-/* Settings - Schedule */
-"Schedule" = "Programación";
-"Automatic Cleaning" = "Limpieza automática";
-"Automatically scan and clean your Mac on a schedule" = "Analiza y limpia tu Mac automáticamente según una programación";
-"Scan Interval" = "Intervalo de análisis";
-"Automation" = "Automatización";
-"Auto-clean after scan" = "Limpiar automáticamente tras el análisis";
-"Minimum junk size to trigger clean:" = "Tamaño mínimo de basura para iniciar la limpieza:";
-"50 MB" = "50 MB";
-"100 MB" = "100 MB";
-"250 MB" = "250 MB";
-"500 MB" = "500 MB";
-"1 GB" = "1 GB";
-"Auto-purge purgeable space" = "Purgar automáticamente el espacio purgable";
-"Show notification on completion" = "Mostrar notificación al finalizar";
-"Status" = "Estado";
-"Last run" = "Última ejecución";
-"Next run" = "Próxima ejecución";
-"Never" = "Nunca";
-"Not scheduled" = "Sin programar";
+/* Apps (AppListView) */
+"Search apps" = "Buscar apps";
+"Refresh" = "Actualizar";
+"Installed Apps (%lld)" = "Apps instaladas (%lld)";
+"Uninstall (%lld files)" = "Desinstalar (%lld archivos)";
+"Loading installed apps..." = "Cargando apps instaladas...";
+"No Apps Found" = "No se encontraron apps";
+"Could not find any installed applications." = "No se pudo encontrar ninguna app instalada.";
+"Retry" = "Reintentar";
+"Application" = "Aplicación";
+"Size" = "Tamaño";
+"Select an App" = "Selecciona una app";
+"Select an app from the list to see all its related files across your system." = "Selecciona una app de la lista para ver todos sus archivos relacionados en el sistema.";
 
-/* Settings - General */
+/* App Files (AppFilesView) */
+"%lld files" = "%lld archivos";
+"Scanning for related files..." = "Buscando archivos relacionados...";
+"Checking %lld locations..." = "Revisando %lld ubicaciones...";
+"No Related Files" = "Sin archivos relacionados";
+"No additional files found for %@." = "No se encontraron archivos adicionales para %@.";
+"Remove %lld files (%@)" = "Eliminar %lld archivos (%@)";
+"Removal Failed" = "No se pudo eliminar";
+"Remove this file" = "Eliminar este archivo";
+"Remove %@?" = "¿Eliminar %@?";
+"Remove" = "Eliminar";
+"This will permanently delete this file. This action cannot be undone." = "Esto eliminará permanentemente este archivo. Esta acción no se puede deshacer.";
+
+/* Orphans */
+"Scanning for orphaned files..." = "Buscando archivos huérfanos...";
+"No Orphaned Files" = "Sin archivos huérfanos";
+"No leftover files from uninstalled apps were found." = "No se encontraron archivos sobrantes de apps desinstaladas.";
+"Scan for Orphans" = "Buscar huérfanos";
+"Orphaned Files (%lld)" = "Archivos huérfanos (%lld)";
+"Remove Selected (%lld)" = "Eliminar seleccionados (%lld)";
+"Some files could not be removed" = "Algunos archivos no se pudieron eliminar";
+
+/* Onboarding */
+"Back" = "Atrás";
+"Next" = "Siguiente";
+"Get Started" = "Empezar";
+"Welcome to PureMac" = "Te damos la bienvenida a PureMac";
+"Free, open-source macOS app manager and system cleaner." = "Administrador de apps y limpiador de sistema gratuito y de código abierto para macOS.";
+"Find junk files across your system" = "Encuentra archivos basura en todo el sistema";
+"App Uninstaller" = "Desinstalador de apps";
+"Remove apps and all their files" = "Elimina apps y todos sus archivos";
+"Orphan Finder" = "Buscador de huérfanos";
+"Find leftovers from deleted apps" = "Encuentra restos de apps eliminadas";
+"Full Disk Access" = "Acceso total al disco";
+"PureMac needs Full Disk Access to uninstall apps, find leftover files, and clean protected caches." = "PureMac necesita acceso total al disco para desinstalar apps, encontrar archivos sobrantes y limpiar cachés protegidas.";
+"We'll guide you through the next steps." = "Te guiaremos por los siguientes pasos.";
+"In System Settings, do this:" = "En Ajustes del Sistema, haz lo siguiente:";
+"Privacy & Security → Full Disk Access" = "Privacidad y seguridad → Acceso total al disco";
+"Find **PureMac** and turn the toggle on" = "Encuentra **PureMac** y activa el interruptor";
+"Authenticate with Touch ID or your password" = "Autentícate con Touch ID o tu contraseña";
+"Reopen Settings" = "Reabrir Ajustes";
+"PureMac isn't in the list — reveal it" = "PureMac no aparece en la lista: mostrarlo";
+"Reset permissions and re-prompt" = "Restablecer permisos y volver a solicitar";
+"Hide diagnostics" = "Ocultar diagnóstico";
+"Show diagnostics" = "Mostrar diagnóstico";
+"Trouble?" = "¿Problemas?";
+"Waiting for permission…" = "Esperando permiso…";
+"Permission granted." = "Permiso concedido.";
+"PureMac can now manage protected files." = "PureMac ahora puede gestionar archivos protegidos.";
+"You're Ready" = "Todo listo";
+"%lld/%lld protected locations accessible" = "%lld/%lld ubicaciones protegidas accesibles";
+"Some features will be limited. You can grant Full Disk Access later in System Settings." = "Algunas funciones serán limitadas. Puedes conceder el acceso total al disco más tarde en Ajustes del Sistema.";
+"Trash" = "Papelera";
+"Mail Data" = "Datos de Mail";
+"Safari Data" = "Datos de Safari";
+"Desktop" = "Escritorio";
+"Documents" = "Documentos";
+"TCC Database" = "Base de datos TCC";
+"Blocked" = "Bloqueado";
+
+/* Settings */
 "General" = "General";
-"App Behavior" = "Comportamiento de la app";
-"Launch at login" = "Abrir al iniciar sesión";
-"Show in Dock" = "Mostrar en el Dock";
-"Show menu bar icon" = "Mostrar ícono en la barra de menús";
-"Safety" = "Seguridad";
-"PureMac will never delete system-critical files. Only caches, logs, temporary files, and user-selected items are removed." = "PureMac nunca eliminará archivos críticos del sistema. Solo se eliminan cachés, registros, archivos temporales y elementos seleccionados por el usuario.";
-
-/* Settings - About */
+"Cleaning" = "Limpieza";
+"Schedule" = "Programación";
 "About" = "Acerca de";
-"Version 1.0.0" = "Versión 1.0.0";
-"A free, open-source Mac cleaning utility.\nKeep your Mac fast, clean, and optimized." = "Una utilidad de limpieza para Mac, gratuita y de código abierto.\nMantén tu Mac rápido, limpio y optimizado.";
+"Startup" = "Inicio";
+"Launch PureMac at login" = "Abrir PureMac al iniciar sesión";
+"App Scanning" = "Análisis de apps";
+"Search sensitivity" = "Sensibilidad de búsqueda";
+"Strict" = "Estricta";
+"Enhanced" = "Mejorada";
+"Deep" = "Profunda";
+"Exact bundle ID and name matches only. Safest option." = "Solo coincidencias exactas de ID de paquete y nombre. La opción más segura.";
+"Includes partial name matching and bundle ID components." = "Incluye coincidencias parciales de nombre y componentes del ID de paquete.";
+"Includes company name, entitlements, and team identifier matching." = "Incluye coincidencias con nombre de empresa, autorizaciones e identificador de equipo.";
+"Language" = "Idioma";
+"Restart PureMac to apply the selected language." = "Reinicia PureMac para aplicar el idioma seleccionado.";
+"Relaunch Now" = "Reiniciar ahora";
+"System Default" = "Predeterminado del sistema";
+"English" = "Inglés";
+"Spanish" = "Español";
+"Japanese" = "Japonés";
+"Arabic" = "Árabe";
+"Portuguese (Brazil)" = "Portugués (Brasil)";
+"Chinese (Simplified)" = "Chino (simplificado)";
+"Chinese (Traditional)" = "Chino (tradicional)";
+"Safety" = "Seguridad";
+"Confirm before deleting files" = "Confirmar antes de eliminar archivos";
+"File Discovery" = "Detección de archivos";
+"Skip hidden files during scan" = "Omitir archivos ocultos al analizar";
+"Large Files" = "Archivos grandes";
+"Minimum size: %lld MB" = "Tamaño mínimo: %lld MB";
+"Files older than: %lld months" = "Archivos con más de: %lld meses";
+"Automatic Scanning" = "Análisis automático";
+"Enable scheduled scanning" = "Activar análisis programado";
+"Scan interval" = "Intervalo de análisis";
+"Auto-clean after scan" = "Limpiar automáticamente tras el análisis";
+"Auto-purge purgeable space" = "Purgar automáticamente el espacio liberable";
+"Notify on completion" = "Notificar al finalizar";
+"Last run" = "Última ejecución";
+"Version %@" = "Versión %@";
+"Free, open-source macOS app manager." = "Administrador de apps de macOS gratuito y de código abierto.";
 "GitHub Repository" = "Repositorio de GitHub";
+"Report an Issue" = "Informar de un problema";
 "MIT License" = "Licencia MIT";
 
-/* Cleaning Categories */
+/* Cleaning categories (CleaningCategory.rawValue) */
 "System Junk" = "Basura del sistema";
 "User Cache" = "Caché de usuario";
 "AI Apps" = "Apps de IA";
 "Mail Files" = "Archivos de Mail";
 "Trash Bins" = "Papeleras";
 "Large & Old Files" = "Archivos grandes y antiguos";
-"Purgeable Space" = "Espacio purgable";
+"Purgeable Space" = "Espacio liberable";
 "Xcode Junk" = "Basura de Xcode";
 "Brew Cache" = "Caché de Brew";
+"Node Cache" = "Caché de Node";
+"Docker Cache" = "Caché de Docker";
 
-/* Category Descriptions */
-"Scan everything at once" = "Analiza todo a la vez";
+/* Cleaning category descriptions */
+"Scan everything at once" = "Analizar todo a la vez";
 "System caches, logs, and temporary files" = "Cachés del sistema, registros y archivos temporales";
 "Application caches and browser data" = "Cachés de aplicaciones y datos del navegador";
-"Logs, caches, and temporary files from local AI apps" = "Registros, cachés y archivos temporales de apps de IA locales";
 "Local AI app logs, caches, and optional history" = "Registros, cachés e historial opcional de apps de IA locales";
 "Downloaded mail attachments" = "Adjuntos de correo descargados";
-"Files in your Trash" = "Archivos en tu Papelera";
+"Files in your Trash" = "Archivos en la Papelera";
 "Files over 100 MB or older than 1 year" = "Archivos de más de 100 MB o con más de 1 año";
-"APFS purgeable disk space" = "Espacio purgable de disco APFS";
+"APFS purgeable disk space" = "Espacio liberable de disco APFS";
 "Derived data, archives, and simulators" = "Datos derivados, archivos y simuladores";
 "Homebrew download cache" = "Caché de descargas de Homebrew";
+"npm, yarn, and pnpm download caches" = "Cachés de descargas de npm, yarn y pnpm";
+"Docker images, containers, and build cache" = "Imágenes, contenedores y caché de compilación de Docker";
 
-/* Schedule Intervals */
+/* Node Cache subcategories */
+"npm cache" = "Caché de npm";
+"yarn classic cache" = "Caché clásica de yarn";
+"pnpm content-addressable store" = "Almacén direccionable de pnpm";
+
+/* Docker Cache helper */
+"Reclaimable (run `docker system prune -af`)" = "Recuperable (ejecuta `docker system prune -af`)";
+
+/* Schedule intervals (ScheduleInterval.rawValue) */
 "Every Hour" = "Cada hora";
 "Every 3 Hours" = "Cada 3 horas";
 "Every 6 Hours" = "Cada 6 horas";
@@ -121,12 +249,14 @@
 "Every 2 Weeks" = "Cada 2 semanas";
 "Monthly" = "Mensualmente";
 
+/* Schedule status */
+"Never" = "Nunca";
+"Not scheduled" = "Sin programar";
+
+/* Appearance modes (AppearanceMode.label) */
+"System" = "Sistema";
+"Light" = "Claro";
+"Dark" = "Oscuro";
+
 /* Notifications */
 "Found %@ of junk files." = "Se encontraron %@ de archivos basura.";
-
-/* Node Cache */
-"Node Cache" = "Caché de Node";
-"npm, yarn, and pnpm download caches" = "Cachés de descarga de npm, yarn y pnpm";
-"npm cache" = "caché de npm";
-"yarn classic cache" = "caché de yarn classic";
-"pnpm content-addressable store" = "almacén de contenido direccionable de pnpm";

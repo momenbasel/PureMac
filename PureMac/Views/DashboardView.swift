@@ -43,7 +43,7 @@ struct DashboardView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .confirmationDialog(
-            "Clean \(ByteCountFormatter.string(fromByteCount: appState.totalSelectedSize, countStyle: .file))?",
+            cleanConfirmationTitle,
             isPresented: $showConfirmation,
             titleVisibility: .visible
         ) {
@@ -52,6 +52,13 @@ struct DashboardView: View {
         } message: {
             Text("This will permanently delete the selected files. This cannot be undone.")
         }
+    }
+
+    private var cleanConfirmationTitle: String {
+        String(
+            format: String(localized: "Clean %@?"),
+            ByteCountFormatter.string(fromByteCount: appState.totalSelectedSize, countStyle: .file)
+        )
     }
 
     // MARK: - Hero (idle)
@@ -76,7 +83,7 @@ struct DashboardView: View {
                             Text(ByteCountFormatter.string(fromByteCount: free, countStyle: .file))
                                 .font(.system(size: 30, weight: .bold))
                                 .monospacedDigit()
-                            Text("free of \(ByteCountFormatter.string(fromByteCount: total, countStyle: .file))")
+                            Text(freeOfText(total: total))
                                 .font(.system(size: 12))
                                 .foregroundStyle(.secondary)
                         }
@@ -98,9 +105,15 @@ struct DashboardView: View {
         }
     }
 
+    private func freeOfText(total: Int64) -> String {
+        String(
+            format: String(localized: "free of %@"),
+            ByteCountFormatter.string(fromByteCount: total, countStyle: .file)
+        )
+    }
+
     private func storageBreakdown(used: Int64, total: Int64) -> some View {
         let usedPct  = total > 0 ? Double(used) / Double(total) : 0
-        let purgePct = total > 0 ? Double(appState.diskInfo.purgeableSpace) / Double(total) : 0
         let junkPct  = total > 0 ? min(0.4, Double(appState.totalJunkSize) / Double(total)) : 0
 
         return VStack(alignment: .leading, spacing: 8) {
@@ -135,12 +148,16 @@ struct DashboardView: View {
                               value: ByteCountFormatter.string(fromByteCount: appState.diskInfo.purgeableSpace, countStyle: .file))
                 }
                 Spacer()
-                Text("\(Int(usedPct * 100))% used")
+                Text(percentUsedText(usedPct))
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
         }
+    }
+
+    private func percentUsedText(_ usedPct: Double) -> String {
+        String(format: String(localized: "%lld%% used"), Int64(usedPct * 100))
     }
 
     // MARK: - Stats
@@ -156,7 +173,7 @@ struct DashboardView: View {
                 tint: Tint.blue,
                 label: "Free Space",
                 value: ByteCountFormatter.string(fromByteCount: free, countStyle: .file),
-                delta: total > 0 ? "of \(ByteCountFormatter.string(fromByteCount: total, countStyle: .file)) · \(Int(percentUsed * 100))% used" : nil
+                delta: total > 0 ? freeSpaceDelta(total: total, percentUsed: percentUsed) : nil
             )
             StatCard(
                 icon: "trash.circle.fill",
@@ -165,14 +182,16 @@ struct DashboardView: View {
                 value: appState.totalJunkSize > 0
                     ? ByteCountFormatter.string(fromByteCount: appState.totalJunkSize, countStyle: .file)
                     : "—",
-                delta: appState.allResults.isEmpty ? "Run a scan" : "across \(appState.allResults.count) categories"
+                delta: appState.allResults.isEmpty
+                    ? String(localized: "Run a scan")
+                    : junkFoundDelta(count: appState.allResults.count)
             )
             StatCard(
                 icon: "square.grid.2x2.fill",
                 tint: Tint.purple,
                 label: "Apps",
                 value: "\(appState.installedApps.count)",
-                delta: "installed"
+                delta: String(localized: "installed")
             )
             StatCard(
                 icon: "memorychip.fill",
@@ -181,9 +200,21 @@ struct DashboardView: View {
                 value: appState.diskInfo.purgeableSpace > 0
                     ? ByteCountFormatter.string(fromByteCount: appState.diskInfo.purgeableSpace, countStyle: .file)
                     : "—",
-                delta: "APFS reclaimable"
+                delta: String(localized: "APFS reclaimable")
             )
         }
+    }
+
+    private func freeSpaceDelta(total: Int64, percentUsed: Double) -> String {
+        String(
+            format: String(localized: "of %@ · %lld%% used"),
+            ByteCountFormatter.string(fromByteCount: total, countStyle: .file),
+            Int64(percentUsed * 100)
+        )
+    }
+
+    private func junkFoundDelta(count: Int) -> String {
+        String(format: String(localized: "across %lld categories"), Int64(count))
     }
 
     // MARK: - Suggestions
@@ -200,11 +231,16 @@ struct DashboardView: View {
         var out: [Suggestion] = []
         // Surface the largest pending category as a contextual nudge.
         if let biggest = appState.allResults.max(by: { $0.totalSize < $1.totalSize }), biggest.totalSize > 0 {
+            let title = String(
+                format: String(localized: "%@ is using %@"),
+                String(localized: String.LocalizationValue(biggest.category.rawValue)),
+                biggest.formattedSize
+            )
             out.append(Suggestion(
                 icon: biggest.category.icon,
                 tint: biggest.category.color,
-                title: "\(biggest.category.rawValue) is using \(biggest.formattedSize)",
-                subtitle: biggest.category.description,
+                title: title,
+                subtitle: String(localized: String.LocalizationValue(biggest.category.description)),
                 pill: biggest.formattedSize
             ))
         }
@@ -212,9 +248,9 @@ struct DashboardView: View {
             out.append(Suggestion(
                 icon: "lock.shield.fill",
                 tint: Tint.orange,
-                title: "Grant Full Disk Access for full results",
-                subtitle: "Without it, most caches and uninstall flows fail.",
-                pill: "Action"
+                title: String(localized: "Grant Full Disk Access for full results"),
+                subtitle: String(localized: "Without it, most caches and uninstall flows fail."),
+                pill: String(localized: "Action")
             ))
         }
         return out
@@ -230,7 +266,7 @@ struct DashboardView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Scanning your Mac")
                         .font(.system(size: 22, weight: .bold))
-                    Text("Currently in: \(appState.currentScanCategory)")
+                    Text(currentlyInText)
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                     ProgressView(value: appState.scanProgress)
@@ -243,13 +279,20 @@ struct DashboardView: View {
         }
     }
 
+    private var currentlyInText: String {
+        String(
+            format: String(localized: "Currently in: %@"),
+            String(localized: String.LocalizationValue(appState.currentScanCategory))
+        )
+    }
+
     private var liveResults: some View {
         CardSurface(padding: 0) {
             VStack(spacing: 0) {
                 ForEach(appState.allResults.prefix(8)) { result in
                     HStack(spacing: 12) {
                         IconTile(systemName: result.category.icon, tint: result.category.color, size: 26)
-                        Text(result.category.rawValue)
+                        Text(LocalizedStringKey(result.category.rawValue))
                             .font(.system(size: 13))
                         Spacer()
                         Text(result.formattedSize)
@@ -295,10 +338,11 @@ struct DashboardView: View {
                             Button {
                                 showConfirmation = true
                             } label: {
-                                Label(
-                                    "Clean \(ByteCountFormatter.string(fromByteCount: appState.totalSelectedSize, countStyle: .file))",
-                                    systemImage: "sparkles"
-                                )
+                                Label {
+                                    Text(cleanSelectedLabel)
+                                } icon: {
+                                    Image(systemName: "sparkles")
+                                }
                                 .font(.system(size: 13, weight: .semibold))
                                 .padding(.horizontal, 6)
                             }
@@ -310,6 +354,13 @@ struct DashboardView: View {
                 }
             }
         }
+    }
+
+    private var cleanSelectedLabel: String {
+        String(
+            format: String(localized: "Clean %@"),
+            ByteCountFormatter.string(fromByteCount: appState.totalSelectedSize, countStyle: .file)
+        )
     }
 
     private var resultsList: some View {
@@ -333,13 +384,17 @@ struct DashboardView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Cleaning…")
                         .font(.system(size: 22, weight: .bold))
-                    Text("\(Int(appState.cleanProgress * 100))% complete")
+                    Text(percentCompleteText)
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 0)
             }
         }
+    }
+
+    private var percentCompleteText: String {
+        String(format: String(localized: "%lld%% complete"), Int64(appState.cleanProgress * 100))
     }
 
     private var cleanedHero: some View {
@@ -372,7 +427,7 @@ struct DashboardView: View {
 
     // MARK: - Helpers
 
-    private func sectionHeader(_ text: String) -> some View {
+    private func sectionHeader(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .font(.system(size: 16, weight: .bold))
             .padding(.top, 4)
@@ -384,7 +439,7 @@ struct DashboardView: View {
 private struct StatCard: View {
     let icon: String
     let tint: Color
-    let label: String
+    let label: LocalizedStringKey
     let value: String
     let delta: String?
 
@@ -492,7 +547,7 @@ private struct StorageGauge: View {
 
 private struct LegendDot: View {
     let color: Color
-    let label: String
+    let label: LocalizedStringKey
     let value: String
 
     var body: some View {
@@ -567,7 +622,7 @@ private struct CategoryToggleRow: View {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(LocalizedStringKey(result.category.rawValue))
                         .font(.system(size: 13.5, weight: .semibold))
-                    Text("\(result.itemCount) items")
+                    Text(itemsCountText)
                         .font(.system(size: 11.5))
                         .foregroundStyle(.secondary)
                 }
@@ -581,5 +636,9 @@ private struct CategoryToggleRow: View {
         .toggleStyle(.checkbox)
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
+    }
+
+    private var itemsCountText: String {
+        String(format: String(localized: "%lld items"), Int64(result.itemCount))
     }
 }
