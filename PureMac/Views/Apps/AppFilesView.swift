@@ -93,14 +93,23 @@ struct AppFilesView: View {
         }
         .alert("Removal Failed", isPresented: Binding(
             get: { appState.removalError != nil },
-            set: { if !$0 { appState.removalError = nil } }
+            set: {
+                if !$0 {
+                    appState.removalError = nil
+                    appState.removalNeedsFullDiskAccess = false
+                }
+            }
         )) {
-            Button("Open System Settings") {
-                FullDiskAccessManager.shared.openFullDiskAccessSettings()
-                appState.removalError = nil
+            if appState.removalNeedsFullDiskAccess {
+                Button("Open System Settings") {
+                    FullDiskAccessManager.shared.openFullDiskAccessSettings()
+                    appState.removalError = nil
+                    appState.removalNeedsFullDiskAccess = false
+                }
             }
             Button("OK", role: .cancel) {
                 appState.removalError = nil
+                appState.removalNeedsFullDiskAccess = false
             }
         } message: {
             Text(appState.removalError ?? "")

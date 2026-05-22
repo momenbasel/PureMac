@@ -123,7 +123,7 @@ actor CleaningEngine {
                 if item.category == .largeFiles {
                     return isExplicitSingleFileDeletable(resolvedPath: resolved)
                 }
-                return isSafeToDelete(resolvedPath: resolved)
+                return isSafeToDelete(resolvedPath: resolved) || isSafeUninstallEscalationPath(resolved)
             }()
             if !accepted {
                 Logger.shared.log("Refusing admin escalation for unsafe path: \(item.path)", level: .warning)
@@ -149,10 +149,9 @@ actor CleaningEngine {
         }
         defer { try? FileManager.default.removeItem(at: tempFile) }
 
-        // UUIDs are alphanumeric + hyphens, NSTemporaryDirectory is a known
-        // path with no shell metacharacters, so direct embedding is safe.
+        let quotedTempPath = shellSingleQuoted(tempFile.path)
         let script = """
-        do shell script "/usr/bin/xargs -0 /bin/rm -rf -- < \(tempFile.path)" with administrator privileges
+        do shell script "/usr/bin/xargs -0 /bin/rm -rf -- < \(quotedTempPath)" with administrator privileges
         """
 
         let runResult: (success: Bool, error: String?) = await withCheckedContinuation { continuation in
@@ -293,6 +292,55 @@ actor CleaningEngine {
             let rootWithSeparator = root.hasSuffix("/") ? root : root + "/"
             return normalized.hasPrefix(rootWithSeparator)
         }
+    }
+
+    /// Allows the app uninstaller to escalate only the protected roots it owns:
+    /// app bundles, package receipts, and launch plists. This intentionally
+    /// stays narrower than the normal cleaner allow-list.
+    private func isSafeUninstallEscalationPath(_ path: String) -> Bool {
+        let normalized = (path as NSString).standardizingPath
+        let home = fileManager.homeDirectoryForCurrentUser.path
+
+        return isAppBundlePath(normalized, rootedAt: "/Applications")
+            || isAppBundlePath(normalized, rootedAt: "\(home)/Applications")
+            || isReceiptPath(normalized, rootedAt: "/private/var/db/receipts")
+            || isReceiptPath(normalized, rootedAt: "/var/db/receipts")
+            || isPlistUnder(normalized, root: "/Library/LaunchDaemons")
+            || isPlistUnder(normalized, root: "/Library/LaunchAgents")
+    }
+
+    private func isAppBundlePath(_ path: String, rootedAt root: String) -> Bool {
+        guard isInside(path, root: root) else { return false }
+        let normalizedRoot = (root as NSString).standardizingPath
+        guard path != normalizedRoot else { return false }
+        let rootWithSeparator = normalizedRoot.hasSuffix("/") ? normalizedRoot : normalizedRoot + "/"
+        let relative = String(path.dropFirst(rootWithSeparator.count))
+        return relative.split(separator: "/").contains { component in
+            component.lowercased().hasSuffix(".app")
+        }
+    }
+
+    private func isReceiptPath(_ path: String, rootedAt root: String) -> Bool {
+        let parent = ((path as NSString).deletingLastPathComponent as NSString).standardizingPath
+        guard parent == (root as NSString).standardizingPath else { return false }
+        let ext = (path as NSString).pathExtension.lowercased()
+        return ext == "plist" || ext == "bom"
+    }
+
+    private func isPlistUnder(_ path: String, root: String) -> Bool {
+        let parent = ((path as NSString).deletingLastPathComponent as NSString).standardizingPath
+        return parent == (root as NSString).standardizingPath && (path as NSString).pathExtension.lowercased() == "plist"
+    }
+
+    private func isInside(_ path: String, root: String) -> Bool {
+        let normalizedRoot = (root as NSString).standardizingPath
+        if path == normalizedRoot { return true }
+        let rootWithSeparator = normalizedRoot.hasSuffix("/") ? normalizedRoot : normalizedRoot + "/"
+        return path.hasPrefix(rootWithSeparator)
+    }
+
+    private func shellSingleQuoted(_ value: String) -> String {
+        "'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'"
     }
 
     /// Allow a single-file delete under Downloads/Documents/Desktop when it

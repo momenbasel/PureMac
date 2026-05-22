@@ -44,6 +44,7 @@ final class AppState: ObservableObject {
     @Published var isLoadingApps: Bool = false
     @Published var isScanningAppFiles: Bool = false
     @Published var removalError: String?
+    @Published var removalNeedsFullDiskAccess = false
 
     // MARK: - Services
 
@@ -140,6 +141,7 @@ final class AppState: ObservableObject {
             }
         }
         removalError = nil
+        removalNeedsFullDiskAccess = false
         if !blocked.isEmpty {
             let blockedList = blocked.map(\.path).joined(separator: ", ")
             Logger.shared.log("Refused to delete \(blocked.count) high-risk home dotpath(s): \(blockedList)", level: .warning)
@@ -151,42 +153,204 @@ final class AppState: ObservableObject {
             }
             return
         }
-        trashDirectly(urls: urls) { [weak self] removed, failed in
-            DispatchQueue.main.async {
+        trashDirectly(urls: urls) { [weak self] removed, needsFullDiskAccess, needsAdmin, failed in
+            Task { @MainActor in
                 guard let self else { return }
-                if !removed.isEmpty {
-                    self.discoveredFiles.removeAll { removed.contains($0) }
-                    self.selectedFiles.subtract(removed)
-                    Logger.shared.log("Removed \(removed.count) files", level: .info)
+
+                self.applyRemovedAppFiles(removed)
+
+                guard !needsAdmin.isEmpty else {
+                    self.finishRemoval(
+                        removedAny: !removed.isEmpty,
+                        needsFullDiskAccess: needsFullDiskAccess,
+                        attemptedAdmin: false,
+                        failed: failed,
+                        adminError: nil
+                    )
+                    return
                 }
-                if !failed.isEmpty {
-                    self.removalError = "\(failed.count) file\(failed.count == 1 ? "" : "s") could not be removed. Grant Full Disk Access in System Settings → Privacy & Security to allow PureMac to manage all files."
-                    Logger.shared.log("Failed to remove \(failed.count) files — likely missing FDA", level: .error)
+
+                let items = needsAdmin.map { self.cleanableUninstallItem(for: $0) }
+                let adminResult = await self.cleaningEngine.cleanWithAdminPrivileges(items: items)
+                let adminRemoved = needsAdmin.filter { adminResult.cleanedPaths.contains($0.path) }
+                let adminFailed = needsAdmin.filter { !adminResult.cleanedPaths.contains($0.path) }
+
+                self.applyRemovedAppFiles(adminRemoved)
+                for url in adminRemoved {
+                    Logger.shared.log("Removed \(url.path) with administrator privileges", level: .info)
                 }
+
+                self.finishRemoval(
+                    removedAny: !removed.isEmpty || !adminRemoved.isEmpty,
+                    needsFullDiskAccess: needsFullDiskAccess,
+                    attemptedAdmin: true,
+                    failed: failed + adminFailed,
+                    adminError: adminResult.errors.joined(separator: "; ")
+                )
             }
         }
     }
 
     /// Move files to the Trash via FileManager.trashItem so the syscall
-    /// originates from PureMac itself — TCC then registers PureMac in the
+    /// originates from PureMac itself - TCC then registers PureMac in the
     /// Full Disk Access list. The previous AppleScript-via-Finder bridge
     /// caused the syscall to originate from Finder, which is why granting
     /// FDA to PureMac made no difference (issue #75).
-    private func trashDirectly(urls: [URL], completion: @escaping ([URL], [URL]) -> Void) {
+    private func trashDirectly(urls: [URL], completion: @escaping ([URL], Bool, [URL], [URL]) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
+            let hasFullDiskAccess = FullDiskAccessManager.shared.hasFullDiskAccess
             var removed: [URL] = []
+            var needsFullDiskAccess = false
+            var needsAdmin: [URL] = []
             var failed: [URL] = []
+
             for url in urls {
                 var resulting: NSURL?
                 do {
                     try FileManager.default.trashItem(at: url, resultingItemURL: &resulting)
                     removed.append(url)
                 } catch {
-                    Logger.shared.log("Trash failed for \(url.path): \(error.localizedDescription)", level: .error)
-                    failed.append(url)
+                    let nsError = error as NSError
+                    if Self.isMissingFileError(nsError) {
+                        Logger.shared.log("Trash skipped for \(url.path): file no longer exists", level: .info)
+                        removed.append(url)
+                    } else if Self.isPermissionDeniedError(nsError) {
+                        if hasFullDiskAccess || Self.isLikelyAdministratorRemovalPath(url) {
+                            needsAdmin.append(url)
+                        } else {
+                            needsFullDiskAccess = true
+                            failed.append(url)
+                        }
+                    } else {
+                        Logger.shared.log("Trash failed for \(url.path): \(error.localizedDescription)", level: .error)
+                        failed.append(url)
+                    }
                 }
             }
-            completion(removed, failed)
+            completion(removed, needsFullDiskAccess, needsAdmin, failed)
+        }
+    }
+
+    private func applyRemovedAppFiles(_ urls: [URL]) {
+        guard !urls.isEmpty else { return }
+        discoveredFiles.removeAll { urls.contains($0) }
+        selectedFiles.subtract(urls)
+        Logger.shared.log("Removed \(urls.count) file\(urls.count == 1 ? "" : "s")", level: .info)
+    }
+
+    private func finishRemoval(
+        removedAny: Bool,
+        needsFullDiskAccess: Bool,
+        attemptedAdmin: Bool,
+        failed: [URL],
+        adminError: String?
+    ) {
+        removalNeedsFullDiskAccess = needsFullDiskAccess
+        if let message = removalFailureMessage(
+            needsFullDiskAccess: needsFullDiskAccess,
+            attemptedAdmin: attemptedAdmin,
+            failed: failed,
+            adminError: adminError
+        ) {
+            removalError = message
+            Logger.shared.log(message, level: .error)
+        }
+        if removedAny {
+            pruneMissingInstalledApps()
+        }
+    }
+
+    private func cleanableUninstallItem(for url: URL) -> CleanableItem {
+        let values = try? url.resourceValues(forKeys: [
+            .totalFileAllocatedSizeKey,
+            .fileAllocatedSizeKey,
+            .contentModificationDateKey,
+        ])
+        let size = Int64(values?.totalFileAllocatedSize ?? values?.fileAllocatedSize ?? 0)
+        return CleanableItem(
+            name: url.lastPathComponent,
+            path: url.path,
+            size: size,
+            category: .systemJunk,
+            isSelected: true,
+            lastModified: values?.contentModificationDate
+        )
+    }
+
+    private func removalFailureMessage(
+        needsFullDiskAccess: Bool,
+        attemptedAdmin: Bool,
+        failed: [URL],
+        adminError: String?
+    ) -> String? {
+        if needsFullDiskAccess {
+            let prefix = failed.isEmpty ? "Some selected files" : "\(failed.count) file\(failed.count == 1 ? "" : "s")"
+            return "\(prefix) could not be removed because PureMac does not have Full Disk Access. Grant Full Disk Access in System Settings, then try again."
+        }
+
+        if !failed.isEmpty {
+            if attemptedAdmin {
+                return "\(failed.count) file\(failed.count == 1 ? "" : "s") could not be removed with administrator privileges. The items may have changed or macOS denied access."
+            }
+            return "\(failed.count) file\(failed.count == 1 ? "" : "s") could not be removed. Check that the items still exist and are not in use."
+        }
+
+        if let adminError, !adminError.isEmpty {
+            return "Administrator removal failed: \(adminError)"
+        }
+        return nil
+    }
+
+    private nonisolated static func isMissingFileError(_ nsError: NSError) -> Bool {
+        (nsError.domain == NSCocoaErrorDomain &&
+            (nsError.code == NSFileNoSuchFileError || nsError.code == NSFileReadNoSuchFileError)) ||
+            (nsError.domain == NSPOSIXErrorDomain && nsError.code == Int(ENOENT))
+    }
+
+    private nonisolated static func isPermissionDeniedError(_ nsError: NSError) -> Bool {
+        (nsError.domain == NSCocoaErrorDomain &&
+            (nsError.code == NSFileReadNoPermissionError || nsError.code == NSFileWriteNoPermissionError)) ||
+            (nsError.domain == NSPOSIXErrorDomain &&
+                (nsError.code == Int(EACCES) || nsError.code == Int(EPERM)))
+    }
+
+    private nonisolated static func isLikelyAdministratorRemovalPath(_ url: URL) -> Bool {
+        let path = (url.resolvingSymlinksInPath().path as NSString).standardizingPath
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+
+        return hasAppBundleComponent(path, rootedAt: "/Applications")
+            || hasAppBundleComponent(path, rootedAt: "\(home)/Applications")
+            || isDirectFile(path, in: "/private/var/db/receipts", extensions: ["plist", "bom"])
+            || isDirectFile(path, in: "/var/db/receipts", extensions: ["plist", "bom"])
+            || isDirectFile(path, in: "/Library/LaunchDaemons", extensions: ["plist"])
+            || isDirectFile(path, in: "/Library/LaunchAgents", extensions: ["plist"])
+    }
+
+    private nonisolated static func hasAppBundleComponent(_ path: String, rootedAt root: String) -> Bool {
+        let normalizedRoot = (root as NSString).standardizingPath
+        guard path != normalizedRoot else { return false }
+        let rootWithSeparator = normalizedRoot.hasSuffix("/") ? normalizedRoot : normalizedRoot + "/"
+        guard path.hasPrefix(rootWithSeparator) else { return false }
+        let relative = String(path.dropFirst(rootWithSeparator.count))
+        return relative.split(separator: "/").contains { component in
+            component.lowercased().hasSuffix(".app")
+        }
+    }
+
+    private nonisolated static func isDirectFile(_ path: String, in root: String, extensions: Set<String>) -> Bool {
+        let parent = ((path as NSString).deletingLastPathComponent as NSString).standardizingPath
+        guard parent == (root as NSString).standardizingPath else { return false }
+        return extensions.contains((path as NSString).pathExtension.lowercased())
+    }
+
+    private func pruneMissingInstalledApps() {
+        let fileManager = FileManager.default
+        installedApps.removeAll { !fileManager.fileExists(atPath: $0.path.path) }
+
+        if let selectedApp, !fileManager.fileExists(atPath: selectedApp.path.path) {
+            self.selectedApp = nil
+            discoveredFiles = []
+            selectedFiles = []
         }
     }
 
