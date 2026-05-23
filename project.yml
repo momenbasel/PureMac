@@ -1,4 +1,8 @@
 name: PureMac
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.0.0
 options:
   bundleIdPrefix: com.puremac
   deploymentTarget:
@@ -31,6 +35,9 @@ targets:
     platform: macOS
     sources:
       - PureMac
+    dependencies:
+      - package: Sparkle
+        product: Sparkle
     settings:
       base:
         PRODUCT_NAME: PureMac
