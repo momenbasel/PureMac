@@ -262,3 +262,42 @@
 
 /* Notifications */
 "Found %@ of junk files." = "Se encontraron %@ de archivos basura.";
+
+/* Permission Sheet */
+"Grant Full Disk Access" = "Conceder acceso a todo el disco";
+"%lld item(s) need Full Disk Access" = "%lld elemento(s) necesitan acceso a todo el disco";
+"Uninstalling %@: %lld file(s) need Full Disk Access" = "Desinstalando %@: %lld archivo(s) necesitan acceso a todo el disco";
+"%lld item(s) need Full Disk Access to remove. Tap Grant Access to fix in one step." = "%lld elemento(s) requieren acceso a todo el disco. Toca Conceder acceso para resolverlo en un paso.";
+"Couldn't remove %@%@. They may be in use or protected by macOS." = "No se pudo eliminar %@%@. Pueden estar en uso o protegidos por macOS.";
+" and %lld more" = " y %lld más";
+"Access granted. Retrying…" = "Acceso concedido. Reintentando…";
+"1-tap setup. We'll detect the change automatically." = "Configuración en un toque. Detectaremos el cambio automáticamente.";
+"Open Settings & reveal PureMac" = "Abrir Ajustes y mostrar PureMac";
+"We'll open both windows side-by-side." = "Abriremos ambas ventanas lado a lado.";
+"Turn on PureMac" = "Activar PureMac";
+"Toggle the row that appears." = "Activa la fila que aparezca.";
+"Authenticate" = "Autenticar";
+"Touch ID or password." = "Touch ID o contraseña.";
+"We auto-retry — no need to come back." = "Reintentamos automáticamente, no necesitas volver.";
+"Watching for permission change…" = "Esperando el cambio de permiso…";
+"PureMac not in the list?" = "¿PureMac no aparece en la lista?";
+"Hide help" = "Ocultar ayuda";
+"Try this if PureMac doesn't appear:" = "Prueba esto si PureMac no aparece:";
+"Reveal app" = "Mostrar app";
+"Drag PureMac.app into the list" = "Arrastra PureMac.app a la lista";
+"Reset + reprompt" = "Restablecer y volver a pedir";
+"Clear stale TCC entry" = "Borrar entrada antigua de TCC";
+"+ %lld more" = "+ %lld más";
+"%lld blocked path(s)" = "%lld ruta(s) bloqueada(s)";
+"Access granted" = "Acceso concedido";
+"Retrying the operation now." = "Reintentando la operación ahora.";
+"Skip for now" = "Omitir por ahora";
+"I granted it — retry" = "Ya lo concedí - reintentar";
+
+/* Dashboard polish */
+"Low space" = "Poco espacio";
+"CLEANING" = "LIMPIANDO";
+"Quick Setup" = "Configuración rápida";
+"1-tap setup. We'll auto-retry what failed." = "Configuración en un toque. Reintentaremos automáticamente lo que falle.";
+"Fix permission" = "Arreglar permiso";
+"Dismiss" = "Descartar";

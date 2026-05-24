@@ -1,0 +1,169 @@
+import AppKit
+import Combine
+import Foundation
+
+/// Centralized coordinator for Full Disk Access (FDA) prompts and retry flow.
+///
+/// Replaces the bare "Open System Settings" alert with a sheet-driven flow that:
+/// - Auto-opens the Settings pane and reveals PureMac.app in Finder so users can
+///   drag the bundle into the FDA list when macOS hasn't auto-registered it
+///   (common with Homebrew installs that strip the quarantine attribute).
+/// - Polls `FullDiskAccessManager.hasFullDiskAccess` once per second while the
+///   sheet is on-screen and auto-dismisses + invokes the retry callback the
+///   moment the user toggles permission on.
+/// - Carries the failed-item batch across the prompt so the caller can re-run
+///   the clean without the user having to re-select anything.
+@MainActor
+final class PermissionCoordinator: ObservableObject {
+    static let shared = PermissionCoordinator()
+
+    @Published private(set) var isRequesting: Bool = false
+    @Published private(set) var hasFullDiskAccess: Bool = false
+    @Published private(set) var failedItemPaths: [String] = []
+    @Published private(set) var context: PromptContext = .general
+
+    enum PromptContext {
+        case general
+        case cleanup(failedCount: Int)
+        case uninstall(appName: String, failedCount: Int)
+
+        var headline: String {
+            switch self {
+            case .general:
+                return String(localized: "Grant Full Disk Access")
+            case .cleanup(let n):
+                return String(
+                    format: String(localized: "%lld item(s) need Full Disk Access"),
+                    Int64(n)
+                )
+            case .uninstall(let app, let n):
+                return String(
+                    format: String(localized: "Uninstalling %@: %lld file(s) need Full Disk Access"),
+                    app,
+                    Int64(n)
+                )
+            }
+        }
+    }
+
+    private var pollTimer: Timer?
+    private var onGrantCallback: (() -> Void)?
+
+    private init() {
+        hasFullDiskAccess = FullDiskAccessManager.shared.hasFullDiskAccess
+    }
+
+    /// Begin the request flow. `onGranted` fires exactly once when permission
+    /// is detected, regardless of whether the sheet was open or already closed.
+    func requestAccess(
+        context: PromptContext = .general,
+        failedPaths: [String] = [],
+        onGranted: @escaping () -> Void
+    ) {
+        self.context = context
+        self.failedItemPaths = failedPaths
+        self.onGrantCallback = onGranted
+        self.hasFullDiskAccess = FullDiskAccessManager.shared.hasFullDiskAccess
+
+        if hasFullDiskAccess {
+            // Already granted. Fire immediately and skip the sheet — useful for
+            // retry-button paths where the user may have granted access in
+            // another window between the original failure and the retry tap.
+            onGranted()
+            onGrantCallback = nil
+            return
+        }
+
+        isRequesting = true
+        startPolling()
+    }
+
+    /// Open System Settings AND reveal PureMac.app in Finder so the user can
+    /// drag the bundle directly into the FDA list. Side-by-side windows are
+    /// the fastest path when macOS hasn't auto-registered the app.
+    func openSettingsAndReveal() {
+        FullDiskAccessManager.shared.openFullDiskAccessSettings()
+        // Delay the reveal slightly so Settings is the frontmost window first.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            FullDiskAccessManager.shared.revealAppInFinder()
+        }
+    }
+
+    /// Reset PureMac's TCC entry and re-prime registration. Use when the user
+    /// reports PureMac doesn't appear in the FDA list (typical after Homebrew
+    /// reinstall replaces the bundle with a different code signature).
+    func resetAndReprime() {
+        _ = FullDiskAccessManager.shared.resetFullDiskAccess()
+        FullDiskAccessManager.shared.triggerRegistration()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            FullDiskAccessManager.shared.openFullDiskAccessSettings()
+        }
+    }
+
+    func dismiss(callRetry: Bool = false) {
+        stopPolling()
+        let callback = onGrantCallback
+        onGrantCallback = nil
+        isRequesting = false
+        failedItemPaths = []
+        context = .general
+        if callRetry { callback?() }
+    }
+
+    /// Refresh permission status without armed polling. Cheap to call on
+    /// app-becomes-active.
+    func refreshStatus() {
+        Task.detached(priority: .userInitiated) {
+            let granted = FullDiskAccessManager.shared.hasFullDiskAccess
+            await MainActor.run { [weak self] in
+                self?.hasFullDiskAccess = granted
+            }
+        }
+    }
+
+    // MARK: - Polling
+
+    private func startPolling() {
+        stopPolling()
+        pollTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let granted = FullDiskAccessManager.shared.hasFullDiskAccess
+                if granted && !self.hasFullDiskAccess {
+                    self.hasFullDiskAccess = true
+                    self.handleGrant()
+                } else {
+                    self.hasFullDiskAccess = granted
+                }
+            }
+        }
+        // Run once immediately so a user who granted before opening the sheet
+        // doesn't wait a full poll cycle.
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            if FullDiskAccessManager.shared.hasFullDiskAccess {
+                self.hasFullDiskAccess = true
+                self.handleGrant()
+            }
+        }
+    }
+
+    private func stopPolling() {
+        pollTimer?.invalidate()
+        pollTimer = nil
+    }
+
+    private func handleGrant() {
+        let callback = onGrantCallback
+        onGrantCallback = nil
+        stopPolling()
+        // Give the success state ~1s on screen so the user sees the
+        // confirmation tick before the sheet snaps closed.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            self?.isRequesting = false
+            self?.failedItemPaths = []
+            self?.context = .general
+            callback?()
+        }
+    }
+}

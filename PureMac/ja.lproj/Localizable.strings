@@ -262,3 +262,42 @@
 
 /* Notifications */
 "Found %@ of junk files." = "%@ のジャンクファイルが見つかりました。";
+
+/* Permission Sheet */
+"Grant Full Disk Access" = "フルディスクアクセスを付与";
+"%lld item(s) need Full Disk Access" = "%lld 件にフルディスクアクセスが必要です";
+"Uninstalling %@: %lld file(s) need Full Disk Access" = "%@ のアンインストール: %lld 個のファイルにフルディスクアクセスが必要です";
+"%lld item(s) need Full Disk Access to remove. Tap Grant Access to fix in one step." = "%lld 件の削除にはフルディスクアクセスが必要です。「アクセスを許可」をタップすると一手で解決します。";
+"Couldn't remove %@%@. They may be in use or protected by macOS." = "%@%@ を削除できませんでした。使用中か macOS によって保護されている可能性があります。";
+" and %lld more" = " 他 %lld 件";
+"Access granted. Retrying…" = "アクセスが許可されました。再試行中…";
+"1-tap setup. We'll detect the change automatically." = "ワンタップ設定。変更は自動的に検出されます。";
+"Open Settings & reveal PureMac" = "設定を開き PureMac を表示";
+"We'll open both windows side-by-side." = "両方のウインドウを並べて開きます。";
+"Turn on PureMac" = "PureMac をオンにする";
+"Toggle the row that appears." = "表示された行をオンに切り替えてください。";
+"Authenticate" = "認証";
+"Touch ID or password." = "Touch ID またはパスワード。";
+"We auto-retry — no need to come back." = "自動的に再試行します - 戻る必要はありません。";
+"Watching for permission change…" = "権限の変更を待機中…";
+"PureMac not in the list?" = "PureMac がリストに表示されない？";
+"Hide help" = "ヘルプを隠す";
+"Try this if PureMac doesn't appear:" = "PureMac が表示されない場合はこれを試してください:";
+"Reveal app" = "アプリを表示";
+"Drag PureMac.app into the list" = "PureMac.app をリストにドラッグ";
+"Reset + reprompt" = "リセットして再表示";
+"Clear stale TCC entry" = "古い TCC エントリを削除";
+"+ %lld more" = "+ %lld 件";
+"%lld blocked path(s)" = "%lld 件のブロックされたパス";
+"Access granted" = "アクセス許可済み";
+"Retrying the operation now." = "操作を再試行しています。";
+"Skip for now" = "今はスキップ";
+"I granted it — retry" = "許可したので再試行";
+
+/* Dashboard polish */
+"Low space" = "空き容量不足";
+"CLEANING" = "クリーニング中";
+"Quick Setup" = "クイックセットアップ";
+"1-tap setup. We'll auto-retry what failed." = "ワンタップ設定。失敗した処理は自動的に再試行します。";
+"Fix permission" = "権限を修正";
+"Dismiss" = "閉じる";

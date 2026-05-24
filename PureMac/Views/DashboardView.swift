@@ -68,21 +68,40 @@ struct DashboardView: View {
         let used = appState.diskInfo.usedSpace
         let free = appState.diskInfo.freeSpace
         let percentUsed = total > 0 ? Double(used) / Double(total) : 0
+        let stress = percentUsed > 0.85
 
-        return CardSurface(padding: 24) {
+        return CardSurface(padding: 24, accent: stress ? Tint.orange : Tint.blue, elevation: .raised) {
             HStack(alignment: .center, spacing: 28) {
                 StorageGauge(percentUsed: percentUsed)
                     .frame(width: 180, height: 180)
 
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack(alignment: .firstTextBaseline) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Storage")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 8) {
+                                Text("Storage")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(.secondary)
+                                    .textCase(.uppercase)
+                                    .tracking(0.6)
+                                if stress {
+                                    StatusChip(label: String(localized: "Low space"),
+                                               systemImage: "exclamationmark.triangle.fill",
+                                               tint: Tint.orange)
+                                }
+                            }
                             Text(ByteCountFormatter.string(fromByteCount: free, countStyle: .file))
-                                .font(.system(size: 30, weight: .bold))
+                                .font(.system(size: 34, weight: .bold))
                                 .monospacedDigit()
+                                .contentTransition(.numericText())
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: stress
+                                            ? [Tint.orange, Tint.red]
+                                            : [Color.primary, Color.primary.opacity(0.85)],
+                                        startPoint: .top, endPoint: .bottom
+                                    )
+                                )
                             Text(freeOfText(total: total))
                                 .font(.system(size: 12))
                                 .foregroundStyle(.secondary)
@@ -92,10 +111,11 @@ struct DashboardView: View {
                             appState.startSmartScan()
                         } label: {
                             Label("Smart Scan", systemImage: "sparkles")
-                                .font(.system(size: 12.5, weight: .semibold))
+                                .font(.system(size: 13, weight: .semibold))
+                                .padding(.horizontal, 4)
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.regular)
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
                     }
 
                     storageBreakdown(used: used, total: total)
@@ -259,20 +279,24 @@ struct DashboardView: View {
     // MARK: - Scanning state
 
     private var scanningHero: some View {
-        CardSurface(padding: 24) {
+        CardSurface(padding: 24, accent: Tint.blue, elevation: .raised) {
             HStack(alignment: .center, spacing: 28) {
                 ScanningGauge(progress: appState.scanProgress)
                     .frame(width: 180, height: 180)
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Scanning your Mac")
-                        .font(.system(size: 22, weight: .bold))
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 8) {
+                        sparklesIcon
+                        Text("Scanning your Mac")
+                            .font(.system(size: 22, weight: .bold))
+                    }
                     Text(currentlyInText)
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                     ProgressView(value: appState.scanProgress)
                         .progressViewStyle(.linear)
+                        .tint(Tint.blue)
                         .frame(maxWidth: 320)
-                        .padding(.top, 4)
+                        .padding(.top, 2)
                 }
                 Spacer(minLength: 0)
             }
@@ -313,26 +337,35 @@ struct DashboardView: View {
     // MARK: - Completed state
 
     private var completedHero: some View {
-        CardSurface(padding: 24) {
+        let isClean = appState.totalJunkSize <= 0
+        return CardSurface(padding: 24, accent: isClean ? Tint.green : Tint.orange, elevation: .raised) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .firstTextBaseline) {
-                    if appState.totalJunkSize > 0 {
+                    if !isClean {
                         Text(ByteCountFormatter.string(fromByteCount: appState.totalJunkSize, countStyle: .file))
-                            .font(.system(size: 36, weight: .bold))
+                            .font(.system(size: 40, weight: .bold))
                             .monospacedDigit()
+                            .contentTransition(.numericText())
+                            .foregroundStyle(
+                                LinearGradient(colors: [Tint.orange, Tint.red],
+                                               startPoint: .top, endPoint: .bottom)
+                            )
                         Text("found")
                             .font(.system(size: 16))
                             .foregroundStyle(.secondary)
                     } else {
-                        Label("Your Mac is clean", systemImage: "checkmark.seal.fill")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundStyle(Tint.green)
+                        HStack(spacing: 10) {
+                            cleanSealIcon
+                            Text("Your Mac is clean")
+                                .font(.system(size: 22, weight: .bold))
+                                .foregroundStyle(Tint.green)
+                        }
                     }
                     Spacer()
                     Button("Scan Again") { appState.startSmartScan() }
                         .controlSize(.large)
                 }
-                if appState.totalJunkSize > 0 {
+                if !isClean {
                     HStack {
                         if appState.totalSelectedSize > 0 {
                             Button {
@@ -376,10 +409,50 @@ struct DashboardView: View {
         }
     }
 
+    @ViewBuilder
+    private var cleanSealIcon: some View {
+        let base = Image(systemName: "checkmark.seal.fill")
+            .font(.system(size: 26, weight: .bold))
+            .foregroundStyle(Tint.green)
+        if #available(macOS 14.0, *) {
+            base.symbolEffect(.bounce, value: appState.totalJunkSize)
+        } else {
+            base
+        }
+    }
+
+    @ViewBuilder
+    private var bigCheckmark: some View {
+        let base = Image(systemName: "checkmark")
+            .font(.system(size: 60, weight: .bold))
+            .foregroundStyle(Tint.green)
+            .shadow(color: Tint.green.opacity(0.5), radius: 12)
+        if #available(macOS 14.0, *) {
+            base.symbolEffect(.bounce, value: appState.totalFreedSpace)
+        } else {
+            base
+        }
+    }
+
+    @ViewBuilder
+    private var sparklesIcon: some View {
+        let base = Image(systemName: "sparkles")
+            .font(.system(size: 18, weight: .semibold))
+            .foregroundStyle(
+                LinearGradient(colors: [Tint.blue, Tint.purple],
+                               startPoint: .topLeading, endPoint: .bottomTrailing)
+            )
+        if #available(macOS 14.0, *) {
+            base.symbolEffect(.variableColor.iterative, options: .repeating)
+        } else {
+            base
+        }
+    }
+
     private var cleaningHero: some View {
-        CardSurface(padding: 24) {
+        CardSurface(padding: 24, accent: Tint.orange, elevation: .raised) {
             HStack(alignment: .center, spacing: 28) {
-                ScanningGauge(progress: appState.cleanProgress, tint: Tint.orange)
+                ScanningGauge(progress: appState.cleanProgress, tint: Tint.orange, label: "CLEANING")
                     .frame(width: 180, height: 180)
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Cleaning…")
@@ -398,20 +471,32 @@ struct DashboardView: View {
     }
 
     private var cleanedHero: some View {
-        CardSurface(padding: 24) {
+        CardSurface(padding: 24, accent: Tint.green, elevation: .raised) {
             HStack(alignment: .center, spacing: 28) {
                 ZStack {
-                    Circle().fill(Tint.green.opacity(0.18))
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 60, weight: .bold))
-                        .foregroundStyle(Tint.green)
+                    Circle()
+                        .fill(Tint.green.opacity(0.12))
+                        .blur(radius: 20)
+                    Circle()
+                        .fill(
+                            LinearGradient(colors: [Tint.green.opacity(0.30), Tint.green.opacity(0.10)],
+                                           startPoint: .topLeading, endPoint: .bottomTrailing)
+                        )
+                    Circle()
+                        .strokeBorder(Tint.green.opacity(0.30), lineWidth: 2)
+                    bigCheckmark
                 }
                 .frame(width: 140, height: 140)
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text(ByteCountFormatter.string(fromByteCount: appState.totalFreedSpace, countStyle: .file))
-                        .font(.system(size: 36, weight: .bold))
+                        .font(.system(size: 40, weight: .bold))
                         .monospacedDigit()
+                        .contentTransition(.numericText())
+                        .foregroundStyle(
+                            LinearGradient(colors: [Tint.green, Color(red: 0.10, green: 0.65, blue: 0.40)],
+                                           startPoint: .top, endPoint: .bottom)
+                        )
                     Text("freed")
                         .font(.system(size: 14))
                         .foregroundStyle(.secondary)
@@ -444,17 +529,20 @@ private struct StatCard: View {
     let delta: String?
 
     var body: some View {
-        CardSurface(padding: 14) {
+        CardSurface(padding: 14, accent: tint) {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 8) {
-                    IconTile(systemName: icon, tint: tint, size: 26)
+                    IconTile(systemName: icon, tint: tint, size: 28, glow: true)
                     Text(label)
-                        .font(.system(size: 12))
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.secondary)
+                        .textCase(.uppercase)
+                        .tracking(0.4)
                 }
                 Text(value)
                     .font(.system(size: 22, weight: .bold))
                     .monospacedDigit()
+                    .contentTransition(.numericText())
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                 if let delta {
@@ -464,6 +552,7 @@ private struct StatCard: View {
                 }
             }
         }
+        .pressable(hoverScale: 1.018)
     }
 }
 
@@ -479,29 +568,27 @@ private struct Suggestion: Identifiable {
 private struct SuggestionRow: View {
     let suggestion: Suggestion
     var body: some View {
-        CardSurface(padding: 14) {
+        CardSurface(padding: 14, accent: suggestion.tint) {
             HStack(spacing: 14) {
-                IconTile(systemName: suggestion.icon, tint: suggestion.tint, size: 36, corner: 10)
+                IconTile(systemName: suggestion.icon, tint: suggestion.tint,
+                         size: 38, corner: 10, glow: true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(suggestion.title)
-                        .font(.system(size: 13.5, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold))
                     Text(suggestion.subtitle)
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
                 if let pill = suggestion.pill {
-                    Text(pill)
-                        .font(.system(size: 12, weight: .semibold))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(
-                            Capsule().fill(suggestion.tint.opacity(0.15))
-                        )
-                        .foregroundStyle(suggestion.tint)
+                    StatusChip(label: pill, tint: suggestion.tint)
                 }
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.tertiary)
             }
         }
+        .pressable(hoverScale: 1.01)
     }
 }
 
@@ -509,37 +596,64 @@ private struct SuggestionRow: View {
 
 private struct StorageGauge: View {
     let percentUsed: Double  // 0...1
+    @State private var glow = false
 
     var body: some View {
         let pct = max(0, min(1, percentUsed))
         let displayPercent = Int(round(pct * 100))
         let stress = pct > 0.85
+        let primaryGradient: [Color] = stress
+            ? [Tint.orange, Tint.red]
+            : [Tint.blue, Tint.purple]
+
         ZStack {
+            // Soft outer halo to give the ring depth.
             Circle()
-                .stroke(Color.primary.opacity(0.10), lineWidth: 14)
+                .fill(primaryGradient.first!.opacity(glow ? 0.18 : 0.10))
+                .blur(radius: 24)
+                .scaleEffect(0.95)
+
+            Circle()
+                .stroke(Color.primary.opacity(0.08), lineWidth: 14)
+
             Circle()
                 .trim(from: 0, to: CGFloat(pct))
                 .stroke(
-                    AngularGradient(
-                        colors: stress
-                            ? [Tint.orange, Tint.red]
-                            : [Tint.blue, Tint.purple],
-                        center: .center
-                    ),
+                    AngularGradient(colors: primaryGradient + [primaryGradient.first!], center: .center),
                     style: StrokeStyle(lineWidth: 14, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
-                .shadow(color: (stress ? Tint.orange : Tint.blue).opacity(0.35), radius: 8, y: 2)
+                .shadow(color: primaryGradient.first!.opacity(0.45), radius: 10, y: 2)
                 .animation(.easeOut(duration: 0.8), value: pct)
+
+            // Pulsing dot at the arc tip — adds life without distracting.
+            Circle()
+                .fill(Color.white)
+                .frame(width: 8, height: 8)
+                .overlay(Circle().fill(primaryGradient.last!).frame(width: 4, height: 4))
+                .shadow(color: primaryGradient.last!.opacity(0.6), radius: 4)
+                .offset(y: -80)
+                .rotationEffect(.degrees(360 * pct))
+                .opacity(pct > 0.02 ? 1 : 0)
+                .animation(.easeOut(duration: 0.8), value: pct)
+
             VStack(spacing: 2) {
                 Text("\(displayPercent)%")
-                    .font(.system(size: 44, weight: .bold))
+                    .font(.system(size: 46, weight: .bold))
                     .monospacedDigit()
                     .contentTransition(.numericText())
+                    .foregroundStyle(
+                        LinearGradient(colors: primaryGradient, startPoint: .top, endPoint: .bottom)
+                    )
                 Text("USED")
                     .font(.system(size: 10, weight: .semibold))
                     .tracking(0.6)
                     .foregroundStyle(.secondary)
+            }
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
+                glow = true
             }
         }
     }
@@ -568,31 +682,52 @@ private struct LegendDot: View {
 private struct ScanningGauge: View {
     let progress: Double
     var tint: Color = Tint.blue
+    var label: LocalizedStringKey = "SCANNING"
     @State private var rotate = false
+    @State private var shimmer = false
 
     var body: some View {
         ZStack {
+            // Halo
             Circle()
-                .stroke(Color.primary.opacity(0.10), lineWidth: 14)
+                .fill(tint.opacity(shimmer ? 0.20 : 0.10))
+                .blur(radius: 24)
+                .scaleEffect(0.95)
+
+            Circle()
+                .stroke(Color.primary.opacity(0.08), lineWidth: 14)
+
+            // Progress arc
             Circle()
                 .trim(from: 0, to: CGFloat(max(0.05, min(0.95, progress))))
                 .stroke(
-                    AngularGradient(colors: [tint, Tint.green], center: .center),
+                    AngularGradient(colors: [tint, Tint.green, tint], center: .center),
                     style: StrokeStyle(lineWidth: 14, lineCap: .round)
                 )
                 .rotationEffect(.degrees(rotate ? 360 : 0))
+                .shadow(color: tint.opacity(0.45), radius: 10, y: 2)
                 .animation(.linear(duration: 4).repeatForever(autoreverses: false), value: rotate)
+
             VStack(spacing: 2) {
                 Text("\(Int(progress * 100))%")
-                    .font(.system(size: 36, weight: .bold))
+                    .font(.system(size: 38, weight: .bold))
                     .monospacedDigit()
-                Text("SCANNING")
+                    .contentTransition(.numericText())
+                    .foregroundStyle(
+                        LinearGradient(colors: [tint, Tint.green], startPoint: .top, endPoint: .bottom)
+                    )
+                Text(label)
                     .font(.system(size: 10, weight: .semibold))
                     .tracking(0.6)
                     .foregroundStyle(.secondary)
             }
         }
-        .onAppear { rotate = true }
+        .onAppear {
+            rotate = true
+            withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
+                shimmer = true
+            }
+        }
     }
 }
 

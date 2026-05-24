@@ -262,3 +262,42 @@
 
 /* Notifications */
 "Found %@ of junk files." = "找到 %@ 的垃圾檔案。";
+
+/* Permission Sheet */
+"Grant Full Disk Access" = "授予完整磁碟存取權限";
+"%lld item(s) need Full Disk Access" = "%lld 個項目需要完整磁碟存取權限";
+"Uninstalling %@: %lld file(s) need Full Disk Access" = "解除安裝 %@：%lld 個檔案需要完整磁碟存取權限";
+"%lld item(s) need Full Disk Access to remove. Tap Grant Access to fix in one step." = "%lld 個項目需要完整磁碟存取權限才能移除。輕點「授予存取權限」一步解決。";
+"Couldn't remove %@%@. They may be in use or protected by macOS." = "無法移除 %@%@。它們可能正在使用或受 macOS 保護。";
+" and %lld more" = " 還有 %lld 個";
+"Access granted. Retrying…" = "已授予存取權限。正在重試…";
+"1-tap setup. We'll detect the change automatically." = "一鍵設定。我們會自動偵測變更。";
+"Open Settings & reveal PureMac" = "開啟「系統設定」並顯示 PureMac";
+"We'll open both windows side-by-side." = "我們會並排開啟兩個視窗。";
+"Turn on PureMac" = "開啟 PureMac";
+"Toggle the row that appears." = "打開出現的那一列。";
+"Authenticate" = "驗證身分";
+"Touch ID or password." = "Touch ID 或密碼。";
+"We auto-retry — no need to come back." = "我們會自動重試 - 不需返回。";
+"Watching for permission change…" = "正在等待權限變更…";
+"PureMac not in the list?" = "PureMac 不在清單裡？";
+"Hide help" = "隱藏說明";
+"Try this if PureMac doesn't appear:" = "如果 PureMac 沒有出現，請嘗試：";
+"Reveal app" = "顯示 App";
+"Drag PureMac.app into the list" = "將 PureMac.app 拖到清單";
+"Reset + reprompt" = "重設並重新提示";
+"Clear stale TCC entry" = "清除過時的 TCC 條目";
+"+ %lld more" = "+ 還有 %lld 個";
+"%lld blocked path(s)" = "%lld 個被封鎖的路徑";
+"Access granted" = "已授予存取權限";
+"Retrying the operation now." = "正在重試此操作。";
+"Skip for now" = "暫時略過";
+"I granted it — retry" = "我已授予 - 重試";
+
+/* Dashboard polish */
+"Low space" = "空間不足";
+"CLEANING" = "正在清理";
+"Quick Setup" = "快速設定";
+"1-tap setup. We'll auto-retry what failed." = "一鍵設定。我們會自動重試失敗的操作。";
+"Fix permission" = "修正權限";
+"Dismiss" = "略過";

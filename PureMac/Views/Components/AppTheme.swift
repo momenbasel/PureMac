@@ -58,40 +58,175 @@ enum Tint {
 }
 
 /// Tinted square icon container used in the sidebar and on dashboard cards.
+/// The optional inner gradient + soft shadow give the tile depth rather than
+/// the previous flat color swatch.
 struct IconTile: View {
     let systemName: String
     var tint: Color = Tint.blue
     var size: CGFloat = 26
     var corner: CGFloat = 7
+    var glow: Bool = false
 
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: corner, style: .continuous)
-                .fill(tint.opacity(0.16))
+                .fill(
+                    LinearGradient(
+                        colors: [tint.opacity(0.22), tint.opacity(0.10)],
+                        startPoint: .topLeading, endPoint: .bottomTrailing
+                    )
+                )
+            RoundedRectangle(cornerRadius: corner, style: .continuous)
+                .strokeBorder(tint.opacity(0.18), lineWidth: 0.5)
             Image(systemName: systemName)
                 .font(.system(size: size * 0.52, weight: .semibold))
                 .foregroundStyle(tint)
         }
         .frame(width: size, height: size)
+        .shadow(color: glow ? tint.opacity(0.35) : .clear, radius: glow ? 6 : 0, y: 1)
     }
 }
 
-/// Card surface used on the dashboard, suggestion list, and detail pages.
+/// Premium card surface used on the dashboard, suggestion list, and detail
+/// pages. Inner gradient fill + dual-layer shadow (ambient + contact) gives
+/// the cards depth without dropping into heavy material that fights the
+/// system look. Optional accent stripe lights up the leading edge so cards
+/// can carry semantic colour without painting the whole surface.
 struct CardSurface<Content: View>: View {
     var padding: CGFloat = 16
+    var accent: Color? = nil
+    var elevation: CardElevation = .standard
     @ViewBuilder var content: Content
 
     var body: some View {
         content
             .padding(padding)
             .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color(nsColor: .controlBackgroundColor))
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color(nsColor: .controlBackgroundColor))
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.04),
+                                    Color.clear,
+                                ],
+                                startPoint: .top, endPoint: .bottom
+                            )
+                        )
+                    if let accent {
+                        HStack(spacing: 0) {
+                            Rectangle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [accent.opacity(0.85), accent.opacity(0.35)],
+                                        startPoint: .top, endPoint: .bottom
+                                    )
+                                )
+                                .frame(width: 3)
+                            Spacer(minLength: 0)
+                        }
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    }
+                }
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.06), lineWidth: 0.5)
+                    .strokeBorder(Color.primary.opacity(0.07), lineWidth: 0.5)
             )
-            .shadow(color: .black.opacity(0.06), radius: 6, y: 2)
+            .shadow(color: .black.opacity(elevation.ambient), radius: elevation.ambientRadius, y: elevation.ambientY)
+            .shadow(color: .black.opacity(elevation.contact), radius: 1, y: 0.5)
+    }
+}
+
+enum CardElevation {
+    case flat, standard, raised
+
+    var ambient: Double {
+        switch self {
+        case .flat: return 0.02
+        case .standard: return 0.06
+        case .raised: return 0.10
+        }
+    }
+
+    var ambientRadius: CGFloat {
+        switch self {
+        case .flat: return 2
+        case .standard: return 6
+        case .raised: return 14
+        }
+    }
+
+    var ambientY: CGFloat {
+        switch self {
+        case .flat: return 1
+        case .standard: return 2
+        case .raised: return 6
+        }
+    }
+
+    var contact: Double { 0.05 }
+}
+
+/// Pill-shaped chip used for inline status pills (severity, counts, etc.).
+struct StatusChip: View {
+    let label: String
+    var systemImage: String? = nil
+    var tint: Color = Tint.blue
+
+    var body: some View {
+        HStack(spacing: 4) {
+            if let systemImage {
+                Image(systemName: systemImage)
+                    .font(.system(size: 9, weight: .bold))
+            }
+            Text(label)
+                .font(.system(size: 11, weight: .semibold))
+                .monospacedDigit()
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(
+            Capsule()
+                .fill(
+                    LinearGradient(
+                        colors: [tint.opacity(0.22), tint.opacity(0.12)],
+                        startPoint: .topLeading, endPoint: .bottomTrailing
+                    )
+                )
+        )
+        .overlay(
+            Capsule().strokeBorder(tint.opacity(0.25), lineWidth: 0.5)
+        )
+        .foregroundStyle(tint)
+    }
+}
+
+/// Modifier that bumps an element on hover and shrinks it on press. Cheap way
+/// to give cards and rows a tactile feel without writing per-call animations.
+struct PressableScale: ViewModifier {
+    @State private var hovering = false
+    @State private var pressing = false
+    var hoverScale: CGFloat = 1.012
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(pressing ? 0.985 : (hovering ? hoverScale : 1.0))
+            .animation(.spring(response: 0.22, dampingFraction: 0.75), value: hovering)
+            .animation(.easeOut(duration: 0.08), value: pressing)
+            .onHover { hovering = $0 }
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in pressing = true }
+                    .onEnded { _ in pressing = false }
+            )
+    }
+}
+
+extension View {
+    func pressable(hoverScale: CGFloat = 1.012) -> some View {
+        modifier(PressableScale(hoverScale: hoverScale))
     }
 }

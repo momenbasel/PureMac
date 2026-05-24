@@ -37,6 +37,14 @@ final class AppState: ObservableObject {
     @Published var hasFullDiskAccess: Bool = true
     @Published var fdaBannerDismissed: Bool = false
     @Published var cleanError: String?
+    /// True when the most recent clean error is rooted in a TCC/FDA refusal
+    /// (i.e. items survived even the admin pass). MainWindow uses this to
+    /// route the user into the PermissionSheet instead of the generic alert.
+    @Published var cleanErrorIsFDAFixable: Bool = false
+    /// Items that survived the most recent clean attempt — used to re-run the
+    /// operation after the user grants Full Disk Access without forcing them
+    /// to re-select anything.
+    @Published var pendingPermissionRetryItems: [CleanableItem] = []
 
     // MARK: - App Uninstaller State
 
@@ -276,6 +284,12 @@ final class AppState: ObservableObject {
         if removedAny {
             pruneMissingInstalledApps()
         }
+    }
+
+    /// Public bridge so views (e.g. AppFilesView) can build CleanableItem rows
+    /// from raw URLs when retrying via the PermissionCoordinator.
+    func makeUninstallCleanableItem(for url: URL) -> CleanableItem {
+        cleanableUninstallItem(for: url)
     }
 
     private func cleanableUninstallItem(for url: URL) -> CleanableItem {
@@ -533,6 +547,74 @@ final class AppState: ObservableObject {
         FullDiskAccessManager.shared.openFullDiskAccessSettings()
     }
 
+    /// Request Full Disk Access via the rich PermissionCoordinator sheet and
+    /// retry the supplied items once the user grants permission. Used by both
+    /// the cleanup and app-uninstall flows so they share a single UI surface.
+    func requestFullDiskAccessAndRetry(items: [CleanableItem], context: PermissionCoordinator.PromptContext) {
+        pendingPermissionRetryItems = items
+        PermissionCoordinator.shared.requestAccess(
+            context: context,
+            failedPaths: items.map { $0.path }
+        ) { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let pending = self.pendingPermissionRetryItems
+                self.pendingPermissionRetryItems = []
+                self.cleanError = nil
+                self.cleanErrorIsFDAFixable = false
+                guard !pending.isEmpty else { return }
+                await self.retryCleanItems(pending)
+            }
+        }
+    }
+
+    private func retryCleanItems(_ items: [CleanableItem]) async {
+        scanState = .cleaning(progress: 0)
+        cleanProgress = 0
+
+        var result = await cleaningEngine.cleanItems(items) { [weak self] progress in
+            Task { @MainActor [weak self] in
+                self?.cleanProgress = progress
+                self?.scanState = .cleaning(progress: progress)
+            }
+        }
+        if !result.requiresAdmin.isEmpty {
+            let admin = await cleaningEngine.cleanWithAdminPrivileges(items: result.requiresAdmin)
+            result.cleanedPaths.formUnion(admin.cleanedPaths)
+            result.itemsCleaned += admin.itemsCleaned
+            result.freedSpace += admin.freedSpace
+            result.errors.append(contentsOf: admin.errors)
+        }
+
+        totalFreedSpace = result.freedSpace
+        lastCleanedDate = Date()
+
+        for (cat, catResult) in categoryResults {
+            let remaining = catResult.items.filter { !result.cleanedPaths.contains($0.path) }
+            let cleared = catResult.items.filter { result.cleanedPaths.contains($0.path) }
+            for item in cleared {
+                selectedCleanupItems.remove(item.id)
+                deselectedItems.remove(item.id)
+            }
+            if remaining.isEmpty {
+                categoryResults.removeValue(forKey: cat)
+            } else {
+                categoryResults[cat] = CategoryResult(
+                    category: cat,
+                    items: remaining,
+                    totalSize: remaining.reduce(0) { $0 + $1.size }
+                )
+            }
+        }
+        totalJunkSize = categoryResults.values.reduce(0) { $0 + $1.totalSize }
+
+        scanState = .cleaned
+        loadDiskInfo()
+        try? await Task.sleep(nanoseconds: 3_000_000_000)
+        scanState = .idle
+        totalFreedSpace = 0
+    }
+
     // MARK: - Disk Info
 
     func loadDiskInfo() {
@@ -624,6 +706,8 @@ final class AppState: ObservableObject {
             totalFreedSpace = result.freedSpace
             lastCleanedDate = Date()
 
+            let survivors = itemsToClean.filter { !result.cleanedPaths.contains($0.path) }
+
             for (cat, catResult) in categoryResults {
                 let remaining = catResult.items.filter { !result.cleanedPaths.contains($0.path) }
                 let cleared = catResult.items.filter { result.cleanedPaths.contains($0.path) }
@@ -643,9 +727,7 @@ final class AppState: ObservableObject {
             }
             totalJunkSize = categoryResults.values.reduce(0) { $0 + $1.totalSize }
 
-            if !result.errors.isEmpty {
-                cleanError = "\(result.errors.count) item\(result.errors.count == 1 ? "" : "s") couldn't be removed. Check the log for details."
-            }
+            handleCleanOutcome(errors: result.errors, survivors: survivors)
 
             scanState = .cleaned
             loadDiskInfo()
@@ -703,9 +785,8 @@ final class AppState: ObservableObject {
             }
             totalJunkSize = categoryResults.values.reduce(0) { $0 + $1.totalSize }
 
-            if !cleanResult.errors.isEmpty {
-                cleanError = "\(cleanResult.errors.count) item\(cleanResult.errors.count == 1 ? "" : "s") couldn't be removed. Check the log for details."
-            }
+            let survivors = selectedItems.filter { !cleanResult.cleanedPaths.contains($0.path) }
+            handleCleanOutcome(errors: cleanResult.errors, survivors: survivors)
 
             scanState = .cleaned
             loadDiskInfo()
@@ -713,6 +794,39 @@ final class AppState: ObservableObject {
             try? await Task.sleep(nanoseconds: 3_000_000_000)
             scanState = .idle
             totalFreedSpace = 0
+        }
+    }
+
+    /// Inspect a clean batch's leftovers and either route the user into the
+    /// PermissionSheet (FDA is the most likely cause) or surface a richer
+    /// error alert that lists actual paths instead of "Check the log".
+    private func handleCleanOutcome(errors: [String], survivors: [CleanableItem]) {
+        guard !errors.isEmpty || !survivors.isEmpty else {
+            cleanError = nil
+            cleanErrorIsFDAFixable = false
+            pendingPermissionRetryItems = []
+            return
+        }
+
+        let fdaGranted = FullDiskAccessManager.shared.hasFullDiskAccess
+        let likelyFDA = !fdaGranted && !survivors.isEmpty
+        cleanErrorIsFDAFixable = likelyFDA
+        pendingPermissionRetryItems = survivors
+
+        if likelyFDA {
+            cleanError = String(
+                format: String(localized: "%lld item(s) need Full Disk Access to remove. Tap Grant Access to fix in one step."),
+                Int64(survivors.count)
+            )
+        } else if !survivors.isEmpty {
+            let preview = survivors.prefix(2).map { ($0.path as NSString).lastPathComponent }.joined(separator: ", ")
+            let extra = survivors.count > 2 ? String(format: String(localized: " and %lld more"), Int64(survivors.count - 2)) : ""
+            cleanError = String(
+                format: String(localized: "Couldn't remove %@%@. They may be in use or protected by macOS."),
+                preview, extra
+            )
+        } else if let first = errors.first {
+            cleanError = first
         }
     }
 

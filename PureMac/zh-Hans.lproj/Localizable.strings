@@ -262,3 +262,42 @@
 
 /* Notifications */
 "Found %@ of junk files." = "发现 %@ 的垃圾文件。";
+
+/* Permission Sheet */
+"Grant Full Disk Access" = "授予完全磁盘访问权限";
+"%lld item(s) need Full Disk Access" = "%lld 个项目需要完全磁盘访问权限";
+"Uninstalling %@: %lld file(s) need Full Disk Access" = "卸载 %@：%lld 个文件需要完全磁盘访问权限";
+"%lld item(s) need Full Disk Access to remove. Tap Grant Access to fix in one step." = "%lld 个项目需要完全磁盘访问权限才能删除。轻点「授予访问权限」一步解决。";
+"Couldn't remove %@%@. They may be in use or protected by macOS." = "无法删除 %@%@。它们可能正在使用或受 macOS 保护。";
+" and %lld more" = " 还有 %lld 个";
+"Access granted. Retrying…" = "已授予访问权限。正在重试…";
+"1-tap setup. We'll detect the change automatically." = "一键设置。我们将自动检测更改。";
+"Open Settings & reveal PureMac" = "打开“设置”并显示 PureMac";
+"We'll open both windows side-by-side." = "我们会并排打开两个窗口。";
+"Turn on PureMac" = "开启 PureMac";
+"Toggle the row that appears." = "打开出现的那一行。";
+"Authenticate" = "验证身份";
+"Touch ID or password." = "Touch ID 或密码。";
+"We auto-retry — no need to come back." = "我们会自动重试 - 无需返回。";
+"Watching for permission change…" = "正在监视权限变更…";
+"PureMac not in the list?" = "PureMac 不在列表中？";
+"Hide help" = "隐藏帮助";
+"Try this if PureMac doesn't appear:" = "如果 PureMac 没有出现，请尝试：";
+"Reveal app" = "显示 App";
+"Drag PureMac.app into the list" = "将 PureMac.app 拖入列表";
+"Reset + reprompt" = "重置并重新提示";
+"Clear stale TCC entry" = "清除过时的 TCC 条目";
+"+ %lld more" = "+ 还有 %lld 个";
+"%lld blocked path(s)" = "%lld 个被阻止的路径";
+"Access granted" = "已授予访问权限";
+"Retrying the operation now." = "正在重试此操作。";
+"Skip for now" = "暂时跳过";
+"I granted it — retry" = "我已授予 - 重试";
+
+/* Dashboard polish */
+"Low space" = "空间不足";
+"CLEANING" = "正在清理";
+"Quick Setup" = "快速设置";
+"1-tap setup. We'll auto-retry what failed." = "一键设置。我们会自动重试失败的操作。";
+"Fix permission" = "修复权限";
+"Dismiss" = "忽略";

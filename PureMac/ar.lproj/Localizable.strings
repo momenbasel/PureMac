@@ -262,3 +262,42 @@
 
 /* Notifications */
 "Found %@ of junk files." = "تم العثور على %@ من الملفات غير المرغوبة.";
+
+/* Permission Sheet */
+"Grant Full Disk Access" = "منح الوصول الكامل إلى القرص";
+"%lld item(s) need Full Disk Access" = "%lld عنصر يحتاج إلى الوصول الكامل إلى القرص";
+"Uninstalling %@: %lld file(s) need Full Disk Access" = "إلغاء تثبيت %@: %lld ملف يحتاج إلى الوصول الكامل إلى القرص";
+"%lld item(s) need Full Disk Access to remove. Tap Grant Access to fix in one step." = "%lld عنصر يحتاج إلى الوصول الكامل لحذفه. اضغط منح الوصول لإصلاحه بخطوة واحدة.";
+"Couldn't remove %@%@. They may be in use or protected by macOS." = "تعذّر حذف %@%@. قد تكون قيد الاستخدام أو محمية بواسطة macOS.";
+" and %lld more" = " و%lld أخرى";
+"Access granted. Retrying…" = "تم منح الوصول. جارٍ إعادة المحاولة…";
+"1-tap setup. We'll detect the change automatically." = "إعداد بضغطة واحدة. سنكتشف التغيير تلقائيًا.";
+"Open Settings & reveal PureMac" = "فتح الإعدادات وإظهار PureMac";
+"We'll open both windows side-by-side." = "سنفتح النافذتين جنبًا إلى جنب.";
+"Turn on PureMac" = "تفعيل PureMac";
+"Toggle the row that appears." = "بدّل الصف الذي يظهر.";
+"Authenticate" = "المصادقة";
+"Touch ID or password." = "Touch ID أو كلمة المرور.";
+"We auto-retry — no need to come back." = "سنعيد المحاولة تلقائيًا - لا حاجة للعودة.";
+"Watching for permission change…" = "ننتظر تغيير الإذن…";
+"PureMac not in the list?" = "PureMac غير موجود في القائمة؟";
+"Hide help" = "إخفاء التعليمات";
+"Try this if PureMac doesn't appear:" = "جرّب هذا إن لم يظهر PureMac:";
+"Reveal app" = "إظهار التطبيق";
+"Drag PureMac.app into the list" = "اسحب PureMac.app إلى القائمة";
+"Reset + reprompt" = "إعادة تعيين + إعادة المطالبة";
+"Clear stale TCC entry" = "حذف إدخال TCC القديم";
+"+ %lld more" = "+ %lld أخرى";
+"%lld blocked path(s)" = "%lld مسار محظور";
+"Access granted" = "تم منح الوصول";
+"Retrying the operation now." = "جارٍ إعادة العملية الآن.";
+"Skip for now" = "تخطي الآن";
+"I granted it — retry" = "لقد منحت الإذن - أعد المحاولة";
+
+/* Dashboard polish */
+"Low space" = "مساحة منخفضة";
+"CLEANING" = "جارٍ التنظيف";
+"Quick Setup" = "إعداد سريع";
+"1-tap setup. We'll auto-retry what failed." = "إعداد بضغطة واحدة. سنعيد المحاولة تلقائيًا.";
+"Fix permission" = "إصلاح الإذن";
+"Dismiss" = "تجاهل";

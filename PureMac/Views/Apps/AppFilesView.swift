@@ -93,8 +93,22 @@ struct AppFilesView: View {
                 .padding()
             }
         }
+        .onChange(of: appState.removalNeedsFullDiskAccess) { needs in
+            // FDA-fixable removals jump straight into the rich sheet, the
+            // same flow cleanup uses. The user grants permission once and we
+            // re-fire the original selection — no re-checking files.
+            guard needs else { return }
+            let toRetry = Array(appState.selectedFiles)
+            let items = toRetry.map { appState.makeUninstallCleanableItem(for: $0) }
+            appState.removalError = nil
+            appState.removalNeedsFullDiskAccess = false
+            appState.requestFullDiskAccessAndRetry(
+                items: items,
+                context: .uninstall(appName: app.appName, failedCount: items.count)
+            )
+        }
         .alert("Removal Failed", isPresented: Binding(
-            get: { appState.removalError != nil },
+            get: { appState.removalError != nil && !appState.removalNeedsFullDiskAccess },
             set: {
                 if !$0 {
                     appState.removalError = nil
@@ -102,13 +116,6 @@ struct AppFilesView: View {
                 }
             }
         )) {
-            if appState.removalNeedsFullDiskAccess {
-                Button("Open System Settings") {
-                    FullDiskAccessManager.shared.openFullDiskAccessSettings()
-                    appState.removalError = nil
-                    appState.removalNeedsFullDiskAccess = false
-                }
-            }
             Button("OK", role: .cancel) {
                 appState.removalError = nil
                 appState.removalNeedsFullDiskAccess = false

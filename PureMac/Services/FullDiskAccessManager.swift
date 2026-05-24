@@ -58,15 +58,30 @@ final class FullDiskAccessManager {
     /// The OS only registers an app in the FDA pane after that app itself
     /// makes a TCC-gated syscall. Metadata lookups (fileExists, isReadableFile)
     /// don't qualify, and delegating to Finder via AppleScript registers
-    /// *Finder* — not PureMac. So at launch we touch a few protected paths
-    /// directly. The reads will fail until the user grants access; that's
-    /// fine — the failed attempts are what register us.
+    /// *Finder* — not PureMac. So at launch we touch a broad set of protected
+    /// paths directly. The reads will fail until the user grants access;
+    /// that's fine — the failed attempts are what register us. Probing more
+    /// surfaces (Mail, Safari, Messages, HomeKit) widens the set of TCC
+    /// services the OS catalogues against PureMac so the bundle shows up
+    /// reliably the first time the user opens the Privacy pane.
     func triggerRegistration() {
         DispatchQueue.global(qos: .utility).async {
-            _ = self.canActuallyRead(path: "/Library/Application Support/com.apple.TCC/TCC.db")
             let home = FileManager.default.homeDirectoryForCurrentUser.path
-            _ = self.canActuallyRead(path: "\(home)/Library/Mail")
-            _ = self.canActuallyRead(path: "\(home)/Library/Safari/CloudTabs.db")
+            let probePaths = [
+                "/Library/Application Support/com.apple.TCC/TCC.db",
+                "\(home)/Library/Mail",
+                "\(home)/Library/Safari/CloudTabs.db",
+                "\(home)/Library/Safari/Bookmarks.plist",
+                "\(home)/Library/Messages/chat.db",
+                "\(home)/Library/Application Support/AddressBook",
+                "\(home)/Library/Calendars",
+                "\(home)/Library/Application Support/com.apple.TCC",
+                "\(home)/Library/Application Support/MobileSync",
+                "\(home)/Library/Containers",
+            ]
+            for path in probePaths {
+                _ = self.canActuallyRead(path: path)
+            }
         }
     }
 

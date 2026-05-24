@@ -20,6 +20,45 @@
 "macOS blocks PureMac from cleaning caches and uninstalling apps until you grant access." = "macOS blocks PureMac from cleaning caches and uninstalling apps until you grant access.";
 "Grant Access" = "Grant Access";
 
+/* Permission Sheet */
+"Grant Full Disk Access" = "Grant Full Disk Access";
+"%lld item(s) need Full Disk Access" = "%lld item(s) need Full Disk Access";
+"Uninstalling %@: %lld file(s) need Full Disk Access" = "Uninstalling %@: %lld file(s) need Full Disk Access";
+"%lld item(s) need Full Disk Access to remove. Tap Grant Access to fix in one step." = "%lld item(s) need Full Disk Access to remove. Tap Grant Access to fix in one step.";
+"Couldn't remove %@%@. They may be in use or protected by macOS." = "Couldn't remove %@%@. They may be in use or protected by macOS.";
+" and %lld more" = " and %lld more";
+"Access granted. Retrying…" = "Access granted. Retrying…";
+"1-tap setup. We'll detect the change automatically." = "1-tap setup. We'll detect the change automatically.";
+"Open Settings & reveal PureMac" = "Open Settings & reveal PureMac";
+"We'll open both windows side-by-side." = "We'll open both windows side-by-side.";
+"Turn on PureMac" = "Turn on PureMac";
+"Toggle the row that appears." = "Toggle the row that appears.";
+"Authenticate" = "Authenticate";
+"Touch ID or password." = "Touch ID or password.";
+"We auto-retry — no need to come back." = "We auto-retry — no need to come back.";
+"Watching for permission change…" = "Watching for permission change…";
+"PureMac not in the list?" = "PureMac not in the list?";
+"Hide help" = "Hide help";
+"Try this if PureMac doesn't appear:" = "Try this if PureMac doesn't appear:";
+"Reveal app" = "Reveal app";
+"Drag PureMac.app into the list" = "Drag PureMac.app into the list";
+"Reset + reprompt" = "Reset + reprompt";
+"Clear stale TCC entry" = "Clear stale TCC entry";
+"+ %lld more" = "+ %lld more";
+"%lld blocked path(s)" = "%lld blocked path(s)";
+"Access granted" = "Access granted";
+"Retrying the operation now." = "Retrying the operation now.";
+"Skip for now" = "Skip for now";
+"I granted it — retry" = "I granted it — retry";
+
+/* Dashboard polish */
+"Low space" = "Low space";
+"CLEANING" = "CLEANING";
+"Quick Setup" = "Quick Setup";
+"1-tap setup. We'll auto-retry what failed." = "1-tap setup. We'll auto-retry what failed.";
+"Fix permission" = "Fix permission";
+"Dismiss" = "Dismiss";
+
 /* Dashboard */
 "Storage" = "Storage";
 "Smart Scan" = "Smart Scan";
