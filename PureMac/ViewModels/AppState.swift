@@ -58,6 +58,11 @@ final class AppState: ObservableObject {
     @Published var isScanningAppFiles: Bool = false
     @Published var removalError: String?
     @Published var removalNeedsFullDiskAccess = false
+    /// Snapshot of the URLs that failed the most recent uninstall due to a
+    /// permission denial. Frozen at finishRemoval time so AppFilesView's
+    /// retry path operates on the failed batch even if the user clicks a
+    /// different app or mutates selection while the FDA sheet is open.
+    @Published var lastFailedRemovalURLs: [URL] = []
     @Published var appFileScanLocationCount: Int = 0
 
     // MARK: - Services
@@ -271,6 +276,9 @@ final class AppState: ObservableObject {
         failed: [URL],
         adminError: String?
     ) {
+        // Freeze the failed batch before the FDA sheet opens so the retry
+        // path can't be poisoned by later selection edits or app switches.
+        lastFailedRemovalURLs = needsFullDiskAccess ? failed : []
         removalNeedsFullDiskAccess = needsFullDiskAccess
         if let message = removalFailureMessage(
             needsFullDiskAccess: needsFullDiskAccess,

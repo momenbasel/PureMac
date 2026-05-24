@@ -58,26 +58,28 @@ final class FullDiskAccessManager {
     /// The OS only registers an app in the FDA pane after that app itself
     /// makes a TCC-gated syscall. Metadata lookups (fileExists, isReadableFile)
     /// don't qualify, and delegating to Finder via AppleScript registers
-    /// *Finder* — not PureMac. So at launch we touch a broad set of protected
-    /// paths directly. The reads will fail until the user grants access;
-    /// that's fine — the failed attempts are what register us. Probing more
-    /// surfaces (Mail, Safari, Messages, HomeKit) widens the set of TCC
-    /// services the OS catalogues against PureMac so the bundle shows up
-    /// reliably the first time the user opens the Privacy pane.
+    /// *Finder* — not PureMac. So at launch we touch a small set of paths
+    /// gated specifically by the SystemPolicyAllFiles (FDA) service. The reads
+    /// will fail until the user grants access — that's fine, the failed
+    /// attempts are what register us.
+    ///
+    /// We intentionally do NOT probe Messages, Contacts, Calendars, or other
+    /// paths gated by separate TCC services. Touching those would register
+    /// PureMac in unrelated permission lists ("Messages", "Contacts", etc.)
+    /// even though we never use them — confusing and a privacy regression.
     func triggerRegistration() {
         DispatchQueue.global(qos: .utility).async {
             let home = FileManager.default.homeDirectoryForCurrentUser.path
+            // FDA-only probes. Each path here is read-gated by
+            // SystemPolicyAllFiles, nothing else.
             let probePaths = [
                 "/Library/Application Support/com.apple.TCC/TCC.db",
                 "\(home)/Library/Mail",
                 "\(home)/Library/Safari/CloudTabs.db",
                 "\(home)/Library/Safari/Bookmarks.plist",
-                "\(home)/Library/Messages/chat.db",
-                "\(home)/Library/Application Support/AddressBook",
-                "\(home)/Library/Calendars",
+                "\(home)/Library/Cookies",
+                "\(home)/Library/HTTPStorages",
                 "\(home)/Library/Application Support/com.apple.TCC",
-                "\(home)/Library/Application Support/MobileSync",
-                "\(home)/Library/Containers",
             ]
             for path in probePaths {
                 _ = self.canActuallyRead(path: path)

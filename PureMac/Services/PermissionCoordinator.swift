@@ -48,6 +48,7 @@ final class PermissionCoordinator: ObservableObject {
 
     private var pollTimer: Timer?
     private var onGrantCallback: (() -> Void)?
+    private var pendingGrantWork: DispatchWorkItem?
 
     private init() {
         hasFullDiskAccess = FullDiskAccessManager.shared.hasFullDiskAccess
@@ -113,6 +114,11 @@ final class PermissionCoordinator: ObservableObject {
 
     func dismiss(callRetry: Bool = false) {
         stopPolling()
+        // Cancel any pending 1-second post-grant retry — without this, a user
+        // who skips the sheet during the success-display delay would still
+        // see the retry execute, which contradicts their explicit dismiss.
+        pendingGrantWork?.cancel()
+        pendingGrantWork = nil
         let callback = onGrantCallback
         onGrantCallback = nil
         isRequesting = false
@@ -168,13 +174,21 @@ final class PermissionCoordinator: ObservableObject {
         let callback = onGrantCallback
         onGrantCallback = nil
         stopPolling()
-        // Give the success state ~1s on screen so the user sees the
-        // confirmation tick before the sheet snaps closed.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            self?.isRequesting = false
-            self?.failedItemPaths = []
-            self?.context = .general
+        // Cancel any prior pending grant work — guarantees the callback fires
+        // at most once even if grant is detected twice in rapid succession
+        // (e.g. immediate-read + first poll tick both fire).
+        pendingGrantWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.isRequesting = false
+            self.failedItemPaths = []
+            self.context = .general
+            self.pendingGrantWork = nil
             callback?()
         }
+        pendingGrantWork = work
+        // Give the success state ~1s on screen so the user sees the
+        // confirmation tick before the sheet snaps closed.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: work)
     }
 }
