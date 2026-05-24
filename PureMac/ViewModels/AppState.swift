@@ -156,12 +156,17 @@ final class AppState: ObservableObject {
 
     func removeSelectedFiles() {
         // Re-entrance guard: if a previous removal is still resolving and
-        // the FDA sheet hasn't dismissed yet, a second call would race-
+        // the FDA sheet/retry hasn't finished, a second call would race-
         // overwrite `lastFailedRemovalURLs` before the first batch's retry
-        // closure read it. Refuse the new request until the user dismisses
-        // (or grants and retries) the active sheet.
-        guard !removalNeedsFullDiskAccess else {
-            Logger.shared.log("Refused duplicate removeSelectedFiles while FDA prompt is active", level: .info)
+        // closure read it. We can't gate on `removalNeedsFullDiskAccess`
+        // alone — AppFilesView clears that flag the moment it hands off to
+        // the coordinator, leaving a window where a second remove call
+        // would pass the guard while the coordinator is still polling.
+        // PermissionCoordinator.isRequesting covers the full sheet-open +
+        // retry-pending span.
+        guard !removalNeedsFullDiskAccess,
+              !PermissionCoordinator.shared.isRequesting else {
+            Logger.shared.log("Refused duplicate removeSelectedFiles while FDA flow is active", level: .info)
             return
         }
         // Safety guard: never allow a high-risk home dotpath (listed in

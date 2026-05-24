@@ -404,6 +404,7 @@ private struct ReadyScene: View {
     let hasFda: Bool
     @State private var bounce = false
     @State private var fireConfetti = false
+    @State private var confettiWork: DispatchWorkItem?
     @AppStorage("PureMac.HasSeenWelcomeConfetti") private var hasSeenConfetti = false
 
     var body: some View {
@@ -433,18 +434,22 @@ private struct ReadyScene: View {
                         bounce = true
                     }
                     // Fire the welcome confetti exactly once per install.
-                    // Subsequent onboarding re-entries (e.g. after a Reset)
-                    // get a clean ready scene without the celebration.
-                    // hasSeenConfetti is recorded the moment the burst
-                    // fires (not after it finishes) so a fast user who
-                    // clicks Start within the first second still gets the
-                    // once-per-install guarantee.
+                    // The work item is cancelled in onDisappear so a fast
+                    // user who clicks Start within the 0.35s delay doesn't
+                    // burn the once-per-install flag without ever seeing the
+                    // celebration.
                     guard !hasSeenConfetti else { return }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    let work = DispatchWorkItem {
                         fireConfetti = true
                         hasSeenConfetti = true
                         Haptics.success()
                     }
+                    confettiWork = work
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: work)
+                }
+                .onDisappear {
+                    confettiWork?.cancel()
+                    confettiWork = nil
                 }
 
                 VStack(spacing: 10) {

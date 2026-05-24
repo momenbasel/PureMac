@@ -133,11 +133,23 @@ final class PermissionCoordinator: ObservableObject {
 
     /// Refresh permission status without armed polling. Cheap to call on
     /// app-becomes-active.
+    ///
+    /// If a request is in flight and we just observed the grant, route
+    /// through `handleGrant` so the sheet dismisses and the callback fires.
+    /// Without this, refreshStatus would flip `hasFullDiskAccess` to true
+    /// and the next poll tick's `granted && !hasFullDiskAccess` guard
+    /// would skip `handleGrant` — the sheet would sit open in a granted
+    /// state and never fire the retry.
     func refreshStatus() {
         Task.detached(priority: .userInitiated) {
             let granted = FullDiskAccessManager.shared.hasFullDiskAccess
             await MainActor.run { [weak self] in
-                self?.hasFullDiskAccess = granted
+                guard let self else { return }
+                let wasGranted = self.hasFullDiskAccess
+                self.hasFullDiskAccess = granted
+                if granted && !wasGranted && self.isRequesting {
+                    self.handleGrant()
+                }
             }
         }
     }

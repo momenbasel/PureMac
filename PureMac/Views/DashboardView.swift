@@ -7,41 +7,65 @@ import SwiftUI
 struct DashboardView: View {
     @EnvironmentObject var appState: AppState
     @State private var showConfirmation = false
+    @State private var fireCleanConfetti = false
+    @State private var lastCleanedScanState: Bool = false
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                switch appState.scanState {
-                case .idle:
-                    hero
-                    stats
-                    if !suggestionRows.isEmpty {
-                        sectionHeader("Suggested for you")
-                        suggestions
+        ZStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    switch appState.scanState {
+                    case .idle:
+                        hero
+                        stats
+                        if !suggestionRows.isEmpty {
+                            sectionHeader("Suggested for you")
+                            suggestions
+                        }
+                    case .scanning:
+                        scanningHero
+                        if !appState.allResults.isEmpty {
+                            sectionHeader("Found so far")
+                            liveResults
+                        }
+                    case .completed:
+                        completedHero
+                        if appState.totalJunkSize > 0 {
+                            sectionHeader("By category")
+                            resultsList
+                        }
+                    case .cleaning:
+                        cleaningHero
+                    case .cleaned:
+                        cleanedHero
                     }
-                case .scanning:
-                    scanningHero
-                    if !appState.allResults.isEmpty {
-                        sectionHeader("Found so far")
-                        liveResults
-                    }
-                case .completed:
-                    completedHero
-                    if appState.totalJunkSize > 0 {
-                        sectionHeader("By category")
-                        resultsList
-                    }
-                case .cleaning:
-                    cleaningHero
-                case .cleaned:
-                    cleanedHero
                 }
+                .padding(.horizontal, 28)
+                .padding(.vertical, 24)
+                .frame(maxWidth: 920, alignment: .leading)
             }
-            .padding(.horizontal, 28)
-            .padding(.vertical, 24)
-            .frame(maxWidth: 920, alignment: .leading)
+
+            // Celebratory burst when a clean cycle finishes with something
+            // freed. Pinned to the whole dashboard so particles cover the
+            // hero card. allowsHitTesting=false keeps Done clickable through
+            // falling confetti.
+            ConfettiView(trigger: fireCleanConfetti)
+                .allowsHitTesting(false)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .onChange(of: appState.scanState) { newState in
+            // Fire only on the rising edge of .cleaned with freed > 0 so
+            // the burst doesn't replay when the user navigates back to the
+            // dashboard while .cleaned is still on screen.
+            let isCleaned: Bool = {
+                if case .cleaned = newState { return true }
+                return false
+            }()
+            if isCleaned && !lastCleanedScanState && appState.totalFreedSpace > 0 {
+                fireCleanConfetti.toggle()
+            }
+            lastCleanedScanState = isCleaned
+        }
         .confirmationDialog(
             cleanConfirmationTitle,
             isPresented: $showConfirmation,
