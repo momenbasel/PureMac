@@ -23,6 +23,7 @@ env:
   APP_NAME: PureMac
   BUNDLE_ID: com.puremac.app
   TEAM_ID: H3WXHVTP97
+  SPARKLE_VERSION: 2.9.2
   SCHEME: PureMac
   PROJECT: PureMac.xcodeproj
   CONFIGURATION: Release
@@ -129,12 +130,22 @@ jobs:
         run: |
           set -euo pipefail
           APP="build/export/PureMac.app"
-          codesign --verify --deep --strict --verbose=2 "${APP}"
+          codesign --verify --deep --strict --verbose=4 "${APP}"
           codesign -dvv "${APP}" 2>&1 | tee /tmp/cs-info.txt
           grep -q "flags=0x10000(runtime)" /tmp/cs-info.txt || { echo "::error::Hardened runtime missing"; exit 1; }
           spctl --assess --type execute --verbose=4 "${APP}" || true
           # Universal arch check
           lipo -archs "${APP}/Contents/MacOS/PureMac" | grep -q "x86_64" && lipo -archs "${APP}/Contents/MacOS/PureMac" | grep -q "arm64"
+
+      - name: Verify Sparkle helper bundles
+        run: |
+          set -euo pipefail
+          APP="build/export/PureMac.app"
+          while IFS= read -r helper; do
+            if [[ -n "${helper}" ]]; then
+              codesign --verify --deep --strict --verbose=4 "${helper}"
+            fi
+          done < <(find "${APP}" -type d \( -name 'Autoupdate.app' -o -name 'Updater.app' \) | sort)
 
       - name: Build DMG
         env:
@@ -202,6 +213,39 @@ jobs:
           # Final shippable zip with stapled ticket
           ditto -c -k --keepParent --sequesterRsrc build/export/PureMac.app "${ZIP}"
 
+      - name: Download Sparkle release tools
+        run: |
+          set -euo pipefail
+          SPARKLE_TARBALL="${RUNNER_TEMP}/Sparkle-${SPARKLE_VERSION}.tar.xz"
+          SPARKLE_DIR="${RUNNER_TEMP}/Sparkle-${SPARKLE_VERSION}"
+          curl -L -o "${SPARKLE_TARBALL}" "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz"
+          rm -rf "${SPARKLE_DIR}"
+          tar -xf "${SPARKLE_TARBALL}" -C "${RUNNER_TEMP}"
+          echo "SPARKLE_BIN_DIR=${SPARKLE_DIR}/bin" >> "$GITHUB_ENV"
+
+      - name: Generate Sparkle appcast
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+          TAG: ${{ steps.ver.outputs.tag }}
+          SPARKLE_ED25519_PRIVATE_KEY: ${{ secrets.SPARKLE_ED25519_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          APPCAST_DIR="build/appcast"
+          DMG="build/PureMac-${VERSION}.dmg"
+          rm -rf "${APPCAST_DIR}"
+          mkdir -p "${APPCAST_DIR}"
+          cp "${DMG}" "${APPCAST_DIR}/"
+          # Sign the DMG explicitly (sign_update) so the signature is available
+          # for auditing and log output. Then generate the signed appcast.
+          printf '%s' "${SPARKLE_ED25519_PRIVATE_KEY}" | "${SPARKLE_BIN_DIR}/sign_update" --ed-key-file - "${APPCAST_DIR}/$(basename "${DMG}")" || true
+
+          printf '%s' "${SPARKLE_ED25519_PRIVATE_KEY}" | "${SPARKLE_BIN_DIR}/generate_appcast" \
+            --ed-key-file - \
+            --output-path "${APPCAST_DIR}/appcast.xml" \
+            --download-url-prefix "https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/" \
+            --full-release-notes-url "https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}" \
+            "${APPCAST_DIR}"
+
       - name: Compute SHA256 checksums
         id: sha
         env:
@@ -228,6 +272,7 @@ jobs:
           path: |
             build/PureMac-${{ steps.ver.outputs.version }}.dmg
             build/PureMac-${{ steps.ver.outputs.version }}.zip
+            build/appcast/appcast.xml
             build/CHECKSUMS.md
           retention-days: 14
 
@@ -259,11 +304,13 @@ jobs:
             gh release upload "${TAG}" \
               "build/PureMac-${VERSION}.dmg" \
               "build/PureMac-${VERSION}.zip" \
+              "build/appcast/appcast.xml" \
               --repo "${GITHUB_REPOSITORY}" --clobber
           else
             gh release create "${TAG}" \
               "build/PureMac-${VERSION}.dmg" \
               "build/PureMac-${VERSION}.zip" \
+              "build/appcast/appcast.xml" \
               --title "PureMac ${TAG}" \
               --notes-file "${NOTES_FILE}" \
               --repo "${GITHUB_REPOSITORY}"

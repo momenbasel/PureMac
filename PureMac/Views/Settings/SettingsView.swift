@@ -7,6 +7,8 @@ struct SettingsView: View {
         TabView {
             GeneralSettingsView()
                 .tabItem { Label("General", systemImage: "gear") }
+            UpdatesSettingsView()
+                .tabItem { Label("Updates", systemImage: "arrow.triangle.2.circlepath") }
             CleaningSettingsView()
                 .tabItem { Label("Cleaning", systemImage: "trash") }
             ScheduleSettingsView()
@@ -15,6 +17,91 @@ struct SettingsView: View {
                 .tabItem { Label("About", systemImage: "info.circle") }
         }
         .frame(width: 480, height: 430)
+    }
+}
+
+// MARK: - Updates
+
+enum UpdateInterval: String, CaseIterable, Identifiable, Codable {
+    case daily = "Daily"
+    case weekly = "Weekly"
+    case monthly = "Monthly"
+
+    var id: String { rawValue }
+
+    var timeInterval: TimeInterval {
+        switch self {
+        case .daily: return 60 * 60 * 24
+        case .weekly: return 60 * 60 * 24 * 7
+        case .monthly: return 60 * 60 * 24 * 30
+        }
+    }
+}
+
+struct UpdatesSettingsView: View {
+    @State private var automaticallyChecks: Bool = true
+    @State private var interval: UpdateInterval = .weekly
+
+    init() {
+        if let updater = UpdateService.shared.updater {
+            _automaticallyChecks = State(initialValue: updater.automaticallyChecksForUpdates)
+            let seconds = updater.updateCheckInterval
+            if let matched = UpdateInterval.allCases.first(where: { $0.timeInterval == seconds }) {
+                _interval = State(initialValue: matched)
+            } else {
+                _interval = State(initialValue: .weekly)
+            }
+        } else {
+            let defaults = UserDefaults.standard
+            let enabled = defaults.object(forKey: "settings.updates.checkAutomatically") as? Bool ?? true
+            let raw = defaults.string(forKey: "settings.updates.checkInterval") ?? UpdateInterval.weekly.rawValue
+            _automaticallyChecks = State(initialValue: enabled)
+            _interval = State(initialValue: UpdateInterval(rawValue: raw) ?? .weekly)
+        }
+    }
+
+    var body: some View {
+        Form {
+            Section("Updates") {
+                Toggle("Check automatically", isOn: $automaticallyChecks)
+                    .onChange(of: automaticallyChecks) { newValue in
+                        UpdateService.shared.setAutomaticallyChecks(newValue)
+                    }
+
+                Picker("Check interval", selection: Binding(
+                    get: { interval },
+                    set: { newValue in
+                        interval = newValue
+                        UpdateService.shared.setUpdateInterval(newValue.timeInterval)
+                    }
+                )) {
+                    ForEach(UpdateInterval.allCases) { value in
+                        Text(LocalizedStringKey(value.rawValue)).tag(value)
+                    }
+                }
+                .pickerStyle(.radioGroup)
+                .disabled(!automaticallyChecks)
+
+                HStack {
+                    Spacer()
+                    Button("Check Now") {
+                        UpdateService.shared.checkForUpdates()
+                    }
+                    .keyboardShortcut("u", modifiers: [.command])
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .onAppear {
+            // Sync UI from updater in case external changes occurred
+            if let updater = UpdateService.shared.updater {
+                automaticallyChecks = updater.automaticallyChecksForUpdates
+                let seconds = updater.updateCheckInterval
+                if let matched = UpdateInterval.allCases.first(where: { $0.timeInterval == seconds }) {
+                    interval = matched
+                }
+            }
+        }
     }
 }
 
