@@ -9,6 +9,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Touch TCC-protected paths so macOS registers PureMac in the
         // Full Disk Access pane on first launch (fixes issue #75).
         FullDiskAccessManager.shared.triggerRegistration()
+
+        if ProcessInfo.processInfo.environment["PUREMAC_AUTO_CHECK_UPDATES"] == "1" {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                UpdateService.shared.checkForUpdates()
+            }
+        }
     }
 }
 

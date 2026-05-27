@@ -8,7 +8,7 @@ The pipeline uses an **App Store Connect API key** for notarization (modern,
 no rotation, scoped to one team) instead of the legacy
 `APPLE_ID + app-specific-password` flow.
 
-## Required secrets (6)
+## Required secrets (7)
 
 | Secret | Source | Notes |
 |--------|--------|-------|
@@ -18,6 +18,7 @@ no rotation, scoped to one team) instead of the legacy
 | `APP_STORE_CONNECT_KEY_ID` | The 10-char ID from the `.p8` filename (`AuthKey_XXXXXXXXXX.p8`) | e.g. `5G7R52L8RK` |
 | `APP_STORE_CONNECT_ISSUER_ID` | UUID from <https://appstoreconnect.apple.com/access/integrations/api> | e.g. `5de3898a-cd31-4061-850f-ae17b389e46a` |
 | `APP_STORE_CONNECT_PRIVATE_KEY` | Full contents of the `.p8` file (`-----BEGIN PRIVATE KEY-----` ... `-----END PRIVATE KEY-----`) | Paste raw, including the BEGIN/END lines |
+| `SPARKLE_ED25519_PRIVATE_KEY` | The private Ed25519 key exported from Sparkle's `generate_keys -x` flow | Used by `generate_appcast` to sign `appcast.xml` |
 
 ## Optional secret (1)
 
@@ -111,6 +112,24 @@ rm -P ~/Desktop/PureMac-secrets/PureMac-DeveloperID.p12* \
       ~/Desktop/PureMac-secrets/P12_PASSWORD.txt \
       ~/Desktop/PureMac-secrets/KEYCHAIN_PASSWORD.txt
 ```
+
+## Storing the Sparkle Ed25519 key locally
+
+Generate the public/private pair once with Sparkle's `generate_keys` tool. The
+public key goes into `PureMac/Info.plist` as `SUPublicEDKey`. The private key
+should be exported from the same keychain account and stored in GitHub Actions
+as `SPARKLE_ED25519_PRIVATE_KEY`.
+
+Example flow:
+
+```bash
+./bin/generate_keys --account puremac
+./bin/generate_keys --account puremac -x puremac-ed25519.key
+cat puremac-ed25519.key
+```
+
+Use the exported file contents as the secret value. The release workflow pipes
+that value into `generate_appcast --ed-key-file -` when building `appcast.xml`.
 
 ## Triggering a release
 

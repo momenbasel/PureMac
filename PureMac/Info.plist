@@ -22,6 +22,14 @@
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
+	<key>SUFeedURL</key>
+	<string>$(PUREMAC_FEED_URL)</string>
+	<key>SUPublicEDKey</key>
+	<string>$(PUREMAC_PUBLIC_ED_KEY)</string>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
+    <key>SUScheduledCheckInterval</key>
+    <integer>86400</integer>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright 2026. MIT License.</string>
 	<key>NSDesktopFolderUsageDescription</key>

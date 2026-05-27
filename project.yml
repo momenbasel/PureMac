@@ -26,6 +26,8 @@ settings:
     MARKETING_VERSION: "2.6.1"
     CURRENT_PROJECT_VERSION: "13"
     GENERATE_INFOPLIST_FILE: "NO"
+    PUREMAC_FEED_URL: "https://github.com/momenbasel/PureMac/releases/latest/download/appcast.xml"
+    PUREMAC_PUBLIC_ED_KEY: "IEOLcqFwQpIXmRrnmBzgjxIR2L9bnh+C+Oye6cMkePk="
     ASSETCATALOG_COMPILER_APPICON_NAME: "AppIcon"
     COMBINE_HIDPI_IMAGES: "YES"
 
@@ -47,6 +49,8 @@ targets:
         Debug:
           CODE_SIGNING_ALLOWED: "NO"
           CODE_SIGNING_REQUIRED: "NO"
+          PUREMAC_FEED_URL: "http://127.0.0.1:8000/appcast.xml"
+          PUREMAC_PUBLIC_ED_KEY: "G2pCmpU2grTTNsigrEmNsPmZX2LjiMBkvMP1fvMCuig="
 
   PureMacTests:
     type: bundle.unit-test
