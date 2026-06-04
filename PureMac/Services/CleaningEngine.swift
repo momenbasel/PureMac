@@ -28,6 +28,11 @@ actor CleaningEngine {
                 let purged = await purgePurgeableSpace()
                 result.freedSpace += purged
                 if purged > 0 { result.itemsCleaned += 1 }
+                // Purgeable space is a one-shot reclaim action, not a file
+                // unlink. Mark it handled so it isn't later mistaken for an
+                // item that "couldn't be removed" (the purge ran regardless of
+                // how much APFS chose to release). See issue #112.
+                result.cleanedPaths.insert(item.path)
                 continue
             }
 

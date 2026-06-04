@@ -286,9 +286,16 @@ actor ScanEngine {
         // Detect APFS purgeable space via URLResourceValues (no admin needed)
         let diskInfo = getDiskInfo()
         if diskInfo.purgeableSpace > 0 {
+            // Purgeable space is reclaimed via `diskutil apfs purgePurgeable /`
+            // (see CleaningEngine.purgePurgeableSpace), it is NOT a file that
+            // gets unlinked. Using "/" as the path made the UI render the root
+            // directory as the deletion target and triggered a bogus
+            // "couldn't remove /" error after cleaning. Use an empty path so
+            // the row shows no misleading filesystem location and the reveal-
+            // in-Finder action stays disabled for this entry. (See issue #112.)
             items.append(CleanableItem(
                 name: "APFS Purgeable Space",
-                path: "/",
+                path: "",
                 size: diskInfo.purgeableSpace,
                 category: .purgeableSpace,
                 isSelected: true,

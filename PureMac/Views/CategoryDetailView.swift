@@ -214,11 +214,13 @@ private struct FileRowView: View {
                         .lineLimit(1)
                         .truncationMode(.middle)
 
-                    Text(item.path)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
+                    if !item.path.isEmpty {
+                        Text(item.path)
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
                 }
 
                 Spacer()
@@ -237,8 +239,10 @@ private struct FileRowView: View {
         }
         .toggleStyle(.checkbox)
         .contextMenu {
-            Button("Reveal in Finder") {
-                NSWorkspace.shared.selectFile(item.path, inFileViewerRootedAtPath: "")
+            if !item.path.isEmpty {
+                Button("Reveal in Finder") {
+                    NSWorkspace.shared.selectFile(item.path, inFileViewerRootedAtPath: "")
+                }
             }
         }
     }
