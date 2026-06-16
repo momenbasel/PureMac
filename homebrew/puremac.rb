@@ -7,6 +7,8 @@ cask "puremac" do
   desc "Free, open-source macOS app manager and system cleaner"
   homepage "https://github.com/momenbasel/PureMac"
 
+  depends_on macos: :ventura
+
   app "PureMac.app"
 
   # Refresh LaunchServices so the Dock/Launchpad icon updates immediately on
