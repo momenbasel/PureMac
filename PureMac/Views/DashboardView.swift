@@ -152,15 +152,19 @@ struct DashboardView: View {
         let free = appState.diskInfo.freeSpace
         let percentUsed = total > 0 ? Double(used) / Double(total) : 0
         let stress = percentUsed > 0.85
+        // Below this width the side-by-side ring + storage column overflows the
+        // card, so the hero stacks vertically and the ring shrinks.
+        let compact = dashboardSize.width > 0 && dashboardSize.width < 660
+        let ringSize: CGFloat = compact ? 132 : 180
 
         return CardSurface(padding: 24, accent: stress ? Tint.orange : Tint.blue, elevation: .raised) {
-            HStack(alignment: .center, spacing: 28) {
+            AdaptiveStack(compact: compact, spacing: compact ? 18 : 28) {
                 ZStack {
                     // Slow atmospheric drift behind the ring — barely-there
                     // ambient depth, frozen under Reduce Motion.
                     HeroDrift(tint: stress ? Tint.orange : Tint.blue)
                     HealthRing(percent: percentUsed)
-                        .frame(width: 180, height: 180)
+                        .frame(width: ringSize, height: ringSize)
                 }
 
                 VStack(alignment: .leading, spacing: 14) {
@@ -264,7 +268,10 @@ struct DashboardView: View {
         let total = appState.diskInfo.totalSpace
         let percentUsed = total > 0 ? Double(total - free) / Double(total) : 0
 
-        return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
+        // Four across when there's room, two when the dashboard is narrow so the
+        // cards don't crush their values.
+        let columnCount = dashboardSize.width > 0 && dashboardSize.width < 660 ? 2 : 4
+        return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: columnCount), spacing: 12) {
             StatCard(
                 icon: "internaldrive.fill",
                 tint: Tint.blue,
@@ -948,5 +955,22 @@ private struct CategoryToggleRow: View {
 
     private var itemsCountText: String {
         String(format: String(localized: "%lld items"), Int64(result.itemCount))
+    }
+}
+
+/// Lays its content out horizontally at full width and vertically when the
+/// container is too narrow for the row to fit, so wide hero rows reflow into a
+/// stacked layout instead of overflowing.
+struct AdaptiveStack<Content: View>: View {
+    let compact: Bool
+    var spacing: CGFloat = 28
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        if compact {
+            VStack(alignment: .leading, spacing: spacing) { content }
+        } else {
+            HStack(alignment: .center, spacing: spacing) { content }
+        }
     }
 }
