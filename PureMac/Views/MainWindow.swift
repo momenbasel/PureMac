@@ -7,6 +7,7 @@ struct MainWindow: View {
     @State private var selectedSection: AppSection? = .cleaning(.smartScan)
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
@@ -143,6 +144,11 @@ struct MainWindow: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(LocalizedStringKey(ok ? "Ready to clean" : "Limited access"))
                     .font(.system(size: 12, weight: .semibold))
+                    // Explicit solid color — same vibrancy-collapse guard as the
+                    // sidebar rows (#117); this title also inherited the default.
+                    .foregroundStyle(colorScheme == .dark
+                        ? Color.white.opacity(0.92)
+                        : Color.black.opacity(0.85))
                 Text(LocalizedStringKey(ok ? "Full Disk Access granted" : "Grant FDA in Settings"))
                     .font(.system(size: 10.5))
                     .foregroundStyle(.secondary)
@@ -319,12 +325,21 @@ private struct SidebarNavRow: View {
 
     @State private var hovering = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         HStack(spacing: 10) {
             IconTile(systemName: icon, tint: tint, size: 24, glow: isSelected)
             Text(label)
                 .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
+                // Force an explicit, solid foreground instead of inheriting the
+                // sidebar list's default. On some configs (custom accent /
+                // reduced transparency, seen on M1 Max — issue #117) the
+                // inherited emphasized/vibrant label style resolves transparent
+                // and the row text disappears while explicitly-colored text
+                // (headers, badges) stays visible. A colorScheme-driven solid
+                // color sidesteps that vibrancy path entirely.
+                .foregroundStyle(labelColor)
             Spacer()
             if let badge {
                 Text(badge)
@@ -352,6 +367,14 @@ private struct SidebarNavRow: View {
         .animation(reduceMotion ? nil : MotionTokens.snappy, value: hovering)
         .contentShape(Rectangle())
         .onHover { hovering = $0 }
+    }
+
+    /// Solid, opaque label color that adapts to light/dark without routing
+    /// through the sidebar's vibrant primary style (see #117).
+    private var labelColor: Color {
+        colorScheme == .dark
+            ? Color.white.opacity(0.92)
+            : Color.black.opacity(0.85)
     }
 }
 
