@@ -364,3 +364,13 @@
 "Ignored orphans: %lld" = "已忽略的孤立檔案：%lld";
 "Forget Ignored" = "清除已忽略";
 "Ignored files won't appear in future orphan scans." = "已忽略的檔案不會出現在日後的孤立檔案掃描中。";
+
+/* v2.8.3: menu-bar system monitor */
+"System Monitor" = "系統監視器";
+"Show system monitor in menu bar" = "在選單列中顯示系統監視器";
+"Live CPU, memory, and disk meters in the menu bar. PureMac keeps running in the background while this is on." = "在選單列中即時顯示 CPU、記憶體和磁碟使用情況。開啟時 PureMac 會在背景持續執行。";
+"CPU" = "CPU";
+"Memory" = "記憶體";
+"Disk" = "磁碟";
+"Open PureMac" = "開啟 PureMac";
+"Quit PureMac" = "結束 PureMac";

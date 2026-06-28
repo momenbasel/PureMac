@@ -1,11 +1,30 @@
 import AppKit
 import SwiftUI
 
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
+    /// Owns the optional menu-bar status item. Nil until the monitor is enabled.
+    private var menuBarController: MenuBarController?
+
+    /// Normally PureMac quits when its window closes. When the menu-bar system
+    /// monitor is enabled the app stays resident so the meters keep updating in
+    /// the menu bar; "Open PureMac" in that menu reopens the window.
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        !UserDefaults.standard.bool(forKey: "settings.general.menuBarMonitor")
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSWindow.allowsAutomaticWindowTabbing = false
+
+        // Install the menu-bar monitor if the user has it enabled. Never under
+        // XCTest — the status-item machinery would stall the test-host run loop.
+        if NSClassFromString("XCTestCase") == nil {
+            syncMenuBarMonitor()
+            NotificationCenter.default.addObserver(
+                self, selector: #selector(syncMenuBarMonitor),
+                name: .pureMacMenuBarMonitorChanged, object: nil
+            )
+        }
         // Touch TCC-protected paths so macOS registers PureMac in the
         // Full Disk Access pane on first launch (fixes issue #75).
         FullDiskAccessManager.shared.triggerRegistration()
@@ -38,6 +57,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             userInfo: ["path": appURL.path]
         )
     }
+
+    /// Create or tear down the menu-bar status item to match the current
+    /// Settings toggle. Posted to whenever the toggle flips so it takes effect
+    /// without a relaunch.
+    @objc func syncMenuBarMonitor() {
+        let enabled = UserDefaults.standard.bool(forKey: "settings.general.menuBarMonitor")
+        if enabled, menuBarController == nil {
+            menuBarController = MenuBarController()
+        } else if !enabled, let controller = menuBarController {
+            controller.teardown()
+            menuBarController = nil
+        }
+    }
+}
+
+extension Notification.Name {
+    /// Posted when the "Show system monitor in menu bar" Settings toggle flips,
+    /// so AppDelegate can add/remove the status item live.
+    static let pureMacMenuBarMonitorChanged = Notification.Name("PureMac.MenuBarMonitorChanged")
 }
 
 @main
@@ -58,7 +96,7 @@ struct PureMacApp: App {
     }
 
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: "main") {
             Group {
                 if onboardingComplete {
                     MainWindow()
@@ -70,6 +108,10 @@ struct PureMacApp: App {
             }
             .environmentObject(theme)
             .preferredColorScheme(theme.appearance.colorScheme)
+            // Record the openWindow action so the menu-bar popover can reopen
+            // this window after it's been closed (the popover lives outside the
+            // scene graph and can't use openWindow itself).
+            .background(WindowOpenerCapture())
         }
         .windowStyle(.automatic)
         .windowToolbarStyle(.unified)
@@ -89,5 +131,12 @@ struct PureMacApp: App {
             SettingsView()
                 .environmentObject(appState)
         }
+
+        // The opt-in menu-bar system monitor is an AppKit NSStatusItem managed
+        // by AppDelegate/MenuBarController rather than a SwiftUI MenuBarExtra:
+        // a conditional `.window`-style MenuBarExtra fails to type-check, and an
+        // unconditional one sets up status-item machinery that hangs the XCTest
+        // host. The AppKit controller is only created when enabled and never
+        // under tests, sidestepping both problems.
     }
 }

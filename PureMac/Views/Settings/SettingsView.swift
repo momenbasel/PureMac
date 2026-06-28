@@ -40,6 +40,7 @@ struct GeneralSettingsView: View {
     @AppStorage("settings.general.launchAtLogin") private var launchAtLogin = false
     @AppStorage("settings.general.searchSensitivity") private var sensitivity: SearchSensitivity = .enhanced
     @AppStorage("settings.general.confirmBeforeDelete") private var confirmBeforeDelete = true
+    @AppStorage("settings.general.menuBarMonitor") private var menuBarMonitor = false
     @AppStorage(Haptics.soundEffectsKey) private var soundEffects = true
     @AppStorage(AppLanguage.preferenceKey) private var appLanguageRaw = AppLanguage.current.rawValue
     @State private var languageNeedsRelaunch = false
@@ -86,6 +87,13 @@ struct GeneralSettingsView: View {
                 }
             }
 
+            Section("System Monitor") {
+                Toggle("Show system monitor in menu bar", isOn: menuBarMonitorBinding)
+                Text("Live CPU, memory, and disk meters in the menu bar. PureMac keeps running in the background while this is on.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             Section("Sound") {
                 Toggle("Play sound effects", isOn: $soundEffects)
             }
@@ -97,6 +105,17 @@ struct GeneralSettingsView: View {
         .formStyle(.grouped)
         .animation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.85),
                    value: languageNeedsRelaunch)
+    }
+
+    private var menuBarMonitorBinding: Binding<Bool> {
+        Binding(
+            get: { menuBarMonitor },
+            set: { newValue in
+                menuBarMonitor = newValue
+                // Tell AppDelegate to add/remove the status item without relaunch.
+                NotificationCenter.default.post(name: .pureMacMenuBarMonitorChanged, object: nil)
+            }
+        )
     }
 
     private var launchAtLoginBinding: Binding<Bool> {

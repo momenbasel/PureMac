@@ -364,3 +364,13 @@
 "Ignored orphans: %lld" = "Órfãos ignorados: %lld";
 "Forget Ignored" = "Esquecer ignorados";
 "Ignored files won't appear in future orphan scans." = "Arquivos ignorados não aparecerão em futuras verificações de órfãos.";
+
+/* v2.8.3: menu-bar system monitor */
+"System Monitor" = "Monitor do sistema";
+"Show system monitor in menu bar" = "Mostrar o monitor do sistema na barra de menus";
+"Live CPU, memory, and disk meters in the menu bar. PureMac keeps running in the background while this is on." = "Medidores de CPU, memória e disco ao vivo na barra de menus. O PureMac continua em execução em segundo plano enquanto isso estiver ativado.";
+"CPU" = "CPU";
+"Memory" = "Memória";
+"Disk" = "Disco";
+"Open PureMac" = "Abrir o PureMac";
+"Quit PureMac" = "Encerrar o PureMac";

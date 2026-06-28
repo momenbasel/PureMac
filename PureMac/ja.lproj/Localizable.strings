@@ -364,3 +364,13 @@
 "Ignored orphans: %lld" = "無視した孤立ファイル: %lld";
 "Forget Ignored" = "無視リストを消去";
 "Ignored files won't appear in future orphan scans." = "無視したファイルは今後の孤立ファイルのスキャンに表示されません。";
+
+/* v2.8.3: menu-bar system monitor */
+"System Monitor" = "システムモニタ";
+"Show system monitor in menu bar" = "メニューバーにシステムモニタを表示";
+"Live CPU, memory, and disk meters in the menu bar. PureMac keeps running in the background while this is on." = "CPU、メモリ、ディスクの使用状況をメニューバーにリアルタイム表示します。オンの間、PureMacはバックグラウンドで動作し続けます。";
+"CPU" = "CPU";
+"Memory" = "メモリ";
+"Disk" = "ディスク";
+"Open PureMac" = "PureMacを開く";
+"Quit PureMac" = "PureMacを終了";
