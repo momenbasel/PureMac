@@ -7,6 +7,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     case japanese = "ja"
     case arabic = "ar"
     case portugueseBrazil = "pt-BR"
+    case polish = "pl"
     case simplifiedChinese = "zh-Hans"
     case traditionalChinese = "zh-Hant"
 
@@ -21,6 +22,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         case .spanish: return "Spanish"
         case .japanese: return "Japanese"
         case .arabic: return "Arabic"
+        case .polish: return "Polish"
         case .portugueseBrazil: return "Portuguese (Brazil)"
         case .simplifiedChinese: return "Chinese (Simplified)"
         case .traditionalChinese: return "Chinese (Traditional)"
