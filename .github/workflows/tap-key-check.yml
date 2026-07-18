@@ -1,0 +1,36 @@
+name: Tap key check
+
+# Temporary one-shot validation of the HOMEBREW_TAP_DEPLOY_KEY secret:
+# clone the tap over SSH, push a throwaway branch, delete it. Removed
+# after the first successful run.
+
+on: workflow_dispatch
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify deploy key can clone and write to the tap
+        env:
+          HOMEBREW_TAP_DEPLOY_KEY: ${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${HOMEBREW_TAP_DEPLOY_KEY:-}" ]]; then
+            echo "::error::HOMEBREW_TAP_DEPLOY_KEY secret is not set"
+            exit 1
+          fi
+          KEY_FILE="${RUNNER_TEMP}/tap_deploy_key"
+          printf '%s\n' "${HOMEBREW_TAP_DEPLOY_KEY}" > "${KEY_FILE}"
+          chmod 600 "${KEY_FILE}"
+          KNOWN_HOSTS="${RUNNER_TEMP}/tap_known_hosts"
+          echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" > "${KNOWN_HOSTS}"
+          export GIT_SSH_COMMAND="ssh -i ${KEY_FILE} -o IdentitiesOnly=yes -o UserKnownHostsFile=${KNOWN_HOSTS} -o StrictHostKeyChecking=yes"
+          git clone --depth 1 git@github.com:momenbasel/homebrew-tap.git "${RUNNER_TEMP}/tap"
+          cd "${RUNNER_TEMP}/tap"
+          git push origin HEAD:refs/heads/ci-key-check
+          git push origin :refs/heads/ci-key-check
+          rm -f "${KEY_FILE}"
+          echo "clone + branch write + branch delete all succeeded"
