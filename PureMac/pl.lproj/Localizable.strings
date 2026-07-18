@@ -60,7 +60,7 @@
 "Dismiss" = "Zamknij";
 
 /* Dashboard */
-"Storage" = "Pamięć";
+"Storage" = "Pamięć masowa";
 "Smart Scan" = "Inteligentne skanowanie";
 "free of %@" = "wolne z %@";
 "%lld%% used" = "%lld%% użyte";
@@ -194,7 +194,7 @@
 "Trash" = "Kosz";
 "Mail Data" = "Dane poczty";
 "Safari Data" = "Dane Safari";
-"Desktop" = "Pulpit";
+"Desktop" = "Biurko";
 "Documents" = "Dokumenty";
 "TCC Database" = "Baza TCC";
 "Blocked" = "Zablokowane";
@@ -354,7 +354,7 @@
 
 /* v2.8.2: large-file folder exclusions (#121) */
 "Excluded Folders" = "Wykluczone foldery";
-"Files inside these folders are skipped from the Large & Old Files scan (Downloads, Documents, Desktop)." = "Pliki w tych folderach są pomijane podczas skanowania Dużych i starych plików (Pobrane, Dokumenty, Pulpit).";
+"Files inside these folders are skipped from the Large & Old Files scan (Downloads, Documents, Desktop)." = "Pliki w tych folderach są pomijane podczas skanowania Dużych i starych plików (Pobrane, Dokumenty, Biurko).";
 "Remove from exclusions" = "Usuń z wykluczeń";
 "Add Folder…" = "Dodaj folder…";
 
