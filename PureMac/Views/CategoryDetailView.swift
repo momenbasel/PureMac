@@ -25,7 +25,12 @@ struct CategoryDetailView: View {
                     if result.items.isEmpty {
                         EmptyStateView("All Clean", systemImage: "checkmark.circle", description: "No junk files found in this category.", tint: Tint.green)
                     } else {
-                        fileList(result)
+                        VStack(spacing: 0) {
+                            selectionStrip(result)
+                                .padding(.horizontal, 20)
+                                .padding(.bottom, 10)
+                            fileList(result)
+                        }
                     }
                 } else {
                     EmptyStateView("Not Scanned", systemImage: category.icon, description: "Run a scan to analyze this category.", action: { appState.scanSingleCategory(category) }, actionLabel: "Scan Now", tint: category.color)
@@ -44,14 +49,8 @@ struct CategoryDetailView: View {
                 .disabled(appState.scanState.isActive)
             }
 
-            ToolbarItemGroup(placement: .automatic) {
+            ToolbarItem(placement: .automatic) {
                 if let result = result, !result.items.isEmpty {
-                    Button("Select All") {
-                        appState.selectAllInCategory(category)
-                    }
-                    Button("Deselect All") {
-                        appState.deselectAllInCategory(category)
-                    }
                     Button(action: { sortDescending.toggle() }) {
                         Label {
                             Text(LocalizedStringKey(sortDescending ? "Largest First" : "Smallest First"))
@@ -60,24 +59,6 @@ struct CategoryDetailView: View {
                         }
                     }
                     .help(LocalizedStringKey(sortDescending ? "Sorted: Largest First" : "Sorted: Smallest First"))
-                }
-            }
-
-            ToolbarItem(placement: .automatic) {
-                if let _ = result, !appState.scanState.isActive {
-                    let selectedSize = appState.selectedSizeInCategory(category)
-                    let selectedCount = appState.selectedCountInCategory(category)
-                    if selectedSize > 0 {
-                        Button {
-                            showConfirmation = true
-                        } label: {
-                            Label {
-                                Text(cleanItemsLabel(count: selectedCount))
-                            } icon: {
-                                Image(systemName: "trash")
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -109,23 +90,26 @@ struct CategoryDetailView: View {
         let itemCount = result?.itemCount ?? 0
         let isScanning = appState.scanState.isActive
 
-        return CardSurface(padding: 18) {
+        return CardSurface(padding: 20, tint: category.color) {
             HStack(alignment: .center, spacing: 16) {
-                IconTile(systemName: category.icon, tint: category.color, size: 56, corner: 14)
+                IconTile(systemName: category.icon, tint: category.color, size: 60, corner: 16, vivid: true)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(LocalizedStringKey(category.rawValue))
-                        .font(.system(size: 22, weight: .semibold))
+                        .font(.system(size: 22, weight: .bold))
                     Text(LocalizedStringKey(category.description))
-                        .font(.system(size: 12))
+                        .font(.system(size: 12.5))
                         .foregroundStyle(.secondary)
                     if itemCount > 0 {
                         Text(itemsAndSizeText(itemCount: itemCount, totalSize: totalSize))
-                            .font(.system(size: 11.5, weight: .medium))
+                            .font(.system(size: 11.5, weight: .semibold))
                             .monospacedDigit()
                             .contentTransition(reduceMotion ? .identity : .numericText())
                             .foregroundStyle(category.color)
-                            .padding(.top, 2)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(Capsule().fill(category.color.opacity(0.12)))
+                            .padding(.top, 4)
                             .animation(reduceMotion ? nil : MotionTokens.gentle, value: totalSize)
                     }
                 }
@@ -143,9 +127,70 @@ struct CategoryDetailView: View {
                     .font(.system(size: 12.5, weight: .semibold))
                 }
                 .buttonStyle(.bordered)
+                .tint(category.color)
                 .controlSize(.large)
                 .disabled(isScanning)
             }
+        }
+    }
+
+    /// Persistent action strip above the file list: tri-state select-all,
+    /// live selection count, selected size, and the Clean CTA. Previously
+    /// these lived only in the toolbar, one extra glance away from the rows
+    /// they act on.
+    private func selectionStrip(_ result: CategoryResult) -> some View {
+        let selectedCount = appState.selectedCountInCategory(category)
+        let totalCount = result.itemCount
+        let selectedSize = appState.selectedSizeInCategory(category)
+
+        return CardSurface(padding: 10, elevation: .flat) {
+            HStack(spacing: 12) {
+                Toggle(isOn: Binding(
+                    get: { selectedCount == totalCount && totalCount > 0 },
+                    set: { newValue in
+                        if newValue {
+                            appState.selectAllInCategory(category)
+                        } else {
+                            appState.deselectAllInCategory(category)
+                        }
+                    }
+                )) {
+                    Text(
+                        String(
+                            format: String(localized: "%lld of %lld selected"),
+                            Int64(selectedCount),
+                            Int64(totalCount)
+                        )
+                    )
+                    .font(.system(size: 12, weight: .medium))
+                    .monospacedDigit()
+                    .contentTransition(reduceMotion ? .identity : .numericText())
+                }
+                .toggleStyle(AnimatedCheckboxStyle(tint: category.color))
+                .animation(reduceMotion ? nil : MotionTokens.gentle, value: selectedCount)
+
+                Spacer()
+
+                Text(ByteCountFormatter.string(fromByteCount: selectedSize, countStyle: .file))
+                    .font(.system(size: 13, weight: .semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+
+                if selectedSize > 0 {
+                    Button {
+                        showConfirmation = true
+                    } label: {
+                        Label {
+                            Text(cleanItemsLabel(count: selectedCount))
+                        } icon: {
+                            Image(systemName: "trash")
+                        }
+                    }
+                    .buttonStyle(GlowProminentButtonStyle(tint: Tint.red, gradient: TintGradient.destructive))
+                    .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.92)))
+                }
+            }
+            .animation(reduceMotion ? nil : MotionTokens.snappy, value: selectedSize > 0)
         }
     }
 
@@ -170,28 +215,13 @@ struct CategoryDetailView: View {
             searchText.isEmpty || item.name.localizedCaseInsensitiveContains(searchText) || item.path.localizedCaseInsensitiveContains(searchText)
         }
         return List {
-            Section {
-                // No .staggered() here: List is lazy, so a delayed-reveal
-                // modifier would blank each row for ~0.45s as it scrolls into
-                // view on large scans. The row hover/selection polish carries
-                // the motion; the list-level sort/filter animation handles
-                // reorders.
-                ForEach(Array(items.enumerated()), id: \.element.id) { _, item in
-                    FileRowView(item: item)
-                }
-            } header: {
-                let selectedCount = appState.selectedCountInCategory(category)
-                let totalCount = result.itemCount
-                Text(
-                    String(
-                        format: String(localized: "%lld of %lld selected"),
-                        Int64(selectedCount),
-                        Int64(totalCount)
-                    )
-                )
-                .monospacedDigit()
-                .contentTransition(reduceMotion ? .identity : .numericText())
-                .animation(reduceMotion ? nil : MotionTokens.gentle, value: selectedCount)
+            // No .staggered() here: List is lazy, so a delayed-reveal
+            // modifier would blank each row for ~0.45s as it scrolls into
+            // view on large scans. The row hover/selection polish carries
+            // the motion; the list-level sort/filter animation handles
+            // reorders.
+            ForEach(Array(items.enumerated()), id: \.element.id) { _, item in
+                FileRowView(item: item)
             }
         }
         // CleanableItem ids are stable, so SwiftUI move-animates re-sorts and
@@ -225,7 +255,7 @@ private struct FileRowView: View {
         )) {
             HStack {
                 Image(systemName: fileIcon)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(item.category.color.opacity(0.85))
                     .frame(width: 20)
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -243,6 +273,23 @@ private struct FileRowView: View {
                 }
 
                 Spacer()
+
+                // Hover-revealed Finder shortcut; stays in the layout so the
+                // trailing size never shifts sideways.
+                if !item.path.isEmpty {
+                    Button {
+                        NSWorkspace.shared.selectFile(item.path, inFileViewerRootedAtPath: "")
+                    } label: {
+                        Image(systemName: "folder")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Reveal in Finder")
+                    .opacity(hovering ? 1 : 0)
+                    .scaleEffect(reduceMotion ? 1 : (hovering ? 1 : 0.8))
+                    .allowsHitTesting(hovering)
+                }
 
                 if let date = item.lastModified {
                     Text(date, style: .date)

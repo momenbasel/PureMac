@@ -83,14 +83,18 @@ enum TintGradient {
 }
 
 /// Tinted square icon container used in the sidebar and on dashboard cards.
-/// Single muted fill, thin border. When `glow` is set (selected sidebar row,
-/// emphasized card) the tile picks up a gradient fill and a soft tinted halo.
+/// Two-stop tinted fill with a hairline inner stroke. When `glow` is set
+/// (selected sidebar row, emphasized card) the tile picks up a stronger
+/// gradient and a soft tinted halo. When `vivid` is set the tile becomes a
+/// full-saturation gradient bubble with a white glyph — reserved for focal
+/// spots (category heroes, result rows) so the chrome stays matte elsewhere.
 struct IconTile: View {
     let systemName: String
     var tint: Color = Tint.blue
     var size: CGFloat = 26
     var corner: CGFloat = 7
     var glow: Bool = false
+    var vivid: Bool = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -99,25 +103,64 @@ struct IconTile: View {
             RoundedRectangle(cornerRadius: corner, style: .continuous)
                 .fill(
                     LinearGradient(
-                        colors: [tint.opacity(glow ? 0.30 : 0.14), tint.opacity(0.14)],
+                        colors: vivid
+                            ? [tint, tint.opacity(0.72)]
+                            : [tint.opacity(glow ? 0.32 : 0.16), tint.opacity(glow ? 0.16 : 0.07)],
                         startPoint: .topLeading, endPoint: .bottomTrailing
                     )
                 )
-                .shadow(color: tint.opacity(glow ? 0.45 : 0), radius: glow ? 5 : 0)
+                .overlay(
+                    RoundedRectangle(cornerRadius: corner, style: .continuous)
+                        .strokeBorder(vivid ? Color.white.opacity(0.22) : tint.opacity(glow ? 0.38 : 0.20),
+                                      lineWidth: 0.5)
+                )
+                .shadow(color: tint.opacity(vivid ? 0.42 : (glow ? 0.45 : 0)),
+                        radius: vivid ? 6 : (glow ? 5 : 0))
             Image(systemName: systemName)
                 .font(.system(size: size * 0.52, weight: .semibold))
-                .foregroundStyle(tint)
-                .shadow(color: tint.opacity(glow ? 0.5 : 0), radius: glow ? 3 : 0)
+                .foregroundStyle(vivid ? Color.white : tint)
+                .shadow(color: vivid ? Color.black.opacity(0.18) : tint.opacity(glow ? 0.5 : 0),
+                        radius: vivid ? 2 : (glow ? 3 : 0))
         }
         .frame(width: size, height: size)
         .animation(reduceMotion ? nil : MotionTokens.snappy, value: glow)
     }
 }
 
-/// Card surface. Flat fill, hairline border, single soft shadow. No accent
-/// stripe by default — content hierarchy carries the meaning, not chrome.
-/// Pass `material` for a vibrancy/glass panel (used on focal hero states
-/// where a tinted backdrop sits behind the card).
+/// Shared ambient backdrop for the app's detail surfaces: layered radial
+/// washes in jewel tones, concentrated at the top where hero content lives
+/// and fading to nothing at the bottom. Static layers — no Reduce Motion
+/// concerns. Opacities halve in light mode so surfaces stay clean.
+struct AmbientBackdrop: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var strength: Double { colorScheme == .dark ? 1 : 0.55 }
+
+    var body: some View {
+        ZStack {
+            Color(nsColor: .windowBackgroundColor)
+            RadialGradient(
+                colors: [Tint.blue.opacity(0.10 * strength), .clear],
+                center: .topLeading, startRadius: 0, endRadius: 700
+            )
+            RadialGradient(
+                colors: [Tint.purple.opacity(0.08 * strength), .clear],
+                center: .topTrailing, startRadius: 0, endRadius: 620
+            )
+            RadialGradient(
+                colors: [Tint.pink.opacity(0.05 * strength), .clear],
+                center: UnitPoint(x: 0.5, y: -0.15), startRadius: 0, endRadius: 480
+            )
+        }
+        .ignoresSafeArea()
+    }
+}
+
+/// Card surface. Flat fill, hairline border, soft shadow. No accent stripe —
+/// content hierarchy carries the meaning, not chrome. Pass `material` for a
+/// vibrancy/glass panel (used on focal hero states where a tinted backdrop
+/// sits behind the card). Pass `tint` for a barely-there vertical color wash
+/// that gives the card an identity without adding chrome.
 struct CardSurface<Content: View>: View {
     var padding: CGFloat = 16
     /// Retained for callsite compatibility; the accent line is intentionally
@@ -125,7 +168,12 @@ struct CardSurface<Content: View>: View {
     var accent: Color? = nil
     var elevation: CardElevation = .standard
     var material: Material? = nil
+    /// Optional identity wash. Kept under ~7% opacity so text contrast and
+    /// light-mode cleanliness are unaffected.
+    var tint: Color? = nil
     @ViewBuilder var content: Content
+
+    private let cornerRadius: CGFloat = 14
 
     var body: some View {
         content
@@ -133,16 +181,25 @@ struct CardSurface<Content: View>: View {
             .background(
                 ZStack {
                     if let material {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                             .fill(material)
                     } else {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                             .fill(Color(nsColor: .controlBackgroundColor))
+                    }
+                    if let tint {
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [tint.opacity(0.07), tint.opacity(0.015)],
+                                    startPoint: .top, endPoint: .bottom
+                                )
+                            )
                     }
                 }
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .strokeBorder(
                         material != nil ? Color.white.opacity(0.14) : Color.primary.opacity(0.07),
                         lineWidth: material != nil ? 1 : 0.5
@@ -158,24 +215,24 @@ enum CardElevation {
     var ambient: Double {
         switch self {
         case .flat: return 0.0
-        case .standard: return 0.04
-        case .raised: return 0.07
+        case .standard: return 0.05
+        case .raised: return 0.10
         }
     }
 
     var ambientRadius: CGFloat {
         switch self {
         case .flat: return 0
-        case .standard: return 4
-        case .raised: return 10
+        case .standard: return 7
+        case .raised: return 20
         }
     }
 
     var ambientY: CGFloat {
         switch self {
         case .flat: return 0
-        case .standard: return 1
-        case .raised: return 3
+        case .standard: return 2
+        case .raised: return 8
         }
     }
 }
@@ -200,6 +257,19 @@ struct StatusChip: View {
         .padding(.vertical, 3)
         .background(Capsule().fill(tint.opacity(0.14)))
         .foregroundStyle(tint)
+    }
+}
+
+/// Consistent section title used on dashboard-style surfaces. Single source
+/// of truth for the "quiet bold headline" look so every section matches.
+struct SectionHeader: View {
+    let title: LocalizedStringKey
+
+    init(_ title: LocalizedStringKey) { self.title = title }
+
+    var body: some View {
+        Text(title)
+            .font(.system(size: 15, weight: .semibold))
     }
 }
 
@@ -241,14 +311,18 @@ extension View {
 /// Gradient capsule CTA with a soft tinted glow — the primary-action style.
 /// Hover lifts the glow and scale; press squeezes. `breathes` adds a gentle
 /// idle glow pulse (radius only, no scale) for the single hero CTA on an
-/// otherwise calm screen. All motion is suppressed under Reduce Motion.
+/// otherwise calm screen. `large` bumps the type and padding for the one
+/// dominant call-to-action on a surface. All motion is suppressed under
+/// Reduce Motion.
 struct GlowProminentButtonStyle: ButtonStyle {
     var tint: Color = Tint.blue
     var gradient: LinearGradient = TintGradient.accent
     var breathes: Bool = false
+    var large: Bool = false
 
     func makeBody(configuration: Configuration) -> some View {
-        GlowBody(configuration: configuration, tint: tint, gradient: gradient, breathes: breathes)
+        GlowBody(configuration: configuration, tint: tint, gradient: gradient,
+                 breathes: breathes, large: large)
     }
 
     private struct GlowBody: View {
@@ -256,6 +330,7 @@ struct GlowProminentButtonStyle: ButtonStyle {
         let tint: Color
         let gradient: LinearGradient
         let breathes: Bool
+        let large: Bool
 
         @State private var hovering = false
         @State private var breathe = false
@@ -263,10 +338,10 @@ struct GlowProminentButtonStyle: ButtonStyle {
 
         var body: some View {
             configuration.label
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: large ? 14 : 13, weight: .semibold))
                 .foregroundStyle(.white)
-                .padding(.horizontal, 18)
-                .padding(.vertical, 9)
+                .padding(.horizontal, large ? 22 : 18)
+                .padding(.vertical, large ? 11 : 9)
                 .background(Capsule().fill(gradient))
                 .overlay(Capsule().strokeBorder(.white.opacity(0.18), lineWidth: 0.5))
                 .shadow(color: tint.opacity(hovering ? 0.45 : (breathe ? 0.40 : 0.22)),

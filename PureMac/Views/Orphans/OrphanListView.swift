@@ -321,6 +321,21 @@ private struct OrphanRowView: View {
 
                 Spacer()
 
+                // Hover-revealed Finder shortcut; stays in the layout so the
+                // trailing size never shifts sideways.
+                Button {
+                    onReveal()
+                } label: {
+                    Image(systemName: "folder")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Reveal in Finder")
+                .opacity(hovering ? 1 : 0)
+                .scaleEffect(reduceMotion ? 1 : (hovering ? 1 : 0.8))
+                .allowsHitTesting(hovering)
+
                 if let size = fileSize {
                     Text(ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
                         .monospacedDigit()

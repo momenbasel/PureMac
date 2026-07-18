@@ -154,7 +154,7 @@ private struct HoverScaleIcon: View {
     var body: some View {
         Image(nsImage: icon)
             .resizable()
-            .frame(width: 20, height: 20)
+            .frame(width: 22, height: 22)
             .scaleEffect(hovering && !reduceMotion ? 1.12 : 1)
             .animation(reduceMotion ? nil : MotionTokens.snappy, value: hovering)
             .onHover { hovering = $0 }

@@ -28,16 +28,56 @@ struct HealthRing: View {
 
     var body: some View {
         ZStack {
+            // Orb body — a deep jewel fill that turns the flat ring into a
+            // glowing sphere. Inset so it never bleeds across the track.
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [arcColor.opacity(0.14), arcColor.opacity(0.05), .clear],
+                        center: .center,
+                        startRadius: 2,
+                        endRadius: 160
+                    )
+                )
+                .padding(lineWidth + 10)
+
+            // Slow conic sheen sweeping the orb interior — the "alive" cue.
+            // Removed entirely under Reduce Motion.
+            if !reduceMotion {
+                TimelineView(.animation) { timeline in
+                    let t = timeline.date.timeIntervalSinceReferenceDate
+                    let angle = (t.truncatingRemainder(dividingBy: 6.0) / 6.0) * 360.0
+                    Circle()
+                        .fill(
+                            AngularGradient(
+                                colors: [.clear, .clear, arcColor.opacity(0.10), .clear],
+                                center: .center
+                            )
+                        )
+                        .rotationEffect(.degrees(angle))
+                }
+                .padding(lineWidth + 10)
+                .clipShape(Circle())
+            }
+
             Circle()
                 .stroke(Color.primary.opacity(0.06), lineWidth: lineWidth)
 
-            // Soft glow layer underneath the crisp arc.
+            // Bloom: a wide soft halo under a tighter, brighter one. The
+            // glow comes from these blurred duplicates of the crisp arc.
             Circle()
                 .trim(from: 0, to: sweep)
-                .stroke(arcColor.opacity(0.5),
+                .stroke(arcColor.opacity(0.35),
                         style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-                .blur(radius: 9)
+                .blur(radius: 16)
+
+            Circle()
+                .trim(from: 0, to: sweep)
+                .stroke(arcColor.opacity(0.55),
+                        style: StrokeStyle(lineWidth: lineWidth * 0.7, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .blur(radius: 7)
 
             Circle()
                 .trim(from: 0, to: sweep)
@@ -225,20 +265,78 @@ struct LegendChip: View {
     let color: Color
     let label: LocalizedStringKey
     let value: String
+    /// Optional share readout ("72%") rendered after the value.
+    var percent: String? = nil
 
     var body: some View {
         HStack(spacing: 7) {
-            RoundedRectangle(cornerRadius: 3, style: .continuous)
+            RoundedRectangle(cornerRadius: 3.5, style: .continuous)
                 .fill(color)
                 .frame(width: 10, height: 10)
             VStack(alignment: .leading, spacing: 0) {
                 Text(label)
                     .font(.system(size: 10.5))
                     .foregroundStyle(.secondary)
-                Text(value)
-                    .font(.system(size: 12, weight: .semibold))
-                    .monospacedDigit()
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text(value)
+                        .font(.system(size: 12, weight: .semibold))
+                        .monospacedDigit()
+                    if let percent {
+                        Text(percent)
+                            .font(.system(size: 10, weight: .medium))
+                            .monospacedDigit()
+                            .foregroundStyle(.tertiary)
+                    }
+                }
             }
+        }
+    }
+}
+
+// MARK: - Stacked meter
+//
+// Full-width segmented storage bar (Used / Junk / Purgeable / Free). Segments
+// sit flush inside one track with thin separators, grow in with a spring on
+// appear, and cross-dim when a legend chip reports a hover. Honors Reduce
+// Motion (instant reveal, instant cross-dim).
+
+struct StackedMeter: View {
+    struct Segment: Identifiable {
+        /// Stable id so legend hover can cross-highlight the matching segment.
+        let id: String
+        let value: Double
+        let color: Color
+    }
+
+    let segments: [Segment]
+    var height: CGFloat = 14
+    /// When set (legend hover), every other segment dims for cross-highlight.
+    var highlightedID: String? = nil
+
+    @State private var reveal: CGFloat = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var total: Double { max(segments.reduce(0) { $0 + $1.value }, 0.0001) }
+
+    var body: some View {
+        GeometryReader { geo in
+            let separator: CGFloat = 2
+            let available = geo.size.width - separator * CGFloat(max(0, segments.count - 1))
+            HStack(spacing: separator) {
+                ForEach(segments) { seg in
+                    let frac = CGFloat(seg.value / total)
+                    RoundedRectangle(cornerRadius: height * 0.3, style: .continuous)
+                        .fill(seg.color)
+                        .frame(width: max(frac > 0 ? 4 : 0, available * frac * reveal))
+                        .opacity(highlightedID == nil || highlightedID == seg.id ? 1 : 0.28)
+                }
+            }
+        }
+        .frame(height: height)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: highlightedID)
+        .onAppear {
+            if reduceMotion { reveal = 1; return }
+            withAnimation(.spring(response: 0.9, dampingFraction: 0.85)) { reveal = 1 }
         }
     }
 }

@@ -160,7 +160,8 @@ struct MainWindow: View {
                         appState.checkFullDiskAccess()
                     }
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.borderedProminent)
+                .tint(Tint.orange)
                 .controlSize(.small)
                 .help("Fix permission")
             }
@@ -211,22 +212,7 @@ struct MainWindow: View {
         .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8),
                    value: appState.hasFullDiskAccess)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
-            // Quiet ambient gradient under every section. Static layers,
-            // opacities kept low enough to stay clean in light mode.
-            ZStack {
-                Color(nsColor: .windowBackgroundColor)
-                LinearGradient(
-                    colors: [Tint.blue.opacity(0.05), .clear],
-                    startPoint: .topLeading, endPoint: .center
-                )
-                RadialGradient(
-                    colors: [Tint.purple.opacity(0.03), .clear],
-                    center: .topTrailing, startRadius: 0, endRadius: 600
-                )
-            }
-            .ignoresSafeArea()
-        )
+        .background(AmbientBackdrop())
     }
 
     @ViewBuilder
@@ -291,11 +277,11 @@ struct MainWindow: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(Tint.orange.opacity(0.08))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(Tint.orange.opacity(0.22), lineWidth: 0.5)
         )
     }

@@ -34,14 +34,6 @@ struct DashboardView: View {
 
     var body: some View {
         ZStack {
-            // Quiet tinted wash so the glass hero states have color to
-            // refract. Static — no Reduce Motion concerns.
-            LinearGradient(
-                colors: [Tint.blue.opacity(0.08), Tint.purple.opacity(0.05), .clear],
-                startPoint: .top, endPoint: .bottom
-            )
-            .ignoresSafeArea()
-
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     switch appState.scanState {
@@ -155,53 +147,59 @@ struct DashboardView: View {
         // Below this width the side-by-side ring + storage column overflows the
         // card, so the hero stacks vertically and the ring shrinks.
         let compact = dashboardSize.width > 0 && dashboardSize.width < 660
-        let ringSize: CGFloat = compact ? 132 : 180
+        let ringSize: CGFloat = compact ? 132 : 176
 
-        return CardSurface(padding: 24, accent: stress ? Tint.orange : Tint.blue, elevation: .raised) {
-            AdaptiveStack(compact: compact, spacing: compact ? 18 : 28) {
-                ZStack {
-                    // Slow atmospheric drift behind the ring — barely-there
-                    // ambient depth, frozen under Reduce Motion.
-                    HeroDrift(tint: stress ? Tint.orange : Tint.blue)
-                    HealthRing(percent: percentUsed)
-                        .frame(width: ringSize, height: ringSize)
-                }
-
-                VStack(alignment: .leading, spacing: 14) {
-                    HStack(alignment: .top) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack(spacing: 8) {
-                                Text("Storage")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(.secondary)
-                                    .textCase(.uppercase)
-                                    .tracking(0.6)
-                                if stress {
-                                    StatusChip(label: String(localized: "Low space"),
-                                               systemImage: "exclamationmark.triangle.fill",
-                                               tint: Tint.orange)
-                                }
-                            }
-                            CountUpBytes(bytes: free)
-                                .font(.system(size: 34, weight: .semibold))
-                                .foregroundStyle(stress ? Tint.orange : Color.primary)
-                            Text(freeOfText(total: total))
-                                .font(.system(size: 12))
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Button {
-                            appState.startSmartScan()
-                        } label: {
-                            Label("Smart Scan", systemImage: "sparkles")
-                                .padding(.horizontal, 4)
-                        }
-                        .buttonStyle(GlowProminentButtonStyle(breathes: true))
+        return CardSurface(padding: compact ? 20 : 26, elevation: .raised,
+                           tint: stress ? Tint.orange : Tint.blue) {
+            VStack(spacing: compact ? 18 : 24) {
+                AdaptiveStack(compact: compact, spacing: compact ? 18 : 30) {
+                    ZStack {
+                        // Slow atmospheric drift behind the ring — barely-there
+                        // ambient depth, frozen under Reduce Motion.
+                        HeroDrift(tint: stress ? Tint.orange : Tint.blue)
+                        HealthRing(percent: percentUsed)
+                            .frame(width: ringSize, height: ringSize)
+                        // Small satellite bubbles orbiting the ring — the
+                        // playful counterweight to the matte stat cards.
+                        OrbSatellites(tint: stress ? Tint.orange : Tint.blue, ringSize: ringSize)
                     }
 
-                    storageBreakdown(used: used, total: total)
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(alignment: .top) {
+                            VStack(alignment: .leading, spacing: 5) {
+                                HStack(spacing: 8) {
+                                    Text("Storage")
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundStyle(.secondary)
+                                        .textCase(.uppercase)
+                                        .tracking(0.8)
+                                    if stress {
+                                        StatusChip(label: String(localized: "Low space"),
+                                                   systemImage: "exclamationmark.triangle.fill",
+                                                   tint: Tint.orange)
+                                    }
+                                }
+                                CountUpBytes(bytes: free)
+                                    .font(.system(size: 38, weight: .bold))
+                                    .foregroundStyle(stress ? Tint.orange : Color.primary)
+                                Text(freeOfText(total: total))
+                                    .font(.system(size: 12.5))
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Button {
+                                appState.startSmartScan()
+                            } label: {
+                                Label("Smart Scan", systemImage: "sparkles")
+                                    .padding(.horizontal, 4)
+                            }
+                            .buttonStyle(GlowProminentButtonStyle(breathes: true, large: true))
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+
+                storageMeter(used: used, total: total)
             }
         }
     }
@@ -213,48 +211,70 @@ struct DashboardView: View {
         )
     }
 
-    private func storageBreakdown(used: Int64, total: Int64) -> some View {
-        let usedPct  = total > 0 ? Double(used) / Double(total) : 0
-        let junkPct  = total > 0 ? min(0.4, Double(appState.totalJunkSize) / Double(total)) : 0
+    /// Full-width segmented meter (Used / Junk / Purgeable / Free) with a
+    /// hoverable legend. The same segment math as the composition donut, so
+    /// both surfaces always agree.
+    private func storageMeter(used: Int64, total: Int64) -> some View {
+        let purge = max(0, appState.diskInfo.purgeableSpace)
+        let junk = max(0, min(appState.totalJunkSize, used))
+        let usedCore = max(0, used - junk - purge)
+        let free = max(0, appState.diskInfo.freeSpace)
 
-        return VStack(alignment: .leading, spacing: 8) {
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(Color.primary.opacity(0.08))
-                    HStack(spacing: 0) {
-                        Capsule()
-                            .fill(LinearGradient(colors: [Tint.blue, Tint.purple], startPoint: .leading, endPoint: .trailing))
-                            .frame(width: geo.size.width * CGFloat(usedPct))
-                    }
-                    if junkPct > 0 {
-                        Capsule()
-                            .fill(Tint.orange)
-                            .frame(width: max(8, geo.size.width * CGFloat(junkPct)))
-                            .offset(x: geo.size.width * CGFloat(usedPct - junkPct))
-                            .opacity(0.85)
+        var segments: [StackedMeter.Segment] = [
+            .init(id: "used", value: Double(usedCore), color: Tint.blue)
+        ]
+        if junk > 0 {
+            segments.append(.init(id: "junk", value: Double(junk), color: Tint.orange))
+        }
+        if purge > 0 {
+            segments.append(.init(id: "purgeable", value: Double(purge), color: Tint.green))
+        }
+        segments.append(.init(id: "free", value: Double(free), color: Color.primary.opacity(0.10)))
+
+        let usedPct = total > 0 ? Double(used) / Double(total) : 0
+
+        return VStack(alignment: .leading, spacing: 10) {
+            StackedMeter(segments: segments, highlightedID: hoveredSegment)
+
+            HStack(spacing: 18) {
+                HoverableLegendChip(color: Tint.blue, label: "Used",
+                                    value: formatted(usedCore),
+                                    percent: shareString(usedCore, of: total)) { hovering in
+                    hoveredSegment = hovering ? "used" : nil
+                }
+                if junk > 0 {
+                    HoverableLegendChip(color: Tint.orange, label: "Junk",
+                                        value: formatted(junk),
+                                        percent: shareString(junk, of: total)) { hovering in
+                        hoveredSegment = hovering ? "junk" : nil
                     }
                 }
-            }
-            .frame(height: 10)
-
-            HStack(spacing: 16) {
-                LegendDot(color: Tint.blue, label: "Used", value: ByteCountFormatter.string(fromByteCount: used, countStyle: .file))
-                if appState.totalJunkSize > 0 {
-                    LegendDot(color: Tint.orange, label: "Junk",
-                              value: ByteCountFormatter.string(fromByteCount: appState.totalJunkSize, countStyle: .file))
-                }
-                if appState.diskInfo.purgeableSpace > 0 {
-                    LegendDot(color: Tint.green, label: "Purgeable",
-                              value: ByteCountFormatter.string(fromByteCount: appState.diskInfo.purgeableSpace, countStyle: .file))
+                if purge > 0 {
+                    HoverableLegendChip(color: Tint.green, label: "Purgeable",
+                                        value: formatted(purge),
+                                        percent: shareString(purge, of: total)) { hovering in
+                        hoveredSegment = hovering ? "purgeable" : nil
+                    }
                 }
                 Spacer()
                 Text(percentUsedText(usedPct))
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: 11.5, weight: .semibold))
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
         }
+    }
+
+    private func formatted(_ bytes: Int64) -> String {
+        ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+    }
+
+    private func shareString(_ part: Int64, of total: Int64) -> String? {
+        guard total > 0, part > 0 else { return nil }
+        let share = Int((Double(part) / Double(total) * 100).rounded())
+        // A rounded 0% is noise — hide it for slivers like APFS purgeable.
+        guard share > 0 else { return nil }
+        return "\(share)%"
     }
 
     private func percentUsedText(_ usedPct: Double) -> String {
@@ -355,14 +375,14 @@ struct DashboardView: View {
         add("purgeable", purge, Tint.green, "Purgeable")
         add("free", free, Color.primary.opacity(0.14), "Free")
 
-        return CardSurface(padding: 18, elevation: .standard) {
-            HStack(alignment: .center, spacing: 24) {
+        return CardSurface(padding: 20, elevation: .standard) {
+            HStack(alignment: .center, spacing: 28) {
                 ZStack {
                     StorageDonut(segments: segments, highlightedID: hoveredSegment)
-                        .frame(width: 132, height: 132)
+                        .frame(width: 148, height: 148)
                     VStack(spacing: 1) {
                         Text(ByteCountFormatter.string(fromByteCount: total, countStyle: .file))
-                            .font(.system(size: 17, weight: .bold))
+                            .font(.system(size: 18, weight: .bold))
                             .monospacedDigit()
                         Text("total")
                             .font(.system(size: 10))
@@ -373,7 +393,8 @@ struct DashboardView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     ForEach(Array(segments.enumerated()), id: \.element.id) { idx, seg in
                         HoverableLegendChip(
-                            color: seg.color, label: seg.label, value: seg.display
+                            color: seg.color, label: seg.label, value: seg.display,
+                            percent: shareString(Int64(seg.value), of: total)
                         ) { hovering in
                             hoveredSegment = hovering ? seg.id : nil
                         }
@@ -428,7 +449,7 @@ struct DashboardView: View {
     // MARK: - Scanning state
 
     private var scanningHero: some View {
-        CardSurface(padding: 24, accent: Tint.blue, elevation: .raised, material: .ultraThinMaterial) {
+        CardSurface(padding: 26, elevation: .raised, material: .ultraThinMaterial, tint: Tint.blue) {
             HStack(alignment: .center, spacing: 28) {
                 ScanningGauge(progress: appState.scanProgress)
                     .frame(width: 180, height: 180)
@@ -511,44 +532,62 @@ struct DashboardView: View {
 
     private var completedHero: some View {
         let isClean = appState.totalJunkSize <= 0
-        return CardSurface(padding: 24, accent: isClean ? Tint.green : Tint.orange, elevation: .raised) {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .firstTextBaseline) {
-                    if !isClean {
-                        CountUpBytes(bytes: appState.totalJunkSize)
-                            .font(.system(size: 40, weight: .semibold))
-                        Text("found")
-                            .font(.system(size: 16))
-                            .foregroundStyle(.secondary)
-                    } else {
-                        HStack(spacing: 10) {
-                            cleanSealIcon
-                            Text("Your Mac is clean")
-                                .font(.system(size: 22, weight: .bold))
-                                .foregroundStyle(Tint.green)
-                        }
+        return CardSurface(padding: 26, elevation: .raised,
+                           tint: isClean ? Tint.green : Tint.orange) {
+            HStack(spacing: 24) {
+                if isClean {
+                    HStack(spacing: 12) {
+                        cleanSealIcon
+                        Text("Your Mac is clean")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundStyle(Tint.green)
                     }
                     Spacer()
                     Button("Scan Again") { appState.startSmartScan() }
                         .controlSize(.large)
-                }
-                if !isClean {
-                    HStack {
-                        if appState.totalSelectedSize > 0 {
-                            Button {
-                                showConfirmation = true
-                            } label: {
-                                Label {
-                                    Text(cleanSelectedLabel)
-                                } icon: {
-                                    Image(systemName: "sparkles")
-                                }
-                                .padding(.horizontal, 6)
-                            }
-                            .buttonStyle(GlowProminentButtonStyle())
+                } else {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Junk Found")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Tint.orange)
+                            .textCase(.uppercase)
+                            .tracking(0.8)
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            CountUpBytes(bytes: appState.totalJunkSize)
+                                .font(.system(size: 40, weight: .bold))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [Tint.orange, Tint.red],
+                                        startPoint: .topLeading, endPoint: .bottomTrailing
+                                    )
+                                )
+                            Text("found")
+                                .font(.system(size: 16))
+                                .foregroundStyle(.secondary)
                         }
-                        Spacer()
+                        Text(junkFoundDelta(count: appState.allResults.count))
+                            .font(.system(size: 12.5))
+                            .foregroundStyle(.secondary)
+
+                        HStack(spacing: 12) {
+                            if appState.totalSelectedSize > 0 {
+                                Button {
+                                    showConfirmation = true
+                                } label: {
+                                    Label {
+                                        Text(cleanSelectedLabel)
+                                    } icon: {
+                                        Image(systemName: "sparkles")
+                                    }
+                                    .padding(.horizontal, 6)
+                                }
+                                .buttonStyle(GlowProminentButtonStyle(large: true))
+                            }
+                            Button("Scan Again") { appState.startSmartScan() }
+                        }
+                        .padding(.top, 2)
                     }
+                    Spacer()
                 }
             }
         }
@@ -615,7 +654,7 @@ struct DashboardView: View {
     }
 
     private var cleaningHero: some View {
-        CardSurface(padding: 24, accent: Tint.orange, elevation: .raised, material: .ultraThinMaterial) {
+        CardSurface(padding: 26, elevation: .raised, material: .ultraThinMaterial, tint: Tint.orange) {
             HStack(alignment: .center, spacing: 28) {
                 ScanningGauge(progress: appState.cleanProgress, tint: Tint.orange, label: "CLEANING")
                     .frame(width: 180, height: 180)
@@ -650,7 +689,7 @@ struct DashboardView: View {
     }
 
     private var cleanedHero: some View {
-        CardSurface(padding: 24, accent: Tint.green, elevation: .raised, material: .ultraThinMaterial) {
+        CardSurface(padding: 26, elevation: .raised, material: .ultraThinMaterial, tint: Tint.green) {
             HStack(alignment: .center, spacing: 28) {
                 SuccessMedal()
                     .background(
@@ -678,8 +717,7 @@ struct DashboardView: View {
     // MARK: - Helpers
 
     private func sectionHeader(_ text: LocalizedStringKey) -> some View {
-        Text(text)
-            .font(.system(size: 16, weight: .bold))
+        SectionHeader(text)
             .padding(.top, 4)
     }
 }
@@ -697,15 +735,16 @@ private struct StatCard: View {
     var byteValue: Int64? = nil
 
     var body: some View {
-        CardSurface(padding: 14, accent: tint) {
-            VStack(alignment: .leading, spacing: 6) {
+        CardSurface(padding: 16, tint: tint) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 8) {
                     IconTile(systemName: icon, tint: tint, size: 28, glow: true)
                     Text(label)
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.secondary)
                         .textCase(.uppercase)
-                        .tracking(0.4)
+                        .tracking(0.5)
+                    Spacer(minLength: 0)
                 }
                 Group {
                     if let byteValue {
@@ -716,13 +755,14 @@ private struct StatCard: View {
                             .contentTransition(.numericText())
                     }
                 }
-                .font(.system(size: 22, weight: .bold))
+                .font(.system(size: 23, weight: .bold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
                 if let delta {
                     Text(delta)
                         .font(.system(size: 11))
                         .foregroundStyle(.tertiary)
+                        .lineLimit(1)
                 }
             }
         }
@@ -742,7 +782,7 @@ private struct Suggestion: Identifiable {
 private struct SuggestionRow: View {
     let suggestion: Suggestion
     var body: some View {
-        CardSurface(padding: 14, accent: suggestion.tint) {
+        CardSurface(padding: 14, tint: suggestion.tint) {
             HStack(spacing: 14) {
                 IconTile(systemName: suggestion.icon, tint: suggestion.tint,
                          size: 38, corner: 10, glow: true)
@@ -791,42 +831,23 @@ private struct ScanPathTicker: View {
 
 // MARK: - Gauges
 
-private struct LegendDot: View {
-    let color: Color
-    let label: LocalizedStringKey
-    let value: String
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Circle().fill(color).frame(width: 8, height: 8)
-            VStack(alignment: .leading, spacing: 0) {
-                Text(label)
-                    .font(.system(size: 10.5))
-                    .foregroundStyle(.secondary)
-                Text(value)
-                    .font(.system(size: 11.5, weight: .semibold))
-                    .monospacedDigit()
-            }
-        }
-    }
-}
-
 // ScanningGauge now lives in Components/DashboardCharts.swift (radar sweep +
 // halo rings + Reduce Motion compliance).
 
-/// Legend chip wrapper that reports hover for donut cross-highlighting and
-/// scales slightly while hovered.
+/// Legend chip wrapper that reports hover for donut/meter cross-highlighting
+/// and scales slightly while hovered.
 private struct HoverableLegendChip: View {
     let color: Color
     let label: LocalizedStringKey
     let value: String
+    var percent: String? = nil
     let onHoverChange: (Bool) -> Void
 
     @State private var hovering = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        LegendChip(color: color, label: label, value: value)
+        LegendChip(color: color, label: label, value: value, percent: percent)
             .scaleEffect(hovering && !reduceMotion ? 1.05 : 1, anchor: .leading)
             .animation(reduceMotion ? nil : MotionTokens.snappy, value: hovering)
             .onHover { h in
@@ -856,6 +877,44 @@ private struct HeroDrift: View {
             guard !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 3.0).repeatForever(autoreverses: true)) {
                 drift = true
+            }
+        }
+    }
+}
+
+/// Two small glass bubbles hovering just outside the hero ring. They bob on
+/// offset rhythms so the composition feels alive without competing with the
+/// gauge itself. Positions are static under Reduce Motion.
+private struct OrbSatellites: View {
+    let tint: Color
+    let ringSize: CGFloat
+
+    @State private var bob = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        let orbit = ringSize / 2 + 14
+        ZStack {
+            Circle()
+                .fill(tint.opacity(0.22))
+                .frame(width: 13, height: 13)
+                .blur(radius: 0.5)
+                .offset(x: -orbit - 6, y: -orbit * 0.55 + (bob ? -7 : 7))
+                .opacity(bob ? 0.9 : 0.55)
+            Circle()
+                .stroke(tint.opacity(0.30), lineWidth: 1)
+                .frame(width: 17, height: 17)
+                .offset(x: orbit + 4, y: orbit * 0.5 + (bob ? 6 : -6))
+            Circle()
+                .fill(Tint.purple.opacity(0.18))
+                .frame(width: 8, height: 8)
+                .offset(x: orbit * 0.35, y: -orbit - 8 + (bob ? -5 : 5))
+        }
+        .allowsHitTesting(false)
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.easeInOut(duration: 2.8).repeatForever(autoreverses: true)) {
+                bob = true
             }
         }
     }
@@ -933,7 +992,7 @@ private struct CategoryToggleRow: View {
             }
         )) {
             HStack(spacing: 12) {
-                IconTile(systemName: result.category.icon, tint: result.category.color, size: 28)
+                IconTile(systemName: result.category.icon, tint: result.category.color, size: 28, vivid: true)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(LocalizedStringKey(result.category.rawValue))
                         .font(.system(size: 13.5, weight: .semibold))
