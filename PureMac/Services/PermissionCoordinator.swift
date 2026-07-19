@@ -2,17 +2,17 @@ import AppKit
 import Combine
 import Foundation
 
-/// Centralized coordinator for Full Disk Access (FDA) prompts and retry flow.
+/// Centralized coordinator for Full Disk Access (FDA) prompts and continuation flow.
 ///
 /// Replaces the bare "Open System Settings" alert with a sheet-driven flow that:
 /// - Auto-opens the Settings pane and reveals PureMac.app in Finder so users can
 ///   drag the bundle into the FDA list when macOS hasn't auto-registered it
 ///   (common with Homebrew installs that strip the quarantine attribute).
 /// - Polls `FullDiskAccessManager.hasFullDiskAccess` once per second while the
-///   sheet is on-screen and auto-dismisses + invokes the retry callback the
+///   sheet is on-screen and auto-dismisses + invokes the continuation callback the
 ///   moment the user toggles permission on.
-/// - Carries the failed-item batch across the prompt so the caller can re-run
-///   the clean without the user having to re-select anything.
+/// - Carries the failed-item batch across the prompt so the caller can retry
+///   identity-verified items or require a safe rescan for unverified paths.
 @MainActor
 final class PermissionCoordinator: ObservableObject {
     static let shared = PermissionCoordinator()

@@ -20,7 +20,7 @@ settings:
     CODE_SIGN_IDENTITY: "Apple Development"
     CODE_SIGN_STYLE: "Automatic"
     DEVELOPMENT_TEAM: "H3WXHVTP97"
-    CODE_SIGN_ENTITLEMENTS: "PureMac/PureMac.entitlements"
+    CODE_SIGN_ENTITLEMENTS: ""
     INFOPLIST_FILE: "PureMac/Info.plist"
     PRODUCT_BUNDLE_IDENTIFIER: "com.puremac.app"
     MARKETING_VERSION: "2.8.5"
@@ -34,19 +34,56 @@ targets:
     type: application
     platform: macOS
     sources:
-      - PureMac
+      - path: PureMac
+        excludes:
+          - Info.plist
+          - PureMac.entitlements
+      - Shared
+      - path: PureMacPrivilegedHelper/com.puremac.privileged-cleaning.plist
+        buildPhase:
+          copyFiles:
+            destination: wrapper
+            subpath: Contents/Library/LaunchDaemons
     dependencies:
       - package: Sparkle
         product: Sparkle
+      - sdk: ServiceManagement.framework
+      - sdk: Security.framework
+      - target: PureMacPrivilegedHelper
+        embed: true
+        link: false
+        codeSign: true
+        copy:
+          destination: wrapper
+          subpath: Contents/Library/LaunchServices
     settings:
       base:
         PRODUCT_NAME: PureMac
         SWIFT_EMIT_LOC_STRINGS: "YES"
+        CODE_SIGN_ENTITLEMENTS: "PureMac/PureMac.entitlements"
+        ENABLE_HARDENED_RUNTIME: "YES"
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
-      configs:
-        Debug:
-          CODE_SIGNING_ALLOWED: "NO"
-          CODE_SIGNING_REQUIRED: "NO"
+
+  PureMacPrivilegedHelper:
+    type: tool
+    platform: macOS
+    sources:
+      - path: PureMacPrivilegedHelper
+        excludes:
+          - "*.plist"
+      - Shared
+    dependencies:
+      - sdk: Security.framework
+    settings:
+      base:
+        PRODUCT_NAME: com.puremac.privileged-helper
+        PRODUCT_BUNDLE_IDENTIFIER: com.puremac.privileged-helper
+        CODE_SIGN_ENTITLEMENTS: ""
+        INFOPLIST_FILE: ""
+        GENERATE_INFOPLIST_FILE: "NO"
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        SKIP_INSTALL: "YES"
+        ENABLE_HARDENED_RUNTIME: "YES"
 
   PureMacTests:
     type: bundle.unit-test

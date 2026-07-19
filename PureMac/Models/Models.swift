@@ -1,3 +1,4 @@
+import Darwin
 import SwiftUI
 
 // MARK: - Cleaning Category
@@ -109,6 +110,38 @@ struct CleanableItem: Identifiable, Hashable {
     let category: CleaningCategory
     var isSelected: Bool
     let lastModified: Date?
+    /// Filesystem identity captured when the scan result is created. Deletion
+    /// is allowed only while this exact directory entry still has the same
+    /// device/inode/type/owner identity.
+    let fileIdentity: FileIdentity?
+
+    init(
+        name: String,
+        path: String,
+        size: Int64,
+        category: CleaningCategory,
+        isSelected: Bool,
+        lastModified: Date?,
+        fileIdentity: FileIdentity? = nil
+    ) {
+        self.name = name
+        self.path = path
+        self.size = size
+        self.category = category
+        self.isSelected = isSelected
+        self.lastModified = lastModified
+
+        if let fileIdentity {
+            self.fileIdentity = fileIdentity
+        } else {
+            let policy = SecureDeletionPolicy(
+                userID: getuid(),
+                homeDirectory: FileManager.default.homeDirectoryForCurrentUser.path
+            )
+            let canonicalPath = (try? policy.canonicalPath(path)) ?? path
+            self.fileIdentity = FileIdentity.capture(path: canonicalPath)
+        }
+    }
 
     var formattedSize: String {
         ByteCountFormatter.string(fromByteCount: size, countStyle: .file)

@@ -1,31 +1,83 @@
+import Darwin
 import Foundation
 
 actor CleaningEngine {
     private let fileManager = FileManager.default
+    private let deletionPolicy: SecureDeletionPolicy
+    private let secureDeleter: SecureFileDeleter
+    private let privilegedClient: PrivilegedCleaningClient
+
+    init(privilegedClient: PrivilegedCleaningClient = PrivilegedCleaningClient()) {
+        let policy = SecureDeletionPolicy(
+            userID: getuid(),
+            homeDirectory: FileManager.default.homeDirectoryForCurrentUser.path
+        )
+        deletionPolicy = policy
+        secureDeleter = SecureFileDeleter(policy: policy)
+        self.privilegedClient = privilegedClient
+    }
 
     struct CleaningResult {
         var freedSpace: Int64 = 0
         var itemsCleaned: Int = 0
         var errors: [String] = []
         var cleanedPaths: Set<String> = []
-        // Items that user-level FileManager.removeItem refused with EACCES /
-        // EPERM. These are root-owned and need an admin-privileged second
-        // pass via cleanWithAdminPrivileges(items:).
+        // Paths whose identity lookup was explicitly denied during the
+        // unprivileged pass. Only these are eligible for an FDA retry; helper
+        // failures and policy rejections must not be mislabeled as TCC issues.
+        var fullDiskAccessPaths: Set<String> = []
+        // Items that the descriptor-based user-level pass refused with EACCES
+        // or EPERM. These need an authorized root-helper second pass.
         var requiresAdmin: [CleanableItem] = []
     }
 
     // MARK: - Public API
 
     func cleanItems(_ items: [CleanableItem], progressHandler: @Sendable (Double) -> Void) async -> CleaningResult {
+        let logger = await Logger.shared
+        do {
+            try await FilesystemMutationCoordinator.shared.acquire()
+        } catch {
+            var result = CleaningResult()
+            result.errors.append(error.localizedDescription)
+            logger.log(
+                "Cleaning blocked because the filesystem mutation lease failed: \(error.localizedDescription)",
+                level: .error
+            )
+            return result
+        }
+        let result = await cleanItemsHoldingMutationLease(
+            items,
+            logger: logger,
+            progressHandler: progressHandler
+        )
+        await FilesystemMutationCoordinator.shared.release()
+        return result
+    }
+
+    private func cleanItemsHoldingMutationLease(
+        _ items: [CleanableItem],
+        logger: Logger,
+        progressHandler: @Sendable (Double) -> Void
+    ) async -> CleaningResult {
         var result = CleaningResult()
         let total = items.count
+
+        do {
+            try await privilegedClient.ensureFilesystemIsReconciled()
+        } catch {
+            let detail = error.localizedDescription
+            result.errors.append(detail)
+            logger.log("Cleaning blocked by unresolved privileged deletion: \(detail)", level: .error)
+            return result
+        }
 
         for (index, item) in items.enumerated() {
             let progress = Double(index + 1) / Double(total)
             progressHandler(progress)
 
             if item.category == .purgeableSpace {
-                let purged = await purgePurgeableSpace()
+                let purged = purgePurgeableSpaceHoldingMutationLease(logger: logger)
                 result.freedSpace += purged
                 if purged > 0 { result.itemsCleaned += 1 }
                 // Purgeable space is a one-shot reclaim action, not a file
@@ -37,69 +89,87 @@ actor CleaningEngine {
             }
 
             do {
-                let itemURL = URL(fileURLWithPath: item.path)
-                guard fileManager.fileExists(atPath: item.path) else { continue }
-
-                // Security: resolve symlinks, validate the real path, delete
-                // through the resolved URL. Deleting through the unresolved
-                // path lets an attacker-at-same-UID swap a component to a
-                // symlink after the check and have us follow it.
-                let resolvedURL = itemURL.resolvingSymlinksInPath()
-                let resolved = resolvedURL.path
-
-                // Large files surfaced by scanLargeFiles are per-file items
-                // under Downloads/Documents/Desktop; those get a narrower check
-                // instead of the whole-subtree allow-list.
-                let pathAccepted: Bool = {
-                    if item.category == .largeFiles {
-                        return isExplicitSingleFileDeletable(resolvedPath: resolved)
+                let identity: FileIdentity
+                if let scannedIdentity = item.fileIdentity {
+                    identity = scannedIdentity
+                } else {
+                    // Synthetic scan rows (for example APFS purgeable space)
+                    // have no filesystem object. Real rows must carry the lstat
+                    // snapshot made when the row was created.
+                    switch FileIdentity.lookup(path: item.path) {
+                    case .missing:
+                        result.cleanedPaths.insert(item.path)
+                        continue
+                    case .found:
+                        throw SecureDeletionError.identityChanged(item.path)
+                    case let .failed(code):
+                        throw SecureDeletionError.posix(
+                            operation: "lstat",
+                            path: item.path,
+                            code: code
+                        )
                     }
-                    return isSafeToDelete(resolvedPath: resolved)
-                }()
-                guard pathAccepted else {
-                    let msg = "Skipped symlink or unsafe path: \(item.path) -> \(resolved)"
-                    Logger.shared.log(msg, level: .warning)
-                    result.errors.append(msg)
-                    continue
                 }
 
-                // Narrow the TOCTOU window: re-resolve right before the delete
-                // and require the resolved path to still match. Any concurrent
-                // swap between check and delete aborts the operation.
-                let reResolved = URL(fileURLWithPath: item.path).resolvingSymlinksInPath().path
-                guard reResolved == resolved else {
-                    let msg = "Aborting delete: path resolution changed between check and unlink for \(item.path)"
-                    Logger.shared.log(msg, level: .warning)
-                    result.errors.append(msg)
-                    continue
-                }
-
-                try fileManager.removeItem(at: resolvedURL)
+                let request = PrivilegedDeletionRequest(
+                    path: item.path,
+                    identity: identity,
+                    operation: item.category == .largeFiles ? .largeFile : .cleaner
+                )
+                try secureDeleter.remove(request)
                 result.freedSpace += item.size
                 result.itemsCleaned += 1
                 result.cleanedPaths.insert(item.path)
             } catch {
                 let nsError = error as NSError
                 let isPermissionDenied =
+                    ({
+                        if case let SecureDeletionError.posix(_, _, code) = error {
+                            return code == EACCES || code == EPERM
+                        }
+                        return false
+                    }()) ||
                     (nsError.domain == NSCocoaErrorDomain &&
                         (nsError.code == NSFileWriteNoPermissionError ||
                          nsError.code == NSFileReadNoPermissionError)) ||
                     (nsError.domain == NSPOSIXErrorDomain &&
                         (nsError.code == Int(EACCES) || nsError.code == Int(EPERM)))
                 if isPermissionDenied {
-                    // Defer to the admin pass — these are typically root-owned
-                    // system caches that the user-level process can't unlink.
-                    result.requiresAdmin.append(item)
-                    Logger.shared.log("Deferring to admin pass: \(item.path)", level: .info)
+                    if item.fileIdentity == nil {
+                        // Never ask root to delete an object whose scan identity
+                        // we could not capture. Keep it visible so the normal
+                        // survivor path can offer Full Disk Access instead.
+                        let detail = "Could not verify \(item.name) at \(item.path): \(error.localizedDescription)"
+                        result.errors.append(detail)
+                        result.fullDiskAccessPaths.insert(item.path)
+                        logger.log("Identity lookup denied: \(item.path)", level: .warning)
+                    } else {
+                        // Defer to the admin pass — these are typically root-owned
+                        // system caches that the user-level process can't unlink.
+                        result.requiresAdmin.append(item)
+                        logger.log("Deferring to admin pass: \(item.path)", level: .info)
+                    }
+                } else if case SecureDeletionError.topLevelMissing = error {
+                    // Only the initial top-level lstat may report an item as
+                    // already gone. Nested ENOENT races are handled inside the
+                    // walker and never count the whole request as cleaned.
+                    result.cleanedPaths.insert(item.path)
                 } else {
                     let detail = "\(item.name) at \(item.path): \(error.localizedDescription)"
                     result.errors.append(detail)
-                    Logger.shared.log("Clean failed: \(detail)", level: .error)
+                    logger.log("Clean failed: \(detail)", level: .error)
                 }
             }
         }
 
         return result
+    }
+
+    /// Used by uninstall's direct-to-Trash path, which bypasses `cleanItems`
+    /// for user-owned objects. It must observe the same write-ahead operation
+    /// fence before treating ENOENT as a successfully removed row.
+    func ensurePrivilegedDeletionsAreSettled() async throws {
+        try await privilegedClient.ensureFilesystemIsReconciled()
     }
 
     func cleanCategory(_ result: CategoryResult, progressHandler: @Sendable (Double) -> Void) async -> CleaningResult {
@@ -107,103 +177,137 @@ actor CleaningEngine {
         return await cleanItems(selectedItems, progressHandler: progressHandler)
     }
 
-    /// Re-runs the deletion of the supplied items as root via NSAppleScript's
-    /// "with administrator privileges" clause. Triggers exactly one auth
-    /// prompt for the whole batch (macOS caches the credential for ~5 min).
-    ///
-    /// Every path is re-validated against the same allow-list as the user-
-    /// level pass (isSafeToDelete / isExplicitSingleFileDeletable) before it
-    /// gets handed off to /bin/rm. Paths are passed via a NUL-separated
-    /// temp file consumed by xargs -0, so no shell-quoting pitfalls.
+    /// Re-runs the deletion through a root LaunchDaemon registered by
+    /// SMAppService. Requests travel as immutable XPC messages and include the
+    /// identity captured by the scanner. The helper independently validates
+    /// policy, owner, type and identity before descriptor-based unlinkat calls.
     func cleanWithAdminPrivileges(items: [CleanableItem]) async -> CleaningResult {
+        let logger = await Logger.shared
+        do {
+            try await FilesystemMutationCoordinator.shared.acquire()
+        } catch {
+            var result = CleaningResult()
+            result.errors.append(error.localizedDescription)
+            logger.log(
+                "Administrator cleaning blocked because the filesystem mutation lease failed: \(error.localizedDescription)",
+                level: .error
+            )
+            return result
+        }
+        let result = await cleanWithAdminPrivilegesHoldingMutationLease(
+            items: items,
+            logger: logger
+        )
+        await FilesystemMutationCoordinator.shared.release()
+        return result
+    }
+
+    private func cleanWithAdminPrivilegesHoldingMutationLease(
+        items: [CleanableItem],
+        logger: Logger
+    ) async -> CleaningResult {
         var result = CleaningResult()
 
-        Logger.shared.log("Admin pass starting with \(items.count) item(s)", level: .info)
+        logger.log("Admin pass starting with \(items.count) item(s)", level: .info)
 
-        // Re-validate. Don't trust the caller — anything not on the allow-list
-        // refuses to escalate.
-        let validated: [(item: CleanableItem, resolved: String)] = items.compactMap { item in
-            let resolved = URL(fileURLWithPath: item.path).resolvingSymlinksInPath().path
-            let accepted: Bool = {
-                if item.category == .largeFiles {
-                    return isExplicitSingleFileDeletable(resolvedPath: resolved)
-                }
-                return isSafeToDelete(resolvedPath: resolved) || isSafeUninstallEscalationPath(resolved)
-            }()
-            if !accepted {
-                Logger.shared.log("Refusing admin escalation for unsafe path: \(item.path)", level: .warning)
+        let validated: [(item: CleanableItem, request: PrivilegedDeletionRequest)] = items.compactMap { item in
+            guard let identity = item.fileIdentity else {
+                logger.log("Refusing admin escalation without scan identity: \(item.path)", level: .warning)
+                result.errors.append("\(item.name) changed or disappeared before administrator authorization")
+                return nil
             }
-            return accepted ? (item, resolved) : nil
+
+            let operations: [PrivilegedDeletionOperation]
+            if item.category == .largeFiles {
+                operations = [.largeFile]
+            } else {
+                // App-uninstall rows currently use .systemJunk. Try the normal
+                // cleaner policy first, then the deliberately narrower
+                // uninstall policy for bundles/receipts/launch plists.
+                operations = [.cleaner, .uninstall]
+            }
+
+            for operation in operations {
+                let request = PrivilegedDeletionRequest(
+                    path: item.path,
+                    identity: identity,
+                    operation: operation
+                )
+                if (try? deletionPolicy.validate(request)) != nil {
+                    return (item, request)
+                }
+            }
+
+            logger.log("Refusing admin escalation for unsafe path: \(item.path)", level: .warning)
+            result.errors.append("Refused unsafe administrator deletion: \(item.path)")
+            return nil
         }
         guard !validated.isEmpty else {
-            Logger.shared.log("Admin pass: no items survived validation", level: .warning)
+            logger.log("Admin pass: no items survived validation", level: .warning)
             return result
         }
 
-        // Stage paths NUL-separated so newlines/spaces in paths don't matter.
-        let staged = validated.map(\.resolved).joined(separator: "\u{0}")
-        guard let payload = staged.data(using: .utf8) else { return result }
-
-        let tempFile = FileManager.default.temporaryDirectory
-            .appendingPathComponent("puremac-rm-\(UUID().uuidString)")
+        let responses: [PrivilegedDeletionResponse]
         do {
-            try payload.write(to: tempFile, options: [.atomic])
+            responses = try await privilegedClient.deleteItems(validated.map(\.request))
         } catch {
-            Logger.shared.log("Couldn't stage admin path list: \(error.localizedDescription)", level: .error)
-            return result
-        }
-        defer { try? FileManager.default.removeItem(at: tempFile) }
-
-        let quotedTempPath = shellSingleQuoted(tempFile.path)
-        let script = """
-        do shell script "/usr/bin/xargs -0 /bin/rm -rf -- < \(quotedTempPath)" with administrator privileges
-        """
-
-        let runResult: (success: Bool, error: String?) = await withCheckedContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                let appleScript = NSAppleScript(source: script)
-                var errorInfo: NSDictionary?
-                appleScript?.executeAndReturnError(&errorInfo)
-                if let errorInfo {
-                    continuation.resume(returning: (false, "\(errorInfo)"))
-                } else {
-                    continuation.resume(returning: (true, nil))
-                }
-            }
-        }
-
-        guard runResult.success else {
-            // -128 is "user cancelled" — log quietly, no need for an error row.
-            if let err = runResult.error, !err.contains("-128") {
-                Logger.shared.log("Admin clean failed: \(err)", level: .error)
-                result.errors.append("Administrator authorization failed")
-            }
+            logger.log("Privileged helper failed: \(error.localizedDescription)", level: .error)
+            result.errors.append(error.localizedDescription)
             return result
         }
 
-        // Verify which items actually disappeared. xargs may have reported a
-        // partial failure even when the AppleScript exited cleanly, so we
-        // re-stat every path rather than trust the script's exit status.
-        for (item, resolved) in validated {
-            if !FileManager.default.fileExists(atPath: resolved) {
+        guard responses.count == validated.count else {
+            result.errors.append("Privileged helper returned an incomplete response")
+            logger.log("Admin pass returned \(responses.count) response(s) for \(validated.count) request(s)", level: .error)
+            return result
+        }
+
+        for ((item, request), response) in zip(validated, responses) {
+            guard response.requestID == request.id, response.path == request.path else {
+                result.errors.append("Privileged helper returned a response for the wrong item")
+                continue
+            }
+            switch response.status {
+            case .deleted:
                 result.cleanedPaths.insert(item.path)
                 result.itemsCleaned += 1
                 result.freedSpace += item.size
-            } else {
-                let detail = "\(item.name) at \(item.path) survived admin removal"
+            case .missing:
+                // The item was already gone before the helper's initial
+                // descriptor lookup. Treat the UI row as handled, but do not
+                // claim bytes or a deletion that this run did not perform.
+                result.cleanedPaths.insert(item.path)
+            case .rejected, .failed, .unknown:
+                let detail = response.message ?? "\(item.name) at \(item.path) survived administrator removal"
                 result.errors.append(detail)
-                Logger.shared.log("Admin pass survivor: \(detail)", level: .error)
+                logger.log("Admin pass survivor: \(detail)", level: .error)
             }
         }
-        Logger.shared.log("Admin pass complete: \(result.itemsCleaned) deleted, \(result.errors.count) survived", level: .info)
+        logger.log("Admin pass complete: \(result.itemsCleaned) deleted, \(result.errors.count) survived", level: .info)
         return result
     }
 
     // MARK: - Purgeable Space
 
     func purgePurgeableSpace() async -> Int64 {
+        let logger = await Logger.shared
+        do {
+            try await FilesystemMutationCoordinator.shared.acquire()
+        } catch {
+            logger.log(
+                "Purgeable-space cleanup blocked because the filesystem mutation lease failed: \(error.localizedDescription)",
+                level: .error
+            )
+            return 0
+        }
+        let result = purgePurgeableSpaceHoldingMutationLease(logger: logger)
+        await FilesystemMutationCoordinator.shared.release()
+        return result
+    }
+
+    private func purgePurgeableSpaceHoldingMutationLease(logger: Logger) -> Int64 {
         // Get current purgeable space first
-        let beforeFree = getCurrentFreeSpace()
+        let beforeFree = getCurrentFreeSpace(logger: logger)
 
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/sbin/diskutil")
@@ -216,11 +320,11 @@ actor CleaningEngine {
             try task.run()
             task.waitUntilExit()
 
-            let afterFree = getCurrentFreeSpace()
+            let afterFree = getCurrentFreeSpace(logger: logger)
             let freedSpace = afterFree - beforeFree
             return max(0, freedSpace)
         } catch {
-            Logger.shared.log("diskutil purge failed: \(error.localizedDescription)", level: .error)
+            logger.log("diskutil purge failed: \(error.localizedDescription)", level: .error)
             return 0
         }
     }
@@ -228,6 +332,32 @@ actor CleaningEngine {
     // MARK: - Trash
 
     func emptyTrash() async -> Int64 {
+        let logger = await Logger.shared
+        do {
+            try await FilesystemMutationCoordinator.shared.acquire()
+        } catch {
+            logger.log(
+                "Trash cleanup blocked because the filesystem mutation lease failed: \(error.localizedDescription)",
+                level: .error
+            )
+            return 0
+        }
+        do {
+            try await privilegedClient.ensureFilesystemIsReconciled()
+        } catch {
+            await FilesystemMutationCoordinator.shared.release()
+            logger.log(
+                "Trash cleanup blocked by unresolved privileged deletion: \(error.localizedDescription)",
+                level: .error
+            )
+            return 0
+        }
+        let result = emptyTrashHoldingMutationLease(logger: logger)
+        await FilesystemMutationCoordinator.shared.release()
+        return result
+    }
+
+    private func emptyTrashHoldingMutationLease(logger: Logger) -> Int64 {
         let home = fileManager.homeDirectoryForCurrentUser.path
         let trashPath = "\(home)/.Trash"
         var totalFreed: Int64 = 0
@@ -242,7 +372,7 @@ actor CleaningEngine {
                 try fileManager.removeItem(atPath: fullPath)
             }
         } catch {
-            Logger.shared.log("Trash cleanup incomplete: \(error.localizedDescription)", level: .warning)
+            logger.log("Trash cleanup incomplete: \(error.localizedDescription)", level: .warning)
         }
 
         return totalFreed
@@ -250,124 +380,12 @@ actor CleaningEngine {
 
     // MARK: - Helpers
 
-    /// Validates that a resolved path is safe to delete.
-    /// Prevents symlink attacks where a link in ~/Library/Caches points to ~/.ssh.
-    /// Downloads, Documents, and Desktop are intentionally NOT whole-subtree
-    /// allow-listed - scanLargeFiles emits per-file items instead, so those
-    /// deletions can still happen through the explicit per-item flow.
-    private func isSafeToDelete(resolvedPath: String) -> Bool {
-        let home = fileManager.homeDirectoryForCurrentUser.path
-        let allowedRoots = [
-            "\(home)/Library/Caches",
-            "\(home)/Library/Logs",
-            "\(home)/Library/Saved Application State",
-            "\(home)/Library/HTTPStorages",
-            "\(home)/Library/WebKit",
-            "\(home)/Library/Containers",
-            "\(home)/Library/Group Containers",
-            "\(home)/Library/Application Support",
-            "\(home)/Library/Preferences",
-            "\(home)/Library/LaunchAgents",
-            "\(home)/Library/Mail Downloads",
-            "\(home)/Library/Developer/Xcode/DerivedData",
-            "\(home)/Library/Developer/Xcode/Archives",
-            "\(home)/Library/Developer/CoreSimulator/Caches",
-            "\(home)/.Trash",
-            "\(home)/.npm",
-            "\(home)/.cache",
-            "\(home)/Library/Containers/com.docker.docker",
-            "/Library/Caches",
-            "/Library/Logs",
-            "/private/var/log",
-            "/private/var/tmp",
-            // /var is a symlink to /private/var, and resolvingSymlinksInPath
-            // gives the /var form. Both spellings must be allow-listed or
-            // every system log/tmp deletion silently fails the safety check.
-            "/var/log",
-            "/var/tmp",
-            "/tmp",
-        ]
-        // Either the path equals an allow-listed root (whole-subtree wipe by
-        // the scanner that emits the root itself, e.g. DerivedData) or it
-        // sits strictly inside one. The trailing "/" on the prefix match
-        // prevents siblings like "/tmpfoo" from sneaking past "/tmp".
-        let normalized = (resolvedPath as NSString).standardizingPath
-        return allowedRoots.contains { root in
-            if normalized == root { return true }
-            let rootWithSeparator = root.hasSuffix("/") ? root : root + "/"
-            return normalized.hasPrefix(rootWithSeparator)
-        }
-    }
-
-    /// Allows the app uninstaller to escalate only the protected roots it owns:
-    /// app bundles, package receipts, and launch plists. This intentionally
-    /// stays narrower than the normal cleaner allow-list.
-    private func isSafeUninstallEscalationPath(_ path: String) -> Bool {
-        let normalized = (path as NSString).standardizingPath
-        let home = fileManager.homeDirectoryForCurrentUser.path
-
-        return isAppBundlePath(normalized, rootedAt: "/Applications")
-            || isAppBundlePath(normalized, rootedAt: "\(home)/Applications")
-            || isReceiptPath(normalized, rootedAt: "/private/var/db/receipts")
-            || isReceiptPath(normalized, rootedAt: "/var/db/receipts")
-            || isPlistUnder(normalized, root: "/Library/LaunchDaemons")
-            || isPlistUnder(normalized, root: "/Library/LaunchAgents")
-    }
-
-    private func isAppBundlePath(_ path: String, rootedAt root: String) -> Bool {
-        guard isInside(path, root: root) else { return false }
-        let normalizedRoot = (root as NSString).standardizingPath
-        guard path != normalizedRoot else { return false }
-        let rootWithSeparator = normalizedRoot.hasSuffix("/") ? normalizedRoot : normalizedRoot + "/"
-        let relative = String(path.dropFirst(rootWithSeparator.count))
-        return relative.split(separator: "/").contains { component in
-            component.lowercased().hasSuffix(".app")
-        }
-    }
-
-    private func isReceiptPath(_ path: String, rootedAt root: String) -> Bool {
-        let parent = ((path as NSString).deletingLastPathComponent as NSString).standardizingPath
-        guard parent == (root as NSString).standardizingPath else { return false }
-        let ext = (path as NSString).pathExtension.lowercased()
-        return ext == "plist" || ext == "bom"
-    }
-
-    private func isPlistUnder(_ path: String, root: String) -> Bool {
-        let parent = ((path as NSString).deletingLastPathComponent as NSString).standardizingPath
-        return parent == (root as NSString).standardizingPath && (path as NSString).pathExtension.lowercased() == "plist"
-    }
-
-    private func isInside(_ path: String, root: String) -> Bool {
-        let normalizedRoot = (root as NSString).standardizingPath
-        if path == normalizedRoot { return true }
-        let rootWithSeparator = normalizedRoot.hasSuffix("/") ? normalizedRoot : normalizedRoot + "/"
-        return path.hasPrefix(rootWithSeparator)
-    }
-
-    private func shellSingleQuoted(_ value: String) -> String {
-        "'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'"
-    }
-
-    /// Allow a single-file delete under Downloads/Documents/Desktop when it
-    /// was explicitly surfaced by a scanner (e.g. scanLargeFiles). Whole-subtree
-    /// deletion of those roots remains blocked.
-    func isExplicitSingleFileDeletable(resolvedPath: String) -> Bool {
-        let home = fileManager.homeDirectoryForCurrentUser.path
-        let perFileRoots = [
-            "\(home)/Downloads/",
-            "\(home)/Documents/",
-            "\(home)/Desktop/",
-        ]
-        let normalized = (resolvedPath as NSString).standardizingPath
-        return perFileRoots.contains { normalized.hasPrefix($0) }
-    }
-
-    private func getCurrentFreeSpace() -> Int64 {
+    private func getCurrentFreeSpace(logger: Logger) -> Int64 {
         do {
             let attrs = try fileManager.attributesOfFileSystem(forPath: "/")
             return (attrs[.systemFreeSize] as? Int64) ?? 0
         } catch {
-            Logger.shared.log("Cannot read filesystem attributes: \(error.localizedDescription)", level: .warning)
+            logger.log("Cannot read filesystem attributes: \(error.localizedDescription)", level: .warning)
             return 0
         }
     }

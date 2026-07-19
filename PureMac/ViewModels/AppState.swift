@@ -1,3 +1,4 @@
+import Darwin
 import SwiftUI
 import Combine
 import UserNotifications
@@ -25,6 +26,540 @@ enum ExternalUninstallBuffer {
     // Written by the Finder Services handler and drained by AppState — both
     // run on the main thread, so a plain static is sufficient here.
     static var pendingPath: String?
+}
+
+/// An identity-bound source entry prepared for a later move to the user's
+/// Trash. Keeping the lstat snapshot separate from the mutation lets a whole
+/// uninstall batch be frozen before its first filesystem change.
+struct SecureTrashCandidate: Sendable {
+    let originalURL: URL
+    let canonicalPath: String
+    let identity: FileIdentity
+}
+
+enum SecureTrashMoveError: LocalizedError, Equatable {
+    case invalidPath(String)
+    case missing(String)
+    case unsupportedType(String)
+    case identityChanged(String)
+    case unsafeTrash(String)
+    case crossedDeviceBoundary(String)
+    case recoveryFailed(String)
+    case posix(operation: String, path: String, code: Int32)
+
+    var isPermissionDenied: Bool {
+        if case let .posix(_, _, code) = self {
+            return code == EACCES || code == EPERM
+        }
+        return false
+    }
+
+    var errorDescription: String? {
+        switch self {
+        case let .invalidPath(path):
+            return "Invalid Trash source path: \(path)"
+        case let .missing(path):
+            return "The item disappeared before it could be moved to Trash: \(path)"
+        case let .unsupportedType(path):
+            return "Unsupported filesystem object type: \(path)"
+        case let .identityChanged(path):
+            return "The item changed before it could be moved to Trash: \(path)"
+        case let .unsafeTrash(path):
+            return "The Trash directory is not safe to use: \(path)"
+        case let .crossedDeviceBoundary(path):
+            return "The item is on a different volume from the user's Trash: \(path)"
+        case let .recoveryFailed(path):
+            return "A raced item could not be restored safely after a Trash move: \(path)"
+        case let .posix(operation, path, code):
+            return "\(operation) failed for \(path): \(String(cString: strerror(code)))"
+        }
+    }
+}
+
+/// Moves an exact lstat identity into ~/.Trash without asking Foundation to
+/// resolve the source pathname again. Every parent component is opened with
+/// O_NOFOLLOW, the leaf is held by a no-follow descriptor, and renameatx_np is
+/// performed relative to the verified source/Trash directory descriptors.
+struct SecureTrashMover: Sendable {
+    private struct OpenTrash {
+        let homeFD: Int32
+        let trashFD: Int32
+        let identity: FileIdentity
+        let path: String
+    }
+
+    private let policy: SecureDeletionPolicy
+    private let homeDirectory: String
+    private let userID: uid_t
+    private let beforeRevalidation: (@Sendable () throws -> Void)?
+    private let afterRevalidationBeforeRename: (@Sendable () throws -> Void)?
+
+    init(
+        homeDirectory: String = FileManager.default.homeDirectoryForCurrentUser.path,
+        userID: uid_t = getuid(),
+        beforeRevalidation: (@Sendable () throws -> Void)? = nil,
+        afterRevalidationBeforeRename: (@Sendable () throws -> Void)? = nil
+    ) {
+        self.homeDirectory = homeDirectory
+        self.userID = userID
+        policy = SecureDeletionPolicy(userID: userID, homeDirectory: homeDirectory)
+        self.beforeRevalidation = beforeRevalidation
+        self.afterRevalidationBeforeRename = afterRevalidationBeforeRename
+    }
+
+    func prepare(_ url: URL) throws -> SecureTrashCandidate {
+        let path: String
+        do {
+            path = try policy.canonicalPath(url.path)
+        } catch {
+            throw SecureTrashMoveError.invalidPath(url.path)
+        }
+
+        let identity: FileIdentity
+        switch FileIdentity.lookup(path: path) {
+        case let .found(found):
+            identity = found
+        case .missing:
+            throw SecureTrashMoveError.missing(path)
+        case let .failed(code):
+            throw SecureTrashMoveError.posix(operation: "lstat", path: path, code: code)
+        }
+
+        guard identity.isDirectory || identity.isRegularFile || identity.isSymbolicLink else {
+            throw SecureTrashMoveError.unsupportedType(path)
+        }
+        return SecureTrashCandidate(
+            originalURL: url,
+            canonicalPath: path,
+            identity: identity
+        )
+    }
+
+    @discardableResult
+    func moveToTrash(_ candidate: SecureTrashCandidate) throws -> URL {
+        let source = try openSource(candidate)
+        defer { Darwin.close(source.parentFD) }
+        defer { Darwin.close(source.leafFD) }
+
+        let trash = try openTrashDirectory()
+        defer { Darwin.close(trash.trashFD) }
+        defer { Darwin.close(trash.homeFD) }
+
+        guard candidate.identity.device == trash.identity.device else {
+            throw SecureTrashMoveError.crossedDeviceBoundary(candidate.canonicalPath)
+        }
+        guard !isAncestor(candidate.canonicalPath, of: trash.path) else {
+            throw SecureTrashMoveError.unsafeTrash(trash.path)
+        }
+
+        try beforeRevalidation?()
+        try verifySource(
+            parentFD: source.parentFD,
+            leafFD: source.leafFD,
+            name: source.name,
+            expected: candidate.identity,
+            path: candidate.canonicalPath
+        )
+        try verifyTrashIsStillReachable(trash)
+
+        // This hook exists solely for deterministic security tests. Shipping
+        // callers leave it nil, so renameatx_np follows the final fstatat
+        // revalidation immediately.
+        try afterRevalidationBeforeRename?()
+
+        let destinationName = try renameExclusivelyToTrash(
+            sourceParentFD: source.parentFD,
+            sourceName: source.name,
+            sourcePath: candidate.canonicalPath,
+            trashFD: trash.trashFD
+        )
+
+        do {
+            let movedIdentity = try identityAt(
+                parentFD: trash.trashFD,
+                name: destinationName,
+                path: candidate.canonicalPath
+            )
+            guard movedIdentity == candidate.identity else {
+                try restoreUnexpectedMove(
+                    trashFD: trash.trashFD,
+                    trashName: destinationName,
+                    movedIdentity: movedIdentity,
+                    sourceParentFD: source.parentFD,
+                    sourceName: source.name,
+                    sourcePath: candidate.canonicalPath
+                )
+                throw SecureTrashMoveError.identityChanged(candidate.canonicalPath)
+            }
+
+            do {
+                try verifyTrashIsStillReachable(trash)
+            } catch {
+                try restoreUnexpectedMove(
+                    trashFD: trash.trashFD,
+                    trashName: destinationName,
+                    movedIdentity: movedIdentity,
+                    sourceParentFD: source.parentFD,
+                    sourceName: source.name,
+                    sourcePath: candidate.canonicalPath
+                )
+                throw error
+            }
+        } catch let error as SecureTrashMoveError {
+            throw error
+        } catch {
+            throw SecureTrashMoveError.recoveryFailed(candidate.canonicalPath)
+        }
+
+        return URL(fileURLWithPath: trash.path).appendingPathComponent(
+            destinationName,
+            isDirectory: candidate.identity.isDirectory
+        )
+    }
+
+    private func openSource(
+        _ candidate: SecureTrashCandidate
+    ) throws -> (parentFD: Int32, leafFD: Int32, name: String) {
+        let components = candidate.canonicalPath.split(separator: "/").map(String.init)
+        guard let name = components.last else {
+            throw SecureTrashMoveError.invalidPath(candidate.canonicalPath)
+        }
+
+        let parentFD = try openDirectoryComponents(
+            Array(components.dropLast()),
+            displayPath: candidate.canonicalPath
+        )
+        do {
+            var flags = O_EVTONLY | O_CLOEXEC
+            if candidate.identity.isDirectory {
+                flags |= O_DIRECTORY | O_NOFOLLOW
+            } else if candidate.identity.isSymbolicLink {
+                // O_SYMLINK opens the link vnode itself. Darwin rejects the
+                // redundant O_NOFOLLOW combination with ELOOP.
+                flags |= O_SYMLINK
+            } else {
+                flags |= O_NOFOLLOW
+            }
+            let leafFD = name.withCString { pointer in
+                Darwin.openat(parentFD, pointer, flags)
+            }
+            guard leafFD >= 0 else {
+                let code = errno
+                if code == ENOENT {
+                    throw SecureTrashMoveError.identityChanged(candidate.canonicalPath)
+                }
+                throw SecureTrashMoveError.posix(
+                    operation: "openat",
+                    path: candidate.canonicalPath,
+                    code: code
+                )
+            }
+            do {
+                let descriptorIdentity = try identityOfDescriptor(
+                    leafFD,
+                    path: candidate.canonicalPath
+                )
+                guard descriptorIdentity == candidate.identity else {
+                    throw SecureTrashMoveError.identityChanged(candidate.canonicalPath)
+                }
+                return (parentFD, leafFD, name)
+            } catch {
+                Darwin.close(leafFD)
+                throw error
+            }
+        } catch {
+            Darwin.close(parentFD)
+            throw error
+        }
+    }
+
+    private func openTrashDirectory() throws -> OpenTrash {
+        let canonicalHome: String
+        do {
+            canonicalHome = try policy.canonicalPath(homeDirectory)
+        } catch {
+            throw SecureTrashMoveError.unsafeTrash(homeDirectory)
+        }
+        let homeComponents = canonicalHome.split(separator: "/").map(String.init)
+        let homeFD = try openDirectoryComponents(homeComponents, displayPath: canonicalHome)
+
+        do {
+            let homeIdentity = try identityOfDescriptor(homeFD, path: canonicalHome)
+            guard homeIdentity.isDirectory, homeIdentity.owner == UInt32(userID) else {
+                throw SecureTrashMoveError.unsafeTrash(canonicalHome)
+            }
+
+            let trashName = ".Trash"
+            var trashFD = trashName.withCString { pointer in
+                Darwin.openat(
+                    homeFD,
+                    pointer,
+                    O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC
+                )
+            }
+            if trashFD < 0, errno == ENOENT {
+                let createStatus = trashName.withCString { pointer in
+                    Darwin.mkdirat(homeFD, pointer, mode_t(S_IRWXU))
+                }
+                if createStatus != 0, errno != EEXIST {
+                    throw SecureTrashMoveError.posix(
+                        operation: "mkdirat",
+                        path: canonicalHome + "/.Trash",
+                        code: errno
+                    )
+                }
+                trashFD = trashName.withCString { pointer in
+                    Darwin.openat(
+                        homeFD,
+                        pointer,
+                        O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC
+                    )
+                }
+            }
+            guard trashFD >= 0 else {
+                throw SecureTrashMoveError.posix(
+                    operation: "openat",
+                    path: canonicalHome + "/.Trash",
+                    code: errno
+                )
+            }
+
+            do {
+                var info = stat()
+                guard Darwin.fstat(trashFD, &info) == 0 else {
+                    throw SecureTrashMoveError.posix(
+                        operation: "fstat",
+                        path: canonicalHome + "/.Trash",
+                        code: errno
+                    )
+                }
+                let identity = FileIdentity(stat: info)
+                let permissionBits = info.st_mode & mode_t(0o077)
+                guard identity.isDirectory,
+                      identity.owner == UInt32(userID),
+                      permissionBits == 0
+                else {
+                    throw SecureTrashMoveError.unsafeTrash(canonicalHome + "/.Trash")
+                }
+                return OpenTrash(
+                    homeFD: homeFD,
+                    trashFD: trashFD,
+                    identity: identity,
+                    path: canonicalHome + "/.Trash"
+                )
+            } catch {
+                Darwin.close(trashFD)
+                throw error
+            }
+        } catch {
+            Darwin.close(homeFD)
+            throw error
+        }
+    }
+
+    private func openDirectoryComponents(
+        _ components: [String],
+        displayPath: String
+    ) throws -> Int32 {
+        var currentFD = Darwin.open(
+            "/",
+            O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC
+        )
+        guard currentFD >= 0 else {
+            throw SecureTrashMoveError.posix(operation: "open", path: "/", code: errno)
+        }
+
+        var traversed = ""
+        do {
+            for component in components {
+                traversed += "/" + component
+                let nextFD = component.withCString { pointer in
+                    Darwin.openat(
+                        currentFD,
+                        pointer,
+                        O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC
+                    )
+                }
+                guard nextFD >= 0 else {
+                    throw SecureTrashMoveError.posix(
+                        operation: "openat",
+                        path: traversed,
+                        code: errno
+                    )
+                }
+                Darwin.close(currentFD)
+                currentFD = nextFD
+            }
+            return currentFD
+        } catch {
+            Darwin.close(currentFD)
+            throw error
+        }
+    }
+
+    private func verifySource(
+        parentFD: Int32,
+        leafFD: Int32,
+        name: String,
+        expected: FileIdentity,
+        path: String
+    ) throws {
+        guard try identityOfDescriptor(leafFD, path: path) == expected,
+              try identityAt(parentFD: parentFD, name: name, path: path) == expected
+        else {
+            throw SecureTrashMoveError.identityChanged(path)
+        }
+    }
+
+    private func verifyTrashIsStillReachable(_ trash: OpenTrash) throws {
+        let visibleIdentity = try identityAt(
+            parentFD: trash.homeFD,
+            name: ".Trash",
+            path: trash.path
+        )
+        guard visibleIdentity == trash.identity else {
+            throw SecureTrashMoveError.unsafeTrash(trash.path)
+        }
+    }
+
+    private func renameExclusivelyToTrash(
+        sourceParentFD: Int32,
+        sourceName: String,
+        sourcePath: String,
+        trashFD: Int32
+    ) throws -> String {
+        for attempt in 0..<8 {
+            let destinationName = attempt == 0
+                ? sourceName
+                : collisionSafeName(for: sourceName)
+            let status = sourceName.withCString { sourcePointer in
+                destinationName.withCString { destinationPointer in
+                    Darwin.renameatx_np(
+                        sourceParentFD,
+                        sourcePointer,
+                        trashFD,
+                        destinationPointer,
+                        UInt32(RENAME_EXCL)
+                    )
+                }
+            }
+            if status == 0 { return destinationName }
+
+            let code = errno
+            if code == EEXIST { continue }
+            if code == ENOENT {
+                throw SecureTrashMoveError.identityChanged(sourcePath)
+            }
+            if code == EXDEV {
+                throw SecureTrashMoveError.crossedDeviceBoundary(sourcePath)
+            }
+            throw SecureTrashMoveError.posix(
+                operation: "renameatx_np",
+                path: sourcePath,
+                code: code
+            )
+        }
+        throw SecureTrashMoveError.posix(
+            operation: "renameatx_np",
+            path: sourcePath,
+            code: EEXIST
+        )
+    }
+
+    private func restoreUnexpectedMove(
+        trashFD: Int32,
+        trashName: String,
+        movedIdentity: FileIdentity,
+        sourceParentFD: Int32,
+        sourceName: String,
+        sourcePath: String
+    ) throws {
+        guard try identityAt(
+            parentFD: trashFD,
+            name: trashName,
+            path: sourcePath
+        ) == movedIdentity else {
+            throw SecureTrashMoveError.recoveryFailed(sourcePath)
+        }
+
+        let status = trashName.withCString { trashPointer in
+            sourceName.withCString { sourcePointer in
+                Darwin.renameatx_np(
+                    trashFD,
+                    trashPointer,
+                    sourceParentFD,
+                    sourcePointer,
+                    UInt32(RENAME_EXCL)
+                )
+            }
+        }
+        guard status == 0,
+              try identityAt(
+                  parentFD: sourceParentFD,
+                  name: sourceName,
+                  path: sourcePath
+              ) == movedIdentity
+        else {
+            throw SecureTrashMoveError.recoveryFailed(sourcePath)
+        }
+    }
+
+    private func identityAt(
+        parentFD: Int32,
+        name: String,
+        path: String
+    ) throws -> FileIdentity {
+        var info = stat()
+        let status = name.withCString { pointer in
+            Darwin.fstatat(parentFD, pointer, &info, AT_SYMLINK_NOFOLLOW)
+        }
+        guard status == 0 else {
+            let code = errno
+            if code == ENOENT {
+                throw SecureTrashMoveError.identityChanged(path)
+            }
+            throw SecureTrashMoveError.posix(
+                operation: "fstatat",
+                path: path,
+                code: code
+            )
+        }
+        return FileIdentity(stat: info)
+    }
+
+    private func identityOfDescriptor(_ descriptor: Int32, path: String) throws -> FileIdentity {
+        var info = stat()
+        guard Darwin.fstat(descriptor, &info) == 0 else {
+            throw SecureTrashMoveError.posix(
+                operation: "fstat",
+                path: path,
+                code: errno
+            )
+        }
+        return FileIdentity(stat: info)
+    }
+
+    private func collisionSafeName(for originalName: String) -> String {
+        let original = originalName as NSString
+        let pathExtension = original.pathExtension
+        let extensionSuffix = pathExtension.isEmpty ? "" : "." + pathExtension
+        let suffix = " \(UUID().uuidString)" + extensionSuffix
+        let stem = pathExtension.isEmpty
+            ? originalName
+            : original.deletingPathExtension
+        let maximumStemBytes = max(1, Int(NAME_MAX) - suffix.utf8.count)
+        var shortened = ""
+        for character in stem {
+            let candidate = shortened + String(character)
+            guard candidate.utf8.count <= maximumStemBytes else { break }
+            shortened = candidate
+        }
+        return shortened + suffix
+    }
+
+    private func isAncestor(_ possibleAncestor: String, of path: String) -> Bool {
+        possibleAncestor == path || path.hasPrefix(possibleAncestor + "/")
+    }
 }
 
 /// Standalone observable for the live scan-path ticker. The scan engine reports
@@ -70,9 +605,9 @@ final class AppState: ObservableObject {
     @Published var hasFullDiskAccess: Bool = true
     @Published var fdaBannerDismissed: Bool = false
     @Published var cleanError: String?
-    /// True when the most recent clean error is rooted in a TCC/FDA refusal
-    /// (i.e. items survived even the admin pass). MainWindow uses this to
-    /// route the user into the PermissionSheet instead of the generic alert.
+    /// True only when every surviving item has an explicit TCC/FDA denial
+    /// from the user-level identity lookup. MainWindow uses this to route the
+    /// user into PermissionSheet instead of the generic alert.
     @Published var cleanErrorIsFDAFixable: Bool = false
     /// Items that survived the most recent clean attempt — used to re-run the
     /// operation after the user grants Full Disk Access without forcing them
@@ -288,81 +823,152 @@ final class AppState: ObservableObject {
             }
             return
         }
-        trashDirectly(urls: urls) { [weak self] removed, needsFullDiskAccess, needsAdmin, failed in
-            Task { @MainActor in
-                guard let self else { return }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                try await FilesystemMutationCoordinator.shared.acquire()
+            } catch {
+                self.removalError = error.localizedDescription
+                Logger.shared.log(
+                    "Uninstall blocked because the filesystem mutation lease failed: \(error.localizedDescription)",
+                    level: .error
+                )
+                return
+            }
+            let directResult: DirectTrashResult
+            do {
+                try await self.cleaningEngine.ensurePrivilegedDeletionsAreSettled()
+                directResult = await self.trashDirectly(urls: urls)
+            } catch {
+                await FilesystemMutationCoordinator.shared.release()
+                self.removalError = error.localizedDescription
+                Logger.shared.log(
+                    "Uninstall blocked by unresolved privileged deletion: \(error.localizedDescription)",
+                    level: .error
+                )
+                return
+            }
+            await FilesystemMutationCoordinator.shared.release()
 
-                self.applyRemovedAppFiles(removed)
+            self.applyRemovedAppFiles(directResult.removed)
 
-                guard !needsAdmin.isEmpty else {
-                    self.finishRemoval(
-                        removedAny: !removed.isEmpty,
-                        needsFullDiskAccess: needsFullDiskAccess,
-                        attemptedAdmin: false,
-                        failed: failed,
-                        adminError: nil
-                    )
-                    return
-                }
-
-                let items = needsAdmin.map { self.cleanableUninstallItem(for: $0) }
-                let adminResult = await self.cleaningEngine.cleanWithAdminPrivileges(items: items)
-                let adminRemoved = needsAdmin.filter { adminResult.cleanedPaths.contains($0.path) }
-                let adminFailed = needsAdmin.filter { !adminResult.cleanedPaths.contains($0.path) }
-
-                self.applyRemovedAppFiles(adminRemoved)
-                for url in adminRemoved {
-                    Logger.shared.log("Removed \(url.path) with administrator privileges", level: .info)
-                }
-
+            guard !directResult.needsAdmin.isEmpty else {
                 self.finishRemoval(
-                    removedAny: !removed.isEmpty || !adminRemoved.isEmpty,
-                    needsFullDiskAccess: needsFullDiskAccess,
-                    attemptedAdmin: true,
-                    failed: failed + adminFailed,
-                    adminError: adminResult.errors.joined(separator: "; ")
+                    removedAny: !directResult.removed.isEmpty,
+                    fullDiskAccessDenied: directResult.fullDiskAccessDenied,
+                    ordinaryFailures: directResult.failures,
+                    adminFailures: [],
+                    adminError: nil
+                )
+                return
+            }
+
+            let items = directResult.needsAdmin.map {
+                self.cleanableUninstallItem(
+                    for: URL(fileURLWithPath: $0.canonicalPath),
+                    fileIdentity: $0.identity
                 )
             }
+            let adminResult = await self.cleaningEngine.cleanWithAdminPrivileges(items: items)
+            let adminRemoved = directResult.needsAdmin.filter {
+                adminResult.cleanedPaths.contains($0.canonicalPath)
+            }.map(\.originalURL)
+            let adminFailed = directResult.needsAdmin.filter {
+                !adminResult.cleanedPaths.contains($0.canonicalPath)
+            }.map(\.originalURL)
+
+            self.applyRemovedAppFiles(adminRemoved)
+            for url in adminRemoved {
+                Logger.shared.log("Removed \(url.path) with administrator privileges", level: .info)
+            }
+
+            self.finishRemoval(
+                removedAny: !directResult.removed.isEmpty || !adminRemoved.isEmpty,
+                fullDiskAccessDenied: directResult.fullDiskAccessDenied,
+                ordinaryFailures: directResult.failures,
+                adminFailures: adminFailed,
+                adminError: adminResult.errors.joined(separator: "; ")
+            )
         }
     }
 
-    /// Move files to the Trash via FileManager.trashItem so the syscall
-    /// originates from PureMac itself - TCC then registers PureMac in the
-    /// Full Disk Access list. The previous AppleScript-via-Finder bridge
-    /// caused the syscall to originate from Finder, which is why granting
-    /// FDA to PureMac made no difference (issue #75).
-    private func trashDirectly(urls: [URL], completion: @escaping ([URL], Bool, [URL], [URL]) -> Void) {
-        DispatchQueue.global(qos: .userInitiated).async {
-            let hasFullDiskAccess = FullDiskAccessManager.shared.hasFullDiskAccess
-            var removed: [URL] = []
-            var needsFullDiskAccess = false
-            var needsAdmin: [URL] = []
-            var failed: [URL] = []
+    private struct DirectTrashResult: Sendable {
+        let removed: [URL]
+        let fullDiskAccessDenied: [URL]
+        let needsAdmin: [SecureTrashCandidate]
+        let failures: [URL]
+    }
 
-            for url in urls {
-                var resulting: NSURL?
-                do {
-                    try FileManager.default.trashItem(at: url, resultingItemURL: &resulting)
-                    removed.append(url)
-                } catch {
-                    let nsError = error as NSError
-                    if Self.isMissingFileError(nsError) {
-                        Logger.shared.log("Trash skipped for \(url.path): file no longer exists", level: .info)
-                        removed.append(url)
-                    } else if Self.isPermissionDeniedError(nsError) {
-                        if hasFullDiskAccess || Self.isLikelyAdministratorRemovalPath(url) {
-                            needsAdmin.append(url)
+    /// Move exact lstat identities into ~/.Trash with descriptor-relative,
+    /// no-follow renames. This keeps the normal recoverable Trash UX while
+    /// ensuring neither Foundation nor Finder resolves a raced pathname.
+    private func trashDirectly(urls: [URL]) async -> DirectTrashResult {
+        let logger = Logger.shared
+        return await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                let hasFullDiskAccess = FullDiskAccessManager.shared.hasFullDiskAccess
+                let trashMover = SecureTrashMover()
+                var removed: [URL] = []
+                var fullDiskAccessDenied: [URL] = []
+                var needsAdmin: [SecureTrashCandidate] = []
+                var failed: [URL] = []
+                var candidates: [SecureTrashCandidate] = []
+
+                // Freeze every source identity before the first namespace
+                // mutation in this batch. A temporary ENOENT is deliberately
+                // retained as a failure, never promoted to "removed".
+                for url in urls {
+                    do {
+                        candidates.append(try trashMover.prepare(url))
+                    } catch {
+                        let nsError = error as NSError
+                        if Self.isPermissionDeniedError(nsError)
+                            || (error as? SecureTrashMoveError)?.isPermissionDenied == true {
+                            // No identity was captured, so root escalation is
+                            // forbidden. FDA + a fresh user-confirmed retry is
+                            // the only safe continuation.
+                            fullDiskAccessDenied.append(url)
                         } else {
-                            needsFullDiskAccess = true
+                            logger.log(
+                                "Trash preparation failed for \(url.path): \(error.localizedDescription)",
+                                level: .error
+                            )
                             failed.append(url)
                         }
-                    } else {
-                        Logger.shared.log("Trash failed for \(url.path): \(error.localizedDescription)", level: .error)
-                        failed.append(url)
                     }
                 }
+
+                for candidate in candidates {
+                    let url = candidate.originalURL
+                    do {
+                        _ = try trashMover.moveToTrash(candidate)
+                        removed.append(url)
+                    } catch {
+                        let nsError = error as NSError
+                        let permissionDenied = Self.isPermissionDeniedError(nsError)
+                            || (error as? SecureTrashMoveError)?.isPermissionDenied == true
+                        if permissionDenied {
+                            if hasFullDiskAccess || Self.isLikelyAdministratorRemovalPath(url) {
+                                needsAdmin.append(candidate)
+                            } else {
+                                fullDiskAccessDenied.append(url)
+                            }
+                        } else {
+                            logger.log(
+                                "Secure Trash move failed for \(url.path): \(error.localizedDescription)",
+                                level: .error
+                            )
+                            failed.append(url)
+                        }
+                    }
+                }
+                continuation.resume(returning: DirectTrashResult(
+                    removed: removed,
+                    fullDiskAccessDenied: fullDiskAccessDenied,
+                    needsAdmin: needsAdmin,
+                    failures: failed
+                ))
             }
-            completion(removed, needsFullDiskAccess, needsAdmin, failed)
         }
     }
 
@@ -384,26 +990,54 @@ final class AppState: ObservableObject {
 
     private func finishRemoval(
         removedAny: Bool,
-        needsFullDiskAccess: Bool,
-        attemptedAdmin: Bool,
-        failed: [URL],
+        fullDiskAccessDenied: [URL],
+        ordinaryFailures: [URL],
+        adminFailures: [URL],
         adminError: String?
     ) {
+        let normalizedAdminError = adminError?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let shouldOfferFullDiskAccess = !fullDiskAccessDenied.isEmpty
+            && ordinaryFailures.isEmpty
+            && adminFailures.isEmpty
+            && (normalizedAdminError?.isEmpty ?? true)
+
         // Freeze the failed batch before the FDA sheet opens so the retry
         // path can't be poisoned by later selection edits or app switches.
-        lastFailedRemovalURLs = needsFullDiskAccess ? failed : []
-        removalNeedsFullDiskAccess = needsFullDiskAccess
+        lastFailedRemovalURLs = shouldOfferFullDiskAccess ? fullDiskAccessDenied : []
+        removalNeedsFullDiskAccess = shouldOfferFullDiskAccess
         if let message = removalFailureMessage(
-            needsFullDiskAccess: needsFullDiskAccess,
-            attemptedAdmin: attemptedAdmin,
-            failed: failed,
-            adminError: adminError
+            fullDiskAccessDenied: fullDiskAccessDenied,
+            ordinaryFailures: ordinaryFailures,
+            adminFailures: adminFailures,
+            adminError: normalizedAdminError
         ) {
             removalError = message
             Logger.shared.log(message, level: .error)
         }
         if removedAny {
-            pruneMissingInstalledApps()
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                do {
+                    try await FilesystemMutationCoordinator.shared.acquire()
+                } catch {
+                    Logger.shared.log(
+                        "Installed-app pruning blocked because the filesystem mutation lease failed: \(error.localizedDescription)",
+                        level: .warning
+                    )
+                    return
+                }
+                do {
+                    try await self.cleaningEngine.ensurePrivilegedDeletionsAreSettled()
+                    self.pruneMissingInstalledApps()
+                    await FilesystemMutationCoordinator.shared.release()
+                } catch {
+                    await FilesystemMutationCoordinator.shared.release()
+                    Logger.shared.log(
+                        "Installed-app pruning deferred until privileged reconciliation: \(error.localizedDescription)",
+                        level: .warning
+                    )
+                }
+            }
         }
     }
 
@@ -413,7 +1047,10 @@ final class AppState: ObservableObject {
         cleanableUninstallItem(for: url)
     }
 
-    private func cleanableUninstallItem(for url: URL) -> CleanableItem {
+    private func cleanableUninstallItem(
+        for url: URL,
+        fileIdentity: FileIdentity? = nil
+    ) -> CleanableItem {
         let values = try? url.resourceValues(forKeys: [
             .totalFileAllocatedSizeKey,
             .fileAllocatedSizeKey,
@@ -426,32 +1063,43 @@ final class AppState: ObservableObject {
             size: size,
             category: .systemJunk,
             isSelected: true,
-            lastModified: values?.contentModificationDate
+            lastModified: values?.contentModificationDate,
+            fileIdentity: fileIdentity
         )
     }
 
     private func removalFailureMessage(
-        needsFullDiskAccess: Bool,
-        attemptedAdmin: Bool,
-        failed: [URL],
+        fullDiskAccessDenied: [URL],
+        ordinaryFailures: [URL],
+        adminFailures: [URL],
         adminError: String?
     ) -> String? {
-        if needsFullDiskAccess {
-            let prefix = failed.isEmpty ? "Some selected files" : "\(failed.count) file\(failed.count == 1 ? "" : "s")"
-            return "\(prefix) could not be removed because PureMac does not have Full Disk Access. Grant Full Disk Access in System Settings, then try again."
-        }
-
-        if !failed.isEmpty {
-            if attemptedAdmin {
-                return "\(failed.count) file\(failed.count == 1 ? "" : "s") could not be removed with administrator privileges. The items may have changed or macOS denied access."
-            }
-            return "\(failed.count) file\(failed.count == 1 ? "" : "s") could not be removed. Check that the items still exist and are not in use."
-        }
+        var messages: [String] = []
 
         if let adminError, !adminError.isEmpty {
-            return "Administrator removal failed: \(adminError)"
+            messages.append("Administrator removal failed: \(adminError)")
+        } else if !adminFailures.isEmpty {
+            let noun = adminFailures.count == 1 ? "file" : "files"
+            messages.append(
+                "\(adminFailures.count) \(noun) could not be removed with administrator privileges. The items may have changed or macOS denied access."
+            )
         }
-        return nil
+
+        if !ordinaryFailures.isEmpty {
+            let noun = ordinaryFailures.count == 1 ? "file" : "files"
+            messages.append(
+                "\(ordinaryFailures.count) \(noun) could not be removed. Check that the items still exist and are not in use."
+            )
+        }
+
+        if !fullDiskAccessDenied.isEmpty {
+            let noun = fullDiskAccessDenied.count == 1 ? "file" : "files"
+            messages.append(
+                "\(fullDiskAccessDenied.count) \(noun) could not be removed because PureMac does not have Full Disk Access. Grant Full Disk Access in System Settings, then try again."
+            )
+        }
+
+        return messages.isEmpty ? nil : messages.joined(separator: " ")
     }
 
     private nonisolated static func isMissingFileError(_ nsError: NSError) -> Bool {
@@ -551,6 +1199,50 @@ final class AppState: ObservableObject {
                 self?.isSearchingOrphans = false
             }
         }
+    }
+
+    /// Removes orphan rows through the same identity-bound descriptor walker as
+    /// the main cleaner. Permission failures are sent to the single-purpose XPC
+    /// helper; no orphan path is ever interpolated into a root shell command.
+    func removeOrphansSecurely(
+        _ urls: [URL]
+    ) async -> (removed: Set<URL>, failedPaths: [String], failureDetails: [String]) {
+        var failedPaths: [String] = []
+        var failureDetails: [String] = []
+        let candidates = urls.filter { url in
+            guard OrphanSafetyPolicy.isSafeCandidate(url) else {
+                failedPaths.append(url.path)
+                failureDetails.append("\(url.path) (blocked by safety policy)")
+                return false
+            }
+            return true
+        }
+
+        let items = candidates.map { url in
+            CleanableItem(
+                name: url.lastPathComponent,
+                path: url.path,
+                size: 0,
+                category: .systemJunk,
+                isSelected: true,
+                lastModified: nil
+            )
+        }
+
+        var cleanResult = await cleaningEngine.cleanItems(items) { _ in }
+        if !cleanResult.requiresAdmin.isEmpty {
+            let admin = await cleaningEngine.cleanWithAdminPrivileges(items: cleanResult.requiresAdmin)
+            cleanResult.cleanedPaths.formUnion(admin.cleanedPaths)
+            cleanResult.fullDiskAccessPaths.formUnion(admin.fullDiskAccessPaths)
+            cleanResult.errors.append(contentsOf: admin.errors)
+        }
+
+        let removed = Set(candidates.filter { cleanResult.cleanedPaths.contains($0.path) })
+        failureDetails.append(contentsOf: cleanResult.errors)
+        failedPaths.append(contentsOf: candidates
+            .filter { !cleanResult.cleanedPaths.contains($0.path) }
+            .map(\.path))
+        return (removed, failedPaths, failureDetails)
     }
 
     // MARK: - Orphan ignore list (#114)
@@ -708,9 +1400,10 @@ final class AppState: ObservableObject {
         FullDiskAccessManager.shared.openFullDiskAccessSettings()
     }
 
-    /// Request Full Disk Access via the rich PermissionCoordinator sheet and
-    /// retry the supplied items once the user grants permission. Used by both
-    /// the cleanup and app-uninstall flows so they share a single UI surface.
+    /// Request Full Disk Access via the rich PermissionCoordinator sheet. A
+    /// retry is automatic only when every item already has a scan identity;
+    /// paths that TCC prevented us from identifying must be rescanned and
+    /// confirmed rather than silently bound to whatever appears after grant.
     ///
     /// The retry callback captures `items` directly rather than reading
     /// `pendingPermissionRetryItems` at fire time — that field is mutable
@@ -729,6 +1422,16 @@ final class AppState: ObservableObject {
                 self.cleanError = nil
                 self.cleanErrorIsFDAFixable = false
                 guard !capturedItems.isEmpty else { return }
+                guard capturedItems.allSatisfy({ $0.fileIdentity != nil }) else {
+                    let message = "Full Disk Access is enabled. Scan again and confirm the items before deleting them; PureMac will not automatically reuse a path whose filesystem identity could not be verified."
+                    switch context {
+                    case .uninstall:
+                        self.removalError = message
+                    case .cleanup, .general:
+                        self.cleanError = message
+                    }
+                    return
+                }
                 await self.retryCleanItems(capturedItems)
             }
         }
@@ -747,6 +1450,7 @@ final class AppState: ObservableObject {
         if !result.requiresAdmin.isEmpty {
             let admin = await cleaningEngine.cleanWithAdminPrivileges(items: result.requiresAdmin)
             result.cleanedPaths.formUnion(admin.cleanedPaths)
+            result.fullDiskAccessPaths.formUnion(admin.fullDiskAccessPaths)
             result.itemsCleaned += admin.itemsCleaned
             result.freedSpace += admin.freedSpace
             result.errors.append(contentsOf: admin.errors)
@@ -778,7 +1482,11 @@ final class AppState: ObservableObject {
         // cleanup uses. Without this, an FDA revocation between grant and
         // retry would silently drop errors instead of re-popping the sheet.
         let survivors = items.filter { !result.cleanedPaths.contains($0.path) }
-        handleCleanOutcome(errors: result.errors, survivors: survivors)
+        handleCleanOutcome(
+            errors: result.errors,
+            survivors: survivors,
+            fullDiskAccessPaths: result.fullDiskAccessPaths
+        )
 
         scanState = .cleaned
         loadDiskInfo()
@@ -875,11 +1583,12 @@ final class AppState: ObservableObject {
                 }
             }
 
-            // Escalate root-owned items via "with administrator privileges".
-            // One auth prompt covers the entire batch.
+            // Escalate root-owned items through the authenticated XPC helper.
+            // One Authorization Services prompt covers the chunked batch.
             if !result.requiresAdmin.isEmpty {
                 let admin = await cleaningEngine.cleanWithAdminPrivileges(items: result.requiresAdmin)
                 result.cleanedPaths.formUnion(admin.cleanedPaths)
+                result.fullDiskAccessPaths.formUnion(admin.fullDiskAccessPaths)
                 result.itemsCleaned += admin.itemsCleaned
                 result.freedSpace += admin.freedSpace
                 result.errors.append(contentsOf: admin.errors)
@@ -910,7 +1619,11 @@ final class AppState: ObservableObject {
             }
             totalJunkSize = categoryResults.values.reduce(0) { $0 + $1.totalSize }
 
-            handleCleanOutcome(errors: result.errors, survivors: survivors)
+            handleCleanOutcome(
+                errors: result.errors,
+                survivors: survivors,
+                fullDiskAccessPaths: result.fullDiskAccessPaths
+            )
 
             scanState = .cleaned
             loadDiskInfo()
@@ -941,6 +1654,7 @@ final class AppState: ObservableObject {
             if !cleanResult.requiresAdmin.isEmpty {
                 let admin = await cleaningEngine.cleanWithAdminPrivileges(items: cleanResult.requiresAdmin)
                 cleanResult.cleanedPaths.formUnion(admin.cleanedPaths)
+                cleanResult.fullDiskAccessPaths.formUnion(admin.fullDiskAccessPaths)
                 cleanResult.itemsCleaned += admin.itemsCleaned
                 cleanResult.freedSpace += admin.freedSpace
                 cleanResult.errors.append(contentsOf: admin.errors)
@@ -969,7 +1683,11 @@ final class AppState: ObservableObject {
             totalJunkSize = categoryResults.values.reduce(0) { $0 + $1.totalSize }
 
             let survivors = selectedItems.filter { !cleanResult.cleanedPaths.contains($0.path) }
-            handleCleanOutcome(errors: cleanResult.errors, survivors: survivors)
+            handleCleanOutcome(
+                errors: cleanResult.errors,
+                survivors: survivors,
+                fullDiskAccessPaths: cleanResult.fullDiskAccessPaths
+            )
 
             scanState = .cleaned
             loadDiskInfo()
@@ -983,7 +1701,11 @@ final class AppState: ObservableObject {
     /// Inspect a clean batch's leftovers and either route the user into the
     /// PermissionSheet (FDA is the most likely cause) or surface a richer
     /// error alert that lists actual paths instead of "Check the log".
-    private func handleCleanOutcome(errors: [String], survivors: [CleanableItem]) {
+    private func handleCleanOutcome(
+        errors: [String],
+        survivors: [CleanableItem],
+        fullDiskAccessPaths: Set<String>
+    ) {
         guard !errors.isEmpty || !survivors.isEmpty else {
             cleanError = nil
             cleanErrorIsFDAFixable = false
@@ -992,15 +1714,22 @@ final class AppState: ObservableObject {
         }
 
         let fdaGranted = FullDiskAccessManager.shared.hasFullDiskAccess
-        let likelyFDA = !fdaGranted && !survivors.isEmpty
+        let fdaSurvivors = survivors.filter { fullDiskAccessPaths.contains($0.path) }
+        let hasNonFDAFailure = survivors.contains { !fullDiskAccessPaths.contains($0.path) }
+        let likelyFDA = !fdaGranted && !fdaSurvivors.isEmpty && !hasNonFDAFailure
         cleanErrorIsFDAFixable = likelyFDA
-        pendingPermissionRetryItems = survivors
+        pendingPermissionRetryItems = likelyFDA ? fdaSurvivors : []
 
         if likelyFDA {
             cleanError = String(
-                format: String(localized: "%lld item(s) need Full Disk Access to remove. Tap Grant Access to fix in one step."),
-                Int64(survivors.count)
+                format: String(localized: "%lld item(s) need Full Disk Access to inspect. Grant access, then rescan to confirm them safely."),
+                Int64(fdaSurvivors.count)
             )
+        } else if let first = errors.first {
+            // Authorization cancellation, helper registration/transport
+            // errors and policy rejections are actionable as reported. Never
+            // replace them with an unrelated FDA or "in use" suggestion.
+            cleanError = first
         } else if !survivors.isEmpty {
             let preview = survivors.prefix(2).map { ($0.path as NSString).lastPathComponent }.joined(separator: ", ")
             let extra = survivors.count > 2 ? String(format: String(localized: " and %lld more"), Int64(survivors.count - 2)) : ""
@@ -1008,8 +1737,6 @@ final class AppState: ObservableObject {
                 format: String(localized: "Couldn't remove %@%@. They may be in use or protected by macOS."),
                 preview, extra
             )
-        } else if let first = errors.first {
-            cleanError = first
         }
     }
 

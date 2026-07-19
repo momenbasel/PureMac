@@ -111,9 +111,9 @@ struct AppFilesView: View {
         .onChange(of: appState.removalNeedsFullDiskAccess) { needs in
             // FDA-fixable removals jump straight into the rich sheet, the
             // same flow cleanup uses. The user grants permission once and we
-            // re-fire the failed batch — using the frozen snapshot from
-            // AppState so a mid-sheet selection change or app switch doesn't
-            // re-trash the wrong files.
+            // continue the failed batch when its identities were captured.
+            // Unverified paths require a rescan, and the frozen snapshot keeps
+            // a mid-sheet selection change from substituting another batch.
             guard needs else { return }
             let toRetry = appState.lastFailedRemovalURLs
             let items = toRetry.map { appState.makeUninstallCleanableItem(for: $0) }

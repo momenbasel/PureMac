@@ -129,12 +129,35 @@ jobs:
         run: |
           set -euo pipefail
           APP="build/export/PureMac.app"
+          HELPER="${APP}/Contents/Library/LaunchServices/com.puremac.privileged-helper"
+          DAEMON_PLIST="${APP}/Contents/Library/LaunchDaemons/com.puremac.privileged-cleaning.plist"
+          APP_REQUIREMENT='anchor apple generic and identifier "com.puremac.app" and certificate leaf[subject.OU] = "H3WXHVTP97"'
+          HELPER_REQUIREMENT='anchor apple generic and identifier "com.puremac.privileged-helper" and certificate leaf[subject.OU] = "H3WXHVTP97"'
+          test -x "${HELPER}"
+          test -f "${DAEMON_PLIST}"
+          plutil -lint "${DAEMON_PLIST}"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :Label' "${DAEMON_PLIST}")" = "com.puremac.privileged-cleaning"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :BundleProgram' "${DAEMON_PLIST}")" = "Contents/Library/LaunchServices/com.puremac.privileged-helper"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :AssociatedBundleIdentifiers:0' "${DAEMON_PLIST}")" = "com.puremac.app"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :MachServices:com.puremac.privileged-cleaning' "${DAEMON_PLIST}")" = "true"
           codesign --verify --deep --strict --verbose=2 "${APP}"
+          codesign --verify --strict --verbose=2 "${HELPER}"
+          codesign --verify --strict --verbose=2 -R="${APP_REQUIREMENT}" "${APP}"
+          codesign --verify --strict --verbose=2 -R="${HELPER_REQUIREMENT}" "${HELPER}"
           codesign -dvv "${APP}" 2>&1 | tee /tmp/cs-info.txt
+          codesign -dvv "${HELPER}" 2>&1 | tee /tmp/helper-cs-info.txt
+          codesign -d --entitlements :- "${APP}" > /tmp/app-entitlements.plist
+          codesign -d --entitlements :- "${HELPER}" > /tmp/helper-entitlements.plist
+          ! plutil -p /tmp/app-entitlements.plist | grep -E 'get-task-allow|disable-library-validation|allow-dyld-environment-variables'
+          ! plutil -p /tmp/helper-entitlements.plist | grep -E 'get-task-allow|disable-library-validation|allow-dyld-environment-variables'
           grep -q "flags=0x10000(runtime)" /tmp/cs-info.txt || { echo "::error::Hardened runtime missing"; exit 1; }
+          grep -q "Identifier=com.puremac.privileged-helper" /tmp/helper-cs-info.txt || { echo "::error::Unexpected privileged helper identifier"; exit 1; }
+          grep -q "TeamIdentifier=${TEAM_ID}" /tmp/helper-cs-info.txt || { echo "::error::Unexpected privileged helper team"; exit 1; }
+          grep -q "flags=0x10000(runtime)" /tmp/helper-cs-info.txt || { echo "::error::Privileged helper hardened runtime missing"; exit 1; }
           spctl --assess --type execute --verbose=4 "${APP}" || true
           # Universal arch check
           lipo -archs "${APP}/Contents/MacOS/PureMac" | grep -q "x86_64" && lipo -archs "${APP}/Contents/MacOS/PureMac" | grep -q "arm64"
+          lipo -archs "${HELPER}" | grep -q "x86_64" && lipo -archs "${HELPER}" | grep -q "arm64"
 
       - name: Build DMG
         env:
