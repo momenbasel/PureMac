@@ -258,6 +258,8 @@
 "Brew Cache" = "Cache Homebrew";
 "Node Cache" = "Cache Node";
 "Docker Cache" = "Cache Dockera";
+"Universal Binaries" = "Uniwersalne pliki binarne";
+"Language Files" = "Pliki językowe";
 
 /* Cleaning category descriptions */
 "Scan everything at once" = "Skanuj wszystko naraz";
@@ -272,6 +274,8 @@
 "Homebrew download cache" = "Cache pobierania Homebrew";
 "npm, yarn, and pnpm download caches" = "Cache pobierania npm, yarn i pnpm";
 "Docker images, containers, and build cache" = "Obrazy Dockera, kontenery i cache budowania";
+"Unused CPU architecture slices in app binaries" = "Nieużywane architektury CPU w plikach binarnych aplikacji";
+"Unused app localizations" = "Nieużywane lokalizacje aplikacji";
 
 /* Node Cache subcategories */
 "npm cache" = "cache npm";

@@ -219,6 +219,8 @@
 "Brew Cache" = "Brew 快取";
 "Node Cache" = "Node 快取";
 "Docker Cache" = "Docker 快取";
+"Universal Binaries" = "通用二進位檔案";
+"Language Files" = "語言檔案";
 
 /* Cleaning category descriptions */
 "Scan everything at once" = "一次掃描所有項目";
@@ -233,6 +235,8 @@
 "Homebrew download cache" = "Homebrew 下載快取";
 "npm, yarn, and pnpm download caches" = "npm、yarn 與 pnpm 下載快取";
 "Docker images, containers, and build cache" = "Docker 映像檔、容器與建置快取";
+"Unused CPU architecture slices in app binaries" = "應用程式二進位檔中未使用的 CPU 架構程式碼";
+"Unused app localizations" = "未使用的應用程式本地化檔案";
 
 /* Node Cache subcategories */
 "npm cache" = "npm 快取";

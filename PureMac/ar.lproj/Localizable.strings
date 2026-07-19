@@ -219,6 +219,8 @@
 "Brew Cache" = "ذاكرة Brew المؤقتة";
 "Node Cache" = "ذاكرة Node المؤقتة";
 "Docker Cache" = "ذاكرة Docker المؤقتة";
+"Universal Binaries" = "الملفات الثنائية المتعددة البنى";
+"Language Files" = "ملفات اللغات";
 
 /* Cleaning category descriptions */
 "Scan everything at once" = "فحص كل شيء دفعة واحدة";
@@ -233,6 +235,8 @@
 "Homebrew download cache" = "ذاكرة تنزيلات Homebrew المؤقتة";
 "npm, yarn, and pnpm download caches" = "ذاكرات تنزيلات npm وyarn وpnpm المؤقتة";
 "Docker images, containers, and build cache" = "صور Docker والحاويات وذاكرة البناء المؤقتة";
+"Unused CPU architecture slices in app binaries" = "شرائح بنى معالج غير مستخدمة في الملفات الثنائية للتطبيقات";
+"Unused app localizations" = "ترجمات التطبيقات غير المستخدمة";
 
 /* Node Cache subcategories */
 "npm cache" = "ذاكرة npm المؤقتة";

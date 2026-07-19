@@ -219,6 +219,8 @@
 "Brew Cache" = "Brewキャッシュ";
 "Node Cache" = "Nodeキャッシュ";
 "Docker Cache" = "Dockerキャッシュ";
+"Universal Binaries" = "ユニバーサルバイナリ";
+"Language Files" = "言語ファイル";
 
 /* Cleaning category descriptions */
 "Scan everything at once" = "すべてを一度にスキャン";
@@ -233,6 +235,8 @@
 "Homebrew download cache" = "Homebrewのダウンロードキャッシュ";
 "npm, yarn, and pnpm download caches" = "npm、yarn、pnpm のダウンロードキャッシュ";
 "Docker images, containers, and build cache" = "Dockerイメージ、コンテナ、ビルドキャッシュ";
+"Unused CPU architecture slices in app binaries" = "アプリバイナリ内の未使用CPUアーキテクチャコード";
+"Unused app localizations" = "使用されていないアプリのローカライゼーション";
 
 /* Node Cache subcategories */
 "npm cache" = "npmキャッシュ";

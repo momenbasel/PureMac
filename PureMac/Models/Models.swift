@@ -16,6 +16,8 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
     case brewCache = "Brew Cache"
     case nodeCache = "Node Cache"
     case dockerCache = "Docker Cache"
+    case universalBinaries = "Universal Binaries"
+    case languageFiles = "Language Files"
 
     var id: String { rawValue }
 
@@ -33,6 +35,8 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .brewCache: return "mug.fill"
         case .nodeCache: return "leaf.fill"
         case .dockerCache: return "shippingbox.fill"
+        case .universalBinaries: return "cpu"
+        case .languageFiles: return "globe"
         }
     }
 
@@ -50,6 +54,8 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .brewCache: return "Homebrew download cache"
         case .nodeCache: return "npm, yarn, and pnpm download caches"
         case .dockerCache: return "Docker images, containers, and build cache"
+        case .universalBinaries: return "Unused CPU architecture slices in app binaries"
+        case .languageFiles: return "Unused app localizations"
         }
     }
 
@@ -67,6 +73,8 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .brewCache: return .mint
         case .nodeCache: return .pink
         case .dockerCache: return .indigo
+        case .universalBinaries: return .brown
+        case .languageFiles: return .gray
         }
     }
 
@@ -80,6 +88,15 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
     // Honest > impressive.
     static var scannable: [CleaningCategory] {
         allCases.filter { $0 != .smartScan && $0 != .purgeableSpace }
+    }
+
+    // Categories that rewrite app bundles in place (binary thinning,
+    // localization stripping) instead of deleting junk. Their items always
+    // start unselected, and the scheduled autoClean path skips them
+    // entirely — re-signing every installed app is never an unattended
+    // action.
+    static var appModifying: Set<CleaningCategory> {
+        [.universalBinaries, .languageFiles]
     }
 }
 

@@ -561,6 +561,58 @@ final class SecureDeletionTests: XCTestCase {
         XCTAssertThrowsError(try defaultPolicy.validate(nestedHelper))
     }
 
+    func testDefaultCleanerPolicyCoversScannerRootsWithoutBroadeningSensitiveParents() throws {
+        let defaultPolicy = SecureDeletionPolicy(
+            userID: getuid(),
+            homeDirectory: FileManager.default.homeDirectoryForCurrentUser.path
+        )
+        let directoryIdentity = try XCTUnwrap(FileIdentity.capture(path: allowedURL.path))
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+
+        let scannerRoots = [
+            "\(home)/Library/Developer/Xcode/iOS DeviceSupport",
+            "\(home)/Library/Developer/Xcode/watchOS DeviceSupport",
+            "\(home)/Library/Developer/Xcode/tvOS DeviceSupport",
+            "\(home)/Library/Developer/XCTestDevices",
+            "\(home)/Library/Developer/Xcode/UserData/Previews",
+            "\(home)/Library/org.swift.swiftpm",
+            "\(home)/Library/pnpm/store",
+            "\(home)/.ollama/logs",
+            "\(home)/.ollama/history",
+            "\(home)/.lmstudio/server-logs",
+            "\(home)/.lmstudio/conversations",
+            "\(home)/.docker/cli-plugins/.cache",
+            "\(home)/.docker/buildx/cache",
+            "\(home)/.orbstack/log",
+            "/opt/homebrew/Library/Caches",
+            "/usr/local/Homebrew/Library/Caches",
+        ]
+        for path in scannerRoots {
+            let request = PrivilegedDeletionRequest(
+                path: path,
+                identity: directoryIdentity,
+                operation: .cleaner
+            )
+            XCTAssertNoThrow(try defaultPolicy.validate(request), path)
+        }
+
+        let sensitiveParents = [
+            "\(home)/Library/pnpm",
+            "\(home)/.ollama/models",
+            "\(home)/.lmstudio/models",
+            "\(home)/.docker",
+            "\(home)/.orbstack/data",
+        ]
+        for path in sensitiveParents {
+            let request = PrivilegedDeletionRequest(
+                path: path,
+                identity: directoryIdentity,
+                operation: .cleaner
+            )
+            XCTAssertThrowsError(try defaultPolicy.validate(request), path)
+        }
+    }
+
     func testDefaultLargeFilePolicyRequiresARegularFileInUserDocumentRoots() throws {
         let defaultPolicy = SecureDeletionPolicy(
             userID: getuid(),

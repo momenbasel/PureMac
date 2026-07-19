@@ -320,7 +320,7 @@ enum PrivilegedCleaningConstants {
     /// Increment this whenever privileged allowlists or deletion semantics
     /// change. The app checks it before sending any paths, so an older daemon
     /// cannot keep applying stale root policy after an application update.
-    static let securityPolicyVersion = 3
+    static let securityPolicyVersion = 4
     static let maximumBatchCount = 128
     static let maximumEncodedSize = 1_048_576
     static let quarantineDirectoryPrefix = ".puremac-delete-"
@@ -436,10 +436,26 @@ struct SecureDeletionPolicy: Sendable {
                 Root(path: "\(home)/Library/Developer/Xcode/DerivedData", mayDeleteRoot: true),
                 Root(path: "\(home)/Library/Developer/Xcode/Archives", mayDeleteRoot: true),
                 Root(path: "\(home)/Library/Developer/CoreSimulator/Caches", mayDeleteRoot: true),
+                Root(path: "\(home)/Library/Developer/Xcode/iOS DeviceSupport", mayDeleteRoot: true),
+                Root(path: "\(home)/Library/Developer/Xcode/watchOS DeviceSupport", mayDeleteRoot: true),
+                Root(path: "\(home)/Library/Developer/Xcode/tvOS DeviceSupport", mayDeleteRoot: true),
+                Root(path: "\(home)/Library/Developer/XCTestDevices", mayDeleteRoot: true),
+                Root(path: "\(home)/Library/Developer/Xcode/UserData/Previews", mayDeleteRoot: true),
+                Root(path: "\(home)/Library/org.swift.swiftpm", mayDeleteRoot: true),
                 Root(path: "\(home)/.Trash", mayDeleteRoot: false),
                 Root(path: "\(home)/.npm", mayDeleteRoot: true),
                 Root(path: "\(home)/.cache", mayDeleteRoot: false),
+                Root(path: "\(home)/Library/pnpm/store", mayDeleteRoot: true),
+                Root(path: "\(home)/.ollama/logs", mayDeleteRoot: true),
+                Root(path: "\(home)/.ollama/history", mayDeleteRoot: true),
+                Root(path: "\(home)/.lmstudio/server-logs", mayDeleteRoot: true),
+                Root(path: "\(home)/.lmstudio/conversations", mayDeleteRoot: true),
                 Root(path: "\(home)/Library/Containers/com.docker.docker", mayDeleteRoot: false),
+                Root(path: "\(home)/.docker/cli-plugins/.cache", mayDeleteRoot: true),
+                Root(path: "\(home)/.docker/buildx/cache", mayDeleteRoot: true),
+                Root(path: "\(home)/.orbstack/log", mayDeleteRoot: true),
+                Root(path: "/opt/homebrew/Library/Caches", mayDeleteRoot: true),
+                Root(path: "/usr/local/Homebrew/Library/Caches", mayDeleteRoot: true),
                 Root(path: "/Library/Caches", mayDeleteRoot: false),
                 Root(path: "/Library/Logs", mayDeleteRoot: false),
                 Root(path: "/private/var/log", mayDeleteRoot: false),

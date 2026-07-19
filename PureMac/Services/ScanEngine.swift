@@ -67,6 +67,10 @@ actor ScanEngine {
             return scanNodeCache()
         case .dockerCache:
             return scanDockerCache()
+        case .universalBinaries:
+            return scanUniversalBinaries()
+        case .languageFiles:
+            return scanLanguageFiles()
         }
     }
 
@@ -164,6 +168,55 @@ actor ScanEngine {
                 items.append(item)
             }
         }
+
+        // Sandboxed apps keep their caches inside per-app containers, not
+        // ~/Library/Caches — on modern macOS this is where most of the
+        // "user cache" gigabytes actually live. One item per container,
+        // skipping near-empty caches (< 1 MB).
+        let containerRoots = [
+            "\(home)/Library/Containers",
+            "\(home)/Library/Group Containers",
+        ]
+        for root in containerRoots {
+            guard let containers = try? fileManager.contentsOfDirectory(atPath: root) else { continue }
+            // App containers nest caches under Data/; group containers don't.
+            let cacheSubpath = root.hasSuffix("Group Containers")
+                ? "Library/Caches"
+                : "Data/Library/Caches"
+            for container in containers {
+                let cachePath = (root as NSString)
+                    .appendingPathComponent(container)
+                    .appending("/" + cacheSubpath)
+                // Same symlink defense as scanDirectory: an app at this UID
+                // could plant Data or Data/Library as a symlink into an
+                // allow-listed root and have the target sized here and later
+                // deleted. Only accept paths that resolve to themselves.
+                let resolvedCachePath = URL(fileURLWithPath: cachePath).resolvingSymlinksInPath().path
+                guard normalizePath(resolvedCachePath) == normalizePath(cachePath) else { continue }
+                if let item = makeCleanupItem(
+                    name: "\(container) (sandbox cache)",
+                    path: cachePath,
+                    category: .userCache,
+                    minimumSize: 1024 * 1024
+                ) {
+                    items.append(item)
+                }
+            }
+        }
+
+        // Per-app HTTP cookie/response storage — one entry per app, same
+        // non-recursive shape as the top-level Caches pass above. CFNetwork
+        // keeps each native app's cookies and HSTS state here, i.e. live
+        // login sessions rather than regenerable cache, so these entries
+        // start unselected and the user opts in per app.
+        let httpStorages = scanDirectory(
+            path: "\(home)/Library/HTTPStorages",
+            category: .userCache,
+            recursive: false,
+            maxDepth: 1,
+            isSelected: false
+        )
+        items.append(contentsOf: httpStorages)
 
         let uniqueItems = deduplicatedItems(items)
         let totalSize = uniqueItems.reduce(0) { $0 + $1.size }
@@ -388,6 +441,18 @@ actor ScanEngine {
             "\(home)/Library/Developer/Xcode/Archives",
             "\(home)/Library/Developer/CoreSimulator/Caches",
             "\(home)/Library/Caches/com.apple.dt.Xcode",
+            // Per-OS symbol caches, regenerated on next device connect.
+            // These alone are often tens of GB on active dev machines.
+            "\(home)/Library/Developer/Xcode/iOS DeviceSupport",
+            "\(home)/Library/Developer/Xcode/watchOS DeviceSupport",
+            "\(home)/Library/Developer/Xcode/tvOS DeviceSupport",
+            // Simulator clones spun up by xcodebuild test runs
+            "\(home)/Library/Developer/XCTestDevices",
+            // SwiftUI preview build products
+            "\(home)/Library/Developer/Xcode/UserData/Previews",
+            // Swift Package Manager download + build caches
+            "\(home)/Library/Caches/org.swift.swiftpm",
+            "\(home)/Library/org.swift.swiftpm",
         ]
 
         for path in xcodePaths {
@@ -632,6 +697,14 @@ actor ScanEngine {
             "\(home)/.docker/cli-plugins/.cache",
             // Buildx / containerd inline cache
             "\(home)/.docker/buildx/cache",
+            // OrbStack (Docker Desktop alternative) keeps its daemon logs and
+            // caches outside ~/Library/Containers. The VM data disk itself
+            // (~/.orbstack/data) is intentionally NOT listed — image/container
+            // space inside the VM is only reclaimable via `docker system
+            // prune`, surfaced as the virtual entry below.
+            "\(home)/.orbstack/log",
+            "\(home)/Library/Caches/dev.kdrag0n.MacVirt",
+            "\(home)/Library/Logs/OrbStack",
         ]
 
         for path in dockerDataDirs {
@@ -648,17 +721,22 @@ actor ScanEngine {
             ))
         }
 
-        // If the `docker` CLI is available, surface reclaimable space
-        // reported by `docker system df` as a single virtual entry.
-        // We don't try to delete it directly — the user runs
-        // `docker system prune` themselves, which is the safe path.
-        // We just show how much they can recover.
+        // If the `docker` CLI is available and the daemon answers, surface
+        // reclaimable space reported by `docker system df` as a single
+        // virtual entry. Cleaning it runs `docker system prune -f` (see
+        // CleaningEngine.pruneDockerSystem) — stopped containers, dangling
+        // images, unused networks, and build cache; running containers and
+        // tagged images are untouched. The empty path mirrors the purgeable-
+        // space convention: this is an action, not a file unlink, so the UI
+        // must not offer reveal-in-Finder or attempt removeItem on it.
+        // Works for both Docker Desktop and OrbStack (both ship a docker CLI
+        // at these locations).
         let dockerBinPaths = ["/usr/local/bin/docker", "/opt/homebrew/bin/docker"]
         for dockerBin in dockerBinPaths where fileManager.fileExists(atPath: dockerBin) {
             if let reclaimable = reclaimableDockerSpace(dockerBin: dockerBin), reclaimable > 0 {
                 items.append(CleanableItem(
-                    name: "Reclaimable (run `docker system prune -af`)",
-                    path: dockerBin,
+                    name: "Docker prune (stopped containers, dangling images, build cache)",
+                    path: "",
                     size: reclaimable,
                     category: .dockerCache,
                     isSelected: false,
@@ -670,6 +748,56 @@ actor ScanEngine {
 
         let totalSize = items.reduce(0) { $0 + $1.size }
         return CategoryResult(category: .dockerCache, items: items, totalSize: totalSize)
+    }
+
+    private func scanUniversalBinaries() -> CategoryResult {
+        var items: [CleanableItem] = []
+
+        // One item per app bundle. The item path is the BUNDLE path (not the
+        // executable) so reveal-in-Finder works; CleaningEngine re-derives
+        // the per-binary lipo work list from that path via BinaryThinner.
+        // Every finding starts unselected: thinning replaces the app's
+        // Developer ID signature with an ad-hoc one (auto-update and
+        // keychain impact), so it is per-app opt-in, never part of a
+        // default Clean All.
+        let findings = UniversalBinaryScanner().scan()
+        for finding in findings {
+            report(finding.appPath)
+            items.append(CleanableItem(
+                name: "\(finding.appName) (\(finding.removableArchs.joined(separator: ", ")))",
+                path: finding.appPath,
+                size: finding.reclaimableBytes,
+                category: .universalBinaries,
+                isSelected: false,
+                lastModified: fileModDate(path: finding.appPath)
+            ))
+        }
+
+        let totalSize = items.reduce(0) { $0 + $1.size }
+        return CategoryResult(category: .universalBinaries, items: items, totalSize: totalSize)
+    }
+
+    private func scanLanguageFiles() -> CategoryResult {
+        // One item per removable .lproj so the user can keep individual
+        // languages. Every finding starts unselected: removal re-signs the
+        // bundle ad-hoc (see BinaryThinner), so stripping localizations is
+        // per-app opt-in, never part of a default Clean All.
+        let scanner = LanguageFilesScanner()
+        let findings = scanner.scan(applicationDirs: ["/Applications", "\(home)/Applications"])
+        let items = scanner.flatten(findings).map { entry in
+            report(entry.path)
+            return CleanableItem(
+                name: entry.name,
+                path: entry.path,
+                size: entry.size,
+                category: .languageFiles,
+                isSelected: false,
+                lastModified: nil
+            )
+        }
+
+        let totalSize = items.reduce(0) { $0 + $1.size }
+        return CategoryResult(category: .languageFiles, items: items, totalSize: totalSize)
     }
 
     /// Sum the reclaimable bytes reported by `docker system df --format json`.
@@ -732,6 +860,7 @@ actor ScanEngine {
         category: CleaningCategory,
         recursive: Bool,
         maxDepth: Int,
+        isSelected: Bool = true,
         excluding excludedPaths: Set<String> = []
     ) -> [CleanableItem] {
         var items: [CleanableItem] = []
@@ -742,6 +871,7 @@ actor ScanEngine {
         do {
             let contents = try fileManager.contentsOfDirectory(atPath: path)
             for item in contents {
+                if Task.isCancelled { break }
                 let fullPath = (path as NSString).appendingPathComponent(item)
                 report(fullPath)
                 if excludedPaths.contains(normalizePath(fullPath)) {
@@ -758,6 +888,13 @@ actor ScanEngine {
                     continue
                 }
 
+                // Skip SIP-protected/immutable entries — they fail even
+                // admin rm and only produce "Couldn't clean everything"
+                // alerts (e.g. /private/var/log/wifi.log).
+                if FileProtection.isProtectedFromDeletion(path: fullPath) {
+                    continue
+                }
+
                 if isDir.boolValue {
                     let size = directorySize(path: fullPath)
                     if size > 1024 { // Skip tiny entries
@@ -766,7 +903,7 @@ actor ScanEngine {
                             path: fullPath,
                             size: size,
                             category: category,
-                            isSelected: true,
+                            isSelected: isSelected,
                             lastModified: fileModDate(path: fullPath)
                         ))
                     }
@@ -778,7 +915,7 @@ actor ScanEngine {
                             path: fullPath,
                             size: size,
                             category: category,
-                            isSelected: true,
+                            isSelected: isSelected,
                             lastModified: attrs[.modificationDate] as? Date
                         ))
                     }
@@ -851,22 +988,31 @@ actor ScanEngine {
     private func directorySize(path: String) -> Int64 {
         var totalSize: Int64 = 0
 
+        // errorHandler returns true so unreadable entries are skipped
+        // instead of aborting the walk partway through the tree.
         guard let enumerator = fileManager.enumerator(
             at: URL(fileURLWithPath: path),
-            includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey],
-            options: [.skipsHiddenFiles]
+            includingPropertiesForKeys: [.totalFileAllocatedSizeKey, .fileSizeKey, .isRegularFileKey],
+            options: [.skipsHiddenFiles],
+            errorHandler: { _, _ in true }
         ) else { return 0 }
 
-        var count = 0
+        // No entry cap. A 10k cap was here previously and made huge trees
+        // like Xcode DerivedData (millions of files) report a fraction of
+        // their real size. report() is throttled, so display stays cheap.
+        // A DerivedData/DeviceSupport walk can hold this loop for minutes,
+        // so honor task cancellation to let an aborted scan stop promptly.
         for case let fileURL as URL in enumerator {
-            count += 1
-            if count > 10000 { break } // Safety limit for very large directories
-
+            if Task.isCancelled { break }
             report(fileURL.path)
-            guard let values = try? fileURL.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey]),
-                  let isFile = values.isRegularFile, isFile,
-                  let size = values.fileSize else { continue }
-            totalSize += Int64(size)
+            guard let values = try? fileURL.resourceValues(forKeys: [.totalFileAllocatedSizeKey, .fileSizeKey, .isRegularFileKey]),
+                  let isFile = values.isRegularFile, isFile else { continue }
+            // Allocated size counts actual on-disk blocks (accurate for
+            // sparse/cloned files); fall back to logical size when the
+            // volume doesn't report it.
+            if let size = values.totalFileAllocatedSize ?? values.fileSize {
+                totalSize += Int64(size)
+            }
         }
 
         return totalSize
