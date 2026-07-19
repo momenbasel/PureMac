@@ -284,7 +284,10 @@ final class AppState: ObservableObject {
         }
         guard !urls.isEmpty else {
             if !blocked.isEmpty {
-                removalError = "Refused to delete \(blocked.count) protected item(s) (home credential directory or similar)."
+                removalError = String(
+                    format: String(localized: "Protected items were not deleted: %lld."),
+                    Int64(blocked.count)
+                )
             }
             return
         }
@@ -437,19 +440,28 @@ final class AppState: ObservableObject {
         adminError: String?
     ) -> String? {
         if needsFullDiskAccess {
-            let prefix = failed.isEmpty ? "Some selected files" : "\(failed.count) file\(failed.count == 1 ? "" : "s")"
-            return "\(prefix) could not be removed because PureMac does not have Full Disk Access. Grant Full Disk Access in System Settings, then try again."
+            guard !failed.isEmpty else { return String(localized: "Full Disk Access required") }
+            return String(
+                format: String(localized: "%lld item(s) need Full Disk Access to remove. Tap Grant Access to fix in one step."),
+                Int64(failed.count)
+            )
         }
 
         if !failed.isEmpty {
-            if attemptedAdmin {
-                return "\(failed.count) file\(failed.count == 1 ? "" : "s") could not be removed with administrator privileges. The items may have changed or macOS denied access."
-            }
-            return "\(failed.count) file\(failed.count == 1 ? "" : "s") could not be removed. Check that the items still exist and are not in use."
+            let preview = failed.prefix(2).map { $0.lastPathComponent }.joined(separator: ", ")
+            let extra = failed.count > 2
+                ? String(format: String(localized: " and %lld more"), Int64(failed.count - 2))
+                : ""
+            return String(
+                format: String(localized: "Couldn't remove %@%@. They may be in use or protected by macOS."),
+                preview,
+                extra
+            )
         }
 
         if let adminError, !adminError.isEmpty {
-            return "Administrator removal failed: \(adminError)"
+            Logger.shared.log("Administrator removal failed: \(adminError)", level: .error)
+            return String(localized: "Some files could not be removed")
         }
         return nil
     }
@@ -1031,7 +1043,8 @@ final class AppState: ObservableObject {
                 preview, extra
             )
         } else if let first = errors.first {
-            cleanError = first
+            Logger.shared.log(first, level: .error)
+            cleanError = String(localized: "Some files could not be removed")
         }
     }
 

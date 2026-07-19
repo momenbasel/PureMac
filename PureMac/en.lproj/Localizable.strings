@@ -58,6 +58,8 @@
 "1-tap setup. We'll auto-retry what failed." = "1-tap setup. We'll auto-retry what failed.";
 "Fix permission" = "Fix permission";
 "Dismiss" = "Dismiss";
+"Fix" = "Fix";
+"Set up" = "Set up";
 
 /* Dashboard */
 "Storage" = "Storage";
@@ -80,6 +82,7 @@
 "Suggested for you" = "Suggested for you";
 "Found so far" = "Found so far";
 "By category" = "By category";
+"Category" = "Category";
 "%@ is using %@" = "%@ is using %@";
 "Grant Full Disk Access for full results" = "Grant Full Disk Access for full results";
 "Without it, most caches and uninstall flows fail." = "Without it, most caches and uninstall flows fail.";
@@ -160,6 +163,9 @@
 "Orphaned Files (%lld)" = "Orphaned Files (%lld)";
 "Remove Selected (%lld)" = "Remove Selected (%lld)";
 "Some files could not be removed" = "Some files could not be removed";
+"Protected items were not deleted: %lld." = "Protected items were not deleted: %lld.";
+"Blocked by safety policy" = "Blocked by safety policy";
+"Items not deleted: %lld\n\n%@" = "Items not deleted: %lld\n\n%@";
 
 /* Onboarding */
 "Back" = "Back";
@@ -199,6 +205,10 @@
 "TCC Database" = "TCC Database";
 "Blocked" = "Blocked";
 
+/* FDA demo system apps */
+"Finder" = "Finder";
+"Terminal" = "Terminal";
+
 /* Settings */
 "General" = "General";
 "Cleaning" = "Cleaning";
@@ -224,6 +234,8 @@
 "Arabic" = "Arabic";
 "Polish" = "Polish";
 "Portuguese (Brazil)" = "Portuguese (Brazil)";
+"Russian" = "Russian";
+"Ukrainian" = "Ukrainian";
 "Chinese (Simplified)" = "Chinese (Simplified)";
 "Chinese (Traditional)" = "Chinese (Traditional)";
 "Safety" = "Safety";
@@ -245,6 +257,8 @@
 "GitHub Repository" = "GitHub Repository";
 "Report an Issue" = "Report an Issue";
 "MIT License" = "MIT License";
+"Updates" = "Updates";
+"Check for Updates" = "Check for Updates";
 
 /* Cleaning categories (CleaningCategory.rawValue) */
 "System Junk" = "System Junk";
@@ -277,13 +291,23 @@
 "Unused CPU architecture slices in app binaries" = "Unused CPU architecture slices in app binaries";
 "Unused app localizations" = "Unused app localizations";
 
+/* AI Apps scan item names */
+"Ollama Logs" = "Ollama Logs";
+"Ollama Cache" = "Ollama Cache";
+"Ollama Electron Cache" = "Ollama Electron Cache";
+"Ollama WebKit Data" = "Ollama WebKit Data";
+"Ollama Saved State" = "Ollama Saved State";
+"Ollama CLI Prompt History (Optional)" = "Ollama CLI Prompt History (Optional)";
+"LM Studio Server Logs" = "LM Studio Server Logs";
+"LM Studio Conversations (Optional)" = "LM Studio Conversations (Optional)";
+
 /* Node Cache subcategories */
 "npm cache" = "npm cache";
 "yarn classic cache" = "yarn classic cache";
 "pnpm content-addressable store" = "pnpm content-addressable store";
 
 /* Docker Cache helper */
-"Reclaimable (run `docker system prune -af`)" = "Reclaimable (run `docker system prune -af`)";
+"Docker prune (stopped containers, dangling images, build cache)" = "Docker prune (stopped containers, dangling images, build cache)";
 
 /* Schedule intervals (ScheduleInterval.rawValue) */
 "Every Hour" = "Every Hour";
@@ -342,7 +366,6 @@
 "Free" = "Free";
 
 /* UI polish (v2.8.0): leftover groups + sound toggle */
-"Application" = "Application";
 "Caches" = "Caches";
 "Application Support" = "Application Support";
 "Preferences" = "Preferences";
@@ -379,3 +402,6 @@
 "Disk" = "Disk";
 "Open PureMac" = "Open PureMac";
 "Quit PureMac" = "Quit PureMac";
+
+/* Finder Service */
+"Select an application (.app) to uninstall." = "Select an application (.app) to uninstall.";

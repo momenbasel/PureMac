@@ -156,7 +156,7 @@ struct OrphanListView: View {
 
         for url in urlsToRemove {
             guard OrphanSafetyPolicy.isSafeCandidate(url) else {
-                failedPaths.append("\(url.path) (blocked by safety policy)")
+                failedPaths.append("\(url.path) — \(String(localized: "Blocked by safety policy"))")
                 continue
             }
 
@@ -198,7 +198,11 @@ struct OrphanListView: View {
         if !failedPaths.isEmpty {
             let preview = failedPaths.prefix(3).joined(separator: "\n")
             let suffix = failedPaths.count > 3 ? "\n…" : ""
-            removalErrorMessage = "\(failedPaths.count) item(s) failed to delete.\n\n\(preview)\(suffix)"
+            removalErrorMessage = String(
+                format: String(localized: "Items not deleted: %lld\n\n%@"),
+                Int64(failedPaths.count),
+                preview + suffix
+            )
         }
     }
 

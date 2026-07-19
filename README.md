@@ -219,7 +219,7 @@ Pull requests welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 Especially welcome:
 - Per-category size and date filter presets
 - Wider XCTest coverage for `AppState` and the scan engine
-- Translations beyond the current set (en, ar, es, ja, pt-BR, zh-Hans, zh-Hant)
+- Translations beyond the current set (en, ar, es, ja, pl, pt-BR, ru, uk, zh-Hans, zh-Hant)
 - App icon design
 
 ## Acknowledgments
