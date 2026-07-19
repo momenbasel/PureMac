@@ -41,6 +41,7 @@
 "Suggested for you" = "Sugestões para você";
 "Found so far" = "Encontrado até agora";
 "By category" = "Por categoria";
+"Category" = "Categoria";
 "%@ is using %@" = "%@ está usando %@";
 "Grant Full Disk Access for full results" = "Conceda acesso total ao disco para ver resultados completos";
 "Without it, most caches and uninstall flows fail." = "Sem ele, a maioria dos caches e desinstalações falha.";
@@ -121,6 +122,9 @@
 "Orphaned Files (%lld)" = "Arquivos órfãos (%lld)";
 "Remove Selected (%lld)" = "Remover selecionados (%lld)";
 "Some files could not be removed" = "Alguns arquivos não puderam ser removidos";
+"Protected items were not deleted: %lld." = "Itens protegidos não excluídos: %lld.";
+"Blocked by safety policy" = "Bloqueado pela política de segurança";
+"Items not deleted: %lld\n\n%@" = "Itens não excluídos: %lld\n\n%@";
 
 /* Onboarding */
 "Back" = "Voltar";
@@ -160,6 +164,10 @@
 "TCC Database" = "Banco de dados TCC";
 "Blocked" = "Bloqueado";
 
+/* FDA demo system apps */
+"Finder" = "Finder";
+"Terminal" = "Terminal";
+
 /* Settings */
 "General" = "Geral";
 "Cleaning" = "Limpeza";
@@ -185,6 +193,8 @@
 "Arabic" = "Árabe";
 "Polish" = "Polonês";
 "Portuguese (Brazil)" = "Português (Brasil)";
+"Russian" = "Russo";
+"Ukrainian" = "Ucraniano";
 "Chinese (Simplified)" = "Chinês (simplificado)";
 "Chinese (Traditional)" = "Chinês (tradicional)";
 "Safety" = "Segurança";
@@ -206,6 +216,8 @@
 "GitHub Repository" = "Repositório no GitHub";
 "Report an Issue" = "Relatar um problema";
 "MIT License" = "Licença MIT";
+"Updates" = "Atualizações";
+"Check for Updates" = "Buscar atualizações";
 
 /* Cleaning categories (CleaningCategory.rawValue) */
 "System Junk" = "Lixo do sistema";
@@ -238,13 +250,23 @@
 "Unused CPU architecture slices in app binaries" = "Arquiteturas de CPU não usadas nos binários dos apps";
 "Unused app localizations" = "Localizações de apps não usadas";
 
+/* AI Apps scan item names */
+"Ollama Logs" = "Logs do Ollama";
+"Ollama Cache" = "Cache do Ollama";
+"Ollama Electron Cache" = "Cache do Electron do Ollama";
+"Ollama WebKit Data" = "Dados do WebKit do Ollama";
+"Ollama Saved State" = "Estado salvo do Ollama";
+"Ollama CLI Prompt History (Optional)" = "Histórico de prompts do Ollama CLI (opcional)";
+"LM Studio Server Logs" = "Logs do servidor do LM Studio";
+"LM Studio Conversations (Optional)" = "Conversas do LM Studio (opcional)";
+
 /* Node Cache subcategories */
 "npm cache" = "Cache do npm";
 "yarn classic cache" = "Cache clássico do yarn";
 "pnpm content-addressable store" = "Repositório endereçável por conteúdo do pnpm";
 
 /* Docker Cache helper */
-"Reclaimable (run `docker system prune -af`)" = "Recuperável (execute `docker system prune -af`)";
+"Docker prune (stopped containers, dangling images, build cache)" = "Limpeza do Docker (contêineres parados, imagens não utilizadas e cache de compilação)";
 
 /* Schedule intervals (ScheduleInterval.rawValue) */
 "Every Hour" = "A cada hora";
@@ -306,6 +328,8 @@
 "1-tap setup. We'll auto-retry what failed." = "Configuração em 1 toque. Tentaremos de novo o que falhar.";
 "Fix permission" = "Corrigir permissão";
 "Dismiss" = "Dispensar";
+"Fix" = "Corrigir";
+"Set up" = "Configurar";
 
 /* Onboarding v2 */
 "Reclaim your Mac" = "Recupere seu Mac";
@@ -342,7 +366,6 @@
 "Free" = "Livre";
 
 /* UI polish (v2.8.0): leftover groups + sound toggle */
-"Application" = "Aplicativo";
 "Caches" = "Caches";
 "Application Support" = "Suporte de aplicativos";
 "Preferences" = "Preferências";
@@ -379,3 +402,6 @@
 "Disk" = "Disco";
 "Open PureMac" = "Abrir o PureMac";
 "Quit PureMac" = "Encerrar o PureMac";
+
+/* Finder Service */
+"Select an application (.app) to uninstall." = "Selecione um aplicativo (.app) para desinstalar.";

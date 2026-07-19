@@ -137,7 +137,7 @@ struct OnboardingView: View {
                 Button("Start") { isComplete = true }
                     .buttonStyle(GlowProminentButtonStyle(breathes: true))
             } else {
-                Button(page == .permission ? "Continue" : "Next") { advance(by: 1) }
+                Button(LocalizedStringKey(page == .permission ? "Continue" : "Next")) { advance(by: 1) }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
             }
@@ -307,10 +307,10 @@ private struct MissionScene: View {
 private struct FeatureRow: View {
     let systemImage: String
     let tint: Color
-    let title: String
-    let body_: String
+    let title: LocalizedStringKey
+    let body_: LocalizedStringKey
 
-    init(systemImage: String, tint: Color, title: String, body: String) {
+    init(systemImage: String, tint: Color, title: LocalizedStringKey, body: LocalizedStringKey) {
         self.systemImage = systemImage
         self.tint = tint
         self.title = title
@@ -347,12 +347,14 @@ private struct PermissionScene: View {
     var body: some View {
         VStack(spacing: 18) {
             VStack(spacing: 8) {
-                Text(hasFda ? "Permission granted" : "One permission, then we're done")
+                Text(LocalizedStringKey(hasFda ? "Permission granted" : "One permission, then we're done"))
                     .font(.system(size: 26, weight: .semibold))
                     .multilineTextAlignment(.center)
-                Text(hasFda
-                     ? "PureMac can now reach the locations macOS protects by default."
-                     : "macOS hides certain folders from every app until you say otherwise. We need them to find caches and uninstall cleanly.")
+                Text(LocalizedStringKey(
+                    hasFda
+                        ? "PureMac can now reach the locations macOS protects by default."
+                        : "macOS hides certain folders from every app until you say otherwise. We need them to find caches and uninstall cleanly."
+                ))
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -382,7 +384,7 @@ private struct PermissionScene: View {
                         Button {
                             openSettings()
                         } label: {
-                            Label(hasOpenedSettings ? "Reopen Settings" : "Open Settings & reveal PureMac",
+                            Label(LocalizedStringKey(hasOpenedSettings ? "Reopen Settings" : "Open Settings & reveal PureMac"),
                                   systemImage: "gear")
                                 .font(.system(size: 13, weight: .semibold))
                                 .frame(minWidth: 240)
@@ -473,11 +475,13 @@ private struct ReadyScene: View {
                 }
 
                 VStack(spacing: 10) {
-                    Text(hasFda ? "You're ready" : "Ready when you are")
+                    Text(LocalizedStringKey(hasFda ? "You're ready" : "Ready when you are"))
                         .font(.system(size: 30, weight: .semibold))
-                    Text(hasFda
-                         ? "Hit Start to run your first Smart Scan."
-                         : "Some features will be limited without Full Disk Access. You can grant it later in Settings.")
+                    Text(LocalizedStringKey(
+                        hasFda
+                            ? "Hit Start to run your first Smart Scan."
+                            : "Some features will be limited. You can grant Full Disk Access later in System Settings."
+                    ))
                         .font(.system(size: 13.5))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)

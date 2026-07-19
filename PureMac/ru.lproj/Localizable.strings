@@ -1,0 +1,407 @@
+/* Sidebar (MainWindow) */
+"Overview" = "Обзор";
+"Applications" = "Приложения";
+"Cleanup" = "Очистка";
+"Dashboard" = "Сводка";
+"Installed Apps" = "Установленные приложения";
+"Orphaned Files" = "Остаточные файлы";
+"PureMac" = "PureMac";
+"Ready to clean" = "Готово к очистке";
+"Limited access" = "Ограниченный доступ";
+"Full Disk Access granted" = "Полный доступ к диску включён";
+"Grant FDA in Settings" = "Включите доступ в Настройках";
+"Select a category from the sidebar to get started." = "Чтобы начать, выберите категорию в боковом меню.";
+
+/* FDA toast + clean error alert (MainWindow) */
+"Couldn't clean everything" = "Не удалось завершить очистку";
+"Open System Settings" = "Открыть Системные настройки";
+"OK" = "ОК";
+"Full Disk Access required" = "Требуется полный доступ к диску";
+"macOS blocks PureMac from cleaning caches and uninstalling apps until you grant access." = "macOS не позволяет PureMac очищать кэши и удалять приложения, пока вы не предоставите доступ.";
+"Grant Access" = "Предоставить доступ";
+
+/* Permission Sheet */
+"Grant Full Disk Access" = "Предоставьте полный доступ к диску";
+"%lld item(s) need Full Disk Access" = "Требуется полный доступ к диску · объектов: %lld";
+"Uninstalling %@: %lld file(s) need Full Disk Access" = "Удаление %@: полный доступ нужен для файлов (%lld)";
+"%lld item(s) need Full Disk Access to remove. Tap Grant Access to fix in one step." = "Для удаления нужен полный доступ к диску. Объектов: %lld. Нажмите «Предоставить доступ», чтобы всё исправить за один шаг.";
+"Couldn't remove %@%@. They may be in use or protected by macOS." = "Не удалось удалить %@%@. Возможно, они используются или защищены macOS.";
+" and %lld more" = " и ещё %lld";
+"Access granted. Retrying…" = "Доступ предоставлен. Повторная попытка…";
+"1-tap setup. We'll detect the change automatically." = "Настройка одним нажатием. Изменение будет обнаружено автоматически.";
+"Open Settings & reveal PureMac" = "Открыть Настройки и показать PureMac в Finder";
+"We'll open both windows side-by-side." = "Оба окна откроются рядом.";
+"Turn on PureMac" = "Включите PureMac";
+"Toggle the row that appears." = "Включите переключатель в появившейся строке.";
+"Authenticate" = "Подтвердите действие";
+"Touch ID or password." = "С помощью Touch ID или пароля.";
+"We auto-retry — no need to come back." = "Повторная попытка выполнится автоматически — возвращаться сюда не нужно.";
+"Watching for permission change…" = "Ожидание изменения разрешения…";
+"PureMac not in the list?" = "PureMac нет в списке?";
+"Hide help" = "Скрыть подсказку";
+"Try this if PureMac doesn't appear:" = "Если PureMac не появляется, попробуйте следующее:";
+"Reveal app" = "Показать в Finder";
+"Drag PureMac.app into the list" = "Перетащите PureMac.app в список";
+"Reset + reprompt" = "Сбросить и запросить заново";
+"Clear stale TCC entry" = "Удалить устаревшую запись TCC";
+"+ %lld more" = "+ ещё %lld";
+"%lld blocked path(s)" = "Недоступных путей: %lld";
+"Access granted" = "Доступ предоставлен";
+"Retrying the operation now." = "Повторяем операцию…";
+"Skip for now" = "Не сейчас";
+"I granted it — retry" = "Проверить доступ и повторить";
+
+/* Dashboard polish */
+"Low space" = "Мало места";
+"CLEANING" = "ОЧИСТКА";
+"Quick Setup" = "Быстрая настройка";
+"1-tap setup. We'll auto-retry what failed." = "Настройка одним нажатием. Неудавшаяся операция повторится автоматически.";
+"Fix permission" = "Настроить доступ";
+"Dismiss" = "Закрыть";
+"Fix" = "Настроить";
+"Set up" = "Настроить";
+
+/* Dashboard */
+"Storage" = "Хранилище";
+"Smart Scan" = "Умное сканирование";
+"free of %@" = "свободно из %@";
+"%lld%% used" = "занято %lld%%";
+"Used" = "Занято";
+"Junk" = "Мусор";
+"Purgeable" = "Очищаемое";
+"USED" = "ЗАНЯТО";
+"SCANNING" = "СКАНИРОВАНИЕ";
+"Free Space" = "Свободное место";
+"Junk Found" = "Найдено мусора";
+"Apps" = "Приложения";
+"of %@ · %lld%% used" = "из %@ · занято %lld%%";
+"Run a scan" = "Запустить сканирование";
+"across %lld categories" = "Категорий: %lld";
+"installed" = "установлено";
+"APFS reclaimable" = "можно освободить в APFS";
+"Suggested for you" = "Рекомендации";
+"Found so far" = "Уже найдено";
+"By category" = "По категориям";
+"Category" = "Категория";
+"%@ is using %@" = "%@ занимает %@";
+"Grant Full Disk Access for full results" = "Предоставьте полный доступ к диску, чтобы получить полные результаты";
+"Without it, most caches and uninstall flows fail." = "Без него большую часть кэшей не удастся очистить, а приложения — удалить полностью.";
+"Action" = "Требуется действие";
+"Scanning your Mac" = "Сканирование Mac";
+"Currently in: %@" = "Категория: %@";
+"found" = "найдено";
+"Your Mac is clean" = "На вашем Mac чисто";
+"Scan Again" = "Сканировать снова";
+"Clean %@" = "Очистить %@";
+"Clean %@?" = "Очистить %@?";
+"Cleaning…" = "Очистка…";
+"%lld%% complete" = "завершено на %lld%%";
+"freed" = "освобождено";
+"Done" = "Готово";
+"%lld items" = "Объектов: %lld";
+
+/* Common destructive dialog */
+"Clean" = "Очистить";
+"Cancel" = "Отмена";
+"This will permanently delete the selected files. This cannot be undone." = "Выбранные файлы будут удалены без возможности восстановления. Это действие нельзя отменить.";
+
+/* Category Detail */
+"All Clean" = "Всё чисто";
+"No junk files found in this category." = "В этой категории мусорных файлов не найдено.";
+"Not Scanned" = "Сканирование не выполнено";
+"Run a scan to analyze this category." = "Запустите сканирование, чтобы проанализировать эту категорию.";
+"Scan Now" = "Сканировать";
+"Filter files" = "Фильтр файлов";
+"Scan" = "Сканировать";
+"Select All" = "Выбрать все";
+"Deselect All" = "Снять выделение";
+"Largest First" = "Сначала самые большие";
+"Smallest First" = "Сначала самые маленькие";
+"Sorted: Largest First" = "Сортировка: сначала самые большие";
+"Sorted: Smallest First" = "Сортировка: сначала самые маленькие";
+"Clean %lld items" = "Очистить выбранное (%lld)";
+"%lld items · %@" = "Объектов: %lld · %@";
+"Scanning…" = "Сканирование…";
+"Rescan" = "Сканировать снова";
+"%lld of %lld selected" = "Выбрано: %lld из %lld";
+"Reveal in Finder" = "Показать в Finder";
+"Copy Path" = "Скопировать путь";
+"Move to Trash" = "Переместить в Корзину";
+
+/* Apps (AppListView) */
+"Search apps" = "Поиск приложений";
+"Refresh" = "Обновить";
+"Installed Apps (%lld)" = "Установленные приложения (%lld)";
+"Uninstall (%lld files)" = "Удалить приложение (%lld)";
+"Loading installed apps..." = "Загрузка установленных приложений…";
+"No Apps Found" = "Приложения не найдены";
+"Could not find any installed applications." = "Не удалось найти установленные приложения.";
+"Retry" = "Повторить";
+"Application" = "Приложение";
+"Size" = "Размер";
+"Select an App" = "Выберите приложение";
+"Select an app from the list to see all its related files across your system." = "Выберите приложение в списке, чтобы увидеть все связанные с ним файлы в системе.";
+
+/* App Files (AppFilesView) */
+"%lld files" = "Файлов: %lld";
+"Scanning for related files..." = "Поиск связанных файлов…";
+"Checking %lld locations..." = "Проверка расположений (%lld)…";
+"No Related Files" = "Связанные файлы не найдены";
+"No additional files found for %@." = "Дополнительные файлы для %@ не найдены.";
+"Remove %lld files (%@)" = "Удалить выбранное (%lld, %@)";
+"Removal Failed" = "Не удалось удалить";
+"Remove this file" = "Удалить этот файл";
+"Remove %@?" = "Удалить %@?";
+"Remove" = "Удалить";
+"This will permanently delete this file. This action cannot be undone." = "Этот файл будет удалён без возможности восстановления. Это действие нельзя отменить.";
+
+/* Orphans */
+"Scanning for orphaned files..." = "Поиск остаточных файлов…";
+"No Orphaned Files" = "Остаточные файлы не найдены";
+"No leftover files from uninstalled apps were found." = "Файлы, оставшиеся после удаления приложений, не найдены.";
+"Scan for Orphans" = "Найти остаточные файлы";
+"Orphaned Files (%lld)" = "Остаточные файлы (%lld)";
+"Remove Selected (%lld)" = "Удалить выбранное (%lld)";
+"Some files could not be removed" = "Некоторые файлы не удалось удалить";
+"Protected items were not deleted: %lld." = "Защищённые объекты не удалены. Количество: %lld.";
+"Blocked by safety policy" = "Заблокировано политикой безопасности";
+"Items not deleted: %lld\n\n%@" = "Не удалено объектов: %lld\n\n%@";
+
+/* Onboarding */
+"Back" = "Назад";
+"Next" = "Далее";
+"Get Started" = "Начать";
+"Welcome to PureMac" = "Добро пожаловать в PureMac";
+"Free, open-source macOS app manager and system cleaner." = "Бесплатный менеджер приложений и средство очистки системы для macOS с открытым исходным кодом.";
+"Find junk files across your system" = "Находите мусорные файлы во всей системе";
+"App Uninstaller" = "Удаление приложений";
+"Remove apps and all their files" = "Удаляйте приложения и все их файлы";
+"Orphan Finder" = "Поиск остаточных файлов";
+"Find leftovers from deleted apps" = "Находите файлы, оставшиеся после удаления приложений";
+"Full Disk Access" = "Полный доступ к диску";
+"PureMac needs Full Disk Access to uninstall apps, find leftover files, and clean protected caches." = "PureMac нужен полный доступ к диску, чтобы удалять приложения, находить остаточные файлы и очищать защищённые кэши.";
+"We'll guide you through the next steps." = "Мы поможем вам выполнить следующие шаги.";
+"In System Settings, do this:" = "В Системных настройках выполните следующее:";
+"Privacy & Security → Full Disk Access" = "Конфиденциальность и безопасность → Полный доступ к диску";
+"Find **PureMac** and turn the toggle on" = "Найдите **PureMac** и включите переключатель";
+"Authenticate with Touch ID or your password" = "Подтвердите действие с помощью Touch ID или пароля";
+"Reopen Settings" = "Снова открыть Настройки";
+"PureMac isn't in the list — reveal it" = "PureMac нет в списке — показать в Finder";
+"Reset permissions and re-prompt" = "Сбросить разрешения и запросить заново";
+"Hide diagnostics" = "Скрыть диагностику";
+"Show diagnostics" = "Показать диагностику";
+"Trouble?" = "Возникли трудности?";
+"Waiting for permission…" = "Ожидание разрешения…";
+"Permission granted." = "Разрешение предоставлено.";
+"PureMac can now manage protected files." = "Теперь PureMac может управлять защищёнными файлами.";
+"You're Ready" = "Всё готово";
+"%lld/%lld protected locations accessible" = "Доступно защищённых расположений: %lld/%lld";
+"Some features will be limited. You can grant Full Disk Access later in System Settings." = "Некоторые функции будут ограничены. Полный доступ к диску можно предоставить позже в Системных настройках.";
+"Trash" = "Корзина";
+"Mail Data" = "Данные Почты";
+"Safari Data" = "Данные Safari";
+"Desktop" = "Рабочий стол";
+"Documents" = "Документы";
+"TCC Database" = "База данных TCC";
+"Blocked" = "Недоступно";
+
+/* FDA demo system apps */
+"Finder" = "Finder";
+"Terminal" = "Терминал";
+
+/* Settings */
+"General" = "Основные";
+"Cleaning" = "Очистка";
+"Schedule" = "Расписание";
+"About" = "О приложении";
+"Startup" = "Запуск";
+"Launch PureMac at login" = "Открывать PureMac при входе";
+"App Scanning" = "Сканирование приложений";
+"Search sensitivity" = "Чувствительность поиска";
+"Strict" = "Строгий";
+"Enhanced" = "Расширенный";
+"Deep" = "Глубокий";
+"Exact bundle ID and name matches only. Safest option." = "Только точные совпадения идентификатора пакета и названия. Самый безопасный вариант.";
+"Includes partial name matching and bundle ID components." = "Включает частичные совпадения названия и компонентов идентификатора пакета.";
+"Includes company name, entitlements, and team identifier matching." = "Учитывает название компании, права доступа и идентификатор команды.";
+"Language" = "Язык";
+"Restart PureMac to apply the selected language." = "Перезапустите PureMac, чтобы применить выбранный язык.";
+"Relaunch Now" = "Перезапустить сейчас";
+"System Default" = "Как в системе";
+"English" = "Английский";
+"Spanish" = "Испанский";
+"Japanese" = "Японский";
+"Arabic" = "Арабский";
+"Polish" = "Польский";
+"Portuguese (Brazil)" = "Португальский (Бразилия)";
+"Russian" = "Русский";
+"Ukrainian" = "Украинский";
+"Chinese (Simplified)" = "Китайский (упрощённый)";
+"Chinese (Traditional)" = "Китайский (традиционный)";
+"Safety" = "Безопасность";
+"Confirm before deleting files" = "Подтверждать удаление файлов";
+"File Discovery" = "Поиск файлов";
+"Skip hidden files during scan" = "Пропускать скрытые файлы при сканировании";
+"Large Files" = "Большие файлы";
+"Minimum size: %lld MB" = "Минимальный размер: %lld МБ";
+"Files older than: %lld months" = "Возраст файлов: более %lld мес.";
+"Automatic Scanning" = "Автоматическое сканирование";
+"Enable scheduled scanning" = "Включить сканирование по расписанию";
+"Scan interval" = "Интервал сканирования";
+"Auto-clean after scan" = "Автоматически очищать после сканирования";
+"Auto-purge purgeable space" = "Автоматически освобождать очищаемое пространство";
+"Notify on completion" = "Уведомлять о завершении";
+"Last run" = "Последний запуск";
+"Version %@" = "Версия %@";
+"Free, open-source macOS app manager." = "Бесплатный менеджер приложений для macOS с открытым исходным кодом.";
+"GitHub Repository" = "Репозиторий GitHub";
+"Report an Issue" = "Сообщить о проблеме";
+"MIT License" = "Лицензия MIT";
+"Updates" = "Обновления";
+"Check for Updates" = "Проверить наличие обновлений";
+
+/* Cleaning categories (CleaningCategory.rawValue) */
+"System Junk" = "Системный мусор";
+"User Cache" = "Пользовательский кэш";
+"AI Apps" = "ИИ-приложения";
+"Mail Files" = "Файлы Почты";
+"Trash Bins" = "Корзины";
+"Large & Old Files" = "Большие и старые файлы";
+"Purgeable Space" = "Очищаемое пространство";
+"Xcode Junk" = "Мусор Xcode";
+"Brew Cache" = "Кэш Homebrew";
+"Node Cache" = "Кэш Node.js";
+"Docker Cache" = "Кэш Docker";
+"Universal Binaries" = "Универсальные бинарные файлы";
+"Language Files" = "Языковые файлы";
+
+/* Cleaning category descriptions */
+"Scan everything at once" = "Сканирование всех категорий сразу";
+"System caches, logs, and temporary files" = "Системные кэши, журналы и временные файлы";
+"Application caches and browser data" = "Кэши приложений и данные браузеров";
+"Local AI app logs, caches, and optional history" = "Локальные журналы, кэши и необязательная история ИИ-приложений";
+"Downloaded mail attachments" = "Загруженные почтовые вложения";
+"Files in your Trash" = "Файлы в Корзине";
+"Files over 100 MB or older than 1 year" = "Файлы размером более 100 МБ или старше 1 года";
+"APFS purgeable disk space" = "Очищаемое пространство на диске APFS";
+"Derived data, archives, and simulators" = "Производные данные, архивы и симуляторы";
+"Homebrew download cache" = "Кэш загрузок Homebrew";
+"npm, yarn, and pnpm download caches" = "Кэши загрузок npm, yarn и pnpm";
+"Docker images, containers, and build cache" = "Образы и контейнеры Docker, а также кэш сборки";
+"Unused CPU architecture slices in app binaries" = "Неиспользуемые архитектуры процессора в бинарных файлах приложений";
+"Unused app localizations" = "Неиспользуемые локализации приложений";
+
+/* AI Apps scan item names */
+"Ollama Logs" = "Журналы Ollama";
+"Ollama Cache" = "Кэш Ollama";
+"Ollama Electron Cache" = "Кэш Electron в Ollama";
+"Ollama WebKit Data" = "Данные WebKit в Ollama";
+"Ollama Saved State" = "Сохранённое состояние Ollama";
+"Ollama CLI Prompt History (Optional)" = "История запросов Ollama CLI (необязательно)";
+"LM Studio Server Logs" = "Журналы сервера LM Studio";
+"LM Studio Conversations (Optional)" = "Диалоги LM Studio (необязательно)";
+
+/* Node Cache subcategories */
+"npm cache" = "Кэш npm";
+"yarn classic cache" = "Классический кэш yarn";
+"pnpm content-addressable store" = "Хранилище pnpm с адресацией по содержимому";
+
+/* Docker Cache helper */
+"Docker prune (stopped containers, dangling images, build cache)" = "Очистка Docker (остановленные контейнеры, непривязанные образы и кэш сборки)";
+
+/* Schedule intervals (ScheduleInterval.rawValue) */
+"Every Hour" = "Каждый час";
+"Every 3 Hours" = "Каждые 3 часа";
+"Every 6 Hours" = "Каждые 6 часов";
+"Every 12 Hours" = "Каждые 12 часов";
+"Daily" = "Ежедневно";
+"Weekly" = "Еженедельно";
+"Every 2 Weeks" = "Раз в 2 недели";
+"Monthly" = "Ежемесячно";
+
+/* Schedule status */
+"Never" = "Никогда";
+"Not scheduled" = "Не запланировано";
+
+/* Appearance modes (AppearanceMode.label) */
+"System" = "Как в системе";
+"Light" = "Светлая тема";
+"Dark" = "Тёмная тема";
+
+/* Notifications */
+"Found %@ of junk files." = "Найдено мусорных файлов на %@.";
+
+/* Onboarding v2 */
+"Reclaim your Mac" = "Освободите место на Mac";
+"Apple sells you small disks. We help you keep them clean." = "Apple продаёт Mac с небольшими накопителями. Мы помогаем поддерживать на них порядок.";
+"Free. Open source. MIT licensed." = "Бесплатно. Открытый исходный код. Лицензия MIT.";
+"What's inside" = "Что внутри";
+"Three things, done well." = "Три задачи, выполненные как следует.";
+"Find caches, logs, broken installs, and the AI-app history hiding in your library." = "Находит кэши, журналы, следы неудачных установок и скрытую в вашей библиотеке историю ИИ-приложений.";
+"Drag an app, see every file it dropped, remove all of it. No leftovers." = "Перетащите приложение, просмотрите все созданные им файлы и удалите их полностью. Никаких остатков.";
+"Surfaces files that outlived the apps that created them." = "Находит файлы, оставшиеся после удаления создавших их приложений.";
+"One permission, then we're done" = "Одно разрешение — и всё готово";
+"Permission granted" = "Разрешение предоставлено";
+"PureMac can now reach the locations macOS protects by default." = "Теперь PureMac может обращаться к папкам, которые macOS защищает по умолчанию.";
+"macOS hides certain folders from every app until you say otherwise. We need them to find caches and uninstall cleanly." = "macOS скрывает некоторые папки от всех приложений, пока вы явно не разрешите доступ. Он нужен, чтобы находить кэши и полностью удалять приложения.";
+"All set — moving you to the next step." = "Всё готово — переходим к следующему шагу.";
+"Reveal app again" = "Снова показать в Finder";
+"Reset permissions" = "Сбросить разрешения";
+"You're ready" = "Всё готово";
+"Ready when you are" = "Можно начинать";
+"Hit Start to run your first Smart Scan." = "Нажмите «Начать», чтобы запустить первое умное сканирование.";
+"Skip" = "Пропустить";
+"Start" = "Начать";
+"Continue" = "Продолжить";
+
+/* Drag handle */
+"Drag to the Settings list" = "Перетащите в список в Настройках";
+"Drag this icon into the Full Disk Access list in System Settings." = "Перетащите этот значок в список «Полный доступ к диску» в Системных настройках.";
+"Tip: drag the icon on the left straight into the list." = "Совет: перетащите значок слева прямо в список.";
+"Or drag the icon on the left straight into Settings." = "Или перетащите значок слева прямо в Настройки.";
+
+/* Dashboard storage composition (v2.7.0) */
+"Storage composition" = "Состав хранилища";
+"total" = "всего";
+"Free" = "Свободно";
+
+/* UI polish (v2.8.0): leftover groups + sound toggle */
+"Caches" = "Кэши";
+"Application Support" = "Поддержка приложений";
+"Preferences" = "Настройки";
+"Logs" = "Журналы";
+"Containers" = "Контейнеры";
+"Launch Agents" = "Агенты запуска";
+"Other Files" = "Другие файлы";
+"Sound" = "Звук";
+"Play sound effects" = "Воспроизводить звуковые эффекты";
+
+/* v2.8.1: purgeable honesty */
+"Managed by macOS" = "Управляется macOS";
+"Reserved by macOS - freed automatically when space is needed" = "Зарезервировано macOS — освобождается автоматически при нехватке места";
+
+/* v2.8.2: large-file folder exclusions (#121) */
+"Excluded Folders" = "Исключённые папки";
+"Files inside these folders are skipped from the Large & Old Files scan (Downloads, Documents, Desktop)." = "Файлы в этих папках пропускаются при поиске больших и старых файлов («Загрузки», «Документы», «Рабочий стол»).";
+"Remove from exclusions" = "Убрать из исключений";
+"Add Folder…" = "Добавить папку…";
+
+/* v2.8.2: orphan ignore list (#114) */
+"Always Ignore" = "Всегда игнорировать";
+"Ignore Selected (%lld)" = "Игнорировать выбранное (%lld)";
+"Ignored orphans: %lld" = "Игнорируемых остаточных файлов: %lld";
+"Forget Ignored" = "Очистить список";
+"Ignored files won't appear in future orphan scans." = "Игнорируемые файлы не будут появляться при последующем поиске остаточных файлов.";
+
+/* v2.8.3: menu-bar system monitor */
+"System Monitor" = "Системный монитор";
+"Show system monitor in menu bar" = "Показывать системный монитор в строке меню";
+"Live CPU, memory, and disk meters in the menu bar. PureMac keeps running in the background while this is on." = "Индикаторы процессора, памяти и диска в строке меню в реальном времени. Пока они включены, PureMac продолжает работать в фоновом режиме.";
+"CPU" = "Процессор";
+"Memory" = "Память";
+"Disk" = "Диск";
+"Open PureMac" = "Открыть PureMac";
+"Quit PureMac" = "Завершить PureMac";
+
+/* Finder Service */
+"Select an application (.app) to uninstall." = "Выберите приложение (.app) для удаления.";

@@ -226,37 +226,37 @@ actor ScanEngine {
     private func scanAIApps() -> CategoryResult {
         let targets = [
             CleanupTarget(
-                name: "Ollama Logs",
+                name: String(localized: "Ollama Logs"),
                 path: "\(home)/.ollama/logs"
             ),
             CleanupTarget(
-                name: "Ollama Cache",
+                name: String(localized: "Ollama Cache"),
                 path: "\(home)/Library/Caches/ollama"
             ),
             CleanupTarget(
-                name: "Ollama Electron Cache",
+                name: String(localized: "Ollama Electron Cache"),
                 path: "\(home)/Library/Caches/com.electron.ollama"
             ),
             CleanupTarget(
-                name: "Ollama WebKit Data",
+                name: String(localized: "Ollama WebKit Data"),
                 path: "\(home)/Library/WebKit/com.electron.ollama"
             ),
             CleanupTarget(
-                name: "Ollama Saved State",
+                name: String(localized: "Ollama Saved State"),
                 path: "\(home)/Library/Saved Application State/com.electron.ollama.savedState"
             ),
             CleanupTarget(
-                name: "Ollama CLI Prompt History (Optional)",
+                name: String(localized: "Ollama CLI Prompt History (Optional)"),
                 path: "\(home)/.ollama/history",
                 isSelected: false,
                 minimumSize: 0
             ),
             CleanupTarget(
-                name: "LM Studio Server Logs",
+                name: String(localized: "LM Studio Server Logs"),
                 path: "\(home)/.lmstudio/server-logs"
             ),
             CleanupTarget(
-                name: "LM Studio Conversations (Optional)",
+                name: String(localized: "LM Studio Conversations (Optional)"),
                 path: "\(home)/.lmstudio/conversations",
                 isSelected: false,
                 minimumSize: 0
@@ -572,12 +572,12 @@ actor ScanEngine {
 
         let managers: [ManagerCache] = [
             ManagerCache(
-                name: "npm cache",
+                name: String(localized: "npm cache"),
                 defaultPath: "\(home)/.npm",
                 detectionCommand: (cli: "npm", args: ["config", "get", "cache"])
             ),
             ManagerCache(
-                name: "yarn classic cache",
+                name: String(localized: "yarn classic cache"),
                 defaultPath: "\(home)/Library/Caches/Yarn",
                 detectionCommand: (cli: "yarn", args: ["cache", "dir"])
             ),
@@ -586,7 +586,7 @@ actor ScanEngine {
             // touched by a system cleaner. The classic cache above remains the
             // global, safe-to-clean location.
             ManagerCache(
-                name: "pnpm content-addressable store",
+                name: String(localized: "pnpm content-addressable store"),
                 defaultPath: "\(home)/Library/pnpm/store",
                 detectionCommand: (cli: "pnpm", args: ["store", "path"])
             ),
@@ -735,7 +735,7 @@ actor ScanEngine {
         for dockerBin in dockerBinPaths where fileManager.fileExists(atPath: dockerBin) {
             if let reclaimable = reclaimableDockerSpace(dockerBin: dockerBin), reclaimable > 0 {
                 items.append(CleanableItem(
-                    name: "Docker prune (stopped containers, dangling images, build cache)",
+                    name: String(localized: "Docker prune (stopped containers, dangling images, build cache)"),
                     path: "",
                     size: reclaimable,
                     category: .dockerCache,

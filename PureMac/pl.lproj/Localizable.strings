@@ -58,6 +58,8 @@
 "1-tap setup. We'll auto-retry what failed." = "Konfiguracja jednym kliknięciem. Automatycznie ponowimy to, co się nie udało.";
 "Fix permission" = "Napraw uprawnienie";
 "Dismiss" = "Zamknij";
+"Fix" = "Napraw";
+"Set up" = "Skonfiguruj";
 
 /* Dashboard */
 "Storage" = "Pamięć masowa";
@@ -80,6 +82,7 @@
 "Suggested for you" = "Sugerowane dla Ciebie";
 "Found so far" = "Znalezione dotychczas";
 "By category" = "Według kategorii";
+"Category" = "Kategoria";
 "%@ is using %@" = "%@ zajmuje %@";
 "Grant Full Disk Access for full results" = "Przyznaj pełny dostęp do dysku, aby zobaczyć pełne wyniki";
 "Without it, most caches and uninstall flows fail." = "Bez niego większość czyszczenia i odinstalowywania nie działa.";
@@ -160,6 +163,9 @@
 "Orphaned Files (%lld)" = "Osierocone pliki (%lld)";
 "Remove Selected (%lld)" = "Usuń zaznaczone (%lld)";
 "Some files could not be removed" = "Niektórych plików nie udało się usunąć";
+"Protected items were not deleted: %lld." = "Nie usunięto chronionych elementów: %lld.";
+"Blocked by safety policy" = "Zablokowano przez zasady bezpieczeństwa";
+"Items not deleted: %lld\n\n%@" = "Nieusunięte elementy: %lld\n\n%@";
 
 /* Onboarding */
 "Back" = "Wstecz";
@@ -199,6 +205,10 @@
 "TCC Database" = "Baza TCC";
 "Blocked" = "Zablokowane";
 
+/* FDA demo system apps */
+"Finder" = "Finder";
+"Terminal" = "Terminal";
+
 /* Settings */
 "General" = "Ogólne";
 "Cleaning" = "Czyszczenie";
@@ -224,6 +234,8 @@
 "Arabic" = "Arabski";
 "Polish" = "Polski";
 "Portuguese (Brazil)" = "Portugalski (Brazylia)";
+"Russian" = "Rosyjski";
+"Ukrainian" = "Ukraiński";
 "Chinese (Simplified)" = "Chiński (uproszczony)";
 "Chinese (Traditional)" = "Chiński (tradycyjny)";
 "Safety" = "Bezpieczeństwo";
@@ -245,6 +257,8 @@
 "GitHub Repository" = "Repozytorium GitHub";
 "Report an Issue" = "Zgłoś problem";
 "MIT License" = "Licencja MIT";
+"Updates" = "Aktualizacje";
+"Check for Updates" = "Sprawdź dostępność aktualizacji";
 
 /* Cleaning categories (CleaningCategory.rawValue) */
 "System Junk" = "Śmieci systemowe";
@@ -277,13 +291,23 @@
 "Unused CPU architecture slices in app binaries" = "Nieużywane architektury CPU w plikach binarnych aplikacji";
 "Unused app localizations" = "Nieużywane lokalizacje aplikacji";
 
+/* AI Apps scan item names */
+"Ollama Logs" = "Dzienniki Ollama";
+"Ollama Cache" = "Pamięć podręczna Ollama";
+"Ollama Electron Cache" = "Pamięć podręczna Electron Ollama";
+"Ollama WebKit Data" = "Dane WebKit Ollama";
+"Ollama Saved State" = "Zapisany stan Ollama";
+"Ollama CLI Prompt History (Optional)" = "Historia promptów Ollama CLI (opcjonalnie)";
+"LM Studio Server Logs" = "Dzienniki serwera LM Studio";
+"LM Studio Conversations (Optional)" = "Konwersacje LM Studio (opcjonalnie)";
+
 /* Node Cache subcategories */
 "npm cache" = "cache npm";
 "yarn classic cache" = "cache yarn classic";
 "pnpm content-addressable store" = "magazyn adresowany treścią pnpm";
 
 /* Docker Cache helper */
-"Reclaimable (run `docker system prune -af`)" = "Do odzyskania (uruchom `docker system prune -af`)";
+"Docker prune (stopped containers, dangling images, build cache)" = "Czyszczenie Dockera (zatrzymane kontenery, nieużywane obrazy i pamięć podręczna kompilacji)";
 
 /* Schedule intervals (ScheduleInterval.rawValue) */
 "Every Hour" = "Co godzinę";
@@ -378,3 +402,6 @@
 "Disk" = "Dysk";
 "Open PureMac" = "Otwórz PureMac";
 "Quit PureMac" = "Zamknij PureMac";
+
+/* Finder Service */
+"Select an application (.app) to uninstall." = "Wybierz aplikację (.app) do odinstalowania.";

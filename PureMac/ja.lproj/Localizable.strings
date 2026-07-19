@@ -41,6 +41,7 @@
 "Suggested for you" = "あなたへのおすすめ";
 "Found so far" = "これまでに見つかったもの";
 "By category" = "カテゴリ別";
+"Category" = "カテゴリ";
 "%@ is using %@" = "%@ は %@ を使用しています";
 "Grant Full Disk Access for full results" = "完全な結果を得るためにフルディスクアクセスを許可してください";
 "Without it, most caches and uninstall flows fail." = "許可しないと、ほとんどのキャッシュ削除やアンインストールに失敗します。";
@@ -121,6 +122,9 @@
 "Orphaned Files (%lld)" = "孤立ファイル (%lld)";
 "Remove Selected (%lld)" = "選択した項目を削除 (%lld)";
 "Some files could not be removed" = "一部のファイルを削除できませんでした";
+"Protected items were not deleted: %lld." = "保護された項目は削除されませんでした：%lld。";
+"Blocked by safety policy" = "安全ポリシーによりブロック";
+"Items not deleted: %lld\n\n%@" = "削除できなかった項目：%lld\n\n%@";
 
 /* Onboarding */
 "Back" = "戻る";
@@ -160,6 +164,10 @@
 "TCC Database" = "TCCデータベース";
 "Blocked" = "ブロック";
 
+/* FDA demo system apps */
+"Finder" = "Finder";
+"Terminal" = "ターミナル";
+
 /* Settings */
 "General" = "一般";
 "Cleaning" = "クリーニング";
@@ -185,6 +193,8 @@
 "Arabic" = "アラビア語";
 "Polish" = "ポーランド語";
 "Portuguese (Brazil)" = "ポルトガル語(ブラジル)";
+"Russian" = "ロシア語";
+"Ukrainian" = "ウクライナ語";
 "Chinese (Simplified)" = "中国語(簡体字)";
 "Chinese (Traditional)" = "中国語(繁体字)";
 "Safety" = "安全";
@@ -206,6 +216,8 @@
 "GitHub Repository" = "GitHubリポジトリ";
 "Report an Issue" = "問題を報告";
 "MIT License" = "MITライセンス";
+"Updates" = "アップデート";
+"Check for Updates" = "アップデートを確認";
 
 /* Cleaning categories (CleaningCategory.rawValue) */
 "System Junk" = "システムジャンク";
@@ -238,13 +250,23 @@
 "Unused CPU architecture slices in app binaries" = "アプリバイナリ内の未使用CPUアーキテクチャコード";
 "Unused app localizations" = "使用されていないアプリのローカライゼーション";
 
+/* AI Apps scan item names */
+"Ollama Logs" = "Ollamaログ";
+"Ollama Cache" = "Ollamaキャッシュ";
+"Ollama Electron Cache" = "Ollama Electronキャッシュ";
+"Ollama WebKit Data" = "Ollama WebKitデータ";
+"Ollama Saved State" = "Ollamaの保存状態";
+"Ollama CLI Prompt History (Optional)" = "Ollama CLIプロンプト履歴（任意）";
+"LM Studio Server Logs" = "LM Studioサーバーログ";
+"LM Studio Conversations (Optional)" = "LM Studioの会話（任意）";
+
 /* Node Cache subcategories */
 "npm cache" = "npmキャッシュ";
 "yarn classic cache" = "yarnクラシックキャッシュ";
 "pnpm content-addressable store" = "pnpmコンテンツアドレッサブルストア";
 
 /* Docker Cache helper */
-"Reclaimable (run `docker system prune -af`)" = "再利用可能 ( `docker system prune -af` を実行)";
+"Docker prune (stopped containers, dangling images, build cache)" = "Docker クリーンアップ（停止中のコンテナ、未使用イメージ、ビルドキャッシュ）";
 
 /* Schedule intervals (ScheduleInterval.rawValue) */
 "Every Hour" = "1時間ごと";
@@ -306,6 +328,8 @@
 "1-tap setup. We'll auto-retry what failed." = "ワンタップ設定。失敗した処理は自動的に再試行します。";
 "Fix permission" = "権限を修正";
 "Dismiss" = "閉じる";
+"Fix" = "修正";
+"Set up" = "設定";
 
 /* Onboarding v2 */
 "Reclaim your Mac" = "Mac を取り戻そう";
@@ -342,7 +366,6 @@
 "Free" = "空き";
 
 /* UI polish (v2.8.0): leftover groups + sound toggle */
-"Application" = "アプリケーション";
 "Caches" = "キャッシュ";
 "Application Support" = "アプリケーションサポート";
 "Preferences" = "環境設定";
@@ -379,3 +402,6 @@
 "Disk" = "ディスク";
 "Open PureMac" = "PureMacを開く";
 "Quit PureMac" = "PureMacを終了";
+
+/* Finder Service */
+"Select an application (.app) to uninstall." = "アンインストールするアプリケーション（.app）を選択してください。";

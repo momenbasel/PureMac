@@ -1,0 +1,8 @@
+/* macOS permission prompts */
+"NSAppleEventsUsageDescription" = "PureMac uses Apple Events to interact with Finder when revealing files.";
+"NSDesktopFolderUsageDescription" = "PureMac needs access to your Desktop to find junk and orphaned files.";
+"NSDocumentsFolderUsageDescription" = "PureMac needs access to your Documents to find junk and orphaned files.";
+"NSDownloadsFolderUsageDescription" = "PureMac needs access to your Downloads to find junk and orphaned files.";
+"NSRemovableVolumesUsageDescription" = "PureMac needs access to removable volumes to scan for junk files.";
+"NSSystemAdministrationUsageDescription" = "PureMac needs system administration access to clean caches and uninstall apps completely.";
+"NSHumanReadableCopyright" = "Copyright 2026. MIT License.";

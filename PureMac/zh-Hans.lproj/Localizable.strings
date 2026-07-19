@@ -41,6 +41,7 @@
 "Suggested for you" = "推荐";
 "Found so far" = "目前发现";
 "By category" = "按类别";
+"Category" = "类别";
 "%@ is using %@" = "%@ 占用 %@";
 "Grant Full Disk Access for full results" = "授予完整磁盘访问以获得完整结果";
 "Without it, most caches and uninstall flows fail." = "没有它,大多数缓存清理和卸载流程都会失败。";
@@ -121,6 +122,9 @@
 "Orphaned Files (%lld)" = "孤立文件 (%lld)";
 "Remove Selected (%lld)" = "删除所选 (%lld)";
 "Some files could not be removed" = "部分文件无法删除";
+"Protected items were not deleted: %lld." = "有 %lld 个受保护项目未被删除。";
+"Blocked by safety policy" = "已被安全策略阻止";
+"Items not deleted: %lld\n\n%@" = "未删除的项目：%lld\n\n%@";
 
 /* Onboarding */
 "Back" = "返回";
@@ -160,6 +164,10 @@
 "TCC Database" = "TCC 数据库";
 "Blocked" = "已阻止";
 
+/* FDA demo system apps */
+"Finder" = "访达";
+"Terminal" = "终端";
+
 /* Settings */
 "General" = "通用";
 "Cleaning" = "清理";
@@ -185,6 +193,8 @@
 "Arabic" = "阿拉伯语";
 "Polish" = "波兰语";
 "Portuguese (Brazil)" = "葡萄牙语(巴西)";
+"Russian" = "俄语";
+"Ukrainian" = "乌克兰语";
 "Chinese (Simplified)" = "简体中文";
 "Chinese (Traditional)" = "繁体中文";
 "Safety" = "安全";
@@ -206,6 +216,8 @@
 "GitHub Repository" = "GitHub 仓库";
 "Report an Issue" = "报告问题";
 "MIT License" = "MIT 许可";
+"Updates" = "更新";
+"Check for Updates" = "检查更新";
 
 /* Cleaning categories (CleaningCategory.rawValue) */
 "System Junk" = "系统垃圾";
@@ -238,13 +250,23 @@
 "Unused CPU architecture slices in app binaries" = "应用二进制文件中未使用的 CPU 架构代码";
 "Unused app localizations" = "未使用的应用本地化文件";
 
+/* AI Apps scan item names */
+"Ollama Logs" = "Ollama 日志";
+"Ollama Cache" = "Ollama 缓存";
+"Ollama Electron Cache" = "Ollama Electron 缓存";
+"Ollama WebKit Data" = "Ollama WebKit 数据";
+"Ollama Saved State" = "Ollama 已保存状态";
+"Ollama CLI Prompt History (Optional)" = "Ollama CLI 提示词历史记录（可选）";
+"LM Studio Server Logs" = "LM Studio 服务器日志";
+"LM Studio Conversations (Optional)" = "LM Studio 对话（可选）";
+
 /* Node Cache subcategories */
 "npm cache" = "npm 缓存";
 "yarn classic cache" = "yarn 经典缓存";
 "pnpm content-addressable store" = "pnpm 内容寻址存储";
 
 /* Docker Cache helper */
-"Reclaimable (run `docker system prune -af`)" = "可回收(运行 `docker system prune -af`)";
+"Docker prune (stopped containers, dangling images, build cache)" = "Docker 清理（已停止的容器、悬空镜像和构建缓存）";
 
 /* Schedule intervals (ScheduleInterval.rawValue) */
 "Every Hour" = "每小时";
@@ -306,6 +328,8 @@
 "1-tap setup. We'll auto-retry what failed." = "一键设置。我们会自动重试失败的操作。";
 "Fix permission" = "修复权限";
 "Dismiss" = "忽略";
+"Fix" = "修复";
+"Set up" = "设置";
 
 /* Onboarding v2 */
 "Reclaim your Mac" = "夺回你的 Mac";
@@ -342,7 +366,6 @@
 "Free" = "可用";
 
 /* UI polish (v2.8.0): leftover groups + sound toggle */
-"Application" = "应用程序";
 "Caches" = "缓存";
 "Application Support" = "应用程序支持";
 "Preferences" = "偏好设置";
@@ -379,3 +402,6 @@
 "Disk" = "磁盘";
 "Open PureMac" = "打开 PureMac";
 "Quit PureMac" = "退出 PureMac";
+
+/* Finder Service */
+"Select an application (.app) to uninstall." = "请选择要卸载的应用程序（.app）。";

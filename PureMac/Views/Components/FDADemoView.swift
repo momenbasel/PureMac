@@ -170,7 +170,7 @@ struct FDADemoView: View {
     }
 
     private struct DemoRow {
-        let name: String
+        let name: LocalizedStringKey
         let systemImage: String
         let granted: Bool
         var isPureMac: Bool = false

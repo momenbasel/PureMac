@@ -41,6 +41,7 @@
 "Suggested for you" = "اقتراحات لك";
 "Found so far" = "العثور عليه حتى الآن";
 "By category" = "حسب الفئة";
+"Category" = "الفئة";
 "%@ is using %@" = "%@ يستخدم %@";
 "Grant Full Disk Access for full results" = "امنح الوصول الكامل للقرص للحصول على نتائج كاملة";
 "Without it, most caches and uninstall flows fail." = "من دونه ستفشل معظم عمليات تنظيف الذاكرة المؤقتة وإزالة التطبيقات.";
@@ -121,6 +122,9 @@
 "Orphaned Files (%lld)" = "الملفات اليتيمة (%lld)";
 "Remove Selected (%lld)" = "إزالة المحدد (%lld)";
 "Some files could not be removed" = "تعذّرت إزالة بعض الملفات";
+"Protected items were not deleted: %lld." = "لم يتم حذف العناصر المحمية: %lld.";
+"Blocked by safety policy" = "محظور بواسطة سياسة الأمان";
+"Items not deleted: %lld\n\n%@" = "العناصر التي لم تُحذف: %lld\n\n%@";
 
 /* Onboarding */
 "Back" = "السابق";
@@ -160,6 +164,10 @@
 "TCC Database" = "قاعدة بيانات TCC";
 "Blocked" = "محظور";
 
+/* FDA demo system apps */
+"Finder" = "فايندر";
+"Terminal" = "الطرفية";
+
 /* Settings */
 "General" = "عام";
 "Cleaning" = "التنظيف";
@@ -185,6 +193,8 @@
 "Arabic" = "العربية";
 "Polish" = "البولندية";
 "Portuguese (Brazil)" = "البرتغالية (البرازيل)";
+"Russian" = "الروسية";
+"Ukrainian" = "الأوكرانية";
 "Chinese (Simplified)" = "الصينية (المبسطة)";
 "Chinese (Traditional)" = "الصينية (التقليدية)";
 "Safety" = "الأمان";
@@ -206,6 +216,8 @@
 "GitHub Repository" = "مستودع GitHub";
 "Report an Issue" = "الإبلاغ عن مشكلة";
 "MIT License" = "ترخيص MIT";
+"Updates" = "التحديثات";
+"Check for Updates" = "التحقق من وجود تحديثات";
 
 /* Cleaning categories (CleaningCategory.rawValue) */
 "System Junk" = "نفايات النظام";
@@ -238,13 +250,23 @@
 "Unused CPU architecture slices in app binaries" = "شرائح بنى معالج غير مستخدمة في الملفات الثنائية للتطبيقات";
 "Unused app localizations" = "ترجمات التطبيقات غير المستخدمة";
 
+/* AI Apps scan item names */
+"Ollama Logs" = "سجلات Ollama";
+"Ollama Cache" = "ذاكرة التخزين المؤقت لـ Ollama";
+"Ollama Electron Cache" = "ذاكرة التخزين المؤقت لـ Electron في Ollama";
+"Ollama WebKit Data" = "بيانات WebKit في Ollama";
+"Ollama Saved State" = "الحالة المحفوظة لـ Ollama";
+"Ollama CLI Prompt History (Optional)" = "سجل مطالبات Ollama CLI (اختياري)";
+"LM Studio Server Logs" = "سجلات خادم LM Studio";
+"LM Studio Conversations (Optional)" = "محادثات LM Studio (اختياري)";
+
 /* Node Cache subcategories */
 "npm cache" = "ذاكرة npm المؤقتة";
 "yarn classic cache" = "ذاكرة yarn الكلاسيكية المؤقتة";
 "pnpm content-addressable store" = "مخزن pnpm القابل للعنونة بالمحتوى";
 
 /* Docker Cache helper */
-"Reclaimable (run `docker system prune -af`)" = "قابلة للاسترجاع (شغّل `docker system prune -af`)";
+"Docker prune (stopped containers, dangling images, build cache)" = "تنظيف Docker (الحاويات المتوقفة، والصور غير المرتبطة، وذاكرة التخزين المؤقت للبناء)";
 
 /* Schedule intervals (ScheduleInterval.rawValue) */
 "Every Hour" = "كل ساعة";
@@ -306,6 +328,8 @@
 "1-tap setup. We'll auto-retry what failed." = "إعداد بضغطة واحدة. سنعيد المحاولة تلقائيًا.";
 "Fix permission" = "إصلاح الإذن";
 "Dismiss" = "تجاهل";
+"Fix" = "إصلاح";
+"Set up" = "إعداد";
 
 /* Onboarding v2 */
 "Reclaim your Mac" = "استعد جهاز Mac الخاص بك";
@@ -342,7 +366,6 @@
 "Free" = "متاح";
 
 /* UI polish (v2.8.0): leftover groups + sound toggle */
-"Application" = "التطبيق";
 "Caches" = "ذاكرة التخزين المؤقت";
 "Application Support" = "دعم التطبيقات";
 "Preferences" = "التفضيلات";
@@ -379,3 +402,6 @@
 "Disk" = "القرص";
 "Open PureMac" = "فتح PureMac";
 "Quit PureMac" = "إنهاء PureMac";
+
+/* Finder Service */
+"Select an application (.app) to uninstall." = "حدد تطبيقًا (.app) لإلغاء تثبيته.";
