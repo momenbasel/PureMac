@@ -22,6 +22,8 @@ SIGN_ID="Developer ID Application: Moamen Basel (${TEAM_ID})"
 SCHEME="PureMac"
 PROJECT="PureMac.xcodeproj"
 APP="build/export/PureMac.app"
+HELPER="${APP}/Contents/Library/LaunchServices/com.puremac.privileged-helper"
+DAEMON_PLIST="${APP}/Contents/Library/LaunchDaemons/com.puremac.privileged-cleaning.plist"
 DMG="build/PureMac-${VERSION}.dmg"
 ZIP="build/PureMac-${VERSION}.zip"
 
@@ -74,10 +76,32 @@ xcodebuild -exportArchive \
   -exportOptionsPlist build/ExportOptions.plist
 
 echo "==> verify codesign"
+APP_REQUIREMENT='anchor apple generic and identifier "com.puremac.app" and certificate leaf[subject.OU] = "H3WXHVTP97"'
+HELPER_REQUIREMENT='anchor apple generic and identifier "com.puremac.privileged-helper" and certificate leaf[subject.OU] = "H3WXHVTP97"'
+test -x "${HELPER}"
+test -f "${DAEMON_PLIST}"
+plutil -lint "${DAEMON_PLIST}"
+test "$(/usr/libexec/PlistBuddy -c 'Print :Label' "${DAEMON_PLIST}")" = "com.puremac.privileged-cleaning"
+test "$(/usr/libexec/PlistBuddy -c 'Print :BundleProgram' "${DAEMON_PLIST}")" = "Contents/Library/LaunchServices/com.puremac.privileged-helper"
+test "$(/usr/libexec/PlistBuddy -c 'Print :AssociatedBundleIdentifiers:0' "${DAEMON_PLIST}")" = "com.puremac.app"
+test "$(/usr/libexec/PlistBuddy -c 'Print :MachServices:com.puremac.privileged-cleaning' "${DAEMON_PLIST}")" = "true"
 codesign --verify --deep --strict --verbose=2 "${APP}"
+codesign --verify --strict --verbose=2 "${HELPER}"
+codesign --verify --strict --verbose=2 -R="${APP_REQUIREMENT}" "${APP}"
+codesign --verify --strict --verbose=2 -R="${HELPER_REQUIREMENT}" "${HELPER}"
+codesign -d --entitlements :- "${APP}" > /tmp/puremac-app-entitlements.plist
+codesign -d --entitlements :- "${HELPER}" > /tmp/puremac-helper-entitlements.plist
+! plutil -p /tmp/puremac-app-entitlements.plist | grep -E 'get-task-allow|disable-library-validation|allow-dyld-environment-variables'
+! plutil -p /tmp/puremac-helper-entitlements.plist | grep -E 'get-task-allow|disable-library-validation|allow-dyld-environment-variables'
 codesign -dvv "${APP}" 2>&1 | grep -E "Identifier|TeamIdentifier|flags|Authority"
 codesign -dvv "${APP}" 2>&1 | grep -q "flags=0x10000(runtime)" || { echo "Hardened runtime missing"; exit 1; }
+codesign -dvv "${HELPER}" 2>&1 | grep -E "Identifier|TeamIdentifier|flags|Authority"
+codesign -dvv "${HELPER}" 2>&1 | grep -q "Identifier=com.puremac.privileged-helper" || { echo "Unexpected privileged helper identifier"; exit 1; }
+codesign -dvv "${HELPER}" 2>&1 | grep -q "TeamIdentifier=${TEAM_ID}" || { echo "Unexpected privileged helper team"; exit 1; }
+codesign -dvv "${HELPER}" 2>&1 | grep -q "flags=0x10000(runtime)" || { echo "Privileged helper hardened runtime missing"; exit 1; }
 lipo -archs "${APP}/Contents/MacOS/PureMac"
+lipo -archs "${HELPER}" | grep -q "x86_64"
+lipo -archs "${HELPER}" | grep -q "arm64"
 
 echo "==> dmg"
 create-dmg \

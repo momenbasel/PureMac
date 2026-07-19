@@ -30,3 +30,31 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
+
+      - name: Verify privileged helper packaging
+        run: |
+          set -euo pipefail
+          APP="build/Build/Products/Release/PureMac.app"
+          HELPER="${APP}/Contents/Library/LaunchServices/com.puremac.privileged-helper"
+          PLIST="${APP}/Contents/Library/LaunchDaemons/com.puremac.privileged-cleaning.plist"
+          test -x "${HELPER}"
+          test -f "${PLIST}"
+          plutil -lint "${PLIST}"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :Label' "${PLIST}")" = "com.puremac.privileged-cleaning"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :BundleProgram' "${PLIST}")" = "Contents/Library/LaunchServices/com.puremac.privileged-helper"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :AssociatedBundleIdentifiers:0' "${PLIST}")" = "com.puremac.app"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :MachServices:com.puremac.privileged-cleaning' "${PLIST}")" = "true"
+          lipo -archs "${HELPER}" | grep -q "arm64"
+          lipo -archs "${HELPER}" | grep -q "x86_64"
+
+      - name: Test
+        run: |
+          xcodebuild -project PureMac.xcodeproj \
+            -scheme PureMac \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            -derivedDataPath build-tests \
+            test \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO

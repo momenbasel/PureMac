@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>AssociatedBundleIdentifiers</key>
+	<array>
+		<string>com.puremac.app</string>
+	</array>
+	<key>BundleProgram</key>
+	<string>Contents/Library/LaunchServices/com.puremac.privileged-helper</string>
+	<key>Label</key>
+	<string>com.puremac.privileged-cleaning</string>
+	<key>MachServices</key>
+	<dict>
+		<key>com.puremac.privileged-cleaning</key>
+		<true/>
+	</dict>
+	<key>ProcessType</key>
+	<string>Background</string>
+	<key>UserName</key>
+	<string>root</string>
+</dict>
+</plist>

@@ -149,40 +149,9 @@ struct OrphanListView: View {
         isRemoving = true
         defer { isRemoving = false }
 
-        let urlsToRemove = selectedOrphans
-        var failedPaths: [String] = []
-        var removedURLs: Set<URL> = []
-        var needsAdminURLs: [URL] = []
-
-        for url in urlsToRemove {
-            guard OrphanSafetyPolicy.isSafeCandidate(url) else {
-                failedPaths.append("\(url.path) (blocked by safety policy)")
-                continue
-            }
-
-            switch removeOrphan(url) {
-            case .removed:
-                removedURLs.insert(url)
-            case .needsAdmin:
-                needsAdminURLs.append(url)
-            case .failed:
-                failedPaths.append(url.path)
-            }
-        }
-
-        if !needsAdminURLs.isEmpty {
-            if removeWithAdminPrivileges(needsAdminURLs) {
-                for url in needsAdminURLs {
-                    if !FileManager.default.fileExists(atPath: url.path) {
-                        removedURLs.insert(url)
-                    } else {
-                        failedPaths.append(url.path)
-                    }
-                }
-            } else {
-                failedPaths.append(contentsOf: needsAdminURLs.map(\.path))
-            }
-        }
+        let outcome = await appState.removeOrphansSecurely(Array(selectedOrphans))
+        let failedPaths = outcome.failedPaths
+        let removedURLs = outcome.removed
 
         // Sweep removed rows out (per-row transitions are attached in the
         // List above); plain assignment under Reduce Motion.
@@ -198,35 +167,8 @@ struct OrphanListView: View {
         if !failedPaths.isEmpty {
             let preview = failedPaths.prefix(3).joined(separator: "\n")
             let suffix = failedPaths.count > 3 ? "\n…" : ""
-            removalErrorMessage = "\(failedPaths.count) item(s) failed to delete.\n\n\(preview)\(suffix)"
-        }
-    }
-
-    private enum OrphanRemoveOutcome {
-        case removed
-        case needsAdmin
-        case failed
-    }
-
-    private func removeOrphan(_ url: URL) -> OrphanRemoveOutcome {
-        do {
-            try FileManager.default.removeItem(at: url)
-            return .removed
-        } catch {
-            let nsError = error as NSError
-            let permissionDeniedCodes = [
-                NSFileReadNoPermissionError,
-                NSFileWriteNoPermissionError,
-                NSFileWriteUnknownError,
-                257,
-                513,
-            ]
-
-            guard permissionDeniedCodes.contains(nsError.code) else {
-                return .failed
-            }
-
-            return .needsAdmin
+            let detail = outcome.failureDetails.first.map { "\n\n\($0)" } ?? ""
+            removalErrorMessage = "\(failedPaths.count) item(s) failed to delete.\n\n\(preview)\(suffix)\(detail)"
         }
     }
 
@@ -255,35 +197,6 @@ struct OrphanListView: View {
         selectedOrphans = previous.subtracting([url])
     }
 
-    private func removeWithAdminPrivileges(_ urls: [URL]) -> Bool {
-        guard !urls.isEmpty else { return true }
-        guard urls.allSatisfy({ OrphanSafetyPolicy.isSafeCandidate($0) }) else { return false }
-
-        // Quote path for a POSIX shell command.
-        let quotedPaths = urls.map { url in
-            "'\(url.path.replacingOccurrences(of: "'", with: "'\\\"'\\\"'"))'"
-        }
-        let shellCommand = "rm -rf -- \(quotedPaths.joined(separator: " "))"
-        let appleScriptCommand = shellCommand
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
-        let script = "do shell script \"\(appleScriptCommand)\" with administrator privileges"
-
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        process.arguments = ["-e", script]
-
-        do {
-            try process.run()
-            process.waitUntilExit()
-            if process.terminationStatus != 0 {
-                return false
-            }
-            return true
-        } catch {
-            return false
-        }
-    }
 }
 
 // MARK: - Row

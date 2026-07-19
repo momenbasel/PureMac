@@ -43,9 +43,9 @@ struct MainWindow: View {
             }
         }
         .onChange(of: appState.cleanErrorIsFDAFixable) { isFDAFixable in
-            // Auto-route FDA-fixable clean errors straight into the rich
-            // sheet — skip the generic alert entirely so the user gets
-            // 1-tap remediation instead of "Check the log for details".
+            // Auto-route explicit FDA denials into the rich sheet. Items that
+            // lacked a scan identity are rescanned after grant, never silently
+            // rebound to whatever later appears at the same path.
             guard isFDAFixable else { return }
             let pending = appState.pendingPermissionRetryItems
             appState.cleanError = nil
@@ -247,7 +247,7 @@ struct MainWindow: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text("Full Disk Access required")
                     .font(.system(size: 13, weight: .semibold))
-                Text("1-tap setup. We'll auto-retry what failed.")
+                Text("1-tap setup. We'll continue safely after access is granted.")
                     .font(.system(size: 11.5))
                     .foregroundStyle(.secondary)
             }

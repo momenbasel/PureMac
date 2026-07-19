@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Premium Full Disk Access prompt that replaces the bare permission-denied
-/// alert. Auto-polls FDA state, auto-retries the failed operation on grant,
+/// alert. Auto-polls FDA state, safely continues verified operations on grant,
 /// and offers escape hatches for the "PureMac isn't in the list" case.
 struct PermissionSheet: View {
     @ObservedObject private var coordinator = PermissionCoordinator.shared
@@ -51,7 +51,7 @@ struct PermissionSheet: View {
                 Text(coordinator.context.headline)
                     .font(.system(size: 16, weight: .bold))
                 Text(coordinator.hasFullDiskAccess
-                     ? "Access granted. Retrying…"
+                     ? "Access granted. Checking items…"
                      : "1-tap setup. We'll detect the change automatically.")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
@@ -136,7 +136,7 @@ struct PermissionSheet: View {
                          caption: "Touch ID or password.")
                 stepDivider
                 stepCell(number: 3, title: "Done",
-                         caption: "We auto-retry — no need to come back.")
+                         caption: "We'll continue safely; a re-scan may be required.")
             }
             .padding(.vertical, 4)
             .background(
@@ -317,7 +317,7 @@ struct PermissionSheet: View {
             SuccessMedal(size: 72)
             Text("Access granted")
                 .font(.system(size: 15, weight: .bold))
-            Text("Retrying the operation now.")
+            Text("Checking whether the selected items can be retried safely.")
                 .font(.system(size: 11.5))
                 .foregroundStyle(.secondary)
         }
@@ -338,7 +338,7 @@ struct PermissionSheet: View {
             Spacer()
 
             if !coordinator.hasFullDiskAccess {
-                Button("I granted it — retry") {
+                Button("I granted it — continue") {
                     coordinator.refreshStatus()
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                         if coordinator.hasFullDiskAccess {
