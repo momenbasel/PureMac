@@ -997,7 +997,9 @@ final class AppState: ObservableObject {
             Logger.shared.log("Skipped \(result.skippedProtected) macOS-protected item(s): \(protectedList)", level: .info)
         }
         return items.filter {
-            !result.cleanedPaths.contains($0.path) && !result.protectedPaths.contains($0.path)
+            !$0.isActionItem &&
+                !result.cleanedPaths.contains($0.path) &&
+                !result.protectedPaths.contains($0.path)
         }
     }
 

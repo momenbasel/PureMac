@@ -91,6 +91,22 @@ actor CleaningEngine {
                 continue
             }
 
+            if let runtimeID = item.simctlRuntimeIdentifier {
+                // Simulator runtimes live in CoreSimulator's secure storage;
+                // deleting the mount path by hand leaves orphaned disk images.
+                // Always go through `xcrun simctl runtime delete`.
+                let deleteOutcome = await deleteSimulatorRuntime(identifier: runtimeID, reportedSize: item.size)
+                result.freedSpace += deleteOutcome.freed
+                if deleteOutcome.cleaned {
+                    result.itemsCleaned += 1
+                    result.cleanedPaths.insert(item.path)
+                }
+                if let error = deleteOutcome.error {
+                    result.errors.append(error)
+                }
+                continue
+            }
+
             do {
                 let itemURL = URL(fileURLWithPath: item.path)
                 guard fileManager.fileExists(atPath: item.path) else { continue }
@@ -350,6 +366,36 @@ actor CleaningEngine {
             return (bytes, nil)
         }
         return (0, nil)
+    }
+
+    // MARK: - Simulator Runtimes
+
+    /// Deletes one simulator runtime disk image via
+    /// `xcrun simctl runtime delete <identifier>`. Uses the scan-time size as
+    /// the freed estimate — simctl does not print reclaimable bytes.
+    /// When `xcrun` is missing, returns a clear error and does not attempt
+    /// a Process launch (avoids a cryptic "No such file" failure).
+    func deleteSimulatorRuntime(identifier: String, reportedSize: Int64) async -> (freed: Int64, cleaned: Bool, error: String?) {
+        guard SimulatorRuntimeSupport.isXcrunAvailable() else {
+            return (0, false, SimulatorRuntimeSupport.missingXcrunMessage)
+        }
+
+        let result = SimulatorRuntimeSupport.runXcrun(["simctl", "runtime", "delete", identifier])
+        guard result.status == 0 else {
+            let detail = result.stderr.isEmpty ? result.stdout : result.stderr
+            if detail == SimulatorRuntimeSupport.missingXcrunMessage {
+                return (0, false, SimulatorRuntimeSupport.missingXcrunMessage)
+            }
+            if detail.localizedCaseInsensitiveContains("CoreSimulator")
+                || detail.localizedCaseInsensitiveContains("simdiskimaged") {
+                return (0, false, "Simulator services unavailable — open Xcode once, then try again")
+            }
+            Logger.shared.log("simctl runtime delete \(identifier) exited \(result.status): \(detail)", level: .error)
+            return (0, false, "Couldn't delete simulator runtime \(identifier)")
+        }
+
+        Logger.shared.log("Deleted simulator runtime \(identifier) (~\(reportedSize) bytes)", level: .info)
+        return (reportedSize, true, nil)
     }
 
     /// Parse Docker's compact size format ("1.23GB", "456MB", "789kB", "0B").

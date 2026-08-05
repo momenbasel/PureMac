@@ -473,8 +473,49 @@ actor ScanEngine {
             }
         }
 
+        // Downloaded simulator runtimes (often multi-GB each). Listed via
+        // `xcrun simctl runtime list -j` and deleted via
+        // `xcrun simctl runtime delete <id>` — not a plain filesystem unlink,
+        // so paths use the simctl-runtime: prefix (see CleaningEngine).
+        // Runtime downloads are always opt-in because restoring one requires
+        // downloading multiple gigabytes again.
+        items.append(contentsOf: scanSimulatorRuntimes())
+
         let totalSize = items.reduce(0) { $0 + $1.size }
         return CategoryResult(category: .xcodeJunk, items: items, totalSize: totalSize)
+    }
+
+    /// Enumerate installed simulator runtime disk images via simctl.
+    /// When `xcrun` is missing (no Xcode / CLT), returns an empty list —
+    /// Xcode Junk still surfaces DerivedData and the rest of the filesystem
+    /// targets; runtime rows are simply omitted.
+    private func scanSimulatorRuntimes() -> [CleanableItem] {
+        guard SimulatorRuntimeSupport.isXcrunAvailable() else {
+            Logger.shared.log(SimulatorRuntimeSupport.missingXcrunMessage, level: .info)
+            return []
+        }
+        guard let runtimes = listSimulatorRuntimes() else { return [] }
+        let items = SimulatorRuntimeSupport.makeCleanableItems(from: runtimes)
+        for item in items {
+            report(item.name)
+        }
+        return items
+    }
+
+    /// Parse `xcrun simctl runtime list -j` into per-image rows.
+    private func listSimulatorRuntimes() -> [SimulatorRuntimeSupport.RuntimeInfo]? {
+        let result = SimulatorRuntimeSupport.runXcrun(["simctl", "runtime", "list", "-j"])
+        guard result.status == 0, !result.stdout.isEmpty else {
+            if !result.stderr.isEmpty {
+                Logger.shared.log("simctl runtime list failed: \(result.stderr)", level: .warning)
+            }
+            return nil
+        }
+        guard let runtimes = SimulatorRuntimeSupport.parseRuntimeListJSON(result.stdout) else {
+            Logger.shared.log("simctl runtime list: could not parse JSON", level: .warning)
+            return nil
+        }
+        return runtimes
     }
 
     private func scanBrewCache() -> CategoryResult {

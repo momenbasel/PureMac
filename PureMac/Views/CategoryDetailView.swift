@@ -263,12 +263,17 @@ private struct FileRowView: View {
                         .lineLimit(1)
                         .truncationMode(.middle)
 
-                    if !item.path.isEmpty {
+                    if !item.isActionItem {
                         Text(item.path)
                             .font(.caption)
                             .foregroundStyle(.tertiary)
                             .lineLimit(1)
                             .truncationMode(.middle)
+                    } else if item.simctlRuntimeIdentifier != nil {
+                        Text(String(localized: "Simulator runtime"))
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                            .lineLimit(1)
                     }
                 }
 
@@ -276,7 +281,7 @@ private struct FileRowView: View {
 
                 // Hover-revealed Finder shortcut; stays in the layout so the
                 // trailing size never shifts sideways.
-                if !item.path.isEmpty {
+                if !item.isActionItem {
                     Button {
                         NSWorkspace.shared.selectFile(item.path, inFileViewerRootedAtPath: "")
                     } label: {
@@ -319,7 +324,7 @@ private struct FileRowView: View {
         .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: isSelected)
         .onHover { hovering = $0 }
         .contextMenu {
-            if !item.path.isEmpty {
+            if !item.isActionItem {
                 Button("Reveal in Finder") {
                     NSWorkspace.shared.selectFile(item.path, inFileViewerRootedAtPath: "")
                 }
@@ -328,6 +333,9 @@ private struct FileRowView: View {
     }
 
     private var fileIcon: String {
+        if item.simctlRuntimeIdentifier != nil {
+            return "iphone"
+        }
         let ext = (item.name as NSString).pathExtension.lowercased()
         switch ext {
         case "log", "txt": return "doc.text"
