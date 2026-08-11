@@ -404,3 +404,55 @@
 
 /* Finder Service */
 "Select an application (.app) to uninstall." = "请选择要卸载的应用程序（.app）。";
+
+/* Smart Care dashboard hero + Care areas — English fallback, pending translation */
+"%@ free" = "%@ free";
+"%lld checks" = "%lld checks";
+"%lld items found" = "%lld items found";
+"%lld selected" = "%lld selected";
+"%lld-POINT LOCAL SCAN" = "%lld-POINT LOCAL SCAN";
+"%lld/%lld checked" = "%lld/%lld checked";
+"ALL CLEAR" = "ALL CLEAR";
+"Advanced Tools" = "Advanced Tools";
+"All clear" = "All clear";
+"App leftovers to inspect" = "App leftovers to inspect";
+"Appearance" = "Appearance";
+"Caches, mail, trash, and large files" = "Caches, mail, trash, and large files";
+"Care areas" = "Care areas";
+"Checks every cleanup category without deleting files" = "Checks every cleanup category without deleting files";
+"Choose what to keep, then clean everything in one controlled pass." = "Choose what to keep, then clean everything in one controlled pass.";
+"Cleaning safely…" = "Cleaning safely…";
+"Cleanup complete" = "Cleanup complete";
+"Cleanup complete. Your storage summary is refreshing." = "Cleanup complete. Your storage summary is refreshing.";
+"Clear" = "Clear";
+"Complete" = "Complete";
+"Developer" = "Developer";
+"Installed apps" = "Installed apps";
+"LOW SPACE" = "LOW SPACE";
+"Last clean: %@" = "Last clean: %@";
+"Local" = "Local";
+"Make room.\nKeep control." = "Make room.\nKeep control.";
+"No cleanup run yet" = "No cleanup run yet";
+"No known leftovers" = "No known leftovers";
+"No removable junk was found in the areas PureMac checked." = "No removable junk was found in the areas PureMac checked.";
+"One scan checks every cleanup tool and prepares a plan for your review." = "One scan checks every cleanup tool and prepares a plan for your review.";
+"Private" = "Private";
+"PureMac builds a reviewable cleanup plan on your Mac. Nothing is removed until you approve it." = "PureMac builds a reviewable cleanup plan on your Mac. Nothing is removed until you approve it.";
+"PureMac is checking your Mac without removing anything." = "PureMac is checking your Mac without removing anything.";
+"Ready" = "Ready";
+"Ready for review" = "Ready for review";
+"Ready to reclaim" = "Ready to reclaim";
+"Review" = "Review";
+"Review ready" = "Review ready";
+"Review scan results" = "Review scan results";
+"Review what was found" = "Review what was found";
+"Reviewable" = "Reviewable";
+"SCAN COMPLETE" = "SCAN COMPLETE";
+"Scan My Mac" = "Scan My Mac";
+"Scan first.\nDecide what goes." = "Scan first.\nDecide what goes.";
+"Scanning" = "Scanning";
+"Selected items are being removed safely." = "Selected items are being removed safely.";
+"Smart Care" = "Smart Care";
+"Twelve-layer storage inspection model" = "Twelve-layer storage inspection model";
+"Xcode and package tools" = "Xcode and package tools";
+"Your Mac is in good shape." = "Your Mac is in good shape.";

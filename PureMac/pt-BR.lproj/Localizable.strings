@@ -404,3 +404,55 @@
 
 /* Finder Service */
 "Select an application (.app) to uninstall." = "Selecione um aplicativo (.app) para desinstalar.";
+
+/* Smart Care dashboard hero + Care areas (2.9.3 strings not yet in catalog) */
+"%@ free" = "%@ livres";
+"%lld checks" = "%lld verificações";
+"%lld items found" = "%lld itens encontrados";
+"%lld selected" = "%lld selecionados";
+"%lld-POINT LOCAL SCAN" = "VERIFICAÇÃO LOCAL DE %lld PONTOS";
+"%lld/%lld checked" = "%lld/%lld verificados";
+"ALL CLEAR" = "TUDO LIMPO";
+"Advanced Tools" = "Ferramentas avançadas";
+"All clear" = "Tudo limpo";
+"App leftovers to inspect" = "Resíduos de apps para inspecionar";
+"Appearance" = "Aparência";
+"Caches, mail, trash, and large files" = "Caches, e-mail, lixeira e arquivos grandes";
+"Care areas" = "Áreas de cuidado";
+"Checks every cleanup category without deleting files" = "Verifica todas as categorias de limpeza sem apagar arquivos";
+"Choose what to keep, then clean everything in one controlled pass." = "Escolha o que manter e limpe tudo em uma única passagem controlada.";
+"Cleaning safely…" = "Limpando com segurança…";
+"Cleanup complete" = "Limpeza concluída";
+"Cleanup complete. Your storage summary is refreshing." = "Limpeza concluída. O resumo de armazenamento está sendo atualizado.";
+"Clear" = "Limpo";
+"Complete" = "Concluído";
+"Developer" = "Desenvolvedor";
+"Installed apps" = "Apps instalados";
+"LOW SPACE" = "POUCO ESPAÇO";
+"Last clean: %@" = "Última limpeza: %@";
+"Local" = "Local";
+"Make room.\nKeep control." = "Libere espaço.\nMantenha o controle.";
+"No cleanup run yet" = "Nenhuma limpeza realizada ainda";
+"No known leftovers" = "Nenhum resíduo conhecido";
+"No removable junk was found in the areas PureMac checked." = "Nenhum lixo removível foi encontrado nas áreas que o PureMac verificou.";
+"One scan checks every cleanup tool and prepares a plan for your review." = "Uma única verificação passa por todas as ferramentas de limpeza e prepara um plano para você revisar.";
+"Private" = "Privado";
+"PureMac builds a reviewable cleanup plan on your Mac. Nothing is removed until you approve it." = "O PureMac cria um plano de limpeza revisável no seu Mac. Nada é removido até você aprovar.";
+"PureMac is checking your Mac without removing anything." = "O PureMac está verificando seu Mac sem remover nada.";
+"Ready" = "Pronto";
+"Ready for review" = "Pronto para revisar";
+"Ready to reclaim" = "Pronto para recuperar";
+"Review" = "Revisar";
+"Review ready" = "Pronto para revisar";
+"Review scan results" = "Revisar resultados da verificação";
+"Review what was found" = "Revise o que foi encontrado";
+"Reviewable" = "Revisável";
+"SCAN COMPLETE" = "VERIFICAÇÃO CONCLUÍDA";
+"Scan My Mac" = "Verificar meu Mac";
+"Scan first.\nDecide what goes." = "Verifique primeiro.\nDecida o que sai.";
+"Scanning" = "Verificando";
+"Selected items are being removed safely." = "Os itens selecionados estão sendo removidos com segurança.";
+"Smart Care" = "Smart Care";
+"Twelve-layer storage inspection model" = "Modelo de inspeção de armazenamento em doze camadas";
+"Xcode and package tools" = "Xcode e gerenciadores";
+"Your Mac is in good shape." = "Seu Mac está em boa forma.";
