@@ -242,7 +242,7 @@
 "Files in your Trash" = "الملفات الموجودة في سلة المهملات";
 "Files over 100 MB or older than 1 year" = "الملفات التي يتجاوز حجمها 100 ميغابايت أو أقدم من سنة";
 "APFS purgeable disk space" = "مساحة القرص القابلة للتحرير في APFS";
-"Derived data, archives, and simulators" = "البيانات المشتقة والأرشيفات والمحاكيات";
+"Derived data, archives, and simulator runtimes" = "البيانات المشتقة والأرشيفات والمحاكيات";
 "Homebrew download cache" = "ذاكرة تنزيلات Homebrew المؤقتة";
 "npm, yarn, and pnpm download caches" = "ذاكرات تنزيلات npm وyarn وpnpm المؤقتة";
 "Docker images, containers, and build cache" = "صور Docker والحاويات وذاكرة البناء المؤقتة";

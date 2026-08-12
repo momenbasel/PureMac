@@ -283,7 +283,7 @@
 "Files in your Trash" = "Файли у Смітнику";
 "Files over 100 MB or older than 1 year" = "Файли розміром понад 100 МБ або старші за 1 рік";
 "APFS purgeable disk space" = "Місце APFS, яке можна звільнити";
-"Derived data, archives, and simulators" = "Похідні дані, архіви та симулятори";
+"Derived data, archives, and simulator runtimes" = "Похідні дані, архіви та середовища виконання симуляторів";
 "Homebrew download cache" = "Кеш завантажень Homebrew";
 "npm, yarn, and pnpm download caches" = "Кеші завантажень npm, yarn і pnpm";
 "Docker images, containers, and build cache" = "Образи й контейнери Docker, а також кеш збірок";

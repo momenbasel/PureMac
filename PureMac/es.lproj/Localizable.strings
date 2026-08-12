@@ -242,7 +242,7 @@
 "Files in your Trash" = "Archivos en la Papelera";
 "Files over 100 MB or older than 1 year" = "Archivos de más de 100 MB o con más de 1 año";
 "APFS purgeable disk space" = "Espacio liberable de disco APFS";
-"Derived data, archives, and simulators" = "Datos derivados, archivos y simuladores";
+"Derived data, archives, and simulator runtimes" = "Datos derivados, archivos y simuladores";
 "Homebrew download cache" = "Caché de descargas de Homebrew";
 "npm, yarn, and pnpm download caches" = "Cachés de descargas de npm, yarn y pnpm";
 "Docker images, containers, and build cache" = "Imágenes, contenedores y caché de compilación de Docker";

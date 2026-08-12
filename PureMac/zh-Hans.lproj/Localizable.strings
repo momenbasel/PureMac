@@ -242,7 +242,7 @@
 "Files in your Trash" = "废纸篓中的文件";
 "Files over 100 MB or older than 1 year" = "大于 100 MB 或超过 1 年的文件";
 "APFS purgeable disk space" = "APFS 可清理磁盘空间";
-"Derived data, archives, and simulators" = "派生数据、归档和模拟器";
+"Derived data, archives, and simulator runtimes" = "派生数据、归档和模拟器";
 "Homebrew download cache" = "Homebrew 下载缓存";
 "npm, yarn, and pnpm download caches" = "npm、yarn 和 pnpm 下载缓存";
 "Docker images, containers, and build cache" = "Docker 镜像、容器和构建缓存";

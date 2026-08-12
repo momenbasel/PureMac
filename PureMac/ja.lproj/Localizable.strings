@@ -242,7 +242,7 @@
 "Files in your Trash" = "ゴミ箱内のファイル";
 "Files over 100 MB or older than 1 year" = "100MB以上または1年以上前のファイル";
 "APFS purgeable disk space" = "APFSの削除可能ディスク領域";
-"Derived data, archives, and simulators" = "派生データ、アーカイブ、シミュレータ";
+"Derived data, archives, and simulator runtimes" = "派生データ、アーカイブ、シミュレータ";
 "Homebrew download cache" = "Homebrewのダウンロードキャッシュ";
 "npm, yarn, and pnpm download caches" = "npm、yarn、pnpm のダウンロードキャッシュ";
 "Docker images, containers, and build cache" = "Dockerイメージ、コンテナ、ビルドキャッシュ";
