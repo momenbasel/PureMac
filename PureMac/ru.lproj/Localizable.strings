@@ -283,7 +283,7 @@
 "Files in your Trash" = "Файлы в Корзине";
 "Files over 100 MB or older than 1 year" = "Файлы размером более 100 МБ или старше 1 года";
 "APFS purgeable disk space" = "Очищаемое пространство на диске APFS";
-"Derived data, archives, and simulators" = "Производные данные, архивы и симуляторы";
+"Derived data, archives, and simulator runtimes" = "Производные данные, архивы и среды выполнения симуляторов";
 "Homebrew download cache" = "Кэш загрузок Homebrew";
 "npm, yarn, and pnpm download caches" = "Кэши загрузок npm, yarn и pnpm";
 "Docker images, containers, and build cache" = "Образы и контейнеры Docker, а также кэш сборки";
