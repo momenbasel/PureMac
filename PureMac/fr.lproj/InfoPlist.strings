@@ -1,0 +1,8 @@
+/* macOS permission prompts */
+"NSAppleEventsUsageDescription" = "PureMac utilise les événements Apple pour interagir avec le Finder lors de l'affichage des fichiers.";
+"NSDesktopFolderUsageDescription" = "PureMac a besoin d'accéder à votre Bureau pour trouver les fichiers inutiles et orphelins.";
+"NSDocumentsFolderUsageDescription" = "PureMac a besoin d'accéder à vos Documents pour trouver les fichiers inutiles et orphelins.";
+"NSDownloadsFolderUsageDescription" = "PureMac a besoin d'accéder à vos Téléchargements pour trouver les fichiers inutiles et orphelins.";
+"NSRemovableVolumesUsageDescription" = "PureMac a besoin d'accéder aux volumes amovibles pour rechercher les fichiers inutiles.";
+"NSSystemAdministrationUsageDescription" = "PureMac a besoin d'un accès d'administration système pour nettoyer les caches et désinstaller complètement les apps.";
+"NSHumanReadableCopyright" = "Copyright 2026. Licence MIT.";

@@ -190,7 +190,6 @@
 "PureMac can now manage protected files." = "PureMac peut désormais gérer les fichiers protégés.";
 "You're Ready" = "Vous êtes prêt";
 "%lld/%lld protected locations accessible" = "%lld/%lld emplacements protégés accessibles";
-"Some features will be limited. You can grant Full Disk Access later in System Settings." = "Certaines fonctionnalités seront limitées. Vous pourrez accorder l'accès complet au disque plus tard dans les Réglages Système.";
 "Trash" = "Corbeille";
 "Mail Data" = "Données Mail";
 "Safari Data" = "Données Safari";
@@ -269,7 +268,7 @@
 "Files in your Trash" = "Fichiers dans votre corbeille";
 "Files over 100 MB or older than 1 year" = "Fichiers de plus de 100 Mo ou vieux de plus d'un an";
 "APFS purgeable disk space" = "Espace disque purgeable APFS";
-"Derived data, archives, and simulators" = "Données dérivées, archives et simulateurs";
+"Derived data, archives, and simulator runtimes" = "Données dérivées, archives et runtimes de simulateur";
 "Homebrew download cache" = "Cache de téléchargement Homebrew";
 "npm, yarn, and pnpm download caches" = "Caches de téléchargement npm, yarn et pnpm";
 "Docker images, containers, and build cache" = "Images, conteneurs et cache de build Docker";
@@ -280,7 +279,6 @@
 "pnpm content-addressable store" = "Magasin adressable par contenu pnpm";
 
 /* Docker Cache helper */
-"Reclaimable (run `docker system prune -af`)" = "Récupérable (exécutez `docker system prune -af`)";
 
 /* Schedule intervals (ScheduleInterval.rawValue) */
 "Every Hour" = "Toutes les heures";
@@ -339,7 +337,6 @@
 "Free" = "Libre";
 
 /* UI polish (v2.8.0): leftover groups + sound toggle */
-"Application" = "Application";
 "Caches" = "Caches";
 "Application Support" = "Application Support";
 "Preferences" = "Préférences";
@@ -376,3 +373,86 @@
 "Disk" = "Disque";
 "Open PureMac" = "Ouvrir PureMac";
 "Quit PureMac" = "Quitter PureMac";
+
+/* Catalog additions between 2.8.4 and 2.9.6 (updater, Ollama/LM Studio, language names, safety) */
+"%lld item(s) failed to delete.\n\n%@" = "Échec de la suppression de %lld élément(s).\n\n%@";
+"Category" = "Catégorie";
+"Check for Updates" = "Rechercher des mises à jour";
+"Docker prune (stopped containers, dangling images, build cache)" = "Purge Docker (conteneurs arrêtés, images orphelines, cache de build)";
+"Finder" = "Finder";
+"Fix" = "Corriger";
+"LM Studio Conversations (Optional)" = "Conversations LM Studio (facultatif)";
+"LM Studio Server Logs" = "Journaux du serveur LM Studio";
+"Language Files" = "Fichiers de langue";
+"Ollama CLI Prompt History (Optional)" = "Historique des invites CLI d'Ollama (facultatif)";
+"Ollama Cache" = "Cache d'Ollama";
+"Ollama Electron Cache" = "Cache Electron d'Ollama";
+"Ollama Logs" = "Journaux d'Ollama";
+"Ollama Saved State" = "État enregistré d'Ollama";
+"Ollama WebKit Data" = "Données WebKit d'Ollama";
+"Russian" = "Russe";
+"Select an application (.app) to uninstall." = "Sélectionnez une application (.app) à désinstaller.";
+"Set up" = "Configurer";
+"Some features will be limited without Full Disk Access. You can grant it later in Settings." = "Certaines fonctionnalités seront limitées sans l'accès complet au disque. Vous pourrez l'accorder plus tard dans les Réglages.";
+"Terminal" = "Terminal";
+"Ukrainian" = "Ukrainien";
+"Universal Binaries" = "Binaires universels";
+"Unused CPU architecture slices in app binaries" = "Tranches d'architecture CPU inutilisées dans les binaires d'apps";
+"Unused app localizations" = "Localisations d'apps inutilisées";
+"Updates" = "Mises à jour";
+"blocked by safety policy" = "bloqué par la politique de sécurité";
+
+/* Smart Care dashboard hero + Care areas */
+"%@ free" = "%@ libres";
+"%lld checks" = "%lld vérifications";
+"%lld items found" = "%lld éléments trouvés";
+"%lld selected" = "%lld sélectionnés";
+"%lld-POINT LOCAL SCAN" = "ANALYSE LOCALE EN %lld POINTS";
+"%lld/%lld checked" = "%lld/%lld vérifiés";
+"ALL CLEAR" = "TOUT EST PROPRE";
+"Advanced Tools" = "Outils avancés";
+"All clear" = "Tout est propre";
+"App leftovers to inspect" = "Résidus d'apps à inspecter";
+"Appearance" = "Apparence";
+"Caches, mail, trash, and large files" = "Caches, mail, corbeille et fichiers volumineux";
+"Care areas" = "Zones d'entretien";
+"Checks every cleanup category without deleting files" = "Vérifie chaque catégorie de nettoyage sans supprimer de fichiers";
+"Choose what to keep, then clean everything in one controlled pass." = "Choisissez ce que vous conservez, puis nettoyez tout en une seule passe contrôlée.";
+"Cleaning safely…" = "Nettoyage en toute sécurité…";
+"Cleanup complete" = "Nettoyage terminé";
+"Cleanup complete. Your storage summary is refreshing." = "Nettoyage terminé. Le résumé du stockage s'actualise.";
+"Clear" = "Propre";
+"Complete" = "Terminé";
+"Developer" = "Développeur";
+"Installed apps" = "Apps installées";
+"LOW SPACE" = "ESPACE FAIBLE";
+"Last clean: %@" = "Dernier nettoyage : %@";
+"Local" = "Local";
+"Make room.\nKeep control." = "Faites de la place.\nGardez le contrôle.";
+"No cleanup run yet" = "Aucun nettoyage effectué pour l'instant";
+"No known leftovers" = "Aucun résidu connu";
+"No removable junk was found in the areas PureMac checked." = "Aucun fichier inutile supprimable n'a été trouvé dans les zones vérifiées par PureMac.";
+"One scan checks every cleanup tool and prepares a plan for your review." = "Une seule analyse passe en revue chaque outil de nettoyage et prépare un plan à valider.";
+"Private" = "Privé";
+"PureMac builds a reviewable cleanup plan on your Mac. Nothing is removed until you approve it." = "PureMac établit un plan de nettoyage vérifiable sur votre Mac. Rien n'est supprimé sans votre approbation.";
+"PureMac is checking your Mac without removing anything." = "PureMac vérifie votre Mac sans rien supprimer.";
+"Ready" = "Prêt";
+"Ready for review" = "Prêt à vérifier";
+"Ready to reclaim" = "Prêt à récupérer";
+"Review" = "Vérifier";
+"Review ready" = "À vérifier";
+"Review scan results" = "Vérifier les résultats de l'analyse";
+"Review what was found" = "Vérifiez ce qui a été trouvé";
+"Reviewable" = "Vérifiable";
+"SCAN COMPLETE" = "ANALYSE TERMINÉE";
+"Scan My Mac" = "Analyser mon Mac";
+"Scan first.\nDecide what goes." = "Analysez d'abord.\nDécidez de ce qui part.";
+"Scanning" = "Analyse en cours";
+"Selected items are being removed safely." = "Les éléments sélectionnés sont supprimés en toute sécurité.";
+"Smart Care" = "Smart Care";
+"Twelve-layer storage inspection model" = "Modèle d'inspection du stockage en douze couches";
+"Xcode and package tools" = "Xcode et gestionnaires de paquets";
+"Your Mac is in good shape." = "Votre Mac est en pleine forme.";
+
+/* Simulator runtimes */
+"Simulator runtime" = "Runtime de simulateur";
