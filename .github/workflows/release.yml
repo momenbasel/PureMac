@@ -290,23 +290,28 @@ jobs:
           fi
 
       - name: Bump tap formula (momenbasel/homebrew-tap)
-        # `env.HOMEBREW_TAP_TOKEN != ''` evaluated empty because env was
-        # step-scoped — referencing the secret directly works in step `if`
-        # per GitHub Actions docs. Also emits a loud warning when the secret
-        # is absent so future runs don't silently skip again.
+        # Auth is a write deploy key scoped to the tap repo only — least
+        # privilege vs a PAT. github.com's ed25519 host key is pinned so the
+        # runner never trusts-on-first-use.
         if: ${{ github.event_name == 'push' || inputs.dry_run == false }}
         env:
-          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          HOMEBREW_TAP_DEPLOY_KEY: ${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}
           VERSION: ${{ steps.ver.outputs.version }}
           ZIP_SHA: ${{ steps.sha.outputs.zip }}
         run: |
           set -euo pipefail
-          if [[ -z "${HOMEBREW_TAP_TOKEN:-}" ]]; then
-            echo "::warning title=Tap bump skipped::HOMEBREW_TAP_TOKEN secret is not set. Tap will stay at its previous version. Set the secret to enable auto-bumps."
+          if [[ -z "${HOMEBREW_TAP_DEPLOY_KEY:-}" ]]; then
+            echo "::warning title=Tap bump skipped::HOMEBREW_TAP_DEPLOY_KEY secret is not set. Tap will stay at its previous version. Set the secret to enable auto-bumps."
             exit 0
           fi
+          KEY_FILE="${RUNNER_TEMP}/tap_deploy_key"
+          printf '%s\n' "${HOMEBREW_TAP_DEPLOY_KEY}" > "${KEY_FILE}"
+          chmod 600 "${KEY_FILE}"
+          KNOWN_HOSTS="${RUNNER_TEMP}/tap_known_hosts"
+          echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" > "${KNOWN_HOSTS}"
+          export GIT_SSH_COMMAND="ssh -i ${KEY_FILE} -o IdentitiesOnly=yes -o UserKnownHostsFile=${KNOWN_HOSTS} -o StrictHostKeyChecking=yes"
           TAP_DIR="${RUNNER_TEMP}/homebrew-tap"
-          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/momenbasel/homebrew-tap.git" "${TAP_DIR}"
+          git clone git@github.com:momenbasel/homebrew-tap.git "${TAP_DIR}"
           cd "${TAP_DIR}"
           # Cask path may be Casks/puremac.rb or puremac.rb depending on tap layout
           FORMULA=$(find . -name 'puremac.rb' -not -path './.git/*' | head -1)
@@ -326,8 +331,8 @@ jobs:
             git push origin HEAD
           fi
 
-      - name: Cleanup keychain + ASC key
+      - name: Cleanup keychain + ASC key + tap deploy key
         if: always()
         run: |
           security delete-keychain "${RUNNER_TEMP}/app-signing.keychain-db" || true
-          rm -f "${RUNNER_TEMP}/asc_api_key.p8" || true
+          rm -f "${RUNNER_TEMP}/asc_api_key.p8" "${RUNNER_TEMP}/tap_deploy_key" || true

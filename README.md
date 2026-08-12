@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="screenshot.png" alt="PureMac dashboard — animated storage health ring and live composition donut" width="820">
+  <img src="screenshots/smart-care.png" alt="PureMac Smart Care - one scan covering 12 cleanup checks, with free-space meter" width="820">
 </p>
 
 <p align="center">
-  <img src="screenshots/breakdown.png" alt="PureMac scan results — by-category breakdown chart" width="820">
+  <img src="screenshots/scanning.png" alt="PureMac scanning - live progress with categories and sizes as they are found" width="820">
 </p>
 
 <p align="center">
@@ -126,7 +126,7 @@ Smart Scan runs every category in parallel. Each category is its own deliberate 
 - **Mail Files** - downloaded mail attachments
 - **Trash Bins** - empties all bins, including external volumes
 - **Large & Old Files** - >100 MB or older than 1 year (never auto-selected)
-- **Xcode Junk** - DerivedData, Archives, simulator caches
+- **Xcode Junk** - DerivedData, Archives, simulator caches, and downloaded simulator runtimes (deleted via `simctl runtime delete`; never auto-selected)
 - **Brew Cache** - respects custom `HOMEBREW_CACHE`
 - **Node Cache** - npm, yarn classic, pnpm content-addressable store
 - **Docker Cache** - images, containers, build cache
@@ -166,17 +166,21 @@ Give it a minute to re-seed, then open PureMac once. If it still sticks, a resta
 
 ## Screenshots
 
-| Onboarding | App Uninstaller |
+| Smart Care | Live scan |
 |---|---|
-| ![Onboarding](screenshots/onboarding.png) | ![App Uninstaller](screenshots/app-uninstaller.png) |
+| ![Smart Care](screenshots/smart-care.png) | ![Live scan](screenshots/scanning.png) |
+
+| Scan breakdown | App Uninstaller |
+|---|---|
+| ![Scan breakdown](screenshots/breakdown.png) | ![App Uninstaller](screenshots/app-uninstaller.png) |
 
 | System Junk | Xcode Junk |
 |---|---|
 | ![System Junk](screenshots/system-junk.png) | ![Xcode Junk](screenshots/xcode-junk.png) |
 
-| User Cache |
-|---|
-| ![User Cache](screenshots/user-cache.png) |
+| User Cache | Onboarding |
+|---|---|
+| ![User Cache](screenshots/user-cache.png) | ![Onboarding](screenshots/onboarding.png) |
 
 ## Architecture
 
@@ -219,7 +223,7 @@ Pull requests welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 Especially welcome:
 - Per-category size and date filter presets
 - Wider XCTest coverage for `AppState` and the scan engine
-- Translations beyond the current set (en, ar, es, ja, pt-BR, zh-Hans, zh-Hant)
+- Translations beyond the current set (en, ar, es, ja, pl, pt-BR, ru, uk, zh-Hans, zh-Hant)
 - App icon design
 
 ## Acknowledgments

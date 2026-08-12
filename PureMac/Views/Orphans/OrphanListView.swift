@@ -156,7 +156,7 @@ struct OrphanListView: View {
 
         for url in urlsToRemove {
             guard OrphanSafetyPolicy.isSafeCandidate(url) else {
-                failedPaths.append("\(url.path) (blocked by safety policy)")
+                failedPaths.append("\(url.path) (\(String(localized: "blocked by safety policy")))")
                 continue
             }
 
@@ -198,7 +198,11 @@ struct OrphanListView: View {
         if !failedPaths.isEmpty {
             let preview = failedPaths.prefix(3).joined(separator: "\n")
             let suffix = failedPaths.count > 3 ? "\n…" : ""
-            removalErrorMessage = "\(failedPaths.count) item(s) failed to delete.\n\n\(preview)\(suffix)"
+            removalErrorMessage = String(
+                format: String(localized: "%lld item(s) failed to delete.\n\n%@"),
+                Int64(failedPaths.count),
+                preview + suffix
+            )
         }
     }
 
@@ -320,6 +324,21 @@ private struct OrphanRowView: View {
                 }
 
                 Spacer()
+
+                // Hover-revealed Finder shortcut; stays in the layout so the
+                // trailing size never shifts sideways.
+                Button {
+                    onReveal()
+                } label: {
+                    Image(systemName: "folder")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Reveal in Finder")
+                .opacity(hovering ? 1 : 0)
+                .scaleEffect(reduceMotion ? 1 : (hovering ? 1 : 0.8))
+                .allowsHitTesting(hovering)
 
                 if let size = fileSize {
                     Text(ByteCountFormatter.string(fromByteCount: size, countStyle: .file))

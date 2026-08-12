@@ -44,7 +44,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let urls = (pboard.readObjects(forClasses: [NSURL.self],
                                        options: [.urlReadingFileURLsOnly: true]) as? [URL]) ?? []
         guard let appURL = urls.first(where: { $0.pathExtension == "app" }) else {
-            error?.pointee = "Select an application (.app) to uninstall." as NSString
+            error?.pointee = String(localized: "Select an application (.app) to uninstall.") as NSString
             return
         }
         NSApp.activate(ignoringOtherApps: true)

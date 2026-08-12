@@ -41,6 +41,7 @@
 "Suggested for you" = "Sugestões para você";
 "Found so far" = "Encontrado até agora";
 "By category" = "Por categoria";
+"Category" = "Categoria";
 "%@ is using %@" = "%@ está usando %@";
 "Grant Full Disk Access for full results" = "Conceda acesso total ao disco para ver resultados completos";
 "Without it, most caches and uninstall flows fail." = "Sem ele, a maioria dos caches e desinstalações falha.";
@@ -121,6 +122,8 @@
 "Orphaned Files (%lld)" = "Arquivos órfãos (%lld)";
 "Remove Selected (%lld)" = "Remover selecionados (%lld)";
 "Some files could not be removed" = "Alguns arquivos não puderam ser removidos";
+"blocked by safety policy" = "bloqueado pela política de segurança";
+"%lld item(s) failed to delete.\n\n%@" = "Falha ao excluir %lld item(ns).\n\n%@";
 
 /* Onboarding */
 "Back" = "Voltar";
@@ -151,7 +154,7 @@
 "PureMac can now manage protected files." = "O PureMac agora pode gerenciar arquivos protegidos.";
 "You're Ready" = "Tudo pronto";
 "%lld/%lld protected locations accessible" = "%lld/%lld locais protegidos acessíveis";
-"Some features will be limited. You can grant Full Disk Access later in System Settings." = "Alguns recursos ficarão limitados. Você pode conceder o acesso total ao disco depois em Ajustes do Sistema.";
+"Some features will be limited without Full Disk Access. You can grant it later in Settings." = "Alguns recursos ficarão limitados sem Acesso Total ao Disco. Você poderá concedê-lo depois nos Ajustes.";
 "Trash" = "Lixo";
 "Mail Data" = "Dados do Mail";
 "Safari Data" = "Dados do Safari";
@@ -159,6 +162,10 @@
 "Documents" = "Documentos";
 "TCC Database" = "Banco de dados TCC";
 "Blocked" = "Bloqueado";
+
+/* FDA demo system apps */
+"Finder" = "Finder";
+"Terminal" = "Terminal";
 
 /* Settings */
 "General" = "Geral";
@@ -186,6 +193,8 @@
 "Arabic" = "Árabe";
 "Polish" = "Polonês";
 "Portuguese (Brazil)" = "Português (Brasil)";
+"Russian" = "Russo";
+"Ukrainian" = "Ucraniano";
 "Chinese (Simplified)" = "Chinês (simplificado)";
 "Chinese (Traditional)" = "Chinês (tradicional)";
 "Safety" = "Segurança";
@@ -207,6 +216,8 @@
 "GitHub Repository" = "Repositório no GitHub";
 "Report an Issue" = "Relatar um problema";
 "MIT License" = "Licença MIT";
+"Updates" = "Atualizações";
+"Check for Updates" = "Buscar atualizações";
 
 /* Cleaning categories (CleaningCategory.rawValue) */
 "System Junk" = "Lixo do sistema";
@@ -220,6 +231,8 @@
 "Brew Cache" = "Cache do Brew";
 "Node Cache" = "Cache do Node";
 "Docker Cache" = "Cache do Docker";
+"Universal Binaries" = "Binários universais";
+"Language Files" = "Arquivos de idioma";
 
 /* Cleaning category descriptions */
 "Scan everything at once" = "Verificar tudo de uma vez";
@@ -234,6 +247,18 @@
 "Homebrew download cache" = "Cache de downloads do Homebrew";
 "npm, yarn, and pnpm download caches" = "Caches de download do npm, yarn e pnpm";
 "Docker images, containers, and build cache" = "Imagens, containers e cache de build do Docker";
+"Unused CPU architecture slices in app binaries" = "Arquiteturas de CPU não usadas nos binários dos apps";
+"Unused app localizations" = "Localizações de apps não usadas";
+
+/* AI Apps scan item names */
+"Ollama Logs" = "Logs do Ollama";
+"Ollama Cache" = "Cache do Ollama";
+"Ollama Electron Cache" = "Cache do Electron do Ollama";
+"Ollama WebKit Data" = "Dados do WebKit do Ollama";
+"Ollama Saved State" = "Estado salvo do Ollama";
+"Ollama CLI Prompt History (Optional)" = "Histórico de prompts do Ollama CLI (opcional)";
+"LM Studio Server Logs" = "Logs do servidor do LM Studio";
+"LM Studio Conversations (Optional)" = "Conversas do LM Studio (opcional)";
 
 /* Node Cache subcategories */
 "npm cache" = "Cache do npm";
@@ -241,7 +266,7 @@
 "pnpm content-addressable store" = "Repositório endereçável por conteúdo do pnpm";
 
 /* Docker Cache helper */
-"Reclaimable (run `docker system prune -af`)" = "Recuperável (execute `docker system prune -af`)";
+"Docker prune (stopped containers, dangling images, build cache)" = "Limpeza do Docker (contêineres parados, imagens não utilizadas e cache de compilação)";
 
 /* Schedule intervals (ScheduleInterval.rawValue) */
 "Every Hour" = "A cada hora";
@@ -303,6 +328,8 @@
 "1-tap setup. We'll auto-retry what failed." = "Configuração em 1 toque. Tentaremos de novo o que falhar.";
 "Fix permission" = "Corrigir permissão";
 "Dismiss" = "Dispensar";
+"Fix" = "Corrigir";
+"Set up" = "Configurar";
 
 /* Onboarding v2 */
 "Reclaim your Mac" = "Recupere seu Mac";
@@ -339,7 +366,6 @@
 "Free" = "Livre";
 
 /* UI polish (v2.8.0): leftover groups + sound toggle */
-"Application" = "Aplicativo";
 "Caches" = "Caches";
 "Application Support" = "Suporte de aplicativos";
 "Preferences" = "Preferências";
@@ -376,3 +402,61 @@
 "Disk" = "Disco";
 "Open PureMac" = "Abrir o PureMac";
 "Quit PureMac" = "Encerrar o PureMac";
+
+/* Finder Service */
+"Select an application (.app) to uninstall." = "Selecione um aplicativo (.app) para desinstalar.";
+
+/* Smart Care dashboard hero + Care areas (2.9.3 strings not yet in catalog) */
+"%@ free" = "%@ livres";
+"%lld checks" = "%lld verificações";
+"%lld items found" = "%lld itens encontrados";
+"%lld selected" = "%lld selecionados";
+"%lld-POINT LOCAL SCAN" = "VERIFICAÇÃO LOCAL DE %lld PONTOS";
+"%lld/%lld checked" = "%lld/%lld verificados";
+"ALL CLEAR" = "TUDO LIMPO";
+"Advanced Tools" = "Ferramentas avançadas";
+"All clear" = "Tudo limpo";
+"App leftovers to inspect" = "Resíduos de apps para inspecionar";
+"Appearance" = "Aparência";
+"Caches, mail, trash, and large files" = "Caches, e-mail, lixeira e arquivos grandes";
+"Care areas" = "Áreas de cuidado";
+"Checks every cleanup category without deleting files" = "Verifica todas as categorias de limpeza sem apagar arquivos";
+"Choose what to keep, then clean everything in one controlled pass." = "Escolha o que manter e limpe tudo em uma única passagem controlada.";
+"Cleaning safely…" = "Limpando com segurança…";
+"Cleanup complete" = "Limpeza concluída";
+"Cleanup complete. Your storage summary is refreshing." = "Limpeza concluída. O resumo de armazenamento está sendo atualizado.";
+"Clear" = "Limpo";
+"Complete" = "Concluído";
+"Developer" = "Desenvolvedor";
+"Installed apps" = "Apps instalados";
+"LOW SPACE" = "POUCO ESPAÇO";
+"Last clean: %@" = "Última limpeza: %@";
+"Local" = "Local";
+"Make room.\nKeep control." = "Libere espaço.\nMantenha o controle.";
+"No cleanup run yet" = "Nenhuma limpeza realizada ainda";
+"No known leftovers" = "Nenhum resíduo conhecido";
+"No removable junk was found in the areas PureMac checked." = "Nenhum lixo removível foi encontrado nas áreas que o PureMac verificou.";
+"One scan checks every cleanup tool and prepares a plan for your review." = "Uma única verificação passa por todas as ferramentas de limpeza e prepara um plano para você revisar.";
+"Private" = "Privado";
+"PureMac builds a reviewable cleanup plan on your Mac. Nothing is removed until you approve it." = "O PureMac cria um plano de limpeza revisável no seu Mac. Nada é removido até você aprovar.";
+"PureMac is checking your Mac without removing anything." = "O PureMac está verificando seu Mac sem remover nada.";
+"Ready" = "Pronto";
+"Ready for review" = "Pronto para revisar";
+"Ready to reclaim" = "Pronto para recuperar";
+"Review" = "Revisar";
+"Review ready" = "Pronto para revisar";
+"Review scan results" = "Revisar resultados da verificação";
+"Review what was found" = "Revise o que foi encontrado";
+"Reviewable" = "Revisável";
+"SCAN COMPLETE" = "VERIFICAÇÃO CONCLUÍDA";
+"Scan My Mac" = "Verificar meu Mac";
+"Scan first.\nDecide what goes." = "Verifique primeiro.\nDecida o que sai.";
+"Scanning" = "Verificando";
+"Selected items are being removed safely." = "Os itens selecionados estão sendo removidos com segurança.";
+"Smart Care" = "Smart Care";
+"Twelve-layer storage inspection model" = "Modelo de inspeção de armazenamento em doze camadas";
+"Xcode and package tools" = "Xcode e gerenciadores";
+"Your Mac is in good shape." = "Seu Mac está em boa forma.";
+
+/* Simulator runtimes */
+"Simulator runtime" = "Runtime do simulador";

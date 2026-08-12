@@ -22,9 +22,16 @@ struct MenuBarMonitorView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("System Monitor")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.primary)
+            HStack(spacing: 7) {
+                if let appIcon = NSImage(named: "AppIcon") {
+                    Image(nsImage: appIcon)
+                        .resizable()
+                        .frame(width: 18, height: 18)
+                }
+                Text("System Monitor")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.primary)
+            }
 
             VStack(spacing: 10) {
                 MeterRow(title: "CPU", tint: Tint.blue,
@@ -61,7 +68,7 @@ struct MenuBarMonitorView: View {
             }
         }
         .padding(14)
-        .frame(width: 248)
+        .frame(width: 252)
         .onAppear { monitor.start() }
         .onDisappear { monitor.stop() }
     }
@@ -119,11 +126,16 @@ private struct MeterRow: View {
                     Capsule()
                         .fill(Color.primary.opacity(0.08))
                     Capsule()
-                        .fill(tint)
+                        .fill(
+                            LinearGradient(
+                                colors: [tint, tint.opacity(0.65)],
+                                startPoint: .leading, endPoint: .trailing
+                            )
+                        )
                         .frame(width: max(2, geo.size.width * clamped))
                 }
             }
-            .frame(height: 5)
+            .frame(height: 6)
         }
     }
 }

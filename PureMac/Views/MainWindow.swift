@@ -6,22 +6,37 @@ struct MainWindow: View {
     @ObservedObject private var permission = PermissionCoordinator.shared
     @State private var selectedSection: AppSection? = .cleaning(.smartScan)
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
+    @State private var advancedToolsExpanded = false
+    @FocusState private var focusedSection: AppSection?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorScheme) private var colorScheme
+
+    private static let cleanupCategories: [CleaningCategory] = [
+        .systemJunk,
+        .userCache,
+        .mailAttachments,
+        .trashBins,
+        .largeFiles,
+    ]
+
+    // Filtered against `scannable` so a category withdrawn there (see
+    // CleaningCategory.appModifying) cannot linger here as a dead sidebar row.
+    private static let advancedCategories: [CleaningCategory] = [
+        .aiApps,
+        .xcodeJunk,
+        .brewCache,
+        .nodeCache,
+        .dockerCache,
+    ].filter(CleaningCategory.scannable.contains)
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             sidebar
+                .navigationSplitViewColumnWidth(min: 232, ideal: 244, max: 300)
         } detail: {
             detailContainer
         }
-        .navigationSplitViewColumnWidth(min: 232, ideal: 244, max: 320)
         .frame(minWidth: 980, minHeight: 600)
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                appearancePicker
-            }
-        }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             appState.checkFullDiskAccess()
             permission.refreshStatus()
@@ -30,7 +45,7 @@ struct MainWindow: View {
             // A right-clicked app arrived via Finder Services — surface the
             // Installed Apps view so its related-files scan is visible.
             guard app != nil else { return }
-            selectedSection = .apps
+            selectSection(.apps)
             appState.pendingExternalApp = nil
         }
         .onAppear {
@@ -38,8 +53,10 @@ struct MainWindow: View {
             // launch, or while onboarding was still showing) — onChange alone
             // fires only on subsequent changes and would miss it.
             if appState.pendingExternalApp != nil {
-                selectedSection = .apps
+                selectSection(.apps)
                 appState.pendingExternalApp = nil
+            } else if let selectedSection {
+                focusedSection = selectedSection
             }
         }
         .onChange(of: appState.cleanErrorIsFDAFixable) { isFDAFixable in
@@ -74,36 +91,86 @@ struct MainWindow: View {
     // MARK: - Sidebar
 
     private var sidebar: some View {
-        List(selection: $selectedSection) {
+        List {
             Section {
-                navRow(section: .cleaning(.smartScan), label: "Dashboard",
-                       icon: "sparkles", tint: Tint.blue,
-                       badge: dashboardBadge)
+                navRow(section: .cleaning(.smartScan), label: "Smart Care",
+                       icon: "sparkles",
+                       tint: SidebarPalette.smartCarePrimary,
+                       secondaryTint: SidebarPalette.smartCareSecondary,
+                       badge: dashboardBadge,
+                       isFeatured: true)
             } header: { sectionLabel("Overview") }
 
             Section {
-                navRow(section: .apps, label: "Installed Apps",
-                       icon: "square.grid.2x2.fill", tint: Tint.purple,
-                       badge: appState.installedApps.isEmpty ? nil : "\(appState.installedApps.count)")
-                navRow(section: .orphans, label: "Orphaned Files",
-                       icon: "doc.questionmark.fill", tint: Tint.pink,
-                       badge: appState.orphanedFiles.isEmpty ? nil : "\(appState.orphanedFiles.count)")
-            } header: { sectionLabel("Applications") }
-
-            Section {
-                ForEach(CleaningCategory.scannable) { category in
+                ForEach(Self.cleanupCategories) { category in
                     navRow(section: .cleaning(category),
                            label: LocalizedStringKey(category.rawValue),
                            icon: category.icon,
                            tint: category.color,
+                           secondaryTint: category.color,
                            badge: sizeBadge(for: category))
                 }
             } header: { sectionLabel("Cleanup") }
+
+            Section {
+                navRow(section: .apps, label: "Installed Apps",
+                       icon: "square.grid.2x2.fill",
+                       tint: SidebarPalette.applicationsPrimary,
+                       secondaryTint: SidebarPalette.applicationsSecondary,
+                       badge: appState.installedApps.isEmpty ? nil : "\(appState.installedApps.count)")
+                navRow(section: .orphans, label: "Orphaned Files",
+                       icon: "doc.questionmark.fill",
+                       tint: Tint.orange,
+                       secondaryTint: Tint.orange,
+                       badge: appState.orphanedFiles.isEmpty ? nil : "\(appState.orphanedFiles.count)")
+            } header: { sectionLabel("Applications") }
+
+            Section {
+                DisclosureGroup(isExpanded: $advancedToolsExpanded) {
+                    ForEach(Self.advancedCategories) { category in
+                        navRow(section: .cleaning(category),
+                               label: LocalizedStringKey(category.rawValue),
+                               icon: category.icon,
+                               tint: category.color,
+                               secondaryTint: category.color,
+                               badge: sizeBadge(for: category))
+                    }
+                } label: {
+                    HStack(spacing: 9) {
+                        IconTile(
+                            systemName: "wrench.and.screwdriver.fill",
+                            tint: SidebarPalette.advanced,
+                            size: 24,
+                            corner: 7
+                        )
+                        Text("Advanced Tools")
+                            .font(.system(size: 12.5, weight: .medium))
+                            .foregroundStyle(sidebarLabelColor)
+                    }
+                    .frame(minHeight: 36)
+                    .contentShape(Rectangle())
+                }
+                .tint(.secondary)
+                .listRowInsets(EdgeInsets(top: 1, leading: 12, bottom: 1, trailing: 12))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+            }
         }
         .listStyle(.sidebar)
+        .environment(\.defaultMinListRowHeight, 36)
+        .scrollContentBackground(.hidden)
+        .background(sidebarBackdrop)
         .navigationTitle("PureMac")
+        .onMoveCommand(perform: moveSelection)
+        .onChange(of: selectedSection) { section in
+            guard case let .cleaning(category)? = section,
+                  Self.advancedCategories.contains(category) else { return }
+            withAnimation(reduceMotion ? nil : MotionTokens.gentle) {
+                advancedToolsExpanded = true
+            }
+        }
         .safeAreaInset(edge: .bottom) {
-            healthFooter
+            sidebarFooter
         }
     }
 
@@ -116,12 +183,62 @@ struct MainWindow: View {
     }
 
     private func navRow(section: AppSection, label: LocalizedStringKey, icon: String,
-                        tint: Color, badge: String?) -> some View {
-        SidebarNavRow(
-            label: label, icon: icon, tint: tint, badge: badge,
-            isSelected: selectedSection == section
-        )
-        .tag(section)
+                        tint: Color, secondaryTint: Color, badge: String?,
+                        isFeatured: Bool = false) -> some View {
+        Button {
+            selectSection(section)
+        } label: {
+            SidebarNavRow(
+                label: label,
+                icon: icon,
+                tint: tint,
+                secondaryTint: secondaryTint,
+                badge: badge,
+                isSelected: selectedSection == section,
+                isFeatured: isFeatured
+            )
+        }
+        .buttonStyle(.plain)
+        .focused($focusedSection, equals: section)
+        .accessibilityAddTraits(selectedSection == section ? .isSelected : [])
+        .listRowInsets(EdgeInsets(top: 1, leading: 12, bottom: 1, trailing: 12))
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
+    }
+
+    private var visibleSections: [AppSection] {
+        var sections: [AppSection] = [.cleaning(.smartScan)]
+        sections.append(contentsOf: Self.cleanupCategories.map(AppSection.cleaning))
+        sections.append(contentsOf: [.apps, .orphans])
+        if advancedToolsExpanded {
+            sections.append(contentsOf: Self.advancedCategories.map(AppSection.cleaning))
+        }
+        return sections
+    }
+
+    private func selectSection(_ section: AppSection) {
+        selectedSection = section
+        focusedSection = section
+    }
+
+    private func moveSelection(_ direction: MoveCommandDirection) {
+        let sections = visibleSections
+        guard !sections.isEmpty else { return }
+
+        let current = focusedSection ?? selectedSection
+        let currentIndex = current.flatMap(sections.firstIndex(of:))
+        let targetIndex: Int
+
+        switch direction {
+        case .up:
+            targetIndex = max(0, (currentIndex ?? sections.count) - 1)
+        case .down:
+            targetIndex = min(sections.count - 1, (currentIndex ?? -1) + 1)
+        default:
+            return
+        }
+
+        selectSection(sections[targetIndex])
     }
 
     private var dashboardBadge: String? {
@@ -135,23 +252,69 @@ struct MainWindow: View {
         return ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
     }
 
+    private var sidebarBackdrop: some View {
+        ZStack {
+            Rectangle()
+                .fill(.ultraThinMaterial)
+
+            RadialGradient(
+                colors: [
+                    SidebarPalette.smartCarePrimary.opacity(colorScheme == .dark ? 0.16 : 0.08),
+                    SidebarPalette.smartCareSecondary.opacity(colorScheme == .dark ? 0.06 : 0.025),
+                    .clear,
+                ],
+                center: .topLeading,
+                startRadius: 0,
+                endRadius: 360
+            )
+
+            LinearGradient(
+                colors: [
+                    Color.white.opacity(colorScheme == .dark ? 0.018 : 0.20),
+                    Color.clear,
+                    Color.black.opacity(colorScheme == .dark ? 0.08 : 0.018),
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        }
+        .ignoresSafeArea()
+    }
+
+    private var sidebarFooter: some View {
+        VStack(spacing: 7) {
+            healthFooter
+            appearanceMenu
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, 8)
+        .padding(.bottom, 10)
+        .background(.ultraThinMaterial)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Color.white.opacity(colorScheme == .dark ? 0.08 : 0.42))
+                .frame(height: 0.5)
+        }
+    }
+
     private var healthFooter: some View {
         let ok = appState.hasFullDiskAccess
         let tint = ok ? Tint.green : Tint.orange
-        return HStack(spacing: 10) {
+        return HStack(spacing: 8) {
             PulsingDot(tint: tint, isPulsing: !ok)
+                .scaleEffect(0.78)
+                .frame(width: 14, height: 14)
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(LocalizedStringKey(ok ? "Ready to clean" : "Limited access"))
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     // Explicit solid color — same vibrancy-collapse guard as the
                     // sidebar rows (#117); this title also inherited the default.
-                    .foregroundStyle(colorScheme == .dark
-                        ? Color.white.opacity(0.92)
-                        : Color.black.opacity(0.85))
+                    .foregroundStyle(sidebarLabelColor)
                 Text(LocalizedStringKey(ok ? "Full Disk Access granted" : "Grant FDA in Settings"))
-                    .font(.system(size: 10.5))
+                    .font(.system(size: 9.5))
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
             Spacer()
             if !ok {
@@ -161,22 +324,71 @@ struct MainWindow: View {
                     }
                 }
                 .buttonStyle(.bordered)
+                .tint(Tint.orange)
                 .controlSize(.small)
                 .help("Fix permission")
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(.bar)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(
+            RoundedRectangle(cornerRadius: 11, style: .continuous)
+                .fill(Color.white.opacity(colorScheme == .dark ? 0.055 : 0.44))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 11, style: .continuous)
+                .strokeBorder(
+                    Color.white.opacity(colorScheme == .dark ? 0.10 : 0.62),
+                    lineWidth: 0.5
+                )
+        )
     }
 
-    // MARK: - Toolbar
+    private var appearanceMenu: some View {
+        Menu {
+            ForEach(AppearanceMode.allCases) { appearance in
+                Button {
+                    theme.appearance = appearance
+                } label: {
+                    Label(LocalizedStringKey(appearance.label), systemImage: appearance.icon)
+                }
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: theme.appearance.icon)
+                    .font(.system(size: 11.5, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 16)
 
-    private var appearancePicker: some View {
-        AppearancePill(selection: Binding(
-            get: { theme.appearance },
-            set: { theme.appearance = $0 }
-        ))
+                Text("Appearance")
+                    .font(.system(size: 11.5, weight: .medium))
+                    .foregroundStyle(sidebarLabelColor)
+
+                Spacer(minLength: 6)
+
+                Text(LocalizedStringKey(theme.appearance.label))
+                    .font(.system(size: 10.5, weight: .medium))
+                    .foregroundStyle(.secondary)
+
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 8.5, weight: .semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .frame(minHeight: 26)
+            .padding(.horizontal, 9)
+            .contentShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .menuStyle(.borderlessButton)
+        .help("Change appearance")
+        .accessibilityLabel("Appearance")
+        .accessibilityValue(Text(LocalizedStringKey(theme.appearance.label)))
+    }
+
+    private var sidebarLabelColor: Color {
+        colorScheme == .dark
+            ? Color.white.opacity(0.92)
+            : Color.black.opacity(0.85)
     }
 
     // MARK: - Detail
@@ -211,22 +423,7 @@ struct MainWindow: View {
         .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8),
                    value: appState.hasFullDiskAccess)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
-            // Quiet ambient gradient under every section. Static layers,
-            // opacities kept low enough to stay clean in light mode.
-            ZStack {
-                Color(nsColor: .windowBackgroundColor)
-                LinearGradient(
-                    colors: [Tint.blue.opacity(0.05), .clear],
-                    startPoint: .topLeading, endPoint: .center
-                )
-                RadialGradient(
-                    colors: [Tint.purple.opacity(0.03), .clear],
-                    center: .topTrailing, startRadius: 0, endRadius: 600
-                )
-            }
-            .ignoresSafeArea()
-        )
+        .background(AmbientBackdrop())
     }
 
     @ViewBuilder
@@ -238,7 +435,7 @@ struct MainWindow: View {
             OrphanListView()
         case .cleaning(let category):
             if category == .smartScan {
-                DashboardView()
+                DashboardView { selectSection($0) }
             } else {
                 CategoryDetailView(category: category)
             }
@@ -291,11 +488,11 @@ struct MainWindow: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(Tint.orange.opacity(0.08))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(Tint.orange.opacity(0.22), lineWidth: 0.5)
         )
     }
@@ -313,25 +510,38 @@ private func pulsingLockIconView() -> some View {
     }
 }
 
-/// Sidebar row with a springy hover highlight. Extracted to a struct so each
-/// row owns its hover state; the selected row's IconTile glows via the shared
-/// glow treatment in AppTheme.
+/// Premium navigation row with explicit selection, independent of List's
+/// system-blue selection rendering.
 private struct SidebarNavRow: View {
     let label: LocalizedStringKey
     let icon: String
     let tint: Color
+    let secondaryTint: Color
     let badge: String?
     let isSelected: Bool
+    let isFeatured: Bool
 
     @State private var hovering = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        HStack(spacing: 10) {
-            IconTile(systemName: icon, tint: tint, size: 24, glow: isSelected)
+        HStack(spacing: 9) {
+            IconTile(
+                systemName: icon,
+                tint: tint,
+                size: 24,
+                corner: 7,
+                glow: isFeatured && isSelected,
+                vivid: isFeatured
+            )
+                .shadow(
+                    color: isFeatured ? tint.opacity(isSelected ? 0.52 : 0.28) : .clear,
+                    radius: isFeatured ? (isSelected ? 9 : 5) : 0
+                )
             Text(label)
-                .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
+                .font(.system(size: 12.5, weight: isSelected ? .semibold : .medium))
+                .lineLimit(1)
                 // Force an explicit, solid foreground instead of inheriting the
                 // sidebar list's default. On some configs (custom accent /
                 // reduced transparency, seen on M1 Max — issue #117) the
@@ -343,30 +553,74 @@ private struct SidebarNavRow: View {
             Spacer()
             if let badge {
                 Text(badge)
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.system(size: 9.75, weight: .semibold))
                     .monospacedDigit()
-                    .foregroundStyle(isSelected ? tint : .secondary)
-                    .padding(.horizontal, 7)
+                    .foregroundStyle(isFeatured && isSelected ? tint : .secondary)
+                    .padding(.horizontal, 6)
                     .padding(.vertical, 2)
                     .background(
-                        Capsule().fill(
-                            (isSelected ? tint : Color.primary).opacity(isSelected ? 0.15 : 0.06)
-                        )
+                        Capsule()
+                            .fill(Color.primary.opacity(isSelected ? 0.075 : 0.045))
                     )
                     .contentTransition(.numericText())
+                    .fixedSize(horizontal: true, vertical: false)
             }
         }
-        .padding(.vertical, 2)
-        // Leading anchor keeps the row from clipping against the sidebar edge.
-        .scaleEffect(hovering && !reduceMotion ? 1.02 : 1, anchor: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(Color.primary.opacity(hovering && !isSelected ? 0.05 : 0))
-                .padding(.horizontal, -6)
-        )
+        .frame(maxWidth: .infinity, minHeight: 36, alignment: .leading)
+        .padding(.horizontal, 8)
+        .background(rowBackground)
+        .overlay(alignment: .leading) {
+            if isSelected {
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [tint, secondaryTint],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .frame(width: 2.5, height: 20)
+                    .padding(.leading, 3)
+                    .shadow(
+                        color: isFeatured ? tint.opacity(0.55) : .clear,
+                        radius: isFeatured ? 5 : 0
+                    )
+            }
+        }
         .animation(reduceMotion ? nil : MotionTokens.snappy, value: hovering)
-        .contentShape(Rectangle())
+        .animation(reduceMotion ? nil : MotionTokens.snappy, value: isSelected)
+        .contentShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
         .onHover { hovering = $0 }
+    }
+
+    @ViewBuilder
+    private var rowBackground: some View {
+        let shape = RoundedRectangle(cornerRadius: 11, style: .continuous)
+
+        if isSelected {
+            shape
+                .fill(.thinMaterial)
+                .overlay {
+                    shape.fill(Color.white.opacity(colorScheme == .dark ? 0.045 : 0.24))
+                }
+                .overlay {
+                    shape.strokeBorder(
+                        Color.white.opacity(colorScheme == .dark ? 0.13 : 0.72),
+                        lineWidth: 0.55
+                    )
+                }
+                .shadow(
+                    color: Color.black.opacity(colorScheme == .dark ? 0.18 : 0.08),
+                    radius: 5,
+                    y: 2
+                )
+        } else {
+            shape.fill(
+                hovering
+                    ? Color.primary.opacity(colorScheme == .dark ? 0.045 : 0.032)
+                    : Color.clear
+            )
+        }
     }
 
     /// Solid, opaque label color that adapts to light/dark without routing
@@ -376,6 +630,16 @@ private struct SidebarNavRow: View {
             ? Color.white.opacity(0.92)
             : Color.black.opacity(0.85)
     }
+}
+
+private enum SidebarPalette {
+    static let smartCarePrimary = Tint.purple
+    static let smartCareSecondary = Tint.blue
+    static let cleanupPrimary = Tint.blue
+    static let cleanupSecondary = Tint.cyan
+    static let applicationsPrimary = Tint.purple
+    static let applicationsSecondary = Tint.pink
+    static let advanced = Tint.orange
 }
 
 /// Small reusable status dot with optional pulse. Used in the sidebar health

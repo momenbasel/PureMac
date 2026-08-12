@@ -31,8 +31,12 @@ struct EmptyStateView: View {
                 Circle()
                     .fill((tint ?? Color.secondary).opacity(0.10))
                     .frame(width: 96, height: 96)
+                Circle()
+                    .strokeBorder((tint ?? Color.secondary).opacity(0.16), lineWidth: 1)
+                    .frame(width: 96, height: 96)
                 Image(systemName: systemImage)
                     .font(.system(size: 40))
+                    .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(tint ?? Color.secondary)
             }
             // One-shot entrance pop, then a gentle idle float. Both skipped

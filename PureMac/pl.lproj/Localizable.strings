@@ -58,6 +58,8 @@
 "1-tap setup. We'll auto-retry what failed." = "Konfiguracja jednym kliknięciem. Automatycznie ponowimy to, co się nie udało.";
 "Fix permission" = "Napraw uprawnienie";
 "Dismiss" = "Zamknij";
+"Fix" = "Napraw";
+"Set up" = "Skonfiguruj";
 
 /* Dashboard */
 "Storage" = "Pamięć masowa";
@@ -80,6 +82,7 @@
 "Suggested for you" = "Sugerowane dla Ciebie";
 "Found so far" = "Znalezione dotychczas";
 "By category" = "Według kategorii";
+"Category" = "Kategoria";
 "%@ is using %@" = "%@ zajmuje %@";
 "Grant Full Disk Access for full results" = "Przyznaj pełny dostęp do dysku, aby zobaczyć pełne wyniki";
 "Without it, most caches and uninstall flows fail." = "Bez niego większość czyszczenia i odinstalowywania nie działa.";
@@ -160,6 +163,8 @@
 "Orphaned Files (%lld)" = "Osierocone pliki (%lld)";
 "Remove Selected (%lld)" = "Usuń zaznaczone (%lld)";
 "Some files could not be removed" = "Niektórych plików nie udało się usunąć";
+"blocked by safety policy" = "zablokowano przez zasady bezpieczeństwa";
+"%lld item(s) failed to delete.\n\n%@" = "Nie udało się usunąć %lld elementów.\n\n%@";
 
 /* Onboarding */
 "Back" = "Wstecz";
@@ -190,7 +195,7 @@
 "PureMac can now manage protected files." = "PureMac może teraz zarządzać chronionymi plikami.";
 "You're Ready" = "Wszystko gotowe";
 "%lld/%lld protected locations accessible" = "%lld/%lld chronionych lokalizacji dostępnych";
-"Some features will be limited. You can grant Full Disk Access later in System Settings." = "Niektóre funkcje będą ograniczone. Możesz przyznać pełny dostęp do dysku później w Ustawieniach systemowych.";
+"Some features will be limited without Full Disk Access. You can grant it later in Settings." = "Bez pełnego dostępu do dysku niektóre funkcje będą ograniczone. Możesz przyznać go później w Ustawieniach.";
 "Trash" = "Kosz";
 "Mail Data" = "Dane poczty";
 "Safari Data" = "Dane Safari";
@@ -198,6 +203,10 @@
 "Documents" = "Dokumenty";
 "TCC Database" = "Baza TCC";
 "Blocked" = "Zablokowane";
+
+/* FDA demo system apps */
+"Finder" = "Finder";
+"Terminal" = "Terminal";
 
 /* Settings */
 "General" = "Ogólne";
@@ -225,6 +234,8 @@
 "Arabic" = "Arabski";
 "Polish" = "Polski";
 "Portuguese (Brazil)" = "Portugalski (Brazylia)";
+"Russian" = "Rosyjski";
+"Ukrainian" = "Ukraiński";
 "Chinese (Simplified)" = "Chiński (uproszczony)";
 "Chinese (Traditional)" = "Chiński (tradycyjny)";
 "Safety" = "Bezpieczeństwo";
@@ -246,6 +257,8 @@
 "GitHub Repository" = "Repozytorium GitHub";
 "Report an Issue" = "Zgłoś problem";
 "MIT License" = "Licencja MIT";
+"Updates" = "Aktualizacje";
+"Check for Updates" = "Sprawdź dostępność aktualizacji";
 
 /* Cleaning categories (CleaningCategory.rawValue) */
 "System Junk" = "Śmieci systemowe";
@@ -259,6 +272,8 @@
 "Brew Cache" = "Cache Homebrew";
 "Node Cache" = "Cache Node";
 "Docker Cache" = "Cache Dockera";
+"Universal Binaries" = "Uniwersalne pliki binarne";
+"Language Files" = "Pliki językowe";
 
 /* Cleaning category descriptions */
 "Scan everything at once" = "Skanuj wszystko naraz";
@@ -273,6 +288,18 @@
 "Homebrew download cache" = "Cache pobierania Homebrew";
 "npm, yarn, and pnpm download caches" = "Cache pobierania npm, yarn i pnpm";
 "Docker images, containers, and build cache" = "Obrazy Dockera, kontenery i cache budowania";
+"Unused CPU architecture slices in app binaries" = "Nieużywane architektury CPU w plikach binarnych aplikacji";
+"Unused app localizations" = "Nieużywane lokalizacje aplikacji";
+
+/* AI Apps scan item names */
+"Ollama Logs" = "Dzienniki Ollama";
+"Ollama Cache" = "Pamięć podręczna Ollama";
+"Ollama Electron Cache" = "Pamięć podręczna Electron Ollama";
+"Ollama WebKit Data" = "Dane WebKit Ollama";
+"Ollama Saved State" = "Zapisany stan Ollama";
+"Ollama CLI Prompt History (Optional)" = "Historia promptów Ollama CLI (opcjonalnie)";
+"LM Studio Server Logs" = "Dzienniki serwera LM Studio";
+"LM Studio Conversations (Optional)" = "Konwersacje LM Studio (opcjonalnie)";
 
 /* Node Cache subcategories */
 "npm cache" = "cache npm";
@@ -280,7 +307,7 @@
 "pnpm content-addressable store" = "magazyn adresowany treścią pnpm";
 
 /* Docker Cache helper */
-"Reclaimable (run `docker system prune -af`)" = "Do odzyskania (uruchom `docker system prune -af`)";
+"Docker prune (stopped containers, dangling images, build cache)" = "Czyszczenie Dockera (zatrzymane kontenery, nieużywane obrazy i pamięć podręczna kompilacji)";
 
 /* Schedule intervals (ScheduleInterval.rawValue) */
 "Every Hour" = "Co godzinę";
@@ -375,3 +402,61 @@
 "Disk" = "Dysk";
 "Open PureMac" = "Otwórz PureMac";
 "Quit PureMac" = "Zamknij PureMac";
+
+/* Finder Service */
+"Select an application (.app) to uninstall." = "Wybierz aplikację (.app) do odinstalowania.";
+
+/* Smart Care dashboard hero + Care areas — English fallback, pending translation */
+"%@ free" = "%@ free";
+"%lld checks" = "%lld checks";
+"%lld items found" = "%lld items found";
+"%lld selected" = "%lld selected";
+"%lld-POINT LOCAL SCAN" = "%lld-POINT LOCAL SCAN";
+"%lld/%lld checked" = "%lld/%lld checked";
+"ALL CLEAR" = "ALL CLEAR";
+"Advanced Tools" = "Advanced Tools";
+"All clear" = "All clear";
+"App leftovers to inspect" = "App leftovers to inspect";
+"Appearance" = "Appearance";
+"Caches, mail, trash, and large files" = "Caches, mail, trash, and large files";
+"Care areas" = "Care areas";
+"Checks every cleanup category without deleting files" = "Checks every cleanup category without deleting files";
+"Choose what to keep, then clean everything in one controlled pass." = "Choose what to keep, then clean everything in one controlled pass.";
+"Cleaning safely…" = "Cleaning safely…";
+"Cleanup complete" = "Cleanup complete";
+"Cleanup complete. Your storage summary is refreshing." = "Cleanup complete. Your storage summary is refreshing.";
+"Clear" = "Clear";
+"Complete" = "Complete";
+"Developer" = "Developer";
+"Installed apps" = "Installed apps";
+"LOW SPACE" = "LOW SPACE";
+"Last clean: %@" = "Last clean: %@";
+"Local" = "Local";
+"Make room.\nKeep control." = "Make room.\nKeep control.";
+"No cleanup run yet" = "No cleanup run yet";
+"No known leftovers" = "No known leftovers";
+"No removable junk was found in the areas PureMac checked." = "No removable junk was found in the areas PureMac checked.";
+"One scan checks every cleanup tool and prepares a plan for your review." = "One scan checks every cleanup tool and prepares a plan for your review.";
+"Private" = "Private";
+"PureMac builds a reviewable cleanup plan on your Mac. Nothing is removed until you approve it." = "PureMac builds a reviewable cleanup plan on your Mac. Nothing is removed until you approve it.";
+"PureMac is checking your Mac without removing anything." = "PureMac is checking your Mac without removing anything.";
+"Ready" = "Ready";
+"Ready for review" = "Ready for review";
+"Ready to reclaim" = "Ready to reclaim";
+"Review" = "Review";
+"Review ready" = "Review ready";
+"Review scan results" = "Review scan results";
+"Review what was found" = "Review what was found";
+"Reviewable" = "Reviewable";
+"SCAN COMPLETE" = "SCAN COMPLETE";
+"Scan My Mac" = "Scan My Mac";
+"Scan first.\nDecide what goes." = "Scan first.\nDecide what goes.";
+"Scanning" = "Scanning";
+"Selected items are being removed safely." = "Selected items are being removed safely.";
+"Smart Care" = "Smart Care";
+"Twelve-layer storage inspection model" = "Twelve-layer storage inspection model";
+"Xcode and package tools" = "Xcode and package tools";
+"Your Mac is in good shape." = "Your Mac is in good shape.";
+
+/* Simulator runtimes */
+"Simulator runtime" = "Środowisko uruchomieniowe symulatora";

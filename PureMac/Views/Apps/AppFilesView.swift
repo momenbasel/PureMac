@@ -84,8 +84,9 @@ struct AppFilesView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
-
-            Divider()
+                .padding(.horizontal, 16)
+                .padding(.top, 14)
+                .padding(.bottom, 10)
 
             // Content
             if appState.isScanningAppFiles {
@@ -145,39 +146,41 @@ struct AppFilesView: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack(spacing: 12) {
-            Image(nsImage: app.icon)
-                .resizable()
-                .frame(width: 48, height: 48)
-                .scaleEffect(iconHovering && !reduceMotion ? 1.06 : 1)
-                .animation(reduceMotion ? nil : MotionTokens.snappy, value: iconHovering)
-                .onHover { iconHovering = $0 }
+        CardSurface(padding: 16, tint: Tint.purple) {
+            HStack(spacing: 14) {
+                Image(nsImage: app.icon)
+                    .resizable()
+                    .frame(width: 52, height: 52)
+                    .shadow(color: .black.opacity(0.18), radius: 6, y: 3)
+                    .scaleEffect(iconHovering && !reduceMotion ? 1.06 : 1)
+                    .animation(reduceMotion ? nil : MotionTokens.snappy, value: iconHovering)
+                    .onHover { iconHovering = $0 }
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(app.appName)
-                    .font(.title3.bold())
-                Text(app.bundleIdentifier)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            if !appState.discoveredFiles.isEmpty {
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(filesCountText(count: appState.discoveredFiles.count))
-                        .font(.callout)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(app.appName)
+                        .font(.system(size: 17, weight: .bold))
+                    Text(app.bundleIdentifier)
+                        .font(.system(size: 11.5))
                         .foregroundStyle(.secondary)
-                        .monospacedDigit()
-                        .contentTransition(.numericText())
-                    CountUpBytes(bytes: totalSelectedSize)
-                        .font(.callout.bold())
                 }
-                .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.9),
-                           value: appState.discoveredFiles.count)
+
+                Spacer()
+
+                if !appState.discoveredFiles.isEmpty {
+                    VStack(alignment: .trailing, spacing: 2) {
+                        CountUpBytes(bytes: totalSelectedSize)
+                            .font(.system(size: 18, weight: .bold))
+                        Text(filesCountText(count: appState.discoveredFiles.count))
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                            .contentTransition(.numericText())
+                    }
+                    .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.9),
+                               value: appState.discoveredFiles.count)
+                }
             }
         }
-        .padding()
     }
 
     // MARK: - Scanning state
@@ -297,13 +300,18 @@ struct AppFilesView: View {
     // MARK: - Action bar
 
     private var actionBar: some View {
-        HStack {
+        HStack(spacing: 12) {
             Button("Select All") {
                 appState.selectedFiles = Set(appState.discoveredFiles)
             }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+
             Button("Deselect All") {
                 appState.selectedFiles.removeAll()
             }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
 
             Spacer()
 
@@ -323,8 +331,12 @@ struct AppFilesView: View {
         }
         .animation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.8),
                    value: appState.selectedFiles.isEmpty)
-        .padding()
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .background(.bar)
+        .overlay(alignment: .top) {
+            Divider().opacity(0.6)
+        }
     }
 
     // MARK: - Helpers

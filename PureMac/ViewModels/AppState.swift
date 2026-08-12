@@ -750,6 +750,7 @@ final class AppState: ObservableObject {
             result.itemsCleaned += admin.itemsCleaned
             result.freedSpace += admin.freedSpace
             result.errors.append(contentsOf: admin.errors)
+            result.protectedPaths.formUnion(admin.protectedPaths)
         }
 
         totalFreedSpace = result.freedSpace
@@ -777,7 +778,7 @@ final class AppState: ObservableObject {
         // Route survivors back through the same outcome path the original
         // cleanup uses. Without this, an FDA revocation between grant and
         // retry would silently drop errors instead of re-popping the sheet.
-        let survivors = items.filter { !result.cleanedPaths.contains($0.path) }
+        let survivors = survivingItems(from: items, result: result)
         handleCleanOutcome(errors: result.errors, survivors: survivors)
 
         scanState = .cleaned
@@ -828,6 +829,8 @@ final class AppState: ObservableObject {
 
             scanProgress = 1.0
             scanTicker.path = ""
+            scanState = .scanning(progress: 1.0, currentCategory: "Finishing scan")
+            try? await Task.sleep(nanoseconds: 800_000_000)
             scanState = .completed
             loadDiskInfo()
         }
@@ -852,6 +855,8 @@ final class AppState: ObservableObject {
             totalJunkSize = categoryResults.values.reduce(0) { $0 + $1.totalSize }
             scanProgress = 1.0
             scanTicker.path = ""
+            scanState = .scanning(progress: 1.0, currentCategory: "Finishing scan")
+            try? await Task.sleep(nanoseconds: 800_000_000)
             scanState = .completed
         }
     }
@@ -883,13 +888,14 @@ final class AppState: ObservableObject {
                 result.itemsCleaned += admin.itemsCleaned
                 result.freedSpace += admin.freedSpace
                 result.errors.append(contentsOf: admin.errors)
+                result.protectedPaths.formUnion(admin.protectedPaths)
             }
 
             totalFreedSpace = result.freedSpace
             lastCleanedDate = Date()
             if result.itemsCleaned > 0 { Haptics.successWithSound() }
 
-            let survivors = itemsToClean.filter { !result.cleanedPaths.contains($0.path) }
+            let survivors = survivingItems(from: itemsToClean, result: result)
 
             for (cat, catResult) in categoryResults {
                 let remaining = catResult.items.filter { !result.cleanedPaths.contains($0.path) }
@@ -944,6 +950,7 @@ final class AppState: ObservableObject {
                 cleanResult.itemsCleaned += admin.itemsCleaned
                 cleanResult.freedSpace += admin.freedSpace
                 cleanResult.errors.append(contentsOf: admin.errors)
+                cleanResult.protectedPaths.formUnion(admin.protectedPaths)
             }
 
             totalFreedSpace = cleanResult.freedSpace
@@ -968,7 +975,7 @@ final class AppState: ObservableObject {
             }
             totalJunkSize = categoryResults.values.reduce(0) { $0 + $1.totalSize }
 
-            let survivors = selectedItems.filter { !cleanResult.cleanedPaths.contains($0.path) }
+            let survivors = survivingItems(from: selectedItems, result: cleanResult)
             handleCleanOutcome(errors: cleanResult.errors, survivors: survivors)
 
             scanState = .cleaned
@@ -977,6 +984,22 @@ final class AppState: ObservableObject {
             try? await Task.sleep(nanoseconds: 3_000_000_000)
             scanState = .idle
             totalFreedSpace = 0
+        }
+    }
+
+    /// Items that neither got cleaned nor were skipped as SIP-protected.
+    /// Protected paths can't be removed even as root, so treating them as
+    /// failures only produces a "Couldn't clean everything" alert the user
+    /// can do nothing about (e.g. /private/var/log/wifi.log) — log and move on.
+    private func survivingItems(from items: [CleanableItem], result: CleaningEngine.CleaningResult) -> [CleanableItem] {
+        if result.skippedProtected > 0 {
+            let protectedList = result.protectedPaths.sorted().joined(separator: ", ")
+            Logger.shared.log("Skipped \(result.skippedProtected) macOS-protected item(s): \(protectedList)", level: .info)
+        }
+        return items.filter {
+            !$0.isActionItem &&
+                !result.cleanedPaths.contains($0.path) &&
+                !result.protectedPaths.contains($0.path)
         }
     }
 
@@ -992,14 +1015,19 @@ final class AppState: ObservableObject {
         }
 
         let fdaGranted = FullDiskAccessManager.shared.hasFullDiskAccess
-        let likelyFDA = !fdaGranted && !survivors.isEmpty
+        // App-modifying survivors (thinning, localization stripping) fail on
+        // root-owned bundles that Full Disk Access cannot make writable, so
+        // they must not steer the user into a Grant Access loop that can
+        // never succeed. Only junk-file survivors count toward that hint.
+        let fdaFixableSurvivors = survivors.filter { !CleaningCategory.appModifying.contains($0.category) }
+        let likelyFDA = !fdaGranted && !fdaFixableSurvivors.isEmpty
         cleanErrorIsFDAFixable = likelyFDA
         pendingPermissionRetryItems = survivors
 
         if likelyFDA {
             cleanError = String(
                 format: String(localized: "%lld item(s) need Full Disk Access to remove. Tap Grant Access to fix in one step."),
-                Int64(survivors.count)
+                Int64(fdaFixableSurvivors.count)
             )
         } else if !survivors.isEmpty {
             let preview = survivors.prefix(2).map { ($0.path as NSString).lastPathComponent }.joined(separator: ", ")
@@ -1036,7 +1064,11 @@ final class AppState: ObservableObject {
     // MARK: - Scheduled Scan
 
     private func runScheduledScan() async {
+        // App-modifying categories (see CleaningCategory.appModifying) never
+        // run unattended — a scheduled autoClean must not re-sign or strip
+        // installed apps behind the user's back.
         let categories = scheduler.config.categoriesToScan
+            .filter { !CleaningCategory.appModifying.contains($0) }
         var totalFound: Int64 = 0
         clearSelectionState()
         categoryResults = [:]

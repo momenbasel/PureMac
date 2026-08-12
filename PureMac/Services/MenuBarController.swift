@@ -40,7 +40,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         if let button = statusItem.button {
             button.image = NSImage(
                 systemSymbolName: "gauge.with.dots.needle.67percent",
-                accessibilityDescription: "System Monitor"
+                accessibilityDescription: String(localized: "System Monitor")
             )
             button.imagePosition = .imageLeading
             button.target = self
