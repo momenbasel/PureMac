@@ -27,6 +27,7 @@ struct MainWindow: View {
         .brewCache,
         .nodeCache,
         .dockerCache,
+        .vsCodeExtensions,
     ].filter(CleaningCategory.scannable.contains)
 
     var body: some View {
@@ -436,6 +437,8 @@ struct MainWindow: View {
         case .cleaning(let category):
             if category == .smartScan {
                 DashboardView { selectSection($0) }
+            } else if category == .vsCodeExtensions {
+                ExtensionListView()
             } else {
                 CategoryDetailView(category: category)
             }

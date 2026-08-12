@@ -90,6 +90,7 @@ open build/Build/Products/Release/PureMac.app
 - **可清除空间** — 检测 APFS 可清除磁盘空间
 - **Xcode 垃圾** — DerivedData、Archives、模拟器缓存与已下载的 simulator runtimes（通过 `simctl runtime delete` 删除，不会自动勾选）
 - **Brew 缓存** — Homebrew 下载缓存(可识别自定义 HOMEBREW_CACHE)
+- **VS Code 扩展** — 类似应用卸载：浏览 `~/.*/extensions`（需 `engines.vscode`），进入详情勾选关联的 globalStorage / 工作区存储 / VSIX 缓存 / 主目录个性化数据（`~/.continue` 等，默认不勾选）后再删除
 - **定时清理** — 按可配置的间隔自动扫描
 
 ### 原生 macOS 体验

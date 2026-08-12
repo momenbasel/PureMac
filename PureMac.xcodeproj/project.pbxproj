@@ -8,12 +8,15 @@
 
 /* Begin PBXBuildFile section */
 		013EF7B96BF046D4DB38FBC5 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 241E0895B09C71AB423B2F9E /* Localizable.strings */; };
+		0975846AABA6EA8B2A7FE3A8 /* AppSupportResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3409287F332A8A0F530B37FA /* AppSupportResolverTests.swift */; };
 		1B0D043102FDB245312A5147 /* AppFilesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 798B80977D14647A5691B0A0 /* AppFilesView.swift */; };
 		2253F11BDF561B617439C96B /* FullDiskAccessManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E866A1541D289C69144A5E62 /* FullDiskAccessManager.swift */; };
 		25E2304A3FF257F1740E304B /* FileProtection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7953B398E47A4C603DE287F1 /* FileProtection.swift */; };
 		27F449EDD1B082FE11FEC9DF /* SchedulerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28181F034530331A550C6A3D /* SchedulerService.swift */; };
+		2B59BFAADAE4DE50B16DE0BB /* VSCodeExtensionsIndexPruner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 643E6725E3E9C5AD9DB3BC27 /* VSCodeExtensionsIndexPruner.swift */; };
 		340E424F759ACCDE7372F99F /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5ADDC35F31E40780FB5D017 /* Theme.swift */; };
 		39BEE5E2BEC526CCADFC9DDD /* ServicesMenu.strings in Resources */ = {isa = PBXBuildFile; fileRef = 57FBBF8C7EF27C8E09126ED5 /* ServicesMenu.strings */; };
+		3FB6821BEAB6070BA1CF1088 /* CleaningEngineVSCodeExtensionsSafetyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D1822BA5115D5C14C5016A6 /* CleaningEngineVSCodeExtensionsSafetyTests.swift */; };
 		41B27CACD7C6C7471EFD03F9 /* UpdateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 022D0EAEE2B6E54069FC2CBE /* UpdateService.swift */; };
 		47C5ECD49C4DD75F271DB6CE /* StringNormalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D3AC5F17D7CA94FAB1E8D7A /* StringNormalization.swift */; };
 		48D1431A7C99C19EEBDB056B /* CleaningEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A8DE5D45BA19E2670B57DC5 /* CleaningEngine.swift */; };
@@ -21,6 +24,7 @@
 		50304378D99F2E9E48B642AF /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 9CC8F66E27BE52A6639E904B /* Sparkle */; };
 		52F11962555C639F0EECADD6 /* FDADemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 231FF7CBB5F621B66F2AB8A5 /* FDADemoView.swift */; };
 		535B23C0108C06475215B8E8 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AB003A7751F05727DBFD1A5 /* AppTheme.swift */; };
+		5923FC5A3040EA3FDFE28449 /* ExtensionListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBD77AD541273D828C3C0529 /* ExtensionListView.swift */; };
 		59B3096E2AE8ED0397B16798 /* AppLanguagePreferencesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 491771F923C93FD61A263893 /* AppLanguagePreferencesTests.swift */; };
 		61D285E96DED76FDCD54570F /* PermissionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 069AAE87E3F9EDE5593AD8B3 /* PermissionSheet.swift */; };
 		6753946A301B2EB2FEF6998B /* SimulatorRuntimeSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = D74E66594478F53363BCB0F9 /* SimulatorRuntimeSupport.swift */; };
@@ -28,21 +32,28 @@
 		6D449325D54B9850FC6C119F /* UniversalBinaryScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95EC878D25C244BF94D0094C /* UniversalBinaryScanner.swift */; };
 		6E72022A661CBB41331A442C /* PermissionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9DCBD97CC88D77AE8DB01A4 /* PermissionCoordinator.swift */; };
 		75B5F0401D37F2872B1AD85A /* AppListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60E6BC61614B27C065BB18C9 /* AppListView.swift */; };
+		761EDF284E391FC9D956A4C3 /* VSCodeExtensionListUpdaterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19C0703391093513B93B41C2 /* VSCodeExtensionListUpdaterTests.swift */; };
 		76B132F9C499225D33E0D075 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 424F7B28624C271620E13BBC /* EmptyStateView.swift */; };
 		826A750D2D7EC14C2AE306A3 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3667D46D8E2004EB4D73835A /* Models.swift */; };
+		8514C86E91C205997AC40705 /* VSCodeExtensionScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35EEBB72EC2BC0BBE95305F9 /* VSCodeExtensionScanner.swift */; };
 		8947F0CE448791BD50EECF46 /* Conditions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB94E06E145558123BB5BFB3 /* Conditions.swift */; };
 		8B541441926847072DC5B75B /* DashboardCharts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08C60E04A0CA3F227816DB63 /* DashboardCharts.swift */; };
 		91751CF033E1541BFD39B12C /* MenuBarMonitorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A27DB5A70FA829B6C3ED0AC3 /* MenuBarMonitorView.swift */; };
 		93743B036059418560D876E6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A8D39C3C250F26302EC45AB /* SettingsView.swift */; };
 		95278ABDCF5F4D6AC60503B1 /* AppearancePill.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92259B3E9F4468865F15DEEC /* AppearancePill.swift */; };
+		95720C0EF8BBB50AFA989BA3 /* VSCodeExtensionLeftoverFinderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA3217843B3766773494CB65 /* VSCodeExtensionLeftoverFinderTests.swift */; };
 		9AA80E035DF7B33F6EE118DF /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED1B71D5F9510582E869CFD /* AppState.swift */; };
 		9BB5AAA574AFED6C27A3F8E2 /* AppPathFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0FEE7141871ED5F9E36121 /* AppPathFinder.swift */; };
 		9E3639F9EFCB2A22F6747894 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 913E3064AA9BD7BE94A315CF /* MenuBarController.swift */; };
 		9E87638A3F12C12D93995DA7 /* LanguageFilesScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0899FE169D270DF95334905 /* LanguageFilesScanner.swift */; };
 		A2AE68CC75CB72D6B10CBDF5 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F661A0F64CF93E482CB1728F /* DashboardView.swift */; };
 		A549D8A39A9E5E70D91B90A6 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40A3F22FCEF534DE4A2CAD0E /* Haptics.swift */; };
+		A78568618FC23BC842615701 /* VSCodeExtensionHomePathRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3BB8DDDBB338006845EB46D /* VSCodeExtensionHomePathRules.swift */; };
+		A8E1A3B2F213A608682A48BC /* AppSupportResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12201F092F9880D8592EAF06 /* AppSupportResolver.swift */; };
 		A9C3A1F643C26930F442E729 /* OrphanSafetyPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AE790496C936424EF98320A /* OrphanSafetyPolicy.swift */; };
+		AA42FDB0A436E24091A1ABB2 /* VSCodeExtensionHomePathRulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 854B04F07E61AAE40F25464E /* VSCodeExtensionHomePathRulesTests.swift */; };
 		ABDDD4F35102A39CC1A2C325 /* ConfettiView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0599AA604B0D6BA4F957537 /* ConfettiView.swift */; };
+		B266B0F8335EC5EEAA1D31D1 /* VSCodeExtensionScannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6425143E7425A44834FA2730 /* VSCodeExtensionScannerTests.swift */; };
 		B51E5A95BB49A6C0F5273E21 /* FileSize.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE522B406791BCE905BC55B /* FileSize.swift */; };
 		B52938BBD11842631314543D /* CategoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B0AF194677EAC1D5568785 /* CategoryDetailView.swift */; };
 		B928E4369A3FC4369F014A29 /* SmartCareCoreArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA389C4F50505795FB31A51 /* SmartCareCoreArtwork.swift */; };
@@ -56,6 +67,7 @@
 		DC32253D26D0E29762006DA0 /* AppBundleDragHandle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D3F9FEDC493A8E49E910F67 /* AppBundleDragHandle.swift */; };
 		DDD6BA35DBF32E7A6B5F6F8B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2EA41E1096FA8E3B916AD13 /* Assets.xcassets */; };
 		DDDA5879006CB97D5D7BDD87 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5785762276FB5E3209C6DE4D /* Logger.swift */; };
+		E0A0200E6253079A729C1FFC /* VSCodeExtensionLeftoverFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15ACF18E6FFF02737C738BAC /* VSCodeExtensionLeftoverFinder.swift */; };
 		E2403D82F00D749C9AD4A6D4 /* AppStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 752603285F7DBBA12BB3AA91 /* AppStateTests.swift */; };
 		E60B0A2C5D0A6CAE35BF4DFB /* Locations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77D3D9A9BC52839E6D0A22BC /* Locations.swift */; };
 		E726702EABBE56155861DBA9 /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82BB0904726B38DEB141BECA /* AppLanguage.swift */; };
@@ -63,6 +75,7 @@
 		F1F506C146E17D6CEC4A12F3 /* AppInfoFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23486A54A82EE3865B784D1C /* AppInfoFetcher.swift */; };
 		F2FA881A4B2209CC2A6342FB /* CLI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01B2C5F66B6D812572BD4F05 /* CLI.swift */; };
 		F4F02F966001A1504C2B4D33 /* SimulatorRuntimeSupportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7D81BE7EA5DB17F4A0300AD /* SimulatorRuntimeSupportTests.swift */; };
+		F9F446F391AE8FD7239E8ACC /* VSCodeExtensionListUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D219E6F46B5EE8FA81D6620 /* VSCodeExtensionListUpdater.swift */; };
 		FBEE9208E222616A8DF1FE75 /* ProviderPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AFB912A9A6CFDCB972E978F /* ProviderPaths.swift */; };
 		FDA30FE6349CA01C8D859F04 /* OrphanListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B71E8F62DB76D85F41F9A2E9 /* OrphanListView.swift */; };
 /* End PBXBuildFile section */
@@ -85,7 +98,10 @@
 		08C60E04A0CA3F227816DB63 /* DashboardCharts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardCharts.swift; sourceTree = "<group>"; };
 		0A544093C897FBCBA8E256F9 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		10B0AF194677EAC1D5568785 /* CategoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryDetailView.swift; sourceTree = "<group>"; };
+		12201F092F9880D8592EAF06 /* AppSupportResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSupportResolver.swift; sourceTree = "<group>"; };
 		155CE1B8CDCCCA6F9FD028C1 /* LocalizationFilesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationFilesTests.swift; sourceTree = "<group>"; };
+		15ACF18E6FFF02737C738BAC /* VSCodeExtensionLeftoverFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSCodeExtensionLeftoverFinder.swift; sourceTree = "<group>"; };
+		19C0703391093513B93B41C2 /* VSCodeExtensionListUpdaterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSCodeExtensionListUpdaterTests.swift; sourceTree = "<group>"; };
 		1AB003A7751F05727DBFD1A5 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		1C0D9A6F75D0B8ADDB32FC2A /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = uk.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1D3AC5F17D7CA94FAB1E8D7A /* StringNormalization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringNormalization.swift; sourceTree = "<group>"; };
@@ -97,7 +113,9 @@
 		2A8DE5D45BA19E2670B57DC5 /* CleaningEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleaningEngine.swift; sourceTree = "<group>"; };
 		2D3F9FEDC493A8E49E910F67 /* AppBundleDragHandle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBundleDragHandle.swift; sourceTree = "<group>"; };
 		311078221878708524283765 /* PureMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PureMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3409287F332A8A0F530B37FA /* AppSupportResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSupportResolverTests.swift; sourceTree = "<group>"; };
 		340D303C60FF878B019056B6 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
+		35EEBB72EC2BC0BBE95305F9 /* VSCodeExtensionScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSCodeExtensionScanner.swift; sourceTree = "<group>"; };
 		3667D46D8E2004EB4D73835A /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		374A3BE46E71E54B6927E9EF /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = uk.lproj/ServicesMenu.strings; sourceTree = "<group>"; };
 		3A8D39C3C250F26302EC45AB /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -115,13 +133,18 @@
 		607B9A8C7B34D6A7DCF4FFE2 /* PureMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PureMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		60E6BC61614B27C065BB18C9 /* AppListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppListView.swift; sourceTree = "<group>"; };
 		63581B70F9B10231964E3602 /* PureMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PureMacApp.swift; sourceTree = "<group>"; };
+		6425143E7425A44834FA2730 /* VSCodeExtensionScannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSCodeExtensionScannerTests.swift; sourceTree = "<group>"; };
+		643E6725E3E9C5AD9DB3BC27 /* VSCodeExtensionsIndexPruner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSCodeExtensionsIndexPruner.swift; sourceTree = "<group>"; };
 		69B24B648B82186FC3B6EF2B /* BinaryThinner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryThinner.swift; sourceTree = "<group>"; };
+		6D1822BA5115D5C14C5016A6 /* CleaningEngineVSCodeExtensionsSafetyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleaningEngineVSCodeExtensionsSafetyTests.swift; sourceTree = "<group>"; };
 		6ED5C9C10C69C3143B1F5CA6 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ServicesMenu.strings; sourceTree = "<group>"; };
 		752603285F7DBBA12BB3AA91 /* AppStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStateTests.swift; sourceTree = "<group>"; };
 		77D3D9A9BC52839E6D0A22BC /* Locations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Locations.swift; sourceTree = "<group>"; };
 		7953B398E47A4C603DE287F1 /* FileProtection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProtection.swift; sourceTree = "<group>"; };
 		798B80977D14647A5691B0A0 /* AppFilesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFilesView.swift; sourceTree = "<group>"; };
+		7D219E6F46B5EE8FA81D6620 /* VSCodeExtensionListUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSCodeExtensionListUpdater.swift; sourceTree = "<group>"; };
 		82BB0904726B38DEB141BECA /* AppLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguage.swift; sourceTree = "<group>"; };
+		854B04F07E61AAE40F25464E /* VSCodeExtensionHomePathRulesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSCodeExtensionHomePathRulesTests.swift; sourceTree = "<group>"; };
 		8AFB912A9A6CFDCB972E978F /* ProviderPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderPaths.swift; sourceTree = "<group>"; };
 		8CE522B406791BCE905BC55B /* FileSize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSize.swift; sourceTree = "<group>"; };
 		8D5E63D733D1A3BDEDF4DCA5 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
@@ -144,9 +167,11 @@
 		C7D81BE7EA5DB17F4A0300AD /* SimulatorRuntimeSupportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulatorRuntimeSupportTests.swift; sourceTree = "<group>"; };
 		CB94E06E145558123BB5BFB3 /* Conditions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conditions.swift; sourceTree = "<group>"; };
 		CED1B71D5F9510582E869CFD /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		D3BB8DDDBB338006845EB46D /* VSCodeExtensionHomePathRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSCodeExtensionHomePathRules.swift; sourceTree = "<group>"; };
 		D74E66594478F53363BCB0F9 /* SimulatorRuntimeSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulatorRuntimeSupport.swift; sourceTree = "<group>"; };
 		DAA389C4F50505795FB31A51 /* SmartCareCoreArtwork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartCareCoreArtwork.swift; sourceTree = "<group>"; };
 		DB798781B99987F55D77E2E3 /* SystemMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMonitor.swift; sourceTree = "<group>"; };
+		DBD77AD541273D828C3C0529 /* ExtensionListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionListView.swift; sourceTree = "<group>"; };
 		DFC4A1FD7DB92C82725B4314 /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = uk.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		E866A1541D289C69144A5E62 /* FullDiskAccessManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullDiskAccessManager.swift; sourceTree = "<group>"; };
 		ED0C4D8912DA94F81B2AEF8F /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -155,6 +180,7 @@
 		F31F91226CDCFBB8E303B7DA /* AppConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstants.swift; sourceTree = "<group>"; };
 		F661A0F64CF93E482CB1728F /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		F9DCBD97CC88D77AE8DB01A4 /* PermissionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionCoordinator.swift; sourceTree = "<group>"; };
+		FA3217843B3766773494CB65 /* VSCodeExtensionLeftoverFinderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSCodeExtensionLeftoverFinderTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -183,8 +209,14 @@
 			children = (
 				491771F923C93FD61A263893 /* AppLanguagePreferencesTests.swift */,
 				752603285F7DBBA12BB3AA91 /* AppStateTests.swift */,
+				3409287F332A8A0F530B37FA /* AppSupportResolverTests.swift */,
+				6D1822BA5115D5C14C5016A6 /* CleaningEngineVSCodeExtensionsSafetyTests.swift */,
 				155CE1B8CDCCCA6F9FD028C1 /* LocalizationFilesTests.swift */,
 				C7D81BE7EA5DB17F4A0300AD /* SimulatorRuntimeSupportTests.swift */,
+				854B04F07E61AAE40F25464E /* VSCodeExtensionHomePathRulesTests.swift */,
+				FA3217843B3766773494CB65 /* VSCodeExtensionLeftoverFinderTests.swift */,
+				19C0703391093513B93B41C2 /* VSCodeExtensionListUpdaterTests.swift */,
+				6425143E7425A44834FA2730 /* VSCodeExtensionScannerTests.swift */,
 			);
 			path = PureMacTests;
 			sourceTree = "<group>";
@@ -217,6 +249,7 @@
 				3D4FD34378988D430A582ED0 /* OnboardingView.swift */,
 				DAD2EC78EB98016ADA27D114 /* Apps */,
 				8AE26715B5748307483A1A5E /* Components */,
+				DC0508F56E813D26C9081F6C /* Extensions */,
 				9D3C2DC382F5D4B77DFD218B /* Orphans */,
 				7BC68AB045DA6E5299FD3CB6 /* Settings */,
 			);
@@ -306,6 +339,14 @@
 			path = Apps;
 			sourceTree = "<group>";
 		};
+		DC0508F56E813D26C9081F6C /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				DBD77AD541273D828C3C0529 /* ExtensionListView.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
 		E05E733EFBC4EFDA12BEC43B /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
@@ -346,11 +387,17 @@
 			children = (
 				23486A54A82EE3865B784D1C /* AppInfoFetcher.swift */,
 				AC0FEE7141871ED5F9E36121 /* AppPathFinder.swift */,
+				12201F092F9880D8592EAF06 /* AppSupportResolver.swift */,
 				CB94E06E145558123BB5BFB3 /* Conditions.swift */,
 				C0899FE169D270DF95334905 /* LanguageFilesScanner.swift */,
 				77D3D9A9BC52839E6D0A22BC /* Locations.swift */,
 				1D3AC5F17D7CA94FAB1E8D7A /* StringNormalization.swift */,
 				95EC878D25C244BF94D0094C /* UniversalBinaryScanner.swift */,
+				D3BB8DDDBB338006845EB46D /* VSCodeExtensionHomePathRules.swift */,
+				15ACF18E6FFF02737C738BAC /* VSCodeExtensionLeftoverFinder.swift */,
+				7D219E6F46B5EE8FA81D6620 /* VSCodeExtensionListUpdater.swift */,
+				35EEBB72EC2BC0BBE95305F9 /* VSCodeExtensionScanner.swift */,
+				643E6725E3E9C5AD9DB3BC27 /* VSCodeExtensionsIndexPruner.swift */,
 			);
 			path = Scanning;
 			sourceTree = "<group>";
@@ -484,6 +531,7 @@
 				75B5F0401D37F2872B1AD85A /* AppListView.swift in Sources */,
 				9BB5AAA574AFED6C27A3F8E2 /* AppPathFinder.swift in Sources */,
 				9AA80E035DF7B33F6EE118DF /* AppState.swift in Sources */,
+				A8E1A3B2F213A608682A48BC /* AppSupportResolver.swift in Sources */,
 				535B23C0108C06475215B8E8 /* AppTheme.swift in Sources */,
 				95278ABDCF5F4D6AC60503B1 /* AppearancePill.swift in Sources */,
 				68F9CE5ED4908F674D673FB2 /* BinaryThinner.swift in Sources */,
@@ -495,6 +543,7 @@
 				8B541441926847072DC5B75B /* DashboardCharts.swift in Sources */,
 				A2AE68CC75CB72D6B10CBDF5 /* DashboardView.swift in Sources */,
 				76B132F9C499225D33E0D075 /* EmptyStateView.swift in Sources */,
+				5923FC5A3040EA3FDFE28449 /* ExtensionListView.swift in Sources */,
 				52F11962555C639F0EECADD6 /* FDADemoView.swift in Sources */,
 				25E2304A3FF257F1740E304B /* FileProtection.swift in Sources */,
 				B51E5A95BB49A6C0F5273E21 /* FileSize.swift in Sources */,
@@ -525,6 +574,11 @@
 				340E424F759ACCDE7372F99F /* Theme.swift in Sources */,
 				6D449325D54B9850FC6C119F /* UniversalBinaryScanner.swift in Sources */,
 				41B27CACD7C6C7471EFD03F9 /* UpdateService.swift in Sources */,
+				A78568618FC23BC842615701 /* VSCodeExtensionHomePathRules.swift in Sources */,
+				E0A0200E6253079A729C1FFC /* VSCodeExtensionLeftoverFinder.swift in Sources */,
+				F9F446F391AE8FD7239E8ACC /* VSCodeExtensionListUpdater.swift in Sources */,
+				8514C86E91C205997AC40705 /* VSCodeExtensionScanner.swift in Sources */,
+				2B59BFAADAE4DE50B16DE0BB /* VSCodeExtensionsIndexPruner.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -534,8 +588,14 @@
 			files = (
 				59B3096E2AE8ED0397B16798 /* AppLanguagePreferencesTests.swift in Sources */,
 				E2403D82F00D749C9AD4A6D4 /* AppStateTests.swift in Sources */,
+				0975846AABA6EA8B2A7FE3A8 /* AppSupportResolverTests.swift in Sources */,
+				3FB6821BEAB6070BA1CF1088 /* CleaningEngineVSCodeExtensionsSafetyTests.swift in Sources */,
 				CFA64F54CDBF8A4765E0068D /* LocalizationFilesTests.swift in Sources */,
 				F4F02F966001A1504C2B4D33 /* SimulatorRuntimeSupportTests.swift in Sources */,
+				AA42FDB0A436E24091A1ABB2 /* VSCodeExtensionHomePathRulesTests.swift in Sources */,
+				95720C0EF8BBB50AFA989BA3 /* VSCodeExtensionLeftoverFinderTests.swift in Sources */,
+				761EDF284E391FC9D956A4C3 /* VSCodeExtensionListUpdaterTests.swift in Sources */,
+				B266B0F8335EC5EEAA1D31D1 /* VSCodeExtensionScannerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

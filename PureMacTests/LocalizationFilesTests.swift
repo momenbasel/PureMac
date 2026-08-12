@@ -104,6 +104,20 @@ final class LocalizationFilesTests: XCTestCase {
         }
     }
 
+    func testLocalizableStringsEntriesDoNotHaveLeadingWhitespace() throws {
+        let pattern = try NSRegularExpression(pattern: #"(?m)^[ \t]+""#)
+        for (language, fileURL) in try localizableStringsFiles() {
+            let contents = try String(contentsOf: fileURL, encoding: .utf8)
+            let range = NSRange(contents.startIndex..., in: contents)
+            let matches = pattern.numberOfMatches(in: contents, range: range)
+            XCTAssertEqual(
+                matches,
+                0,
+                "\(language).lproj/Localizable.strings has \(matches) entry line(s) with leading whitespace"
+            )
+        }
+    }
+
     private func localizableStringsFiles() throws -> [String: URL] {
         let sourceRoot = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()

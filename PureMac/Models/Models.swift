@@ -15,6 +15,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
     case brewCache = "Brew Cache"
     case nodeCache = "Node Cache"
     case dockerCache = "Docker Cache"
+    case vsCodeExtensions = "VS Code Extensions"
     case universalBinaries = "Universal Binaries"
     case languageFiles = "Language Files"
 
@@ -34,6 +35,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .brewCache: return "mug.fill"
         case .nodeCache: return "leaf.fill"
         case .dockerCache: return "shippingbox.fill"
+        case .vsCodeExtensions: return "puzzlepiece.extension"
         case .universalBinaries: return "cpu"
         case .languageFiles: return "globe"
         }
@@ -53,6 +55,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .brewCache: return "Homebrew download cache"
         case .nodeCache: return "npm, yarn, and pnpm download caches"
         case .dockerCache: return "Docker images, containers, and build cache"
+        case .vsCodeExtensions: return "Installed VS Code–family extensions under ~/.*/extensions (review before removing; quit the editor first)"
         case .universalBinaries: return "Unused CPU architecture slices in app binaries"
         case .languageFiles: return "Unused app localizations"
         }
@@ -72,6 +75,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .brewCache: return .mint
         case .nodeCache: return .pink
         case .dockerCache: return .indigo
+        case .vsCodeExtensions: return .brown
         case .universalBinaries: return .brown
         case .languageFiles: return .gray
         }

@@ -103,6 +103,15 @@ final class AppState: ObservableObject {
     /// still showing) is still surfaced — a one-shot token would be missed.
     @Published var pendingExternalApp: InstalledApp?
 
+    // MARK: - VS Code Extension Uninstaller State
+
+    @Published var vscodeExtensions: [VSCodeExtensionItem] = []
+    @Published var selectedVSCodeExtension: VSCodeExtensionItem?
+    @Published var extensionRelatedFiles: [URL] = []
+    @Published var selectedExtensionRelatedFiles: Set<URL> = []
+    @Published var isLoadingVSCodeExtensions = false
+    @Published var isScanningExtensionRelatedFiles = false
+
     private var externalUninstallObserver: AnyCancellable?
 
     // MARK: - Services
@@ -143,10 +152,12 @@ final class AppState: ObservableObject {
     init(
         performStartupTasks: Bool = true,
         locationsProvider: @escaping () -> Locations = Locations.init,
-        appFileScanner: @escaping AppFileScanner = AppState.defaultAppFileScanner
+        // Default arg evaluation is nonisolated on Xcode 16.1; resolve MainActor
+        // scanner in the body instead of `= AppState.defaultAppFileScanner`.
+        appFileScanner: AppFileScanner? = nil
     ) {
         self.locationsProvider = locationsProvider
-        self.appFileScanner = appFileScanner
+        self.appFileScanner = appFileScanner ?? AppState.defaultAppFileScanner
 
         // Listen for right-click "Uninstall with PureMac" hand-offs from the
         // Finder Services handler in AppDelegate.
@@ -241,6 +252,106 @@ final class AppState: ObservableObject {
             self.selectedFiles = urls
             self.isScanningAppFiles = false
             self.appFileScanLocationCount = 0
+        }
+    }
+
+    func loadVSCodeExtensions() {
+        isLoadingVSCodeExtensions = true
+        selectedVSCodeExtension = nil
+        extensionRelatedFiles = []
+        selectedExtensionRelatedFiles = []
+        Task {
+            let items = await Task.detached(priority: .userInitiated) {
+                VSCodeExtensionScanner.scan(
+                    homeDirectory: FileManager.default.homeDirectoryForCurrentUser
+                )
+            }.value
+            vscodeExtensions = items
+            isLoadingVSCodeExtensions = false
+        }
+    }
+
+    func scanExtensionRelatedFiles(_ item: VSCodeExtensionItem) {
+        selectedVSCodeExtension = item
+        extensionRelatedFiles = []
+        selectedExtensionRelatedFiles = []
+        isScanningExtensionRelatedFiles = true
+        Task {
+            let home = FileManager.default.homeDirectoryForCurrentUser
+            let urls = await Task.detached(priority: .userInitiated) {
+                VSCodeExtensionLeftoverFinder.findRelatedPaths(
+                    for: item,
+                    homeDirectory: home
+                )
+                .sorted { $0.path < $1.path }
+            }.value
+            extensionRelatedFiles = urls
+            // Home personalization (~/.continue, ~/.config/github-copilot, …)
+            // is listed but default-unchecked — user must opt in.
+            selectedExtensionRelatedFiles = VSCodeExtensionHomePathRules.defaultSelectedPaths(
+                from: urls,
+                homeDirectory: home
+            )
+            isScanningExtensionRelatedFiles = false
+        }
+    }
+
+    func removeSelectedExtensionRelatedFiles(
+        displayOrder: [VSCodeExtensionItem]? = nil
+    ) {
+        guard let item = selectedVSCodeExtension else { return }
+        let homePath = FileManager.default.homeDirectoryForCurrentUser.path
+        let urls = Array(selectedExtensionRelatedFiles).filter { url in
+            let path = (url.path as NSString).standardizingPath
+            return VSCodeExtensionScanner.isSafeDeletePath(path, homeDirectoryPath: homePath)
+                || VSCodeExtensionLeftoverFinder.isSafeRelatedPath(
+                    path,
+                    extensionId: item.extensionId,
+                    homeDirectoryPath: homePath
+                )
+        }
+        guard !urls.isEmpty else { return }
+        let neighborOrder = displayOrder
+        trashDirectly(urls: urls) { [weak self] removed, needsFullDiskAccess, needsAdmin, failed in
+            Task { @MainActor in
+                guard let self else { return }
+                if !removed.isEmpty {
+                    if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+                        self.extensionRelatedFiles.removeAll { removed.contains($0) }
+                    } else {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                            self.extensionRelatedFiles.removeAll { removed.contains($0) }
+                        }
+                    }
+                    self.selectedExtensionRelatedFiles.subtract(removed)
+                    VSCodeExtensionsIndexPruner.pruneIndexes(afterRemoving: removed)
+                    // Incremental list update — do not full-rescan ~/.*/extensions.
+                    let previousId = self.selectedVSCodeExtension?.id
+                    let update = VSCodeExtensionListUpdater.applyingRemoval(
+                        extensions: self.vscodeExtensions,
+                        selected: self.selectedVSCodeExtension,
+                        removedPaths: removed,
+                        neighborOrder: neighborOrder
+                    )
+                    self.vscodeExtensions = update.extensions
+                    if let next = update.selected {
+                        if next.id != previousId {
+                            // Install dir gone — advance to next/previous in display order.
+                            self.scanExtensionRelatedFiles(next)
+                        }
+                    } else {
+                        self.selectedVSCodeExtension = nil
+                        self.extensionRelatedFiles = []
+                        self.selectedExtensionRelatedFiles = []
+                    }
+                }
+                if needsFullDiskAccess || !needsAdmin.isEmpty || !failed.isEmpty {
+                    self.removalError = needsFullDiskAccess
+                        ? String(localized: "Full Disk Access is required to remove some extension files.")
+                        : String(localized: "Some extension files could not be removed.")
+                    self.removalNeedsFullDiskAccess = needsFullDiskAccess
+                }
+            }
         }
     }
 

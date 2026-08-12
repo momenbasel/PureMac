@@ -67,6 +67,8 @@ actor ScanEngine {
             return scanNodeCache()
         case .dockerCache:
             return scanDockerCache()
+        case .vsCodeExtensions:
+            return scanVSCodeExtensions()
         case .universalBinaries:
             return scanUniversalBinaries()
         case .languageFiles:
@@ -791,6 +793,24 @@ actor ScanEngine {
 
         let totalSize = items.reduce(0) { $0 + $1.size }
         return CategoryResult(category: .dockerCache, items: items, totalSize: totalSize)
+    }
+
+    private func scanVSCodeExtensions() -> CategoryResult {
+        let home = fileManager.homeDirectoryForCurrentUser
+        let discovered = VSCodeExtensionScanner.scan(homeDirectory: home, fileManager: fileManager)
+        let items = discovered.map { ext in
+            report(ext.path)
+            return CleanableItem(
+                name: ext.listName,
+                path: ext.path,
+                size: ext.size,
+                category: .vsCodeExtensions,
+                isSelected: false,
+                lastModified: ext.lastModified
+            )
+        }
+        let totalSize = items.reduce(0) { $0 + $1.size }
+        return CategoryResult(category: .vsCodeExtensions, items: items, totalSize: totalSize)
     }
 
     private func scanUniversalBinaries() -> CategoryResult {

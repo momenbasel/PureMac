@@ -272,6 +272,7 @@
 "Brew Cache" = "Кеш Brew";
 "Node Cache" = "Кеш Node";
 "Docker Cache" = "Кеш Docker";
+"VS Code Extensions" = "VS Code Extensions";
 "Universal Binaries" = "Універсальні бінарні файли";
 "Language Files" = "Мовні файли";
 
@@ -288,6 +289,7 @@
 "Homebrew download cache" = "Кеш завантажень Homebrew";
 "npm, yarn, and pnpm download caches" = "Кеші завантажень npm, yarn і pnpm";
 "Docker images, containers, and build cache" = "Образи й контейнери Docker, а також кеш збірок";
+"Installed VS Code–family extensions under ~/.*/extensions (review before removing; quit the editor first)" = "Installed VS Code–family extensions under ~/.*/extensions (review before removing; quit the editor first)";
 "Unused CPU architecture slices in app binaries" = "Невикористовувані архітектури процесора в бінарних файлах програм";
 "Unused app localizations" = "Невикористовувані локалізації програм";
 
@@ -460,3 +462,18 @@
 
 /* Simulator runtimes */
 "Simulator runtime" = "Середовище виконання симулятора";
+
+"Search extensions" = "Search extensions";
+"VS Code Extensions (%lld)" = "VS Code Extensions (%lld)";
+"Remove (%lld files)" = "Remove (%lld files)";
+"Loading extensions..." = "Loading extensions...";
+"No Extensions Found" = "No Extensions Found";
+"Select an Extension" = "Select an Extension";
+"Scanning related files..." = "Scanning related files...";
+"Extension" = "Extension";
+"Global Storage" = "Global Storage";
+"Workspace Storage" = "Workspace Storage";
+"VSIX Cache" = "VSIX Cache";
+"Home Personalization" = "Персональні дані в домашній теці";
+"Full Disk Access is required to remove some extension files." = "Щоб видалити деякі файли розширень, потрібен повний доступ до диска.";
+"Some extension files could not be removed." = "Не вдалося видалити деякі файли розширень.";

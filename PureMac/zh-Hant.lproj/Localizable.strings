@@ -231,6 +231,7 @@
 "Brew Cache" = "Brew 快取";
 "Node Cache" = "Node 快取";
 "Docker Cache" = "Docker 快取";
+"VS Code Extensions" = "VS Code 擴充功能";
 "Universal Binaries" = "通用二進位檔案";
 "Language Files" = "語言檔案";
 
@@ -247,6 +248,7 @@
 "Homebrew download cache" = "Homebrew 下載快取";
 "npm, yarn, and pnpm download caches" = "npm、yarn 與 pnpm 下載快取";
 "Docker images, containers, and build cache" = "Docker 映像檔、容器與建置快取";
+"Installed VS Code–family extensions under ~/.*/extensions (review before removing; quit the editor first)" = "掃描 ~/.*/extensions 下宣告 engines.vscode 的擴充功能（刪除前請確認，建議先退出對應編輯器）";
 "Unused CPU architecture slices in app binaries" = "應用程式二進位檔中未使用的 CPU 架構程式碼";
 "Unused app localizations" = "未使用的應用程式本地化檔案";
 
@@ -460,3 +462,18 @@
 
 /* Simulator runtimes */
 "Simulator runtime" = "模擬器執行環境";
+
+"Search extensions" = "Search extensions";
+"VS Code Extensions (%lld)" = "VS Code Extensions (%lld)";
+"Remove (%lld files)" = "Remove (%lld files)";
+"Loading extensions..." = "Loading extensions...";
+"No Extensions Found" = "No Extensions Found";
+"Select an Extension" = "Select an Extension";
+"Scanning related files..." = "Scanning related files...";
+"Extension" = "Extension";
+"Global Storage" = "Global Storage";
+"Workspace Storage" = "Workspace Storage";
+"VSIX Cache" = "VSIX Cache";
+"Home Personalization" = "主目錄個人化資料";
+"Full Disk Access is required to remove some extension files." = "刪除部分擴充功能檔案需要「完整磁碟取用權限」。";
+"Some extension files could not be removed." = "部分擴充功能檔案無法刪除。";

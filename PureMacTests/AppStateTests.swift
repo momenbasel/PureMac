@@ -4,6 +4,12 @@ import XCTest
 
 @MainActor
 final class AppStateTests: XCTestCase {
+    func testInitWithDefaultAppFileScannerDoesNotCrash() {
+        let appState = AppState(performStartupTasks: false)
+        XCTAssertTrue(appState.discoveredFiles.isEmpty)
+        XCTAssertFalse(appState.isScanningAppFiles)
+    }
+
     func testScanForAppFilesTracksLocationsWhileResultsArePending() throws {
         var completion: ((Set<URL>) -> Void)?
         let expectedLocations = ["/one", "/two", "/three"]

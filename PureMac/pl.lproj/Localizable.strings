@@ -272,6 +272,7 @@
 "Brew Cache" = "Cache Homebrew";
 "Node Cache" = "Cache Node";
 "Docker Cache" = "Cache Dockera";
+"VS Code Extensions" = "VS Code Extensions";
 "Universal Binaries" = "Uniwersalne pliki binarne";
 "Language Files" = "Pliki językowe";
 
@@ -288,6 +289,7 @@
 "Homebrew download cache" = "Cache pobierania Homebrew";
 "npm, yarn, and pnpm download caches" = "Cache pobierania npm, yarn i pnpm";
 "Docker images, containers, and build cache" = "Obrazy Dockera, kontenery i cache budowania";
+"Installed VS Code–family extensions under ~/.*/extensions (review before removing; quit the editor first)" = "Installed VS Code–family extensions under ~/.*/extensions (review before removing; quit the editor first)";
 "Unused CPU architecture slices in app binaries" = "Nieużywane architektury CPU w plikach binarnych aplikacji";
 "Unused app localizations" = "Nieużywane lokalizacje aplikacji";
 
@@ -460,3 +462,18 @@
 
 /* Simulator runtimes */
 "Simulator runtime" = "Środowisko uruchomieniowe symulatora";
+
+"Search extensions" = "Search extensions";
+"VS Code Extensions (%lld)" = "VS Code Extensions (%lld)";
+"Remove (%lld files)" = "Remove (%lld files)";
+"Loading extensions..." = "Loading extensions...";
+"No Extensions Found" = "No Extensions Found";
+"Select an Extension" = "Select an Extension";
+"Scanning related files..." = "Scanning related files...";
+"Extension" = "Extension";
+"Global Storage" = "Global Storage";
+"Workspace Storage" = "Workspace Storage";
+"VSIX Cache" = "VSIX Cache";
+"Home Personalization" = "Dane personalizacji w katalogu domowym";
+"Full Disk Access is required to remove some extension files." = "Do usunięcia niektórych plików rozszerzeń wymagany jest pełny dostęp do dysku.";
+"Some extension files could not be removed." = "Nie udało się usunąć niektórych plików rozszerzeń.";

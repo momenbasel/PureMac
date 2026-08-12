@@ -456,3 +456,21 @@
 
 /* Simulator runtimes */
 "Simulator runtime" = "Runtime de simulateur";
+
+/* VS Code–family extensions cleanup */
+"VS Code Extensions" = "Extensions VS Code";
+"Installed VS Code–family extensions under ~/.*/extensions (review before removing; quit the editor first)" = "Extensions de la famille VS Code sous ~/.*/extensions (vérifiez avant de supprimer ; quittez l’éditeur d’abord)";
+"Search extensions" = "Rechercher des extensions";
+"VS Code Extensions (%lld)" = "Extensions VS Code (%lld)";
+"Remove (%lld files)" = "Supprimer (%lld fichiers)";
+"Loading extensions..." = "Chargement des extensions…";
+"No Extensions Found" = "Aucune extension trouvée";
+"Select an Extension" = "Sélectionnez une extension";
+"Scanning related files..." = "Analyse des fichiers associés…";
+"Extension" = "Extension";
+"Global Storage" = "Stockage global";
+"Workspace Storage" = "Stockage d’espace de travail";
+"VSIX Cache" = "Cache VSIX";
+"Home Personalization" = "Personnalisation du dossier personnel";
+"Full Disk Access is required to remove some extension files." = "L’accès complet au disque est requis pour supprimer certains fichiers d’extension.";
+"Some extension files could not be removed." = "Certains fichiers d’extension n’ont pas pu être supprimés.";

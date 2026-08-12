@@ -444,7 +444,7 @@ struct DashboardView: View {
     }
 
     private var developerCleanupCategories: [CleaningCategory] {
-        [.aiApps, .xcodeJunk, .brewCache, .nodeCache, .dockerCache]
+        [.aiApps, .xcodeJunk, .brewCache, .nodeCache, .dockerCache, .vsCodeExtensions]
             .filter(CleaningCategory.scannable.contains)
     }
 

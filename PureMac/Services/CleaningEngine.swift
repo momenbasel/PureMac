@@ -472,6 +472,13 @@ actor CleaningEngine {
 
     // MARK: - Helpers
 
+    /// Same allow-list gate used by `cleanItems` (after symlink resolution).
+    /// Exposed for unit tests covering category-specific roots (e.g. VS Code extensions).
+    func isAllowedCleanupPath(_ path: String) -> Bool {
+        let resolved = URL(fileURLWithPath: path).resolvingSymlinksInPath().path
+        return isSafeToDelete(resolvedPath: resolved)
+    }
+
     /// Validates that a resolved path is safe to delete.
     /// Prevents symlink attacks where a link in ~/Library/Caches points to ~/.ssh.
     /// Downloads, Documents, and Desktop are intentionally NOT whole-subtree
@@ -541,6 +548,11 @@ actor CleaningEngine {
         // sits strictly inside one. The trailing "/" on the prefix match
         // prevents siblings like "/tmpfoo" from sneaking past "/tmp".
         let normalized = (resolvedPath as NSString).standardizingPath
+        if VSCodeExtensionScanner.isSafeDeletePath(normalized, homeDirectoryPath: home)
+            || VSCodeExtensionLeftoverFinder.isSafeRelatedPath(normalized, homeDirectoryPath: home)
+        {
+            return true
+        }
         return allowedRoots.contains { root in
             if normalized == root { return true }
             let rootWithSeparator = root.hasSuffix("/") ? root : root + "/"

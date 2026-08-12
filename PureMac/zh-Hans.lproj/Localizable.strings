@@ -231,6 +231,7 @@
 "Brew Cache" = "Brew 缓存";
 "Node Cache" = "Node 缓存";
 "Docker Cache" = "Docker 缓存";
+"VS Code Extensions" = "VS Code 扩展";
 "Universal Binaries" = "通用二进制文件";
 "Language Files" = "语言文件";
 
@@ -247,6 +248,7 @@
 "Homebrew download cache" = "Homebrew 下载缓存";
 "npm, yarn, and pnpm download caches" = "npm、yarn 和 pnpm 下载缓存";
 "Docker images, containers, and build cache" = "Docker 镜像、容器和构建缓存";
+"Installed VS Code–family extensions under ~/.*/extensions (review before removing; quit the editor first)" = "扫描 ~/.*/extensions 下声明 engines.vscode 的扩展（删除前请确认，建议先退出对应编辑器）";
 "Unused CPU architecture slices in app binaries" = "应用二进制文件中未使用的 CPU 架构代码";
 "Unused app localizations" = "未使用的应用本地化文件";
 
@@ -460,3 +462,18 @@
 
 /* Simulator runtimes */
 "Simulator runtime" = "模拟器运行时";
+
+"Search extensions" = "搜索扩展";
+"VS Code Extensions (%lld)" = "VS Code 扩展（%lld）";
+"Remove (%lld files)" = "删除（%lld 个文件）";
+"Loading extensions..." = "正在加载扩展…";
+"No Extensions Found" = "未找到扩展";
+"Select an Extension" = "选择一个扩展";
+"Scanning related files..." = "正在扫描关联文件…";
+"Extension" = "扩展安装目录";
+"Global Storage" = "全局存储";
+"Workspace Storage" = "工作区存储";
+"VSIX Cache" = "VSIX 缓存";
+"Home Personalization" = "主目录个性化数据";
+"Full Disk Access is required to remove some extension files." = "删除部分扩展文件需要“完全磁盘访问权限”。";
+"Some extension files could not be removed." = "部分扩展文件无法删除。";

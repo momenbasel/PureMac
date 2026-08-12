@@ -231,6 +231,7 @@
 "Brew Cache" = "ذاكرة Brew المؤقتة";
 "Node Cache" = "ذاكرة Node المؤقتة";
 "Docker Cache" = "ذاكرة Docker المؤقتة";
+"VS Code Extensions" = "VS Code Extensions";
 "Universal Binaries" = "الملفات الثنائية المتعددة البنى";
 "Language Files" = "ملفات اللغات";
 
@@ -247,6 +248,7 @@
 "Homebrew download cache" = "ذاكرة تنزيلات Homebrew المؤقتة";
 "npm, yarn, and pnpm download caches" = "ذاكرات تنزيلات npm وyarn وpnpm المؤقتة";
 "Docker images, containers, and build cache" = "صور Docker والحاويات وذاكرة البناء المؤقتة";
+"Installed VS Code–family extensions under ~/.*/extensions (review before removing; quit the editor first)" = "Installed VS Code–family extensions under ~/.*/extensions (review before removing; quit the editor first)";
 "Unused CPU architecture slices in app binaries" = "شرائح بنى معالج غير مستخدمة في الملفات الثنائية للتطبيقات";
 "Unused app localizations" = "ترجمات التطبيقات غير المستخدمة";
 
@@ -460,3 +462,18 @@
 
 /* Simulator runtimes */
 "Simulator runtime" = "وقت تشغيل المحاكي";
+
+"Search extensions" = "Search extensions";
+"VS Code Extensions (%lld)" = "VS Code Extensions (%lld)";
+"Remove (%lld files)" = "Remove (%lld files)";
+"Loading extensions..." = "Loading extensions...";
+"No Extensions Found" = "No Extensions Found";
+"Select an Extension" = "Select an Extension";
+"Scanning related files..." = "Scanning related files...";
+"Extension" = "Extension";
+"Global Storage" = "Global Storage";
+"Workspace Storage" = "Workspace Storage";
+"VSIX Cache" = "VSIX Cache";
+"Home Personalization" = "بيانات التخصيص في المجلد الرئيسي";
+"Full Disk Access is required to remove some extension files." = "يلزم الوصول الكامل إلى القرص لإزالة بعض ملفات الإضافة.";
+"Some extension files could not be removed." = "تعذّر إزالة بعض ملفات الإضافة.";
