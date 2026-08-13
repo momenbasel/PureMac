@@ -3,11 +3,14 @@ import Foundation
 enum AppLanguage: String, CaseIterable, Identifiable {
     case system = "system"
     case english = "en"
+    case french = "fr"
     case spanish = "es"
     case japanese = "ja"
     case arabic = "ar"
     case portugueseBrazil = "pt-BR"
     case polish = "pl"
+    case russian = "ru"
+    case ukrainian = "uk"
     case simplifiedChinese = "zh-Hans"
     case traditionalChinese = "zh-Hant"
 
@@ -19,11 +22,14 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         switch self {
         case .system: return "System Default"
         case .english: return "English"
+        case .french: return "French"
         case .spanish: return "Spanish"
         case .japanese: return "Japanese"
         case .arabic: return "Arabic"
         case .polish: return "Polish"
         case .portugueseBrazil: return "Portuguese (Brazil)"
+        case .russian: return "Russian"
+        case .ukrainian: return "Ukrainian"
         case .simplifiedChinese: return "Chinese (Simplified)"
         case .traditionalChinese: return "Chinese (Traditional)"
         }

@@ -41,6 +41,7 @@
 "Suggested for you" = "あなたへのおすすめ";
 "Found so far" = "これまでに見つかったもの";
 "By category" = "カテゴリ別";
+"Category" = "カテゴリ";
 "%@ is using %@" = "%@ は %@ を使用しています";
 "Grant Full Disk Access for full results" = "完全な結果を得るためにフルディスクアクセスを許可してください";
 "Without it, most caches and uninstall flows fail." = "許可しないと、ほとんどのキャッシュ削除やアンインストールに失敗します。";
@@ -121,6 +122,8 @@
 "Orphaned Files (%lld)" = "孤立ファイル (%lld)";
 "Remove Selected (%lld)" = "選択した項目を削除 (%lld)";
 "Some files could not be removed" = "一部のファイルを削除できませんでした";
+"blocked by safety policy" = "安全ポリシーによりブロック";
+"%lld item(s) failed to delete.\n\n%@" = "%lld 項目を削除できませんでした。\n\n%@";
 
 /* Onboarding */
 "Back" = "戻る";
@@ -151,7 +154,7 @@
 "PureMac can now manage protected files." = "PureMacは保護されたファイルを管理できるようになりました。";
 "You're Ready" = "準備完了";
 "%lld/%lld protected locations accessible" = "%lld/%lld の保護された場所にアクセス可能";
-"Some features will be limited. You can grant Full Disk Access later in System Settings." = "一部の機能は制限されます。フルディスクアクセスは後でシステム設定から許可できます。";
+"Some features will be limited without Full Disk Access. You can grant it later in Settings." = "フルディスクアクセスがない場合、一部の機能が制限されます。後で設定から許可できます。";
 "Trash" = "ゴミ箱";
 "Mail Data" = "メールデータ";
 "Safari Data" = "Safariデータ";
@@ -159,6 +162,10 @@
 "Documents" = "書類";
 "TCC Database" = "TCCデータベース";
 "Blocked" = "ブロック";
+
+/* FDA demo system apps */
+"Finder" = "Finder";
+"Terminal" = "ターミナル";
 
 /* Settings */
 "General" = "一般";
@@ -180,11 +187,14 @@
 "Relaunch Now" = "今すぐ再起動";
 "System Default" = "システムデフォルト";
 "English" = "英語";
+"French" = "フランス語";
 "Spanish" = "スペイン語";
 "Japanese" = "日本語";
 "Arabic" = "アラビア語";
 "Polish" = "ポーランド語";
 "Portuguese (Brazil)" = "ポルトガル語(ブラジル)";
+"Russian" = "ロシア語";
+"Ukrainian" = "ウクライナ語";
 "Chinese (Simplified)" = "中国語(簡体字)";
 "Chinese (Traditional)" = "中国語(繁体字)";
 "Safety" = "安全";
@@ -206,6 +216,8 @@
 "GitHub Repository" = "GitHubリポジトリ";
 "Report an Issue" = "問題を報告";
 "MIT License" = "MITライセンス";
+"Updates" = "アップデート";
+"Check for Updates" = "アップデートを確認";
 
 /* Cleaning categories (CleaningCategory.rawValue) */
 "System Junk" = "システムジャンク";
@@ -231,12 +243,22 @@
 "Files in your Trash" = "ゴミ箱内のファイル";
 "Files over 100 MB or older than 1 year" = "100MB以上または1年以上前のファイル";
 "APFS purgeable disk space" = "APFSの削除可能ディスク領域";
-"Derived data, archives, and simulators" = "派生データ、アーカイブ、シミュレータ";
+"Derived data, archives, and simulator runtimes" = "派生データ、アーカイブ、シミュレータ";
 "Homebrew download cache" = "Homebrewのダウンロードキャッシュ";
 "npm, yarn, and pnpm download caches" = "npm、yarn、pnpm のダウンロードキャッシュ";
 "Docker images, containers, and build cache" = "Dockerイメージ、コンテナ、ビルドキャッシュ";
 "Unused CPU architecture slices in app binaries" = "アプリバイナリ内の未使用CPUアーキテクチャコード";
 "Unused app localizations" = "使用されていないアプリのローカライゼーション";
+
+/* AI Apps scan item names */
+"Ollama Logs" = "Ollamaログ";
+"Ollama Cache" = "Ollamaキャッシュ";
+"Ollama Electron Cache" = "Ollama Electronキャッシュ";
+"Ollama WebKit Data" = "Ollama WebKitデータ";
+"Ollama Saved State" = "Ollamaの保存状態";
+"Ollama CLI Prompt History (Optional)" = "Ollama CLIプロンプト履歴（任意）";
+"LM Studio Server Logs" = "LM Studioサーバーログ";
+"LM Studio Conversations (Optional)" = "LM Studioの会話（任意）";
 
 /* Node Cache subcategories */
 "npm cache" = "npmキャッシュ";
@@ -244,7 +266,7 @@
 "pnpm content-addressable store" = "pnpmコンテンツアドレッサブルストア";
 
 /* Docker Cache helper */
-"Reclaimable (run `docker system prune -af`)" = "再利用可能 ( `docker system prune -af` を実行)";
+"Docker prune (stopped containers, dangling images, build cache)" = "Docker クリーンアップ（停止中のコンテナ、未使用イメージ、ビルドキャッシュ）";
 
 /* Schedule intervals (ScheduleInterval.rawValue) */
 "Every Hour" = "1時間ごと";
@@ -306,6 +328,8 @@
 "1-tap setup. We'll auto-retry what failed." = "ワンタップ設定。失敗した処理は自動的に再試行します。";
 "Fix permission" = "権限を修正";
 "Dismiss" = "閉じる";
+"Fix" = "修正";
+"Set up" = "設定";
 
 /* Onboarding v2 */
 "Reclaim your Mac" = "Mac を取り戻そう";
@@ -342,7 +366,6 @@
 "Free" = "空き";
 
 /* UI polish (v2.8.0): leftover groups + sound toggle */
-"Application" = "アプリケーション";
 "Caches" = "キャッシュ";
 "Application Support" = "アプリケーションサポート";
 "Preferences" = "環境設定";
@@ -379,3 +402,61 @@
 "Disk" = "ディスク";
 "Open PureMac" = "PureMacを開く";
 "Quit PureMac" = "PureMacを終了";
+
+/* Finder Service */
+"Select an application (.app) to uninstall." = "アンインストールするアプリケーション（.app）を選択してください。";
+
+/* Smart Care dashboard hero + Care areas — English fallback, pending translation */
+"%@ free" = "%@ free";
+"%lld checks" = "%lld checks";
+"%lld items found" = "%lld items found";
+"%lld selected" = "%lld selected";
+"%lld-POINT LOCAL SCAN" = "%lld-POINT LOCAL SCAN";
+"%lld/%lld checked" = "%lld/%lld checked";
+"ALL CLEAR" = "ALL CLEAR";
+"Advanced Tools" = "Advanced Tools";
+"All clear" = "All clear";
+"App leftovers to inspect" = "App leftovers to inspect";
+"Appearance" = "Appearance";
+"Caches, mail, trash, and large files" = "Caches, mail, trash, and large files";
+"Care areas" = "Care areas";
+"Checks every cleanup category without deleting files" = "Checks every cleanup category without deleting files";
+"Choose what to keep, then clean everything in one controlled pass." = "Choose what to keep, then clean everything in one controlled pass.";
+"Cleaning safely…" = "Cleaning safely…";
+"Cleanup complete" = "Cleanup complete";
+"Cleanup complete. Your storage summary is refreshing." = "Cleanup complete. Your storage summary is refreshing.";
+"Clear" = "Clear";
+"Complete" = "Complete";
+"Developer" = "Developer";
+"Installed apps" = "Installed apps";
+"LOW SPACE" = "LOW SPACE";
+"Last clean: %@" = "Last clean: %@";
+"Local" = "Local";
+"Make room.\nKeep control." = "Make room.\nKeep control.";
+"No cleanup run yet" = "No cleanup run yet";
+"No known leftovers" = "No known leftovers";
+"No removable junk was found in the areas PureMac checked." = "No removable junk was found in the areas PureMac checked.";
+"One scan checks every cleanup tool and prepares a plan for your review." = "One scan checks every cleanup tool and prepares a plan for your review.";
+"Private" = "Private";
+"PureMac builds a reviewable cleanup plan on your Mac. Nothing is removed until you approve it." = "PureMac builds a reviewable cleanup plan on your Mac. Nothing is removed until you approve it.";
+"PureMac is checking your Mac without removing anything." = "PureMac is checking your Mac without removing anything.";
+"Ready" = "Ready";
+"Ready for review" = "Ready for review";
+"Ready to reclaim" = "Ready to reclaim";
+"Review" = "Review";
+"Review ready" = "Review ready";
+"Review scan results" = "Review scan results";
+"Review what was found" = "Review what was found";
+"Reviewable" = "Reviewable";
+"SCAN COMPLETE" = "SCAN COMPLETE";
+"Scan My Mac" = "Scan My Mac";
+"Scan first.\nDecide what goes." = "Scan first.\nDecide what goes.";
+"Scanning" = "Scanning";
+"Selected items are being removed safely." = "Selected items are being removed safely.";
+"Smart Care" = "Smart Care";
+"Twelve-layer storage inspection model" = "Twelve-layer storage inspection model";
+"Xcode and package tools" = "Xcode and package tools";
+"Your Mac is in good shape." = "Your Mac is in good shape.";
+
+/* Simulator runtimes */
+"Simulator runtime" = "シミュレータランタイム";

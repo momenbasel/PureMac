@@ -1,0 +1,8 @@
+/* macOS permission prompts */
+"NSAppleEventsUsageDescription" = "PureMac использует Apple Events для взаимодействия с Finder при показе файлов.";
+"NSDesktopFolderUsageDescription" = "PureMac требуется доступ к папке «Рабочий стол», чтобы находить мусорные и остаточные файлы.";
+"NSDocumentsFolderUsageDescription" = "PureMac требуется доступ к папке «Документы», чтобы находить мусорные и остаточные файлы.";
+"NSDownloadsFolderUsageDescription" = "PureMac требуется доступ к папке «Загрузки», чтобы находить мусорные и остаточные файлы.";
+"NSRemovableVolumesUsageDescription" = "PureMac требуется доступ к съёмным томам для поиска мусорных файлов.";
+"NSSystemAdministrationUsageDescription" = "PureMac требуются права администратора, чтобы полностью очищать кэши и удалять приложения.";
+"NSHumanReadableCopyright" = "© 2026. Лицензия MIT.";

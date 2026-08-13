@@ -126,7 +126,7 @@ Smart Scan runs every category in parallel. Each category is its own deliberate 
 - **Mail Files** - downloaded mail attachments
 - **Trash Bins** - empties all bins, including external volumes
 - **Large & Old Files** - >100 MB or older than 1 year (never auto-selected)
-- **Xcode Junk** - DerivedData, Archives, simulator caches
+- **Xcode Junk** - DerivedData, Archives, simulator caches, and downloaded simulator runtimes (deleted via `simctl runtime delete`; never auto-selected)
 - **Brew Cache** - respects custom `HOMEBREW_CACHE`
 - **Node Cache** - npm, yarn classic, pnpm content-addressable store
 - **Docker Cache** - images, containers, build cache
@@ -223,7 +223,7 @@ Pull requests welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 Especially welcome:
 - Per-category size and date filter presets
 - Wider XCTest coverage for `AppState` and the scan engine
-- Translations beyond the current set (en, ar, es, ja, pt-BR, zh-Hans, zh-Hant)
+- Translations beyond the current set (en, ar, es, ja, pl, pt-BR, ru, uk, zh-Hans, zh-Hant)
 - App icon design
 
 ## Acknowledgments

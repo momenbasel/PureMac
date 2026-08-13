@@ -49,7 +49,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .trashBins: return "Files in your Trash"
         case .largeFiles: return "Files over 100 MB or older than 1 year"
         case .purgeableSpace: return "Reserved by macOS - freed automatically when space is needed"
-        case .xcodeJunk: return "Derived data, archives, and simulators"
+        case .xcodeJunk: return "Derived data, archives, and simulator runtimes"
         case .brewCache: return "Homebrew download cache"
         case .nodeCache: return "npm, yarn, and pnpm download caches"
         case .dockerCache: return "Docker images, containers, and build cache"
@@ -85,15 +85,34 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
     // be inaccurate. We still SHOW it in the storage breakdown for
     // transparency, but we never present it as junk PureMac can delete.
     // Honest > impressive.
+    // `appModifying` is excluded too — see the note on that property. Both of
+    // those categories are withdrawn as of 2.9.5 and must not be scanned,
+    // surfaced, or selectable anywhere in the UI.
     static var scannable: [CleaningCategory] {
-        allCases.filter { $0 != .smartScan && $0 != .purgeableSpace }
+        allCases.filter {
+            $0 != .smartScan && $0 != .purgeableSpace && !appModifying.contains($0)
+        }
     }
 
     // Categories that rewrite app bundles in place (binary thinning,
-    // localization stripping) instead of deleting junk. Their items always
-    // start unselected, and the scheduled autoClean path skips them
-    // entirely — re-signing every installed app is never an unattended
-    // action.
+    // localization stripping) instead of deleting junk.
+    //
+    // WITHDRAWN in 2.9.5 (issues #135, #144). Both mutate a third-party
+    // bundle and then ad-hoc re-sign it, which cannot preserve the vendor's
+    // Developer ID or notarization — that is cryptographic fact, not a bug
+    // that can be patched. Worse, `codesign --deep` does not descend into
+    // Contents/Resources, so a Mach-O there keeps the vendor signature while
+    // the outer bundle becomes ad-hoc; dyld then refuses to load the pair
+    // ("different Team IDs") and the app dies before showing UI. Users lost
+    // 21 bundles in a single run. `codesign --verify --deep --strict` cannot
+    // detect this because it checks seal consistency, not runtime Team-ID
+    // compatibility.
+    //
+    // The cases stay in the enum for Codable compatibility with persisted
+    // scan results, but `scannable` no longer includes them, so nothing
+    // reaches BinaryThinner. See also the unconditional refusal in
+    // BinaryThinner.stagedModify, which makes any replayed or persisted item
+    // list inert.
     static var appModifying: Set<CleaningCategory> {
         [.universalBinaries, .languageFiles]
     }
@@ -119,6 +138,11 @@ enum ScanState: Equatable {
 // MARK: - Cleanable Item
 
 struct CleanableItem: Identifiable, Hashable {
+    /// Path prefix for virtual items cleaned via `xcrun simctl runtime delete`
+    /// rather than a filesystem unlink. The UUID after the colon is the
+    /// runtime disk-image identifier from `simctl runtime list`.
+    static let simctlRuntimePathPrefix = "simctl-runtime:"
+
     let id = UUID()
     let name: String
     let path: String
@@ -129,6 +153,18 @@ struct CleanableItem: Identifiable, Hashable {
 
     var formattedSize: String {
         ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
+    }
+
+    /// True for action-only items (Docker prune, simctl runtimes) that have
+    /// no real filesystem path to reveal in Finder.
+    var isActionItem: Bool {
+        path.isEmpty || path.hasPrefix(Self.simctlRuntimePathPrefix)
+    }
+
+    var simctlRuntimeIdentifier: String? {
+        guard path.hasPrefix(Self.simctlRuntimePathPrefix) else { return nil }
+        let id = String(path.dropFirst(Self.simctlRuntimePathPrefix.count))
+        return id.isEmpty ? nil : id
     }
 
     func hash(into hasher: inout Hasher) {

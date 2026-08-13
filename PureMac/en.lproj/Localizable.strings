@@ -58,6 +58,8 @@
 "1-tap setup. We'll auto-retry what failed." = "1-tap setup. We'll auto-retry what failed.";
 "Fix permission" = "Fix permission";
 "Dismiss" = "Dismiss";
+"Fix" = "Fix";
+"Set up" = "Set up";
 
 /* Dashboard */
 "Storage" = "Storage";
@@ -80,6 +82,7 @@
 "Suggested for you" = "Suggested for you";
 "Found so far" = "Found so far";
 "By category" = "By category";
+"Category" = "Category";
 "%@ is using %@" = "%@ is using %@";
 "Grant Full Disk Access for full results" = "Grant Full Disk Access for full results";
 "Without it, most caches and uninstall flows fail." = "Without it, most caches and uninstall flows fail.";
@@ -160,6 +163,8 @@
 "Orphaned Files (%lld)" = "Orphaned Files (%lld)";
 "Remove Selected (%lld)" = "Remove Selected (%lld)";
 "Some files could not be removed" = "Some files could not be removed";
+"blocked by safety policy" = "blocked by safety policy";
+"%lld item(s) failed to delete.\n\n%@" = "%lld item(s) failed to delete.\n\n%@";
 
 /* Onboarding */
 "Back" = "Back";
@@ -190,7 +195,7 @@
 "PureMac can now manage protected files." = "PureMac can now manage protected files.";
 "You're Ready" = "You're Ready";
 "%lld/%lld protected locations accessible" = "%lld/%lld protected locations accessible";
-"Some features will be limited. You can grant Full Disk Access later in System Settings." = "Some features will be limited. You can grant Full Disk Access later in System Settings.";
+"Some features will be limited without Full Disk Access. You can grant it later in Settings." = "Some features will be limited without Full Disk Access. You can grant it later in Settings.";
 "Trash" = "Trash";
 "Mail Data" = "Mail Data";
 "Safari Data" = "Safari Data";
@@ -198,6 +203,10 @@
 "Documents" = "Documents";
 "TCC Database" = "TCC Database";
 "Blocked" = "Blocked";
+
+/* FDA demo system apps */
+"Finder" = "Finder";
+"Terminal" = "Terminal";
 
 /* Settings */
 "General" = "General";
@@ -219,11 +228,14 @@
 "Relaunch Now" = "Relaunch Now";
 "System Default" = "System Default";
 "English" = "English";
+"French" = "French";
 "Spanish" = "Spanish";
 "Japanese" = "Japanese";
 "Arabic" = "Arabic";
 "Polish" = "Polish";
 "Portuguese (Brazil)" = "Portuguese (Brazil)";
+"Russian" = "Russian";
+"Ukrainian" = "Ukrainian";
 "Chinese (Simplified)" = "Chinese (Simplified)";
 "Chinese (Traditional)" = "Chinese (Traditional)";
 "Safety" = "Safety";
@@ -245,6 +257,8 @@
 "GitHub Repository" = "GitHub Repository";
 "Report an Issue" = "Report an Issue";
 "MIT License" = "MIT License";
+"Updates" = "Updates";
+"Check for Updates" = "Check for Updates";
 
 /* Cleaning categories (CleaningCategory.rawValue) */
 "System Junk" = "System Junk";
@@ -270,12 +284,22 @@
 "Files in your Trash" = "Files in your Trash";
 "Files over 100 MB or older than 1 year" = "Files over 100 MB or older than 1 year";
 "APFS purgeable disk space" = "APFS purgeable disk space";
-"Derived data, archives, and simulators" = "Derived data, archives, and simulators";
+"Derived data, archives, and simulator runtimes" = "Derived data, archives, and simulator runtimes";
 "Homebrew download cache" = "Homebrew download cache";
 "npm, yarn, and pnpm download caches" = "npm, yarn, and pnpm download caches";
 "Docker images, containers, and build cache" = "Docker images, containers, and build cache";
 "Unused CPU architecture slices in app binaries" = "Unused CPU architecture slices in app binaries";
 "Unused app localizations" = "Unused app localizations";
+
+/* AI Apps scan item names */
+"Ollama Logs" = "Ollama Logs";
+"Ollama Cache" = "Ollama Cache";
+"Ollama Electron Cache" = "Ollama Electron Cache";
+"Ollama WebKit Data" = "Ollama WebKit Data";
+"Ollama Saved State" = "Ollama Saved State";
+"Ollama CLI Prompt History (Optional)" = "Ollama CLI Prompt History (Optional)";
+"LM Studio Server Logs" = "LM Studio Server Logs";
+"LM Studio Conversations (Optional)" = "LM Studio Conversations (Optional)";
 
 /* Node Cache subcategories */
 "npm cache" = "npm cache";
@@ -283,7 +307,7 @@
 "pnpm content-addressable store" = "pnpm content-addressable store";
 
 /* Docker Cache helper */
-"Reclaimable (run `docker system prune -af`)" = "Reclaimable (run `docker system prune -af`)";
+"Docker prune (stopped containers, dangling images, build cache)" = "Docker prune (stopped containers, dangling images, build cache)";
 
 /* Schedule intervals (ScheduleInterval.rawValue) */
 "Every Hour" = "Every Hour";
@@ -342,7 +366,6 @@
 "Free" = "Free";
 
 /* UI polish (v2.8.0): leftover groups + sound toggle */
-"Application" = "Application";
 "Caches" = "Caches";
 "Application Support" = "Application Support";
 "Preferences" = "Preferences";
@@ -379,3 +402,61 @@
 "Disk" = "Disk";
 "Open PureMac" = "Open PureMac";
 "Quit PureMac" = "Quit PureMac";
+
+/* Finder Service */
+"Select an application (.app) to uninstall." = "Select an application (.app) to uninstall.";
+
+/* Smart Care dashboard hero + Care areas (2.9.3 strings not yet in catalog) */
+"%@ free" = "%@ free";
+"%lld checks" = "%lld checks";
+"%lld items found" = "%lld items found";
+"%lld selected" = "%lld selected";
+"%lld-POINT LOCAL SCAN" = "%lld-POINT LOCAL SCAN";
+"%lld/%lld checked" = "%lld/%lld checked";
+"ALL CLEAR" = "ALL CLEAR";
+"Advanced Tools" = "Advanced Tools";
+"All clear" = "All clear";
+"App leftovers to inspect" = "App leftovers to inspect";
+"Appearance" = "Appearance";
+"Caches, mail, trash, and large files" = "Caches, mail, trash, and large files";
+"Care areas" = "Care areas";
+"Checks every cleanup category without deleting files" = "Checks every cleanup category without deleting files";
+"Choose what to keep, then clean everything in one controlled pass." = "Choose what to keep, then clean everything in one controlled pass.";
+"Cleaning safely…" = "Cleaning safely…";
+"Cleanup complete" = "Cleanup complete";
+"Cleanup complete. Your storage summary is refreshing." = "Cleanup complete. Your storage summary is refreshing.";
+"Clear" = "Clear";
+"Complete" = "Complete";
+"Developer" = "Developer";
+"Installed apps" = "Installed apps";
+"LOW SPACE" = "LOW SPACE";
+"Last clean: %@" = "Last clean: %@";
+"Local" = "Local";
+"Make room.\nKeep control." = "Make room.\nKeep control.";
+"No cleanup run yet" = "No cleanup run yet";
+"No known leftovers" = "No known leftovers";
+"No removable junk was found in the areas PureMac checked." = "No removable junk was found in the areas PureMac checked.";
+"One scan checks every cleanup tool and prepares a plan for your review." = "One scan checks every cleanup tool and prepares a plan for your review.";
+"Private" = "Private";
+"PureMac builds a reviewable cleanup plan on your Mac. Nothing is removed until you approve it." = "PureMac builds a reviewable cleanup plan on your Mac. Nothing is removed until you approve it.";
+"PureMac is checking your Mac without removing anything." = "PureMac is checking your Mac without removing anything.";
+"Ready" = "Ready";
+"Ready for review" = "Ready for review";
+"Ready to reclaim" = "Ready to reclaim";
+"Review" = "Review";
+"Review ready" = "Review ready";
+"Review scan results" = "Review scan results";
+"Review what was found" = "Review what was found";
+"Reviewable" = "Reviewable";
+"SCAN COMPLETE" = "SCAN COMPLETE";
+"Scan My Mac" = "Scan My Mac";
+"Scan first.\nDecide what goes." = "Scan first.\nDecide what goes.";
+"Scanning" = "Scanning";
+"Selected items are being removed safely." = "Selected items are being removed safely.";
+"Smart Care" = "Smart Care";
+"Twelve-layer storage inspection model" = "Twelve-layer storage inspection model";
+"Xcode and package tools" = "Xcode and package tools";
+"Your Mac is in good shape." = "Your Mac is in good shape.";
+
+/* Simulator runtimes */
+"Simulator runtime" = "Simulator runtime";

@@ -435,13 +435,17 @@ struct DashboardView: View {
 
     // MARK: - Care overview
 
+    // Both lists are filtered against `scannable`, so a category withdrawn
+    // there (see CleaningCategory.appModifying) drops out of the Care areas
+    // counts instead of contributing a permanent zero.
     private var everydayCleanupCategories: [CleaningCategory] {
         [.systemJunk, .userCache, .mailAttachments, .trashBins, .largeFiles]
+            .filter(CleaningCategory.scannable.contains)
     }
 
     private var developerCleanupCategories: [CleaningCategory] {
-        [.aiApps, .xcodeJunk, .brewCache, .nodeCache, .dockerCache,
-         .universalBinaries, .languageFiles]
+        [.aiApps, .xcodeJunk, .brewCache, .nodeCache, .dockerCache]
+            .filter(CleaningCategory.scannable.contains)
     }
 
     private var careOverview: some View {

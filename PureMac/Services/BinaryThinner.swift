@@ -153,6 +153,30 @@ actor BinaryThinner {
         appName: String,
         modify: (String) throws -> Int64
     ) -> Result<Int64, Error> {
+        // WITHDRAWN in 2.9.5 (issues #135, #144). Every caller of this method
+        // ad-hoc re-signs a third-party bundle, and no signature gate can make
+        // that safe: `codesign --deep` skips Contents/Resources, so a Mach-O
+        // there keeps its vendor Developer ID while the outer bundle turns
+        // ad-hoc, and dyld kills the process for the Team-ID mismatch.
+        //
+        // `CleaningCategory.scannable` already excludes both app-modifying
+        // categories, so nothing should reach here. This refusal is the second
+        // layer: a persisted scan result decoded from an older build, or a
+        // replayed item list, must also be inert. Remove it only together with
+        // a re-signing strategy that preserves the vendor's authority.
+        Logger.shared.log(
+            "Refusing to modify app bundle at \(appPath): bundle modification is withdrawn (issues #135, #144)",
+            level: .warning
+        )
+        return .failure(ThinningError.signatureProtected(appName))
+    }
+
+    /// Retained for the eventual safe implementation; see `stagedModify`.
+    private func stagedModifyUnsafe_disabled(
+        appPath: String,
+        appName: String,
+        modify: (String) throws -> Int64
+    ) -> Result<Int64, Error> {
         if hasRestrictedEntitlements(appPath) {
             return .failure(ThinningError.restrictedEntitlements(appName))
         }
@@ -329,8 +353,12 @@ actor BinaryThinner {
     private func hasProtectedSignature(_ appPath: String) -> Bool {
         // `codesign -d` prints the signature summary to stderr.
         let result = runProcess("/usr/bin/codesign", ["-dvv", appPath])
-        // Unsigned bundle: no trust to protect, safe to thin.
-        guard result.status == 0 else { return false }
+        // FAIL CLOSED. A non-zero exit is not proof the bundle is unsigned —
+        // it also covers a spawn failure (runProcess returns status -1), a
+        // read error, or a bundle format codesign cannot parse. Treating any
+        // of those as "unsigned, safe to mutate" is how a Developer ID app
+        // gets ad-hoc re-signed. If we cannot prove it is unsigned, protect it.
+        guard result.status == 0 else { return true }
         let info = result.stdout + result.stderr
         // An already ad-hoc bundle has nothing Gatekeeper would have trusted,
         // so re-thinning + re-ad-hoc-signing leaves it no worse off.

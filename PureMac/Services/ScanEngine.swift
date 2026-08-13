@@ -132,12 +132,14 @@ actor ScanEngine {
 
     private func scanUserCache() -> CategoryResult {
         var items: [CleanableItem] = []
-        // Exclude cache roots claimed by dedicated categories to avoid double-counting.
-        let excludedRootPaths = Set([
+        // Exclude cache roots claimed by dedicated categories to avoid double-counting,
+        // plus cloud File Provider state, which lives under Caches but is a live
+        // database rather than reclaimable junk (issue #142).
+        let excludedRootPaths = Set(([
             "\(home)/Library/Caches/Homebrew",
             "\(home)/Library/Caches/com.electron.ollama",
             "\(home)/Library/Caches/ollama",
-        ].map(normalizePath))
+        ] + ProviderPaths.deniedRoots).map(normalizePath))
 
         // Dynamically enumerate ~/Library/Caches/ so every subdirectory is visible
         let cachePath = "\(home)/Library/Caches"
@@ -226,37 +228,37 @@ actor ScanEngine {
     private func scanAIApps() -> CategoryResult {
         let targets = [
             CleanupTarget(
-                name: "Ollama Logs",
+                name: String(localized: "Ollama Logs"),
                 path: "\(home)/.ollama/logs"
             ),
             CleanupTarget(
-                name: "Ollama Cache",
+                name: String(localized: "Ollama Cache"),
                 path: "\(home)/Library/Caches/ollama"
             ),
             CleanupTarget(
-                name: "Ollama Electron Cache",
+                name: String(localized: "Ollama Electron Cache"),
                 path: "\(home)/Library/Caches/com.electron.ollama"
             ),
             CleanupTarget(
-                name: "Ollama WebKit Data",
+                name: String(localized: "Ollama WebKit Data"),
                 path: "\(home)/Library/WebKit/com.electron.ollama"
             ),
             CleanupTarget(
-                name: "Ollama Saved State",
+                name: String(localized: "Ollama Saved State"),
                 path: "\(home)/Library/Saved Application State/com.electron.ollama.savedState"
             ),
             CleanupTarget(
-                name: "Ollama CLI Prompt History (Optional)",
+                name: String(localized: "Ollama CLI Prompt History (Optional)"),
                 path: "\(home)/.ollama/history",
                 isSelected: false,
                 minimumSize: 0
             ),
             CleanupTarget(
-                name: "LM Studio Server Logs",
+                name: String(localized: "LM Studio Server Logs"),
                 path: "\(home)/.lmstudio/server-logs"
             ),
             CleanupTarget(
-                name: "LM Studio Conversations (Optional)",
+                name: String(localized: "LM Studio Conversations (Optional)"),
                 path: "\(home)/.lmstudio/conversations",
                 isSelected: false,
                 minimumSize: 0
@@ -471,8 +473,49 @@ actor ScanEngine {
             }
         }
 
+        // Downloaded simulator runtimes (often multi-GB each). Listed via
+        // `xcrun simctl runtime list -j` and deleted via
+        // `xcrun simctl runtime delete <id>` — not a plain filesystem unlink,
+        // so paths use the simctl-runtime: prefix (see CleaningEngine).
+        // Runtime downloads are always opt-in because restoring one requires
+        // downloading multiple gigabytes again.
+        items.append(contentsOf: scanSimulatorRuntimes())
+
         let totalSize = items.reduce(0) { $0 + $1.size }
         return CategoryResult(category: .xcodeJunk, items: items, totalSize: totalSize)
+    }
+
+    /// Enumerate installed simulator runtime disk images via simctl.
+    /// When `xcrun` is missing (no Xcode / CLT), returns an empty list —
+    /// Xcode Junk still surfaces DerivedData and the rest of the filesystem
+    /// targets; runtime rows are simply omitted.
+    private func scanSimulatorRuntimes() -> [CleanableItem] {
+        guard SimulatorRuntimeSupport.isXcrunAvailable() else {
+            Logger.shared.log(SimulatorRuntimeSupport.missingXcrunMessage, level: .info)
+            return []
+        }
+        guard let runtimes = listSimulatorRuntimes() else { return [] }
+        let items = SimulatorRuntimeSupport.makeCleanableItems(from: runtimes)
+        for item in items {
+            report(item.name)
+        }
+        return items
+    }
+
+    /// Parse `xcrun simctl runtime list -j` into per-image rows.
+    private func listSimulatorRuntimes() -> [SimulatorRuntimeSupport.RuntimeInfo]? {
+        let result = SimulatorRuntimeSupport.runXcrun(["simctl", "runtime", "list", "-j"])
+        guard result.status == 0, !result.stdout.isEmpty else {
+            if !result.stderr.isEmpty {
+                Logger.shared.log("simctl runtime list failed: \(result.stderr)", level: .warning)
+            }
+            return nil
+        }
+        guard let runtimes = SimulatorRuntimeSupport.parseRuntimeListJSON(result.stdout) else {
+            Logger.shared.log("simctl runtime list: could not parse JSON", level: .warning)
+            return nil
+        }
+        return runtimes
     }
 
     private func scanBrewCache() -> CategoryResult {
@@ -572,12 +615,12 @@ actor ScanEngine {
 
         let managers: [ManagerCache] = [
             ManagerCache(
-                name: "npm cache",
+                name: String(localized: "npm cache"),
                 defaultPath: "\(home)/.npm",
                 detectionCommand: (cli: "npm", args: ["config", "get", "cache"])
             ),
             ManagerCache(
-                name: "yarn classic cache",
+                name: String(localized: "yarn classic cache"),
                 defaultPath: "\(home)/Library/Caches/Yarn",
                 detectionCommand: (cli: "yarn", args: ["cache", "dir"])
             ),
@@ -586,7 +629,7 @@ actor ScanEngine {
             // touched by a system cleaner. The classic cache above remains the
             // global, safe-to-clean location.
             ManagerCache(
-                name: "pnpm content-addressable store",
+                name: String(localized: "pnpm content-addressable store"),
                 defaultPath: "\(home)/Library/pnpm/store",
                 detectionCommand: (cli: "pnpm", args: ["store", "path"])
             ),
@@ -735,7 +778,7 @@ actor ScanEngine {
         for dockerBin in dockerBinPaths where fileManager.fileExists(atPath: dockerBin) {
             if let reclaimable = reclaimableDockerSpace(dockerBin: dockerBin), reclaimable > 0 {
                 items.append(CleanableItem(
-                    name: "Docker prune (stopped containers, dangling images, build cache)",
+                    name: String(localized: "Docker prune (stopped containers, dangling images, build cache)"),
                     path: "",
                     size: reclaimable,
                     category: .dockerCache,

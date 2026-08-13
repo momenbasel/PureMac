@@ -88,7 +88,7 @@ open build/Build/Products/Release/PureMac.app
 - **ゴミ箱** — すべてのゴミ箱を空に
 - **大容量・古いファイル** — 100 MB を超える、または 1 年以上経過したファイル
 - **消去可能領域** — APFS の消去可能ディスク領域を検出
-- **Xcode ジャンク** — DerivedData、Archives、シミュレータキャッシュ
+- **Xcode ジャンク** — DerivedData、Archives、シミュレータキャッシュ、ダウンロード済み simulator runtimes（`simctl runtime delete` 経由で削除、自動選択されません）
 - **Brew キャッシュ** — Homebrew ダウンロードキャッシュ（カスタム HOMEBREW_CACHE も検出）
 - **スケジュールクリーニング** — 設定可能な間隔での自動スキャン
 

@@ -231,7 +231,7 @@ struct CategoryBarChart: View {
         return Chart(bars) { bar in
             BarMark(
                 x: .value("Size", Double(bar.size) * reveal),
-                y: .value("Category", bar.name)
+                y: .value(String(localized: "Category"), bar.name)
             )
             .foregroundStyle(bar.category.color.gradient)
             .cornerRadius(5)

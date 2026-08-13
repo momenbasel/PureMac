@@ -88,7 +88,7 @@ open build/Build/Products/Release/PureMac.app
 - **废纸篓** — 清空所有废纸篓
 - **大文件与旧文件** — 超过 100 MB 或超过 1 年的文件
 - **可清除空间** — 检测 APFS 可清除磁盘空间
-- **Xcode 垃圾** — DerivedData、Archives、模拟器缓存
+- **Xcode 垃圾** — DerivedData、Archives、模拟器缓存与已下载的 simulator runtimes（通过 `simctl runtime delete` 删除，不会自动勾选）
 - **Brew 缓存** — Homebrew 下载缓存(可识别自定义 HOMEBREW_CACHE)
 - **定时清理** — 按可配置的间隔自动扫描
 

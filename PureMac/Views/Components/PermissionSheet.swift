@@ -50,9 +50,11 @@ struct PermissionSheet: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(coordinator.context.headline)
                     .font(.system(size: 16, weight: .bold))
-                Text(coordinator.hasFullDiskAccess
-                     ? "Access granted. Retrying…"
-                     : "1-tap setup. We'll detect the change automatically.")
+                Text(LocalizedStringKey(
+                    coordinator.hasFullDiskAccess
+                        ? "Access granted. Retrying…"
+                        : "1-tap setup. We'll detect the change automatically."
+                ))
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
             }
@@ -160,7 +162,7 @@ struct PermissionSheet: View {
                     .font(.system(size: 11.5))
                     .foregroundStyle(.secondary)
                 Spacer()
-                Button(showAdvanced ? "Hide help" : "PureMac not in the list?") {
+                Button(LocalizedStringKey(showAdvanced ? "Hide help" : "PureMac not in the list?")) {
                     withAnimation(.easeInOut(duration: 0.25)) { showAdvanced.toggle() }
                 }
                 .buttonStyle(.link)

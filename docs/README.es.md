@@ -88,7 +88,7 @@ open build/Build/Products/Release/PureMac.app
 - **Papeleras** — vacía todas las papeleras
 - **Archivos grandes y antiguos** — archivos de más de 100 MB o con más de 1 año
 - **Espacio purgable** — detección de espacio purgable APFS
-- **Basura de Xcode** — DerivedData, Archives, cachés de simuladores
+- **Basura de Xcode** — DerivedData, Archives, cachés de simuladores y runtimes descargados (se eliminan vía `simctl runtime delete`; nunca se auto-seleccionan)
 - **Caché de Brew** — caché de descargas de Homebrew (detecta HOMEBREW_CACHE personalizado)
 - **Limpieza programada** — análisis automático en intervalos configurables
 

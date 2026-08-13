@@ -88,7 +88,7 @@ open build/Build/Products/Release/PureMac.app
 - **垃圾桶** — 清空所有垃圾桶
 - **大型與舊檔案** — 超過 100 MB 或超過 1 年的檔案
 - **可清除空間** — 偵測 APFS 可清除磁碟空間
-- **Xcode 垃圾** — DerivedData、Archives、模擬器快取
+- **Xcode 垃圾** — DerivedData、Archives、模擬器快取與下載的 simulator runtimes（透過 `simctl runtime delete` 刪除，不會自動勾選）
 - **Brew 快取** — Homebrew 下載快取(可辨識自訂的 HOMEBREW_CACHE)
 - **排程清理** — 以可設定的間隔自動掃描
 
