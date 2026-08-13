@@ -7,6 +7,7 @@
   <a href="README.ar.md">العربية</a> |
   <a href="README.es.md">Español</a> |
   <a href="README.ja.md">日本語</a> |
+  <a href="README.pt-BR.md">Português (Brasil)</a> |
   <b>简体中文</b> |
   <a href="README.zh-Hant.md">繁體中文</a>
 </p>

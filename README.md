@@ -11,6 +11,7 @@
   <a href="docs/README.ar.md">العربية</a> |
   <a href="docs/README.es.md">Español</a> |
   <a href="docs/README.ja.md">日本語</a> |
+  <a href="docs/README.pt-BR.md">Português (Brasil)</a> |
   <a href="docs/README.zh-Hans.md">简体中文</a> |
   <a href="docs/README.zh-Hant.md">繁體中文</a>
 </p>
