@@ -20,7 +20,7 @@
 
 <p align="center">
   <b>Recupere o seu Mac.</b><br>
-  Desinstalador e limpador para macOS, gratuito e de código aberto. Sem assinatura, sem telemetria, sem upsell.
+  Desinstalador e limpador para macOS, gratuito e open-source. Sem assinatura, sem telemetria, sem upsell.
 </p>
 
 <p align="center">
@@ -139,7 +139,7 @@ Opcional. Intervalo configurável (de a cada hora até mensal), com limite míni
 
 ## Permissões
 
-O PureMac precisa de **Acesso Total ao Disco** para ler os locais que o macOS esconde de todos os apps por padrão - downloads do Mail, dados do Safari, o banco de dados do TCC, contêineres protegidos de apps. Sem ele, as categorias de limpeza deixam de encontrar cerca de 70% do que poderiam, e as desinstalações deixam para trás tudo o que está em `~/Library/Containers`.
+O PureMac precisa de **Acesso total ao Disco** para ler os locais que o macOS esconde de todos os apps por padrão - downloads do Mail, dados do Safari, o banco de dados do TCC, contêineres protegidos de apps. Sem ele, as categorias de limpeza deixam de encontrar cerca de 70% do que poderiam, e as desinstalações deixam para trás tudo o que está em `~/Library/Containers`.
 
 O onboarding do primeiro uso guia a concessão da permissão com uma prévia animada do exato interruptor que você precisa acionar. Se você pular, o painel exibe uma pílula "Configurar" de um clique. Se uma limpeza falhar por questão de permissão, o PureMac abre os Ajustes do Sistema, revela seu bundle no Finder para você arrastá-lo à lista de Acesso Total ao Disco, monitora o estado da permissão a cada segundo e refaz automaticamente o lote que falhou assim que o acesso é concedido. Você nunca precisa selecionar nada de novo.
 
