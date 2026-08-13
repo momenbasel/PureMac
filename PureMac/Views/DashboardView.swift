@@ -1500,41 +1500,62 @@ private struct ShimmerProgressBar: View {
     private var clamped: Double { max(0, min(1, progress)) }
 
     var body: some View {
-        GeometryReader { geo in
-            let fillWidth = geo.size.width * CGFloat(clamped)
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(Color.primary.opacity(0.08))
+        ZStack(alignment: .leading) {
+            Capsule()
+                .fill(Color.primary.opacity(0.08))
 
-                Capsule()
-                    .fill(
-                        LinearGradient(colors: [tint, tint.opacity(0.7)],
-                                       startPoint: .leading, endPoint: .trailing)
-                    )
-                    .frame(width: max(8, fillWidth))
-                    .animation(reduceMotion ? nil : .easeOut(duration: 0.35), value: clamped)
-
-                if !reduceMotion {
-                    TimelineView(.animation) { timeline in
-                        let t = timeline.date.timeIntervalSinceReferenceDate
-                        let cycle = (t.truncatingRemainder(dividingBy: 1.8)) / 1.8
-                        let bandWidth: CGFloat = 56
-                        LinearGradient(
-                            colors: [.clear, .white.opacity(0.35), .clear],
-                            startPoint: .leading, endPoint: .trailing
-                        )
-                        .frame(width: bandWidth)
-                        .offset(x: CGFloat(cycle) * (geo.size.width + bandWidth) - bandWidth)
-                    }
-                    .mask(
-                        Capsule()
-                            .frame(width: max(8, fillWidth))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    )
+            if reduceMotion {
+                ShimmerProgressFill(progress: CGFloat(clamped), cycle: nil, tint: tint)
+            } else {
+                TimelineView(.animation) { timeline in
+                    let t = timeline.date.timeIntervalSinceReferenceDate
+                    let cycle = CGFloat((t.truncatingRemainder(dividingBy: 1.8)) / 1.8)
+                    ShimmerProgressFill(progress: CGFloat(clamped), cycle: cycle, tint: tint)
+                        .animation(.easeOut(duration: 0.35), value: clamped)
                 }
             }
         }
+        .clipShape(Capsule())
         .frame(height: 9)
+    }
+}
+
+/// Keeps the fill, its clipping boundary, and the shimmer path on the same
+/// interpolated progress value while `TimelineView` independently drives the
+/// shimmer phase.
+private struct ShimmerProgressFill: View, Animatable {
+    var progress: CGFloat
+    let cycle: CGFloat?
+    let tint: Color
+
+    var animatableData: CGFloat {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            let fillWidth = geo.size.width * max(0, min(1, progress))
+            let visibleFillWidth = min(geo.size.width, max(8, fillWidth))
+
+            ZStack(alignment: .leading) {
+                LinearGradient(colors: [tint, tint.opacity(0.7)],
+                               startPoint: .leading, endPoint: .trailing)
+
+                if let cycle {
+                    let bandWidth = min(56, max(3, visibleFillWidth * 0.6))
+                    LinearGradient(
+                        colors: [.clear, .white.opacity(0.35), .clear],
+                        startPoint: .leading, endPoint: .trailing
+                    )
+                    .frame(width: bandWidth)
+                    .offset(x: cycle * (visibleFillWidth + bandWidth) - bandWidth)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .frame(width: visibleFillWidth)
+            .clipShape(Capsule())
+        }
     }
 }
 
