@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// User-overridable appearance setting that lives independently of the system
@@ -22,11 +23,11 @@ enum AppearanceMode: String, CaseIterable, Identifiable {
         }
     }
 
-    var colorScheme: ColorScheme? {
+    var nsAppearance: NSAppearance? {
         switch self {
         case .system: return nil
-        case .light: return .light
-        case .dark: return .dark
+        case .light: return NSAppearance(named: .aqua)
+        case .dark: return NSAppearance(named: .darkAqua)
         }
     }
 }
@@ -37,9 +38,23 @@ final class ThemeManager: ObservableObject {
 
     @AppStorage("PureMac.Appearance") private var rawValue: String = AppearanceMode.system.rawValue
 
+    private init() { applyToApp() }
+
     var appearance: AppearanceMode {
         get { AppearanceMode(rawValue: rawValue) ?? .system }
-        set { rawValue = newValue.rawValue; objectWillChange.send() }
+        set { rawValue = newValue.rawValue; objectWillChange.send(); applyToApp() }
+    }
+
+    /// The theme is driven through NSApp.appearance, not SwiftUI's
+    /// .preferredColorScheme: resetting preferredColorScheme back to nil
+    /// (System) inside a WindowGroup hosting a NavigationSplitView only
+    /// re-appearances the titlebar — the content's colorScheme environment
+    /// isn't re-evaluated until the window resigns key, so the body stays
+    /// stuck in the previous scheme while focused. The AppKit route applies
+    /// immediately and also themes windows outside the main scene
+    /// (Settings, menus, popovers).
+    func applyToApp() {
+        NSApplication.shared.appearance = appearance.nsAppearance
     }
 }
 

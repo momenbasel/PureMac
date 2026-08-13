@@ -107,7 +107,6 @@ struct PureMacApp: App {
                 }
             }
             .environmentObject(theme)
-            .preferredColorScheme(theme.appearance.colorScheme)
             // Record the openWindow action so the menu-bar popover can reopen
             // this window after it's been closed (the popover lives outside the
             // scene graph and can't use openWindow itself).
