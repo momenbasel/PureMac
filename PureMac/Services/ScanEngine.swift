@@ -2,7 +2,11 @@ import Foundation
 
 actor ScanEngine {
     private let fileManager = FileManager.default
-    private let home = FileManager.default.homeDirectoryForCurrentUser.path
+    private let home: String
+
+    init(homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser) {
+        home = homeDirectory.resolvingSymlinksInPath().path
+    }
 
     /// Live path reporter for the dashboard's scanning ticker. Throttled so
     /// a directory with thousands of entries doesn't flood the main actor.
@@ -473,6 +477,50 @@ actor ScanEngine {
             }
         }
 
+        let xcodeBuildMCPRoot = URL(
+            fileURLWithPath: "\(home)/Library/Developer/XcodeBuildMCP",
+            isDirectory: true
+        )
+        // Never traverse a replaced/symlinked managed root. Without this gate,
+        // a link into another cleanup allow-list (for example Application
+        // Support) could make unrelated data appear to be managed DerivedData.
+        if isRealDirectory(xcodeBuildMCPRoot) {
+            // XcodeBuildMCP before v2.5 used one shared DerivedData directory.
+            let legacyDerivedData = xcodeBuildMCPRoot.appendingPathComponent("DerivedData", isDirectory: true)
+            if isRealDirectory(legacyDerivedData),
+               let item = makeCleanupItem(
+                   name: "XcodeBuildMCP: Legacy DerivedData",
+                   path: legacyDerivedData.path,
+                   category: .xcodeJunk
+               ) {
+                items.append(item)
+            }
+
+            // XcodeBuildMCP v2.5+ isolates DerivedData per invocation workspace:
+            // ~/Library/Developer/XcodeBuildMCP/workspaces/<name>-<hash>/DerivedData.
+            // Only surface DerivedData here. Sibling logs, result bundles, daemon
+            // state, and locks belong to XcodeBuildMCP's own lifecycle manager.
+            let workspacesRoot = xcodeBuildMCPRoot.appendingPathComponent("workspaces", isDirectory: true)
+            if isRealDirectory(workspacesRoot),
+               let workspaces = try? fileManager.contentsOfDirectory(
+                   at: workspacesRoot,
+                   includingPropertiesForKeys: nil,
+                   options: [.skipsHiddenFiles]
+               ) {
+                for workspace in workspaces where isRealDirectory(workspace) {
+                    let derivedData = workspace.appendingPathComponent("DerivedData", isDirectory: true)
+                    guard isRealDirectory(derivedData) else { continue }
+                    if let item = makeCleanupItem(
+                        name: "XcodeBuildMCP: \(xcodeBuildMCPWorkspaceName(workspace.lastPathComponent))",
+                        path: derivedData.path,
+                        category: .xcodeJunk
+                    ) {
+                        items.append(item)
+                    }
+                }
+            }
+        }
+
         // Downloaded simulator runtimes (often multi-GB each). Listed via
         // `xcrun simctl runtime list -j` and deleted via
         // `xcrun simctl runtime delete <id>` — not a plain filesystem unlink,
@@ -483,6 +531,23 @@ actor ScanEngine {
 
         let totalSize = items.reduce(0) { $0 + $1.size }
         return CategoryResult(category: .xcodeJunk, items: items, totalSize: totalSize)
+    }
+
+    private func xcodeBuildMCPWorkspaceName(_ workspaceKey: String) -> String {
+        guard let separator = workspaceKey.lastIndex(of: "-") else { return workspaceKey }
+        let suffix = workspaceKey[workspaceKey.index(after: separator)...]
+        guard suffix.count == 12, suffix.allSatisfy(\.isHexDigit) else { return workspaceKey }
+        return String(workspaceKey[..<separator])
+    }
+
+    private func isRealDirectory(_ url: URL) -> Bool {
+        let normalized = url.standardizedFileURL.path
+        guard url.resolvingSymlinksInPath().standardizedFileURL.path == normalized,
+              let attributes = try? fileManager.attributesOfItem(atPath: normalized),
+              attributes[.type] as? FileAttributeType == .typeDirectory else {
+            return false
+        }
+        return true
     }
 
     /// Enumerate installed simulator runtime disk images via simctl.
