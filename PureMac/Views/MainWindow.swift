@@ -555,7 +555,7 @@ private struct SidebarNavRow: View {
                 Text(badge)
                     .font(.system(size: 9.75, weight: .semibold))
                     .monospacedDigit()
-                    .foregroundStyle(isFeatured && isSelected ? tint : .secondary)
+                    .foregroundStyle(isFeatured && isSelected ? tint : badgeColor)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
                     .background(
@@ -629,6 +629,18 @@ private struct SidebarNavRow: View {
         colorScheme == .dark
             ? Color.white.opacity(0.92)
             : Color.black.opacity(0.85)
+    }
+
+    /// Dimmed counterpart to `labelColor` for the count badge.
+    ///
+    /// The #117 fix assumed badges were safe because they were "explicitly
+    /// colored". They were not: `.secondary` is a hierarchical style resolved
+    /// through the same vibrancy path that made the row label disappear, so on
+    /// the affected configs the badge rendered as an empty capsule (issue #141).
+    private var badgeColor: Color {
+        colorScheme == .dark
+            ? Color.white.opacity(0.62)
+            : Color.black.opacity(0.55)
     }
 }
 
