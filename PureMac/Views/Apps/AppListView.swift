@@ -5,9 +5,21 @@ struct AppListView: View {
     @State private var searchText = ""
     @State private var selection: InstalledApp.ID?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var sortOrder: [KeyPathComparator<InstalledApp>] = [
-        .init(\.appName, order: .forward)
-    ]
+    @AppStorage(FileSort.fieldPreferenceKey) private var sortField: FileSortField = FileSort.defaultField
+    @AppStorage(FileSort.ascendingPreferenceKey) private var sortAscending: Bool = FileSort.defaultAscending
+
+    /// Derived from the shared preference rather than held in `@State`, so a
+    /// column click here and a sort menu choice elsewhere stay in step.
+    private var sortOrderBinding: Binding<[KeyPathComparator<InstalledApp>]> {
+        Binding(
+            get: { FileSort.comparators(for: sortField, ascending: sortAscending) },
+            set: { newValue in
+                guard let preference = FileSort.preference(from: newValue) else { return }
+                sortField = preference.field
+                sortAscending = preference.ascending
+            }
+        )
+    }
 
     private var filteredApps: [InstalledApp] {
         let base: [InstalledApp]
@@ -20,7 +32,7 @@ struct AppListView: View {
                 $0.bundleIdentifier.lowercased().contains(query)
             }
         }
-        return base.sorted(using: sortOrder)
+        return base.sorted(using: FileSort.comparators(for: sortField, ascending: sortAscending))
     }
 
     var body: some View {
@@ -84,7 +96,7 @@ struct AppListView: View {
                     actionLabel: "Retry"
                 )
             } else {
-                Table(filteredApps, selection: $selection, sortOrder: $sortOrder) {
+                Table(filteredApps, selection: $selection, sortOrder: sortOrderBinding) {
                     TableColumn("Application", value: \.appName) { app in
                         HStack(spacing: 8) {
                             HoverScaleIcon(icon: app.icon)

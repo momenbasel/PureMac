@@ -460,3 +460,16 @@
 
 /* Simulator runtimes */
 "Simulator runtime" = "模拟器运行时";
+
+/* Sorting */
+"Sort" = "排序";
+"Sort By" = "排序方式";
+"Order" = "顺序";
+"Name" = "名称";
+"Date Modified" = "修改日期";
+"Path" = "路径";
+"Oldest First" = "最旧优先";
+"Newest First" = "最新优先";
+"A to Z" = "A 到 Z";
+"Z to A" = "Z 到 A";
+"Sorted by %@" = "按 %@ 排序";

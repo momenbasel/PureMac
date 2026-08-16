@@ -460,3 +460,16 @@
 
 /* Simulator runtimes */
 "Simulator runtime" = "シミュレータランタイム";
+
+/* Sorting */
+"Sort" = "並べ替え";
+"Sort By" = "並べ替えの基準";
+"Order" = "順序";
+"Name" = "名前";
+"Date Modified" = "変更日";
+"Path" = "パス";
+"Oldest First" = "古い順";
+"Newest First" = "新しい順";
+"A to Z" = "昇順 (A→Z)";
+"Z to A" = "降順 (Z→A)";
+"Sorted by %@" = "%@ で並べ替え";

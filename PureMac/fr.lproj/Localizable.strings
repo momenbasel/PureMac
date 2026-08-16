@@ -456,3 +456,16 @@
 
 /* Simulator runtimes */
 "Simulator runtime" = "Runtime de simulateur";
+
+/* Sorting */
+"Sort" = "Trier";
+"Sort By" = "Trier par";
+"Order" = "Ordre";
+"Name" = "Nom";
+"Date Modified" = "Date de modification";
+"Path" = "Chemin";
+"Oldest First" = "Les plus anciens d'abord";
+"Newest First" = "Les plus récents d'abord";
+"A to Z" = "De A à Z";
+"Z to A" = "De Z à A";
+"Sorted by %@" = "Trié par %@";

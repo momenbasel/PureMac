@@ -11,7 +11,24 @@ struct OrphanListView: View {
     /// every realized row on each selection toggle and beachball the UI. We walk
     /// once off-main per result set and rows read the cached value.
     @State private var sizeCache: [URL: Int64] = [:]
+    /// Modification dates gathered in the same off-main walk as the sizes, so
+    /// ordering by date costs no extra pass over the disk.
+    @State private var dateCache: [URL: Date] = [:]
+    @AppStorage(FileSort.fieldPreferenceKey) private var sortField: FileSortField = FileSort.defaultField
+    @AppStorage(FileSort.ascendingPreferenceKey) private var sortAscending: Bool = FileSort.defaultAscending
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// Rows read from the caches only. Both start empty and fill in from the
+    /// task below, so an unmeasured row sorts as zero and the list re-sorts
+    /// once the walk lands.
+    private var sortedOrphans: [URL] {
+        FileSort.sortedURLs(
+            appState.orphanedFiles,
+            by: sortField,
+            ascending: sortAscending,
+            context: FileSort.Context(sizes: sizeCache, dates: dateCache)
+        )
+    }
 
     var body: some View {
         Group {
@@ -29,7 +46,7 @@ struct OrphanListView: View {
                     // No .staggered(): List is lazy, so a delayed-reveal would
                     // blank each row as it scrolls in. The removal transition
                     // below still gives the sweep-out on delete.
-                    ForEach(Array(appState.orphanedFiles.enumerated()), id: \.element) { _, fileURL in
+                    ForEach(Array(sortedOrphans.enumerated()), id: \.element) { _, fileURL in
                         OrphanRowView(
                             fileURL: fileURL,
                             isSelected: orphanBinding(for: fileURL),
@@ -54,6 +71,10 @@ struct OrphanListView: View {
                 }
             }
         }
+        // URLs are stable ids, so SwiftUI move-animates a re-sort instead of
+        // snapping the rows.
+        .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.85), value: sortField)
+        .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.85), value: sortAscending)
         .navigationTitle(orphanedFilesTitle)
         .task(id: appState.orphanedFiles) {
             // Recompute off the main thread whenever the orphan set changes
@@ -61,18 +82,31 @@ struct OrphanListView: View {
             // with no main-actor isolation, so it runs safely on a detached
             // background task; the result is applied back on the main actor.
             let urls = appState.orphanedFiles
-            let sizes = await Task.detached(priority: .utility) { () -> [URL: Int64] in
-                var out: [URL: Int64] = [:]
+            let measured = await Task.detached(priority: .utility) { () -> (sizes: [URL: Int64], dates: [URL: Date]) in
+                var sizes: [URL: Int64] = [:]
+                var dates: [URL: Date] = [:]
                 for url in urls {
-                    out[url] = FileSizeCalculator.size(of: url) ?? 0
+                    sizes[url] = FileSizeCalculator.size(of: url) ?? 0
+                    // Same walk, one extra stat. Undated entries are left out
+                    // and sink to the bottom when ordering by date.
+                    if let date = try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate {
+                        dates[url] = date
+                    }
                 }
-                return out
+                return (sizes, dates)
             }.value
-            sizeCache = sizes
+            sizeCache = measured.sizes
+            dateCache = measured.dates
         }
         .toolbar {
             ToolbarItemGroup {
                 if !appState.orphanedFiles.isEmpty {
+                    SortMenu(
+                        field: $sortField,
+                        ascending: $sortAscending,
+                        fields: FileSortField.allCases
+                    )
+
                     Button(LocalizedStringKey(selectedOrphans.count == appState.orphanedFiles.count ? "Deselect All" : "Select All")) {
                         if selectedOrphans.count == appState.orphanedFiles.count {
                             selectedOrphans.removeAll()

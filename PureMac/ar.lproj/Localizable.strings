@@ -460,3 +460,16 @@
 
 /* Simulator runtimes */
 "Simulator runtime" = "وقت تشغيل المحاكي";
+
+/* Sorting */
+"Sort" = "فرز";
+"Sort By" = "الفرز حسب";
+"Order" = "الترتيب";
+"Name" = "الاسم";
+"Date Modified" = "تاريخ التعديل";
+"Path" = "المسار";
+"Oldest First" = "الأقدم أولاً";
+"Newest First" = "الأحدث أولاً";
+"A to Z" = "من الألف إلى الياء";
+"Z to A" = "من الياء إلى الألف";
+"Sorted by %@" = "مرتب حسب %@";

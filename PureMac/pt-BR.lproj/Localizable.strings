@@ -460,3 +460,16 @@
 
 /* Simulator runtimes */
 "Simulator runtime" = "Runtime do simulador";
+
+/* Sorting */
+"Sort" = "Ordenar";
+"Sort By" = "Ordenar por";
+"Order" = "Ordem";
+"Name" = "Nome";
+"Date Modified" = "Data de modificação";
+"Path" = "Caminho";
+"Oldest First" = "Mais antigos primeiro";
+"Newest First" = "Mais recentes primeiro";
+"A to Z" = "De A a Z";
+"Z to A" = "De Z a A";
+"Sorted by %@" = "Ordenado por %@";

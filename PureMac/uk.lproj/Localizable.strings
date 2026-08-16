@@ -460,3 +460,16 @@
 
 /* Simulator runtimes */
 "Simulator runtime" = "Середовище виконання симулятора";
+
+/* Sorting */
+"Sort" = "Сортування";
+"Sort By" = "Сортувати за";
+"Order" = "Порядок";
+"Name" = "Назва";
+"Date Modified" = "Дата зміни";
+"Path" = "Шлях";
+"Oldest First" = "Спочатку старі";
+"Newest First" = "Спочатку нові";
+"A to Z" = "Від А до Я";
+"Z to A" = "Від Я до А";
+"Sorted by %@" = "Сортування за %@";

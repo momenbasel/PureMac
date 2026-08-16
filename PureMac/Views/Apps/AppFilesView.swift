@@ -63,6 +63,8 @@ struct AppFilesView: View {
     /// One-pass size cache so group headers and the selected-size counter
     /// don't re-stat the disk on every render.
     @State private var sizeCache: [URL: Int64] = [:]
+    @AppStorage(FileSort.fieldPreferenceKey) private var sortField: FileSortField = FileSort.defaultField
+    @AppStorage(FileSort.ascendingPreferenceKey) private var sortAscending: Bool = FileSort.defaultAscending
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var totalSelectedSize: Int64 {
@@ -71,13 +73,24 @@ struct AppFilesView: View {
         }
     }
 
-    /// Discovered files bucketed for display, preserving the sorted order
-    /// inside each bucket. Only non-empty groups are shown.
+    /// Discovered files bucketed for display, ordered inside each bucket by the
+    /// shared sort preference. Only non-empty groups are shown, and the group
+    /// order stays fixed to `LeftoverGroup.allCases` so headers do not jump when
+    /// the sort changes.
     private var groupedFiles: [(group: LeftoverGroup, urls: [URL])] {
         let buckets = Dictionary(grouping: appState.discoveredFiles, by: LeftoverGroup.categorize)
+        // Read the cache once. `cachedSize` falls through to a live recursive
+        // walk on a miss, and a comparator runs O(n log n) times.
+        let context = FileSort.Context(sizes: sizeCache)
         return LeftoverGroup.allCases.compactMap { group in
             guard let urls = buckets[group], !urls.isEmpty else { return nil }
-            return (group, urls)
+            let ordered = FileSort.sortedURLs(
+                urls,
+                by: sortField,
+                ascending: sortAscending,
+                context: context
+            )
+            return (group, ordered)
         }
     }
 
@@ -312,6 +325,17 @@ struct AppFilesView: View {
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
+
+            // This view has no toolbar, so the sort control lives in the
+            // action bar. Leftovers are bare URLs with no modification date.
+            SortMenu(
+                field: $sortField,
+                ascending: $sortAscending,
+                fields: FileSortField.fieldsWithoutDate
+            )
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .fixedSize()
 
             Spacer()
 

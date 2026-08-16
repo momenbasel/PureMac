@@ -4,7 +4,8 @@ struct CategoryDetailView: View {
     @EnvironmentObject var appState: AppState
     let category: CleaningCategory
 
-    @State private var sortDescending: Bool = true
+    @AppStorage(FileSort.fieldPreferenceKey) private var sortField: FileSortField = FileSort.defaultField
+    @AppStorage(FileSort.ascendingPreferenceKey) private var sortAscending: Bool = FileSort.defaultAscending
     @State private var searchText = ""
     @State private var showConfirmation = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -51,14 +52,7 @@ struct CategoryDetailView: View {
 
             ToolbarItem(placement: .automatic) {
                 if let result = result, !result.items.isEmpty {
-                    Button(action: { sortDescending.toggle() }) {
-                        Label {
-                            Text(LocalizedStringKey(sortDescending ? "Largest First" : "Smallest First"))
-                        } icon: {
-                            Image(systemName: "arrow.up.arrow.down")
-                        }
-                    }
-                    .help(LocalizedStringKey(sortDescending ? "Sorted: Largest First" : "Sorted: Smallest First"))
+                    SortMenu(field: $sortField, ascending: $sortAscending)
                 }
             }
         }
@@ -226,12 +220,13 @@ struct CategoryDetailView: View {
         }
         // CleanableItem ids are stable, so SwiftUI move-animates re-sorts and
         // fades filtered rows instead of snapping.
-        .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.85), value: sortDescending)
+        .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.85), value: sortField)
+        .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.85), value: sortAscending)
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: searchText)
     }
 
     private func sortedItems(_ items: [CleanableItem]) -> [CleanableItem] {
-        items.sorted { sortDescending ? $0.size > $1.size : $0.size < $1.size }
+        items.sorted(by: sortField, ascending: sortAscending)
     }
 }
 
