@@ -13,7 +13,7 @@ struct Ignore: ParsableCommand {
         @Argument(help: "Path to protect.") var path: String
         func run() throws {
             var store = IgnoreStore()
-            let added = store.add(path)
+            let added = try store.add(path)
             let shown = Render.shorten(((path as NSString).expandingTildeInPath as NSString).standardizingPath)
             print(added ? Term.green("✓ Protected ") + shown : Term.dim("Already protected: \(shown)"))
         }
@@ -24,7 +24,7 @@ struct Ignore: ParsableCommand {
         @Argument(help: "Path to stop protecting.") var path: String
         func run() throws {
             var store = IgnoreStore()
-            let removed = store.remove(path)
+            let removed = try store.remove(path)
             let shown = Render.shorten(((path as NSString).expandingTildeInPath as NSString).standardizingPath)
             print(removed ? Term.green("✓ Removed ") + shown : Term.yellow("Not in ignore list: \(shown)"))
         }

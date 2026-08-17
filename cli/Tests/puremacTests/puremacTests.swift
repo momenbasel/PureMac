@@ -69,7 +69,7 @@ final class PureMacTests: XCTestCase {
         XCTAssertTrue(fm.fileExists(atPath: victimChild), "victim must survive a symlinked-parent delete")
     }
 
-    func testSafetyHonorsIgnoreList() {
+    func testSafetyHonorsIgnoreList() throws {
 
         let tmp = NSTemporaryDirectory() + "puremac-test-\(getpid())"
         try? FileManager.default.createDirectory(atPath: tmp, withIntermediateDirectories: true)
@@ -78,8 +78,8 @@ final class PureMacTests: XCTestCase {
         var ig = IgnoreStore()
 
         XCTAssertTrue(Safety.canRemove(tmp, ignore: ig).ok)
-        _ = ig.add(tmp)
+        _ = try ig.add(tmp)
         XCTAssertFalse(Safety.canRemove(tmp, ignore: ig).ok)
-        _ = ig.remove(tmp)
+        _ = try ig.remove(tmp)
     }
 }

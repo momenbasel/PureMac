@@ -38,25 +38,25 @@ struct IgnoreStore {
         return false
     }
 
-    mutating func add(_ path: String) -> Bool {
+    mutating func add(_ path: String) throws -> Bool {
         let std = (((path as NSString).expandingTildeInPath) as NSString).standardizingPath
         guard !roots.contains(std) else { return false }
         roots.append(std)
-        save()
+        try save()
         return true
     }
 
-    mutating func remove(_ path: String) -> Bool {
+    mutating func remove(_ path: String) throws -> Bool {
         let std = (((path as NSString).expandingTildeInPath) as NSString).standardizingPath
         guard let idx = roots.firstIndex(of: std) else { return false }
         roots.remove(at: idx)
-        save()
+        try save()
         return true
     }
 
-    private func save() {
+    private func save() throws {
         AppPaths.ensureDir()
-        try? (roots.sorted().joined(separator: "\n") + "\n").write(to: AppPaths.ignoreFile, atomically: true, encoding: .utf8)
+        try (roots.sorted().joined(separator: "\n") + "\n").write(to: AppPaths.ignoreFile, atomically: true, encoding: .utf8)
     }
 }
 
