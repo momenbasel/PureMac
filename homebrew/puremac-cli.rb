@@ -3,7 +3,7 @@ class PuremacCli < Formula
   homepage "https://github.com/momenbasel/PureMac"
   version "1.0.0"
   url "https://github.com/momenbasel/PureMac/releases/download/cli-v#{version}/puremac-cli-#{version}.tar.gz"
-  sha256 "34bdc414c63fdde15593760144ef995313c5fb5df0f6ef5e0e00cbc7052fbbeb"
+  sha256 "58cd364dc9204e37742312eaec19184041cf92bfdb91c53f64ed01b9e6c48519"
   license "MIT"
 
   depends_on macos: :big_sur
