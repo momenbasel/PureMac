@@ -8,6 +8,8 @@ PureMac scans first and removes only what you approve. Cache and junk removal is
 permanent, but cloud state (iCloud, Dropbox, OneDrive) and your config dotfiles
 (`~/.ssh`, `~/.aws`, `~/.gnupg`, `~/.docker`, `~/.claude`, ...) are never touched.
 
+![puremac showing a scan and the confirmation that lists exactly what will be deleted](screenshots/clean.png)
+
 ## Install
 
 ```bash

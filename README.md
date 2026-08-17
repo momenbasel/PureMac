@@ -79,6 +79,8 @@ brew install momenbasel/tap/puremac-cli
 puremac clean dev --dry-run
 ```
 
+![puremac scanning and listing exactly what will be deleted before removing anything](cli/screenshots/clean.png)
+
 See [`cli/README.md`](cli/README.md) for the full command reference.
 
 ## How it compares
