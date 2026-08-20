@@ -4,6 +4,7 @@ struct MainWindow: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var theme: ThemeManager
     @ObservedObject private var permission = PermissionCoordinator.shared
+    @StateObject private var storageIntelligenceState = StorageIntelligenceState()
     @State private var selectedSection: AppSection? = .cleaning(.smartScan)
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var advancedToolsExpanded = false
@@ -99,6 +100,11 @@ struct MainWindow: View {
                        secondaryTint: SidebarPalette.smartCareSecondary,
                        badge: dashboardBadge,
                        isFeatured: true)
+                navRow(section: .storageIntelligence, label: "Storage Intelligence",
+                       icon: "chart.bar.fill",
+                       tint: SidebarPalette.storageIntelligencePrimary,
+                       secondaryTint: SidebarPalette.storageIntelligenceSecondary,
+                       badge: nil)
             } header: { sectionLabel("Overview") }
 
             Section {
@@ -207,7 +213,7 @@ struct MainWindow: View {
     }
 
     private var visibleSections: [AppSection] {
-        var sections: [AppSection] = [.cleaning(.smartScan)]
+        var sections: [AppSection] = [.cleaning(.smartScan), .storageIntelligence]
         sections.append(contentsOf: Self.cleanupCategories.map(AppSection.cleaning))
         sections.append(contentsOf: [.apps, .orphans])
         if advancedToolsExpanded {
@@ -429,6 +435,8 @@ struct MainWindow: View {
     @ViewBuilder
     private var detailView: some View {
         switch selectedSection {
+        case .storageIntelligence:
+            StorageIntelligenceView(state: storageIntelligenceState)
         case .apps:
             AppListView()
         case .orphans:
@@ -635,6 +643,8 @@ private struct SidebarNavRow: View {
 private enum SidebarPalette {
     static let smartCarePrimary = Tint.purple
     static let smartCareSecondary = Tint.blue
+    static let storageIntelligencePrimary = Tint.blue
+    static let storageIntelligenceSecondary = Tint.cyan
     static let cleanupPrimary = Tint.blue
     static let cleanupSecondary = Tint.cyan
     static let applicationsPrimary = Tint.purple

@@ -75,33 +75,30 @@ actor ScanEngine {
     }
 
     func getDiskInfo() -> DiskInfo {
-        var info = DiskInfo()
-        do {
-            let attrs = try fileManager.attributesOfFileSystem(forPath: "/")
-            if let total = attrs[.systemSize] as? Int64 {
-                info.totalSpace = total
-            }
-            if let free = attrs[.systemFreeSize] as? Int64 {
-                info.freeSpace = free
-            }
-            info.usedSpace = info.totalSpace - info.freeSpace
+        let result = VolumeStatisticsProvider.read(
+            at: URL(fileURLWithPath: "/", isDirectory: true)
+        )
+        let info = Self.makeDiskInfo(from: result.statistics)
+        for issue in result.issues {
+            Logger.shared.log("Disk info unavailable: \(issue.message)", level: .warning)
+        }
+        return info
+    }
 
-            // Use URLResourceValues for accurate purgeable space detection
-            let rootURL = URL(fileURLWithPath: "/")
-            let values = try rootURL.resourceValues(forKeys: [
-                .volumeAvailableCapacityForImportantUsageKey,
-                .volumeAvailableCapacityKey
-            ])
-            if let importantCapacity = values.volumeAvailableCapacityForImportantUsage,
-               let freeCapacity = values.volumeAvailableCapacity {
-                // Purgeable = important capacity (free + purgeable) minus actual free
-                let purgeable = importantCapacity - Int64(freeCapacity)
-                if purgeable > 10 * 1024 * 1024 { // Only report if > 10 MB
-                    info.purgeableSpace = purgeable
-                }
-            }
-        } catch {
-            Logger.shared.log("Disk info unavailable: \(error.localizedDescription)", level: .warning)
+    /// Keeps the pre-existing dashboard/cleanup representation on top of the
+    /// shared read-only capacity calculation. Internal for regression tests.
+    static func makeDiskInfo(from statistics: VolumeCapacityStatistics) -> DiskInfo {
+        var info = DiskInfo()
+        info.totalSpace = statistics.totalCapacity ?? 0
+        info.freeSpace = statistics.availableCapacity ?? 0
+        info.usedSpace = statistics.usedCapacity ?? max(0, info.totalSpace - info.freeSpace)
+
+        // Preserve the existing UI/cleanup threshold. The shared provider
+        // owns only the estimate formula: important-usage capacity minus
+        // ordinary available capacity.
+        if let purgeable = statistics.purgeableEstimate,
+           purgeable > 10 * 1024 * 1024 {
+            info.purgeableSpace = purgeable
         }
         return info
     }

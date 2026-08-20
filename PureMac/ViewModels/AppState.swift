@@ -6,6 +6,7 @@ import AppKit
 // InstalledApp is defined in AppInfoFetcher.swift
 
 enum AppSection: Hashable {
+    case storageIntelligence
     case apps
     case orphans
     case cleaning(CleaningCategory)
