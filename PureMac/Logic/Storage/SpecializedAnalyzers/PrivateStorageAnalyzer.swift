@@ -112,20 +112,30 @@ struct PrivateStorageAnalyzer: Sendable {
 
     private let privateURL: URL
     private let scanner: FileTreeScanner
+    private let cache: StorageAnalysisCache?
     private let largeAllocatedSizeThreshold: Int64
 
     init(
         privateURL: URL = PrivateStorageAnalyzer.defaultPrivateURL,
         scanner: FileTreeScanner = FileTreeScanner(),
+        cache: StorageAnalysisCache? = nil,
         largeAllocatedSizeThreshold: Int64 = PrivateStorageAnalyzer.defaultLargeAllocatedSizeThreshold
     ) {
         self.privateURL = privateURL
         self.scanner = scanner
+        self.cache = cache
         self.largeAllocatedSizeThreshold = max(largeAllocatedSizeThreshold, 1)
     }
 
     func analyze() async -> StorageAnalysisResult {
-        let scannedResult = await scanner.scan(root: privateURL)
+        let scannedResult: StorageAnalysisResult
+        if let cached = cache?.get(path: privateURL.path) {
+            scannedResult = cached
+        } else {
+            let result = await scanner.scan(root: privateURL)
+            cache?.store(result, isFullSubtree: true)
+            scannedResult = result
+        }
         let threshold = largeAllocatedSizeThreshold
 
         return await Task.detached(priority: .utility) {

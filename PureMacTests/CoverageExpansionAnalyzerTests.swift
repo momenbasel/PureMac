@@ -474,6 +474,7 @@ final class CoverageExpansionAnalyzerTests: XCTestCase {
                     largeAllocatedSizeThreshold: 1_073_741_824
                 )
             },
+            applicationsAnalysis: { emptyResult },
             applicationSupportAnalysis: { appSupportResult ?? emptyResult },
             containersAnalysis: { emptyResult },
             groupContainersAnalysis: { emptyResult },

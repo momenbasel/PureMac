@@ -352,6 +352,89 @@ final class StorageIntelligenceStateTests: XCTestCase {
         XCTAssertFalse(state.isRunning)
         XCTAssertEqual(state.progress?.state, .completed)
     }
+
+    func testSyntheticLargeHierarchyDoesNotEagerlyCreatePresentationObjectsForAllDescendants() async {
+        // Build a synthetic tree with deep nesting (1000 nodes)
+        var leafNodes: [StorageNode] = []
+        for i in 0..<100 {
+            leafNodes.append(Self.node(path: "/Library/Application Support/App/deep/file\(i)", allocated: 100))
+        }
+        let middleNode = Self.node(path: "/Library/Application Support/App/deep", allocated: 10_000, children: leafNodes)
+        let appNode = Self.node(path: "/Library/Application Support/App", allocated: 10_000, children: [middleNode])
+        let rootNode = Self.node(path: "/Library/Application Support", allocated: 10_000, children: [appNode])
+
+        let appSupport = StorageAnalysisResult(
+            root: rootNode,
+            startedAt: Date(),
+            completedAt: Date(),
+            rootDeviceIdentifier: 1,
+            wasCancelled: false,
+            issues: []
+        )
+
+        let report = Self.report(explained: 10_000, applicationSupport: appSupport)
+        let prepared = StorageIntelligenceState.prepare(report: report, sortOrder: .sizeDescending)
+
+        // StorageNode count received should reflect full recursive count (> 100)
+        XCTAssertGreaterThan(prepared.storageNodeCountReceived, 100)
+        // Presentation nodes created upfront should ONLY reflect top-level roots (1 category root)
+        XCTAssertLessThanOrEqual(prepared.presentationNodeCountCreated, 5)
+        // Search index should not be built eagerly at scan completion
+        XCTAssertEqual(prepared.searchIndex.count, 0)
+    }
+
+    func testExpandingNodeMaterializesOnlyImmediateChildren() {
+        let child1 = Self.node(path: "/Users/test/Documents/A", allocated: 200)
+        let child2 = Self.node(path: "/Users/test/Documents/B", allocated: 500)
+        let parent = Self.node(path: "/Users/test/Documents", allocated: 700, children: [child1, child2])
+
+        let state = Self.makeState()
+        let sorted = state.sortedChildren(of: parent)
+
+        XCTAssertEqual(sorted.count, 2)
+        XCTAssertEqual(sorted.first?.name, "B")
+        XCTAssertEqual(sorted.last?.name, "A")
+    }
+
+    func testOnDemandSearchFindsDeepDescendantWithoutEagerIndex() async {
+        let deepLeaf = Self.node(path: "/Library/Application Support/App/deep/nested_target.dat", allocated: 100)
+        let middle = Self.node(path: "/Library/Application Support/App/deep", allocated: 100, children: [deepLeaf])
+        let app = Self.node(path: "/Library/Application Support/App", allocated: 100, children: [middle])
+        let root = Self.node(path: "/Library/Application Support", allocated: 100, children: [app])
+
+        let appSupport = StorageAnalysisResult(
+            root: root,
+            startedAt: Date(),
+            completedAt: Date(),
+            rootDeviceIdentifier: 1,
+            wasCancelled: false,
+            issues: []
+        )
+
+        let report = Self.report(explained: 100, applicationSupport: appSupport)
+        let state = Self.makeState(report: report)
+
+        await Self.analyze(state)
+
+        state.updateSearch("nested_target")
+        await state.waitForSearch()
+
+        XCTAssertEqual(state.searchResults.count, 1)
+        XCTAssertEqual(state.searchResults.first?.node.name, "nested_target.dat")
+        XCTAssertEqual(state.searchResults.first?.node.absolutePath, "/Library/Application Support/App/deep/nested_target.dat")
+    }
+
+    func testSearchCancellationWhenQueryChanges() async {
+        let state = Self.makeState()
+        await Self.analyze(state)
+
+        state.updateSearch("query_one")
+        state.updateSearch("query_two")
+        state.updateSearch("Beta")
+        await state.waitForSearch()
+
+        XCTAssertEqual(state.searchResults.map(\.node.name), ["Beta"])
+    }
 }
 
 // MARK: - Fixtures
@@ -391,14 +474,15 @@ private extension StorageIntelligenceStateTests {
         unreadablePathCount: Int = 0,
         knownLowerBound: Int64 = 0,
         docker: DockerStorageReport? = nil,
-        apfs: APFSStorageReport? = nil
+        apfs: APFSStorageReport? = nil,
+        applicationSupport: StorageAnalysisResult? = nil
     ) -> StorageReconciliationReport {
-        let applicationSupport = applicationSupportResult()
+        let appSupport = applicationSupport ?? applicationSupportResult()
         let contribution = StorageFilesystemContribution(
             source: .applicationSupport,
-            absolutePath: applicationSupport.root.absolutePath,
-            normalizedPath: applicationSupport.root.absolutePath,
-            observedAllocatedBytes: applicationSupport.root.allocatedSize,
+            absolutePath: appSupport.root.absolutePath,
+            normalizedPath: appSupport.root.absolutePath,
+            observedAllocatedBytes: appSupport.root.allocatedSize,
             accountedAllocatedBytes: explained,
             relationship: .canonicalUnique,
             owningPath: nil
@@ -421,7 +505,7 @@ private extension StorageIntelligenceStateTests {
             analysisIssues: [],
             analyzerResults: StorageAnalyzerResults(
                 userHomeStorage: nil,
-                applicationSupport: applicationSupport,
+                applicationSupport: appSupport,
                 containers: nil,
                 groupContainers: nil,
                 systemLibrary: nil,

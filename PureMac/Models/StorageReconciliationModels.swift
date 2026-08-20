@@ -5,6 +5,7 @@ import Foundation
 enum StorageAnalyzerStage: String, Codable, CaseIterable, Sendable {
     case apfsVolume
     case userHomeStorage
+    case applications
     case applicationSupport
     case containers
     case groupContainers
@@ -39,6 +40,7 @@ enum StorageCoverageStatus: String, Codable, Sendable {
 
 enum StorageCanonicalRoot: String, Codable, CaseIterable, Sendable {
     case userHomeVisibleStorage
+    case applications
     case applicationSupport
     case containers
     case groupContainers
@@ -70,6 +72,7 @@ struct StorageCanonicalRootCoverage: Hashable, Codable, Sendable {
 
 enum StorageAccountingSource: String, Codable, Sendable {
     case userHomeVisibleStorage
+    case applications
     case applicationSupport
     case containers
     case groupContainers
@@ -140,14 +143,39 @@ enum StorageCoverageCandidateScope: String, Codable, Sendable {
 enum StorageCoverageCandidateStatus: String, Codable, Sendable {
     case eligible
     case measured
+    case partiallyMeasured
+    case inaccessible
+    case skippedAlreadyOwned
+    case skippedNonAdditive
+    case skippedUnsafeOverlap
     case excludedAlreadyAccounted
     case excludedNested
     case excludedSymlink
     case excludedDifferentVolume
     case excludedProtectedSystem
-    case inaccessible
     case failed
     case cancelled
+
+    var isMeasuredOrPartial: Bool {
+        self == .measured || self == .partiallyMeasured
+    }
+
+    var displayName: String {
+        switch self {
+        case .eligible: return "Eligible"
+        case .measured: return "Measured"
+        case .partiallyMeasured: return "Partial"
+        case .inaccessible: return "Inaccessible"
+        case .skippedAlreadyOwned, .excludedAlreadyAccounted: return "Already Accounted"
+        case .skippedNonAdditive: return "Non-additive"
+        case .skippedUnsafeOverlap, .excludedNested: return "Excluded (Overlap)"
+        case .excludedSymlink: return "Excluded (Symlink)"
+        case .excludedDifferentVolume: return "Different Volume"
+        case .excludedProtectedSystem: return "Protected System"
+        case .failed: return "Failed"
+        case .cancelled: return "Cancelled"
+        }
+    }
 }
 
 struct StorageCoverageCandidate: Identifiable, Hashable, Codable, Sendable {
@@ -197,6 +225,7 @@ struct StorageCoverageExpansionReport: Hashable, Codable, Sendable {
 /// Optional values indicate a stage that failed or never started.
 struct StorageAnalyzerResults: Hashable, Codable, Sendable {
     var userHomeStorage: UserHomeStorageReport?
+    var applications: StorageAnalysisResult?
     var applicationSupport: StorageAnalysisResult?
     var containers: StorageAnalysisResult?
     var groupContainers: StorageAnalysisResult?
@@ -207,6 +236,37 @@ struct StorageAnalyzerResults: Hashable, Codable, Sendable {
     var dockerStorage: DockerStorageReport?
     var apfsStorage: APFSStorageReport?
     var coverageExpansion: StorageCoverageExpansionReport?
+    var physicalReconciliation: APFSPhysicalReconciliationReport?
+
+    init(
+        userHomeStorage: UserHomeStorageReport? = nil,
+        applications: StorageAnalysisResult? = nil,
+        applicationSupport: StorageAnalysisResult? = nil,
+        containers: StorageAnalysisResult? = nil,
+        groupContainers: StorageAnalysisResult? = nil,
+        systemLibrary: StorageAnalysisResult? = nil,
+        privateStorage: StorageAnalysisResult? = nil,
+        dataVolumeHiddenStorage: StorageAnalysisResult? = nil,
+        developerSystemStorage: DeveloperSystemStorageReport? = nil,
+        dockerStorage: DockerStorageReport? = nil,
+        apfsStorage: APFSStorageReport? = nil,
+        coverageExpansion: StorageCoverageExpansionReport? = nil,
+        physicalReconciliation: APFSPhysicalReconciliationReport? = nil
+    ) {
+        self.userHomeStorage = userHomeStorage
+        self.applications = applications
+        self.applicationSupport = applicationSupport
+        self.containers = containers
+        self.groupContainers = groupContainers
+        self.systemLibrary = systemLibrary
+        self.privateStorage = privateStorage
+        self.dataVolumeHiddenStorage = dataVolumeHiddenStorage
+        self.developerSystemStorage = developerSystemStorage
+        self.dockerStorage = dockerStorage
+        self.apfsStorage = apfsStorage
+        self.coverageExpansion = coverageExpansion
+        self.physicalReconciliation = physicalReconciliation
+    }
 }
 
 struct StorageReconciliationReport: Hashable, Codable, Sendable {
@@ -243,6 +303,8 @@ struct StorageReconciliationReport: Hashable, Codable, Sendable {
     let coverageDiagnostic: StorageCoverageDiagnostic
     /// Typed attribution breakdown explaining why unexplained storage remains.
     let attributionReport: StorageUnexplainedAttributionReport?
+    /// Physical reconciliation report bridging container/volume usage to filesystem accounting.
+    let physicalReconciliation: APFSPhysicalReconciliationReport?
 
     let startedAt: Date
     let completedAt: Date
@@ -268,6 +330,7 @@ struct StorageReconciliationReport: Hashable, Codable, Sendable {
         analyzerResults: StorageAnalyzerResults,
         coverageDiagnostic: StorageCoverageDiagnostic,
         attributionReport: StorageUnexplainedAttributionReport? = nil,
+        physicalReconciliation: APFSPhysicalReconciliationReport? = nil,
         startedAt: Date,
         completedAt: Date,
         duration: TimeInterval,
@@ -291,6 +354,7 @@ struct StorageReconciliationReport: Hashable, Codable, Sendable {
         self.analyzerResults = analyzerResults
         self.coverageDiagnostic = coverageDiagnostic
         self.attributionReport = attributionReport
+        self.physicalReconciliation = physicalReconciliation
         self.startedAt = startedAt
         self.completedAt = completedAt
         self.duration = duration

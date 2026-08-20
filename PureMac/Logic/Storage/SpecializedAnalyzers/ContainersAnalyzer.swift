@@ -36,17 +36,20 @@ struct ContainersAnalyzer: Sendable {
 
     private let containersURL: URL
     private let scanner: FileTreeScanner
+    private let cache: StorageAnalysisCache?
     private let largeAllocatedSizeThreshold: Int64
     private let attributionProvider: AttributionProvider
 
     init(
         containersURL: URL = ContainersAnalyzer.currentUserContainersURL,
         scanner: FileTreeScanner = FileTreeScanner(),
+        cache: StorageAnalysisCache? = nil,
         largeAllocatedSizeThreshold: Int64 = ContainersAnalyzer.defaultLargeAllocatedSizeThreshold
     ) {
         self.init(
             containersURL: containersURL,
             scanner: scanner,
+            cache: cache,
             largeAllocatedSizeThreshold: largeAllocatedSizeThreshold,
             attributionProvider: { bundleIdentifier in
                 ContainersAnalyzer.workspaceAttribution(for: bundleIdentifier)
@@ -57,11 +60,13 @@ struct ContainersAnalyzer: Sendable {
     init(
         containersURL: URL,
         scanner: FileTreeScanner = FileTreeScanner(),
+        cache: StorageAnalysisCache? = nil,
         largeAllocatedSizeThreshold: Int64 = ContainersAnalyzer.defaultLargeAllocatedSizeThreshold,
         attributionProvider: @escaping AttributionProvider
     ) {
         self.containersURL = containersURL
         self.scanner = scanner
+        self.cache = cache
         self.largeAllocatedSizeThreshold = max(largeAllocatedSizeThreshold, 1)
         self.attributionProvider = attributionProvider
     }
@@ -70,7 +75,14 @@ struct ContainersAnalyzer: Sendable {
     /// are ordered by allocated bytes; their complete children remain intact
     /// for future inspection of Data, Library, Documents, and other paths.
     func analyze() async -> StorageAnalysisResult {
-        let scannedResult = await scanner.scan(root: containersURL)
+        let scannedResult: StorageAnalysisResult
+        if let cached = cache?.get(path: containersURL.path) {
+            scannedResult = cached
+        } else {
+            let result = await scanner.scan(root: containersURL)
+            cache?.store(result, isFullSubtree: true)
+            scannedResult = result
+        }
         let threshold = largeAllocatedSizeThreshold
         let attributionProvider = attributionProvider
 

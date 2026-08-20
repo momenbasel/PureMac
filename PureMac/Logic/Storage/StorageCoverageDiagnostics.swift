@@ -266,7 +266,8 @@ struct StorageCoverageDiagnosticBuilder: Sendable {
         let gaps = coverageGaps(
             discovery: discovery,
             coverage: canonicalRootCoverage,
-            aggregation: aggregation
+            aggregation: aggregation,
+            expansion: analyzerResults.coverageExpansion
         )
         let map = coverageMap(
             coverage: canonicalRootCoverage,
@@ -749,9 +750,132 @@ private extension StorageCoverageDiagnosticBuilder {
     func coverageGaps(
         discovery: StorageCoverageDiscoveryResult,
         coverage: [StorageCanonicalRootCoverage],
-        aggregation: StorageCoverageIssueAggregation
+        aggregation: StorageCoverageIssueAggregation,
+        expansion: StorageCoverageExpansionReport? = nil
     ) -> [StorageCoverageGap] {
-        var gaps = discovery.hiddenHomeEntries + discovery.unspecializedLibraryEntries
+        var gaps: [StorageCoverageGap] = []
+
+        let expansionCandidatesByNormPath = Dictionary(
+            (expansion?.candidates ?? []).map { ($0.normalizedPath, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+
+        for rawGap in (discovery.hiddenHomeEntries + discovery.unspecializedLibraryEntries) {
+            let norm = rawGap.absolutePath.map { StoragePathNormalizer.normalize($0) } ?? ""
+            if let candidate = expansionCandidatesByNormPath[norm] {
+                let state: StorageCoverageMapState
+                let confidence: StorageMeasurementConfidence
+                let isAdditive: Bool
+                let explanation: String
+
+                switch candidate.status {
+                case .measured:
+                    state = .measured
+                    confidence = candidate.issue == nil ? .completeMeasurement : .knownLowerBound
+                    isAdditive = candidate.contributesToExplainedBytes
+                    explanation = "Discovered and measured by targeted coverage expansion pass."
+                case .partiallyMeasured:
+                    state = .partiallyMeasured
+                    confidence = .knownLowerBound
+                    isAdditive = candidate.contributesToExplainedBytes
+                    explanation = candidate.exclusionReason ?? "Partially measured; some items had restricted access."
+                case .inaccessible, .excludedProtectedSystem:
+                    state = .partiallyMeasured
+                    confidence = .knownLowerBound
+                    isAdditive = false
+                    explanation = candidate.exclusionReason ?? "Protected macOS location with restricted access."
+                case .excludedAlreadyAccounted, .excludedNested, .skippedAlreadyOwned, .skippedUnsafeOverlap:
+                    state = .measured
+                    confidence = .nonAdditiveMetadata
+                    isAdditive = false
+                    explanation = candidate.exclusionReason ?? "Already accounted by a specialized canonical root."
+                default:
+                    state = rawGap.state
+                    confidence = rawGap.confidence
+                    isAdditive = false
+                    explanation = rawGap.explanation
+                }
+
+                gaps.append(StorageCoverageGap(
+                    kind: rawGap.kind,
+                    name: rawGap.name,
+                    absolutePath: rawGap.absolutePath,
+                    category: rawGap.category,
+                    state: state,
+                    confidence: confidence,
+                    explanation: explanation,
+                    allocatedBytes: candidate.allocatedBytes,
+                    logicalBytes: candidate.logicalBytes,
+                    isFilesystemAdditive: isAdditive,
+                    issueCount: candidate.issue == nil ? 0 : 1
+                ))
+            } else {
+                gaps.append(rawGap)
+            }
+        }
+
+        if let expansionCandidates = expansion?.candidates {
+            for candidate in expansionCandidates {
+                let norm = candidate.normalizedPath
+                let alreadyInGaps = gaps.contains { ($0.absolutePath.map { StoragePathNormalizer.normalize($0) }) == norm }
+                if !alreadyInGaps {
+                    let kind: StorageCoverageGapKind
+                    switch candidate.scope {
+                    case .hiddenHome: kind = .hiddenHomeEntry
+                    case .userLibrary: kind = .unspecializedUserLibraryEntry
+                    case .dataVolumeRoot, .other: kind = .rootFilesystemRegion
+                    }
+
+                    let state: StorageCoverageMapState
+                    let confidence: StorageMeasurementConfidence
+                    let isAdditive: Bool
+                    let explanation: String
+
+                    switch candidate.status {
+                    case .measured:
+                        state = .measured
+                        confidence = candidate.issue == nil ? .completeMeasurement : .knownLowerBound
+                        isAdditive = candidate.contributesToExplainedBytes
+                        explanation = "Discovered and measured by targeted coverage expansion pass."
+                    case .partiallyMeasured:
+                        state = .partiallyMeasured
+                        confidence = .knownLowerBound
+                        isAdditive = candidate.contributesToExplainedBytes
+                        explanation = candidate.exclusionReason ?? "Partially measured; some items had restricted access."
+                    case .inaccessible, .excludedProtectedSystem:
+                        state = .partiallyMeasured
+                        confidence = .knownLowerBound
+                        isAdditive = false
+                        explanation = candidate.exclusionReason ?? "Protected macOS location with restricted access."
+                    case .excludedAlreadyAccounted, .excludedNested, .skippedAlreadyOwned, .skippedUnsafeOverlap:
+                        state = .measured
+                        confidence = .nonAdditiveMetadata
+                        isAdditive = false
+                        explanation = candidate.exclusionReason ?? "Already accounted by a specialized canonical root."
+                    default:
+                        state = .presentButUnmeasured
+                        confidence = .unmeasured
+                        isAdditive = false
+                        explanation = candidate.exclusionReason ?? "Data-volume candidate discovered during coverage expansion pass."
+                    }
+
+                    gaps.append(StorageCoverageGap(
+                        kind: kind,
+                        name: candidate.name,
+                        absolutePath: candidate.originalPath,
+                        category: candidate.status == .excludedProtectedSystem ? .permissionDenied : .uncoveredFilesystemRegion,
+                        state: state,
+                        confidence: confidence,
+                        explanation: explanation,
+                        allocatedBytes: candidate.allocatedBytes,
+                        logicalBytes: candidate.logicalBytes,
+                        isFilesystemAdditive: isAdditive,
+                        issueCount: candidate.issue == nil ? 0 : 1
+                    ))
+                }
+            }
+        }
+
         gaps.append(contentsOf: coverage.compactMap { item in
             guard item.state == .missingOptional else { return nil }
             return StorageCoverageGap(
@@ -1009,6 +1133,7 @@ private extension StorageCoverageDiagnosticBuilder {
         let expected: Set<StorageCanonicalRoot>
         switch stage {
         case .userHomeStorage: expected = [.userHomeVisibleStorage]
+        case .applications: expected = [.applications]
         case .applicationSupport: expected = [.applicationSupport]
         case .containers: expected = [.containers]
         case .groupContainers: expected = [.groupContainers]
@@ -1038,6 +1163,7 @@ private extension StorageCoverageDiagnosticBuilder {
         switch stage {
         case .apfsVolume: return results.apfsStorage != nil
         case .userHomeStorage: return results.userHomeStorage != nil
+        case .applications: return results.applications != nil
         case .applicationSupport: return results.applicationSupport != nil
         case .containers: return results.containers != nil
         case .groupContainers: return results.groupContainers != nil
@@ -1072,6 +1198,7 @@ private extension StorageCoverageDiagnosticBuilder {
     func rootTitle(_ root: StorageCanonicalRoot) -> String {
         switch root {
         case .userHomeVisibleStorage: return "Visible user-home roots"
+        case .applications: return "Applications"
         case .applicationSupport: return "Application Support"
         case .containers: return "Containers"
         case .groupContainers: return "Group Containers"

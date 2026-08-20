@@ -33,17 +33,20 @@ struct GroupContainersAnalyzer: Sendable {
 
     private let groupContainersURL: URL
     private let scanner: FileTreeScanner
+    private let cache: StorageAnalysisCache?
     private let largeAllocatedSizeThreshold: Int64
     private let attributionProvider: AttributionProvider
 
     init(
         groupContainersURL: URL = GroupContainersAnalyzer.currentUserGroupContainersURL,
         scanner: FileTreeScanner = FileTreeScanner(),
+        cache: StorageAnalysisCache? = nil,
         largeAllocatedSizeThreshold: Int64 = GroupContainersAnalyzer.defaultLargeAllocatedSizeThreshold
     ) {
         self.init(
             groupContainersURL: groupContainersURL,
             scanner: scanner,
+            cache: cache,
             largeAllocatedSizeThreshold: largeAllocatedSizeThreshold,
             attributionProvider: { _ in [] }
         )
@@ -52,11 +55,13 @@ struct GroupContainersAnalyzer: Sendable {
     init(
         groupContainersURL: URL,
         scanner: FileTreeScanner = FileTreeScanner(),
+        cache: StorageAnalysisCache? = nil,
         largeAllocatedSizeThreshold: Int64 = GroupContainersAnalyzer.defaultLargeAllocatedSizeThreshold,
         attributionProvider: @escaping AttributionProvider
     ) {
         self.groupContainersURL = groupContainersURL
         self.scanner = scanner
+        self.cache = cache
         self.largeAllocatedSizeThreshold = max(largeAllocatedSizeThreshold, 1)
         self.attributionProvider = attributionProvider
     }
@@ -65,7 +70,14 @@ struct GroupContainersAnalyzer: Sendable {
     /// Containers ordered for storage inspection. No cleanup semantics or
     /// filesystem mutation are introduced by this analyzer.
     func analyze() async -> StorageAnalysisResult {
-        let scannedResult = await scanner.scan(root: groupContainersURL)
+        let scannedResult: StorageAnalysisResult
+        if let cached = cache?.get(path: groupContainersURL.path) {
+            scannedResult = cached
+        } else {
+            let result = await scanner.scan(root: groupContainersURL)
+            cache?.store(result, isFullSubtree: true)
+            scannedResult = result
+        }
         let threshold = largeAllocatedSizeThreshold
         let attributionProvider = attributionProvider
 

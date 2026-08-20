@@ -12,60 +12,40 @@ struct StorageAnalysisCoordinator: Sendable {
     typealias CoverageDiscovery = @Sendable () async -> StorageCoverageDiscoveryResult
     typealias ProgressHandler = @Sendable (StorageAnalysisProgress) async -> Void
 
-    private let applicationSupportAnalysis: FilesystemAnalysis
-    private let containersAnalysis: FilesystemAnalysis
-    private let groupContainersAnalysis: FilesystemAnalysis
-    private let systemLibraryAnalysis: FilesystemAnalysis
-    private let privateStorageAnalysis: FilesystemAnalysis
-    private let dataVolumeHiddenStorageAnalysis: FilesystemAnalysis
-    private let developerSystemStorageAnalysis: DeveloperAnalysis
-    private let dockerStorageAnalysis: DockerAnalysis
-    private let apfsStorageAnalysis: APFSAnalysis
-    private let userHomeStorageAnalysis: UserHomeAnalysis
-    private let coverageExpansionAnalysis: CoverageExpansionAnalysis
-    private let coverageDiscovery: CoverageDiscovery
+    private let userHomeStorageAnalysis: UserHomeAnalysis?
+    private let applicationsAnalysis: FilesystemAnalysis?
+    private let applicationSupportAnalysis: FilesystemAnalysis?
+    private let containersAnalysis: FilesystemAnalysis?
+    private let groupContainersAnalysis: FilesystemAnalysis?
+    private let systemLibraryAnalysis: FilesystemAnalysis?
+    private let privateStorageAnalysis: FilesystemAnalysis?
+    private let dataVolumeHiddenStorageAnalysis: FilesystemAnalysis?
+    private let developerSystemStorageAnalysis: DeveloperAnalysis?
+    private let dockerStorageAnalysis: DockerAnalysis?
+    private let apfsStorageAnalysis: APFSAnalysis?
+    private let coverageExpansionAnalysis: CoverageExpansionAnalysis?
+    private let coverageDiscovery: CoverageDiscovery?
     private let maxConcurrentAnalyzers: Int
 
     init(
-        maxConcurrentAnalyzers: Int = 2,
-        userHomeStorageAnalysis: @escaping UserHomeAnalysis = {
-            await UserHomeStorageAnalyzer().analyze()
-        },
-        applicationSupportAnalysis: @escaping FilesystemAnalysis = {
-            await ApplicationSupportAnalyzer().analyze()
-        },
-        containersAnalysis: @escaping FilesystemAnalysis = {
-            await ContainersAnalyzer().analyze()
-        },
-        groupContainersAnalysis: @escaping FilesystemAnalysis = {
-            await GroupContainersAnalyzer().analyze()
-        },
-        systemLibraryAnalysis: @escaping FilesystemAnalysis = {
-            await SystemLibraryAnalyzer().analyze()
-        },
-        privateStorageAnalysis: @escaping FilesystemAnalysis = {
-            await PrivateStorageAnalyzer().analyze()
-        },
-        dataVolumeHiddenStorageAnalysis: @escaping FilesystemAnalysis = {
-            await DataVolumeHiddenStorageAnalyzer().analyze()
-        },
-        developerSystemStorageAnalysis: @escaping DeveloperAnalysis = {
-            await DeveloperSystemStorageAnalyzer().analyze()
-        },
-        dockerStorageAnalysis: @escaping DockerAnalysis = {
-            await DockerStorageAnalyzer().analyze()
-        },
-        apfsStorageAnalysis: @escaping APFSAnalysis = {
-            await APFSStorageAnalyzer().analyze()
-        },
-        coverageExpansionAnalysis: @escaping CoverageExpansionAnalysis = {
-            await CoverageExpansionAnalyzer().analyze()
-        },
-        coverageDiscovery: @escaping CoverageDiscovery = {
-            await StorageCoverageGapDiscovery().discover()
-        }
+        maxConcurrentAnalyzers: Int = min(max(ProcessInfo.processInfo.activeProcessorCount / 2, 4), 6),
+        userHomeStorageAnalysis: UserHomeAnalysis? = nil,
+        applicationsAnalysis: FilesystemAnalysis? = nil,
+        applicationSupportAnalysis: FilesystemAnalysis? = nil,
+        containersAnalysis: FilesystemAnalysis? = nil,
+        groupContainersAnalysis: FilesystemAnalysis? = nil,
+        systemLibraryAnalysis: FilesystemAnalysis? = nil,
+        privateStorageAnalysis: FilesystemAnalysis? = nil,
+        dataVolumeHiddenStorageAnalysis: FilesystemAnalysis? = nil,
+        developerSystemStorageAnalysis: DeveloperAnalysis? = nil,
+        dockerStorageAnalysis: DockerAnalysis? = nil,
+        apfsStorageAnalysis: APFSAnalysis? = nil,
+        coverageExpansionAnalysis: CoverageExpansionAnalysis? = nil,
+        coverageDiscovery: CoverageDiscovery? = nil
     ) {
-        self.maxConcurrentAnalyzers = min(max(maxConcurrentAnalyzers, 1), 3)
+        self.maxConcurrentAnalyzers = min(max(maxConcurrentAnalyzers, 1), 8)
+        self.userHomeStorageAnalysis = userHomeStorageAnalysis
+        self.applicationsAnalysis = applicationsAnalysis
         self.applicationSupportAnalysis = applicationSupportAnalysis
         self.containersAnalysis = containersAnalysis
         self.groupContainersAnalysis = groupContainersAnalysis
@@ -75,7 +55,6 @@ struct StorageAnalysisCoordinator: Sendable {
         self.developerSystemStorageAnalysis = developerSystemStorageAnalysis
         self.dockerStorageAnalysis = dockerStorageAnalysis
         self.apfsStorageAnalysis = apfsStorageAnalysis
-        self.userHomeStorageAnalysis = userHomeStorageAnalysis
         self.coverageExpansionAnalysis = coverageExpansionAnalysis
         self.coverageDiscovery = coverageDiscovery
     }
@@ -84,14 +63,20 @@ struct StorageAnalysisCoordinator: Sendable {
     /// task group to avoid launching every disk-intensive tree scan at once.
     func analyze(progress progressHandler: ProgressHandler? = nil) async -> StorageReconciliationReport {
         let startedAt = Date()
-        let operations = makeOperations()
+        let runCache = StorageAnalysisCache()
+        let operations = makeOperations(cache: runCache)
+        let discoveryStart = CFAbsoluteTimeGetCurrent()
         let discoveryTask = Task(priority: .utility) {
-            await coverageDiscovery()
+            if let custom = coverageDiscovery {
+                return await custom()
+            }
+            return await StorageCoverageGapDiscovery().discover()
         }
         var outputs: [StorageAnalyzerStage: StageOutput] = [:]
         var failures: [StorageAnalyzerStage: String] = [:]
         var completedStages: Set<StorageAnalyzerStage> = []
         var runningStages: Set<StorageAnalyzerStage> = []
+        var stageDurations: [StorageAnalyzerStage: Double] = [:]
 
         await progressHandler?(StorageAnalysisProgress(
             totalStages: operations.count,
@@ -105,7 +90,7 @@ struct StorageAnalysisCoordinator: Sendable {
                 let initialCount = min(maxConcurrentAnalyzers, operations.count)
                 for operation in operations.prefix(initialCount) {
                     runningStages.insert(operation.stage)
-                    group.addTask { await Self.execute(operation) }
+                    group.addTask { await Self.execute(operation, cache: runCache) }
                 }
 
                 await progressHandler?(Self.progress(
@@ -119,6 +104,7 @@ struct StorageAnalysisCoordinator: Sendable {
                 while let execution = await group.next() {
                     runningStages.remove(execution.stage)
                     completedStages.insert(execution.stage)
+                    stageDurations[execution.stage] = execution.duration
 
                     switch execution.result {
                     case let .success(output):
@@ -135,7 +121,7 @@ struct StorageAnalysisCoordinator: Sendable {
                         let operation = operations[nextIndex]
                         nextIndex += 1
                         runningStages.insert(operation.stage)
-                        group.addTask { await Self.execute(operation) }
+                        group.addTask { await Self.execute(operation, cache: runCache) }
                     }
 
                     await progressHandler?(Self.progress(
@@ -152,6 +138,7 @@ struct StorageAnalysisCoordinator: Sendable {
             discoveryTask.cancel()
         }
         let discovery = await discoveryTask.value
+        let discoveryDuration = CFAbsoluteTimeGetCurrent() - discoveryStart
 
         let completedAt = Date()
         let report = await Self.reconcile(
@@ -165,6 +152,18 @@ struct StorageAnalysisCoordinator: Sendable {
             totalStageCount: operations.count
         )
         await progressHandler?(report.progress)
+
+        #if DEBUG
+        let cacheMetrics = runCache.metrics
+        Self.emitDebugPerformanceReport(
+            report: report,
+            stageDurations: stageDurations,
+            discoveryDuration: discoveryDuration,
+            totalDuration: max(completedAt.timeIntervalSince(startedAt), 0),
+            cacheMetrics: cacheMetrics
+        )
+        #endif
+
         return report
     }
 }
@@ -173,6 +172,8 @@ struct StorageAnalysisCoordinator: Sendable {
 
 private extension StorageAnalysisCoordinator {
     enum StageOutput: Sendable {
+        case userHomeStorage(UserHomeStorageReport)
+        case applications(StorageAnalysisResult)
         case applicationSupport(StorageAnalysisResult)
         case containers(StorageAnalysisResult)
         case groupContainers(StorageAnalysisResult)
@@ -182,7 +183,6 @@ private extension StorageAnalysisCoordinator {
         case developerSystemStorage(DeveloperSystemStorageReport)
         case dockerStorage(DockerStorageReport)
         case apfsStorage(APFSStorageReport)
-        case userHomeStorage(UserHomeStorageReport)
         case coverageExpansion(StorageCoverageExpansionReport)
     }
 
@@ -195,6 +195,7 @@ private extension StorageAnalysisCoordinator {
     struct StageExecution: Sendable {
         let stage: StorageAnalyzerStage
         let result: StageExecutionResult
+        let duration: Double
     }
 
     struct StageOperation: Sendable {
@@ -202,60 +203,131 @@ private extension StorageAnalysisCoordinator {
         let operation: @Sendable () async throws -> StageOutput
     }
 
-    func makeOperations() -> [StageOperation] {
-        [
+    func makeOperations(cache: StorageAnalysisCache) -> [StageOperation] {
+        let scanner = FileTreeScanner(cache: cache)
+        return [
             StageOperation(stage: .apfsVolume) {
-                .apfsStorage(try await apfsStorageAnalysis())
-            },
-            StageOperation(stage: .userHomeStorage) {
-                .userHomeStorage(try await userHomeStorageAnalysis())
-            },
-            StageOperation(stage: .applicationSupport) {
-                .applicationSupport(try await applicationSupportAnalysis())
+                if let custom = apfsStorageAnalysis {
+                    return .apfsStorage(try await custom())
+                }
+                return .apfsStorage(await APFSStorageAnalyzer().analyze())
             },
             StageOperation(stage: .containers) {
-                .containers(try await containersAnalysis())
+                if let custom = containersAnalysis {
+                    return .containers(try await custom())
+                }
+                return .containers(await ContainersAnalyzer(scanner: scanner, cache: cache).analyze())
             },
             StageOperation(stage: .groupContainers) {
-                .groupContainers(try await groupContainersAnalysis())
+                if let custom = groupContainersAnalysis {
+                    return .groupContainers(try await custom())
+                }
+                return .groupContainers(await GroupContainersAnalyzer(scanner: scanner, cache: cache).analyze())
+            },
+            StageOperation(stage: .applicationSupport) {
+                if let custom = applicationSupportAnalysis {
+                    return .applicationSupport(try await custom())
+                }
+                return .applicationSupport(await ApplicationSupportAnalyzer(scanner: scanner, cache: cache).analyze())
+            },
+            StageOperation(stage: .applications) {
+                if let custom = applicationsAnalysis {
+                    return .applications(try await custom())
+                }
+                return .applications(await ApplicationsStorageAnalyzer(scanner: scanner, cache: cache).analyze())
             },
             StageOperation(stage: .systemLibrary) {
-                .systemLibrary(try await systemLibraryAnalysis())
+                if let custom = systemLibraryAnalysis {
+                    return .systemLibrary(try await custom())
+                }
+                return .systemLibrary(await SystemLibraryAnalyzer(scanner: scanner, cache: cache).analyze())
+            },
+            StageOperation(stage: .userHomeStorage) {
+                if let custom = userHomeStorageAnalysis {
+                    return .userHomeStorage(try await custom())
+                }
+                return .userHomeStorage(await UserHomeStorageAnalyzer(scanner: scanner).analyze())
             },
             StageOperation(stage: .privateStorage) {
-                .privateStorage(try await privateStorageAnalysis())
+                if let custom = privateStorageAnalysis {
+                    return .privateStorage(try await custom())
+                }
+                return .privateStorage(await PrivateStorageAnalyzer(scanner: scanner, cache: cache).analyze())
             },
             StageOperation(stage: .dataVolumeHiddenStorage) {
-                .dataVolumeHiddenStorage(try await dataVolumeHiddenStorageAnalysis())
+                if let custom = dataVolumeHiddenStorageAnalysis {
+                    return .dataVolumeHiddenStorage(try await custom())
+                }
+                return .dataVolumeHiddenStorage(await DataVolumeHiddenStorageAnalyzer(scanner: scanner).analyze())
             },
             StageOperation(stage: .developerSystemStorage) {
-                .developerSystemStorage(try await developerSystemStorageAnalysis())
+                if let custom = developerSystemStorageAnalysis {
+                    return .developerSystemStorage(try await custom())
+                }
+                return .developerSystemStorage(await DeveloperSystemStorageAnalyzer(scanner: scanner, cache: cache).analyze())
             },
             StageOperation(stage: .dockerStorage) {
-                .dockerStorage(try await dockerStorageAnalysis())
+                if let custom = dockerStorageAnalysis {
+                    return .dockerStorage(try await custom())
+                }
+                return .dockerStorage(await DockerStorageAnalyzer(scanner: scanner, cache: cache).analyze())
             },
             StageOperation(stage: .coverageExpansion) {
-                .coverageExpansion(try await coverageExpansionAnalysis())
+                if let custom = coverageExpansionAnalysis {
+                    return .coverageExpansion(try await custom())
+                }
+                return .coverageExpansion(await CoverageExpansionAnalyzer(scanner: scanner, cache: cache).analyze())
             },
         ]
     }
 
-    static func execute(_ operation: StageOperation) async -> StageExecution {
+    static func execute(_ operation: StageOperation, cache: StorageAnalysisCache) async -> StageExecution {
         guard !Task.isCancelled else {
-            return StageExecution(stage: operation.stage, result: .cancelled)
+            return StageExecution(stage: operation.stage, result: .cancelled, duration: 0)
         }
+        let startTime = CFAbsoluteTimeGetCurrent()
         do {
             let output = try await operation.operation()
+            let duration = CFAbsoluteTimeGetCurrent() - startTime
+            if !Task.isCancelled {
+                switch output {
+                case let .applications(res),
+                     let .applicationSupport(res),
+                     let .containers(res),
+                     let .groupContainers(res),
+                     let .systemLibrary(res),
+                     let .privateStorage(res),
+                     let .dataVolumeHiddenStorage(res):
+                    cache.store(res, isFullSubtree: true)
+                case let .developerSystemStorage(rep):
+                    cache.store(rep.opt.result, isFullSubtree: true)
+                    cache.store(rep.usrLocal.result, isFullSubtree: true)
+                case let .dockerStorage(rep):
+                    for loc in rep.hostFootprint.locations {
+                        cache.store(loc, isFullSubtree: true)
+                    }
+                case let .coverageExpansion(rep):
+                    for res in rep.treeResults {
+                        cache.store(res, isFullSubtree: true)
+                    }
+                case .userHomeStorage, .apfsStorage:
+                    break
+                }
+            }
             return StageExecution(
                 stage: operation.stage,
-                result: Task.isCancelled ? .cancelled : .success(output)
+                result: Task.isCancelled ? .cancelled : .success(output),
+                duration: duration
             )
         } catch is CancellationError {
-            return StageExecution(stage: operation.stage, result: .cancelled)
+            let duration = CFAbsoluteTimeGetCurrent() - startTime
+            return StageExecution(stage: operation.stage, result: .cancelled, duration: duration)
         } catch {
+            let duration = CFAbsoluteTimeGetCurrent() - startTime
             return StageExecution(
                 stage: operation.stage,
-                result: .failure(String(describing: error))
+                result: .failure(String(describing: error)),
+                duration: duration
             )
         }
     }
@@ -431,7 +503,7 @@ private extension StorageAnalysisCoordinator {
 
         let attribution = await StorageAttributionAnalyzer().analyze(reconciliationReport: initialReport)
 
-        return StorageReconciliationReport(
+        let intermediateReport = StorageReconciliationReport(
             totalCapacityBytes: initialReport.totalCapacityBytes,
             usedCapacityBytes: initialReport.usedCapacityBytes,
             availableCapacityBytes: initialReport.availableCapacityBytes,
@@ -449,11 +521,43 @@ private extension StorageAnalysisCoordinator {
             analyzerResults: initialReport.analyzerResults,
             coverageDiagnostic: initialReport.coverageDiagnostic,
             attributionReport: attribution,
+            physicalReconciliation: nil,
             startedAt: initialReport.startedAt,
             completedAt: initialReport.completedAt,
             duration: initialReport.duration,
             progress: initialReport.progress,
             wasCancelled: initialReport.wasCancelled
+        )
+
+        let physicalReconciliation = await APFSPhysicalReconciliationAnalyzer().analyze(reconciliationReport: intermediateReport)
+
+        var finalResults = intermediateReport.analyzerResults
+        finalResults.physicalReconciliation = physicalReconciliation
+
+        return StorageReconciliationReport(
+            totalCapacityBytes: intermediateReport.totalCapacityBytes,
+            usedCapacityBytes: intermediateReport.usedCapacityBytes,
+            availableCapacityBytes: intermediateReport.availableCapacityBytes,
+            purgeableEstimateBytes: intermediateReport.purgeableEstimateBytes,
+            explainedAllocatedBytes: intermediateReport.explainedAllocatedBytes,
+            unexplainedBytes: intermediateReport.unexplainedBytes,
+            inaccessibleKnownLowerBoundBytes: intermediateReport.inaccessibleKnownLowerBoundBytes,
+            unreadablePathCount: intermediateReport.unreadablePathCount,
+            incompleteCoverage: intermediateReport.incompleteCoverage,
+            coverageStatus: intermediateReport.coverageStatus,
+            canonicalRootCoverage: intermediateReport.canonicalRootCoverage,
+            filesystemContributions: intermediateReport.filesystemContributions,
+            hardLinkAccountingStatus: intermediateReport.hardLinkAccountingStatus,
+            analysisIssues: intermediateReport.analysisIssues,
+            analyzerResults: finalResults,
+            coverageDiagnostic: intermediateReport.coverageDiagnostic,
+            attributionReport: attribution,
+            physicalReconciliation: physicalReconciliation,
+            startedAt: intermediateReport.startedAt,
+            completedAt: intermediateReport.completedAt,
+            duration: intermediateReport.duration,
+            progress: intermediateReport.progress,
+            wasCancelled: intermediateReport.wasCancelled
         )
     }
 
@@ -462,6 +566,7 @@ private extension StorageAnalysisCoordinator {
     ) -> StorageAnalyzerResults {
         var results = StorageAnalyzerResults(
             userHomeStorage: nil,
+            applications: nil,
             applicationSupport: nil,
             containers: nil,
             groupContainers: nil,
@@ -471,11 +576,13 @@ private extension StorageAnalysisCoordinator {
             developerSystemStorage: nil,
             dockerStorage: nil,
             apfsStorage: nil,
-            coverageExpansion: nil
+            coverageExpansion: nil,
+            physicalReconciliation: nil
         )
         for output in outputs.values {
             switch output {
             case let .userHomeStorage(value): results.userHomeStorage = value
+            case let .applications(value): results.applications = value
             case let .applicationSupport(value): results.applicationSupport = value
             case let .containers(value): results.containers = value
             case let .groupContainers(value): results.groupContainers = value
@@ -506,6 +613,7 @@ private extension StorageAnalysisCoordinator {
                 ))
             }
         }
+        append(results.applications, source: .applications, to: &candidates)
         append(results.applicationSupport, source: .applicationSupport, to: &candidates)
         append(results.containers, source: .containers, to: &candidates)
         append(results.groupContainers, source: .groupContainers, to: &candidates)
@@ -528,7 +636,7 @@ private extension StorageAnalysisCoordinator {
         }
 
         if let expansion = results.coverageExpansion {
-            for candidate in expansion.candidates where candidate.status == .measured && candidate.contributesToExplainedBytes {
+            for candidate in expansion.candidates where candidate.status.isMeasuredOrPartial && candidate.contributesToExplainedBytes {
                 candidates.append(Candidate(
                     source: .additionalCoverageGap,
                     path: candidate.originalPath,
@@ -690,6 +798,13 @@ private extension StorageAnalysisCoordinator {
         coverage.append(coverageForUserHome(
             results.userHomeStorage,
             failed: failures[.userHomeStorage] != nil,
+            cancelled: cancelled
+        ))
+        coverage.append(coverageForResult(
+            results.applications,
+            root: .applications,
+            fallbackPath: ApplicationsStorageAnalyzer.defaultApplicationsURL.path,
+            failed: failures[.applications] != nil,
             cancelled: cancelled
         ))
         coverage.append(coverageForResult(
@@ -945,12 +1060,12 @@ private extension StorageAnalysisCoordinator {
     }
 
     static func candidateOwnershipSort(_ left: Candidate, _ right: Candidate) -> Bool {
-        let leftIsUserHome = left.source == .userHomeVisibleStorage
-        let rightIsUserHome = right.source == .userHomeVisibleStorage
-        if leftIsUserHome != rightIsUserHome { return !leftIsUserHome }
         let leftIsCoverage = left.source == .additionalCoverageGap
         let rightIsCoverage = right.source == .additionalCoverageGap
         if leftIsCoverage != rightIsCoverage { return !leftIsCoverage }
+        let leftIsUserHome = left.source == .userHomeVisibleStorage
+        let rightIsUserHome = right.source == .userHomeVisibleStorage
+        if leftIsUserHome != rightIsUserHome { return !leftIsUserHome }
         let leftPath = normalize(left.path)
         let rightPath = normalize(right.path)
         let leftDepth = leftPath.split(separator: "/").count
@@ -977,6 +1092,7 @@ private extension StorageAnalysisCoordinator {
     static func accountingSource(for root: StorageCanonicalRoot) -> StorageAccountingSource {
         switch root {
         case .userHomeVisibleStorage: return .userHomeVisibleStorage
+        case .applications: return .applications
         case .applicationSupport: return .applicationSupport
         case .containers: return .containers
         case .groupContainers: return .groupContainers
@@ -992,6 +1108,7 @@ private extension StorageAnalysisCoordinator {
     static func stage(for source: StorageAccountingSource) -> StorageAnalyzerStage {
         switch source {
         case .userHomeVisibleStorage: return .userHomeStorage
+        case .applications: return .applications
         case .applicationSupport: return .applicationSupport
         case .containers: return .containers
         case .groupContainers: return .groupContainers
@@ -1006,6 +1123,7 @@ private extension StorageAnalysisCoordinator {
 
     static func resultsContainCancellation(_ results: StorageAnalyzerResults) -> Bool {
         results.userHomeStorage?.wasCancelled == true
+            || results.applications?.wasCancelled == true
             || results.applicationSupport?.wasCancelled == true
             || results.containers?.wasCancelled == true
             || results.groupContainers?.wasCancelled == true
@@ -1034,6 +1152,110 @@ private extension StorageAnalysisCoordinator {
         let (value, overflow) = left.addingReportingOverflow(right)
         return overflow ? Int64.max : value
     }
+
+    #if DEBUG
+    static func emitDebugPerformanceReport(
+        report: StorageReconciliationReport,
+        stageDurations: [StorageAnalyzerStage: Double],
+        discoveryDuration: Double,
+        totalDuration: Double,
+        cacheMetrics: StorageAnalysisCacheMetrics? = nil
+    ) {
+        var stageRecords: [StagePerformanceRecord] = []
+        let results = report.analyzerResults
+
+        func record(stage: StorageAnalyzerStage, name: String, nodes: [StorageNode]?, note: String? = nil) {
+            let dur = stageDurations[stage] ?? 0
+            let metrics = nodes.map { StorageScanMetrics.compute(from: $0) }
+            stageRecords.append(StagePerformanceRecord(
+                stageName: name,
+                durationSeconds: dur,
+                metrics: metrics,
+                customNote: note
+            ))
+        }
+
+        record(stage: .userHomeStorage, name: "User Files", nodes: results.userHomeStorage?.roots.map(\.node))
+        record(stage: .applications, name: "Applications", nodes: results.applications.map { [$0.root] })
+        record(stage: .applicationSupport, name: "Application Support", nodes: results.applicationSupport.map { [$0.root] })
+        record(stage: .containers, name: "Containers", nodes: results.containers.map { [$0.root] })
+        record(stage: .groupContainers, name: "Group Containers", nodes: results.groupContainers.map { [$0.root] })
+        record(stage: .systemLibrary, name: "System Library", nodes: results.systemLibrary.map { [$0.root] })
+        record(stage: .privateStorage, name: "Private / System State", nodes: results.privateStorage.map { [$0.root] })
+        record(stage: .dataVolumeHiddenStorage, name: "Hidden Data-Volume Storage", nodes: results.dataVolumeHiddenStorage.map { [$0.root] })
+        record(
+            stage: .developerSystemStorage,
+            name: "Developer & Third-Party",
+            nodes: results.developerSystemStorage.map { [$0.opt.result.root, $0.usrLocal.result.root] }
+        )
+        record(
+            stage: .dockerStorage,
+            name: "Docker Host Storage",
+            nodes: results.dockerStorage?.hostFootprint.locations.map(\.root)
+        )
+        record(
+            stage: .coverageExpansion,
+            name: "Coverage Expansion",
+            nodes: results.coverageExpansion?.treeResults.map(\.root),
+            note: results.coverageExpansion.map { "\($0.candidates.count) discovered, \($0.measuredCandidateCount) roots scanned" }
+        )
+        record(stage: .apfsVolume, name: "APFS Volume Analysis", nodes: nil)
+
+        stageRecords.append(StagePerformanceRecord(
+            stageName: "Coverage Discovery",
+            durationSeconds: discoveryDuration,
+            metrics: nil,
+            customNote: "\(report.coverageDiagnostic.coverageGaps.count) gaps discovered"
+        ))
+
+        let duplicates = StorageAnalysisPerformanceDiagnostics.analyzeDuplicates(
+            results: results,
+            expansionReport: results.coverageExpansion
+        )
+
+        var allScannedRoots: [StorageNode] = []
+        if let userHome = results.userHomeStorage {
+            allScannedRoots.append(contentsOf: userHome.roots.map(\.node))
+        }
+        if let apps = results.applications {
+            allScannedRoots.append(apps.root)
+        }
+        if let appSupport = results.applicationSupport {
+            allScannedRoots.append(appSupport.root)
+        }
+        if let containers = results.containers {
+            allScannedRoots.append(containers.root)
+        }
+        if let groupContainers = results.groupContainers {
+            allScannedRoots.append(groupContainers.root)
+        }
+        if let sysLib = results.systemLibrary {
+            allScannedRoots.append(sysLib.root)
+        }
+        if let priv = results.privateStorage {
+            allScannedRoots.append(priv.root)
+        }
+        if let dev = results.developerSystemStorage {
+            allScannedRoots.append(dev.opt.result.root)
+            allScannedRoots.append(dev.usrLocal.result.root)
+        }
+
+        let heaviestSubtrees = StorageAnalysisPerformanceDiagnostics.findHeaviestSubtrees(
+            from: allScannedRoots,
+            limit: 20
+        )
+
+        let perfReport = StorageAnalysisPerformanceReport(
+            totalDurationSeconds: totalDuration,
+            stageRecords: stageRecords,
+            duplicateObservations: duplicates,
+            cacheMetrics: cacheMetrics,
+            heaviestSubtrees: heaviestSubtrees
+        )
+
+        StorageAnalysisPerformanceDiagnostics.printDebugReport(perfReport)
+    }
+    #endif
 }
 
 private extension Array where Element: Hashable {

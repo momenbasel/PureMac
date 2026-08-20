@@ -91,20 +91,30 @@ struct SystemLibraryAnalyzer: Sendable {
 
     private let systemLibraryURL: URL
     private let scanner: FileTreeScanner
+    private let cache: StorageAnalysisCache?
     private let largeAllocatedSizeThreshold: Int64
 
     init(
         systemLibraryURL: URL = SystemLibraryAnalyzer.defaultSystemLibraryURL,
         scanner: FileTreeScanner = FileTreeScanner(),
+        cache: StorageAnalysisCache? = nil,
         largeAllocatedSizeThreshold: Int64 = SystemLibraryAnalyzer.defaultLargeAllocatedSizeThreshold
     ) {
         self.systemLibraryURL = systemLibraryURL
         self.scanner = scanner
+        self.cache = cache
         self.largeAllocatedSizeThreshold = max(largeAllocatedSizeThreshold, 1)
     }
 
     func analyze() async -> StorageAnalysisResult {
-        let scannedResult = await scanner.scan(root: systemLibraryURL)
+        let scannedResult: StorageAnalysisResult
+        if let cached = cache?.get(path: systemLibraryURL.path) {
+            scannedResult = cached
+        } else {
+            let result = await scanner.scan(root: systemLibraryURL)
+            cache?.store(result, isFullSubtree: true)
+            scannedResult = result
+        }
         let threshold = largeAllocatedSizeThreshold
 
         return await Task.detached(priority: .utility) {

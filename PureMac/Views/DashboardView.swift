@@ -86,8 +86,13 @@ struct DashboardView: View {
         .coordinateSpace(name: dashboardSpace)
         .background(
             GeometryReader { geo in
-                Color.clear.onAppear { dashboardSize = geo.size }
-                    .onChange(of: geo.size) { dashboardSize = $0 }
+                Color.clear
+                    .onAppear {
+                        if dashboardSize != geo.size { dashboardSize = geo.size }
+                    }
+                    .onChange(of: geo.size) { newSize in
+                        if dashboardSize != newSize { dashboardSize = newSize }
+                    }
             }
         )
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)

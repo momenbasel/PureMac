@@ -177,6 +177,36 @@ final class FileTreeScannerTests: XCTestCase {
             result.root.ownAllocatedSize + originalNode.ownAllocatedSize
         )
     }
+
+    func testPackageBoundaryAggregation() async throws {
+        let temporaryDirectory = try TemporaryTestDirectory()
+        let appDir = temporaryDirectory.url.appendingPathComponent("SampleApp.app", isDirectory: true)
+        let contents = appDir.appendingPathComponent("Contents", isDirectory: true)
+        let macos = contents.appendingPathComponent("MacOS", isDirectory: true)
+        try FileManager.default.createDirectory(at: macos, withIntermediateDirectories: true)
+
+        let binary = macos.appendingPathComponent("sample_bin")
+        let data = Data(repeating: 0x88, count: 16_384)
+        try data.write(to: binary)
+
+        // Without aggregation
+        let fullScanner = FileTreeScanner(configuration: .init(aggregateApplicationPackages: false))
+        let fullResult = await fullScanner.scan(root: temporaryDirectory.url)
+
+        // With aggregation
+        let aggScanner = FileTreeScanner(configuration: .init(aggregateApplicationPackages: true))
+        let aggResult = await aggScanner.scan(root: temporaryDirectory.url)
+
+        let fullApp = try XCTUnwrap(node(at: appDir.path, in: fullResult.root))
+        let aggApp = try XCTUnwrap(node(at: appDir.path, in: aggResult.root))
+
+        XCTAssertEqual(aggApp.allocatedSize, fullApp.allocatedSize)
+        XCTAssertEqual(aggApp.logicalSize, fullApp.logicalSize)
+        XCTAssertEqual(aggApp.children.count, 0)
+        XCTAssertGreaterThan(fullApp.children.count, 0)
+        XCTAssertEqual(aggResult.root.allocatedSize, fullResult.root.allocatedSize)
+        XCTAssertEqual(aggResult.root.logicalSize, fullResult.root.logicalSize)
+    }
 }
 
 private final class TemporaryTestDirectory {

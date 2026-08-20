@@ -238,9 +238,11 @@ final class StorageCoverageDiagnosticTests: XCTestCase {
 
     func testDiagnosticsNeverFabricateInaccessibleByteCounts() {
         let value = diagnostic(applicationIssues: [issue("/private/unknown-size", .unreadable)])
-        let labels = Mirror(reflecting: value.coverageGaps[0]).children.compactMap(\.label)
+        let gap = value.coverageGaps[0]
 
-        XCTAssertFalse(labels.contains(where: { $0.lowercased().contains("byte") || $0.lowercased().contains("size") }))
+        XCTAssertNil(gap.allocatedBytes)
+        XCTAssertNil(gap.logicalBytes)
+        XCTAssertEqual(gap.confidence, .knownLowerBound)
     }
 
     func testPartialAnalyzerResultIsKnownLowerBound() {

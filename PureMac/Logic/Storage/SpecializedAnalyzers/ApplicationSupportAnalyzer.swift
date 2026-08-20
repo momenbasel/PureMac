@@ -36,17 +36,20 @@ struct ApplicationSupportAnalyzer: Sendable {
 
     private let applicationSupportURL: URL
     private let scanner: FileTreeScanner
+    private let cache: StorageAnalysisCache?
     private let largeAllocatedSizeThreshold: Int64
     private let attributionProvider: AttributionProvider
 
     init(
         applicationSupportURL: URL = ApplicationSupportAnalyzer.currentUserApplicationSupportURL,
         scanner: FileTreeScanner = FileTreeScanner(),
+        cache: StorageAnalysisCache? = nil,
         largeAllocatedSizeThreshold: Int64 = ApplicationSupportAnalyzer.defaultLargeAllocatedSizeThreshold
     ) {
         self.init(
             applicationSupportURL: applicationSupportURL,
             scanner: scanner,
+            cache: cache,
             largeAllocatedSizeThreshold: largeAllocatedSizeThreshold,
             attributionProvider: { directoryName in
                 ApplicationSupportAnalyzer.workspaceAttribution(for: directoryName)
@@ -57,11 +60,13 @@ struct ApplicationSupportAnalyzer: Sendable {
     init(
         applicationSupportURL: URL,
         scanner: FileTreeScanner = FileTreeScanner(),
+        cache: StorageAnalysisCache? = nil,
         largeAllocatedSizeThreshold: Int64 = ApplicationSupportAnalyzer.defaultLargeAllocatedSizeThreshold,
         attributionProvider: @escaping AttributionProvider
     ) {
         self.applicationSupportURL = applicationSupportURL
         self.scanner = scanner
+        self.cache = cache
         self.largeAllocatedSizeThreshold = max(largeAllocatedSizeThreshold, 1)
         self.attributionProvider = attributionProvider
     }
@@ -70,7 +75,14 @@ struct ApplicationSupportAnalyzer: Sendable {
     /// Support children are ordered by allocated size, while every descendant
     /// remains available for later drill-down.
     func analyze() async -> StorageAnalysisResult {
-        let scannedResult = await scanner.scan(root: applicationSupportURL)
+        let scannedResult: StorageAnalysisResult
+        if let cached = cache?.get(path: applicationSupportURL.path) {
+            scannedResult = cached
+        } else {
+            let result = await scanner.scan(root: applicationSupportURL)
+            cache?.store(result, isFullSubtree: true)
+            scannedResult = result
+        }
         let threshold = largeAllocatedSizeThreshold
         let attributionProvider = attributionProvider
 

@@ -85,6 +85,22 @@
 		AF0000000000000000000022 /* StorageAttributionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0000000000000000000021 /* StorageAttributionModels.swift */; };
 		AF0000000000000000000024 /* StorageAttributionAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0000000000000000000023 /* StorageAttributionAnalyzer.swift */; };
 		AF0000000000000000000026 /* StorageAttributionAnalyzerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0000000000000000000025 /* StorageAttributionAnalyzerTests.swift */; };
+		AF0000000000000000000032 /* TargetedCoverageGapMeasurementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0000000000000000000031 /* TargetedCoverageGapMeasurementTests.swift */; };
+		AF0000000000000000000042 /* APFSPhysicalReconciliationModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0000000000000000000041 /* APFSPhysicalReconciliationModels.swift */; };
+		AF0000000000000000000044 /* APFSPhysicalReconciliationAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0000000000000000000043 /* APFSPhysicalReconciliationAnalyzer.swift */; };
+		AF0000000000000000000046 /* APFSPhysicalReconciliationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0000000000000000000045 /* APFSPhysicalReconciliationTests.swift */; };
+		AF0000000000000000000048 /* DataVolumeInternalGapModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0000000000000000000047 /* DataVolumeInternalGapModels.swift */; };
+		AF000000000000000000004A /* DataVolumeInternalGapAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0000000000000000000049 /* DataVolumeInternalGapAnalyzer.swift */; };
+		AF000000000000000000004C /* DataVolumeInternalGapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF000000000000000000004B /* DataVolumeInternalGapTests.swift */; };
+		AF0000000000000000000052 /* ApplicationsStorageAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0000000000000000000051 /* ApplicationsStorageAnalyzer.swift */; };
+		AF0000000000000000000054 /* DataVolumeTopLevelSafetyNetModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0000000000000000000053 /* DataVolumeTopLevelSafetyNetModels.swift */; };
+		AF0000000000000000000056 /* DataVolumeTopLevelSafetyNetChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0000000000000000000055 /* DataVolumeTopLevelSafetyNetChecker.swift */; };
+		AF0000000000000000000058 /* ApplicationsStorageAnalyzerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0000000000000000000057 /* ApplicationsStorageAnalyzerTests.swift */; };
+		AF000000000000000000005A /* DataVolumeTopLevelSafetyNetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0000000000000000000059 /* DataVolumeTopLevelSafetyNetTests.swift */; };
+		AF000000000000000000005C /* StorageAnalysisPerformanceDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF000000000000000000005B /* StorageAnalysisPerformanceDiagnostics.swift */; };
+		AF000000000000000000005E /* StorageAnalysisPerformanceDiagnosticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF000000000000000000005D /* StorageAnalysisPerformanceDiagnosticsTests.swift */; };
+		AF0000000000000000000060 /* StorageAnalysisCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF000000000000000000005F /* StorageAnalysisCache.swift */; };
+		AF0000000000000000000062 /* StorageAnalysisCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0000000000000000000061 /* StorageAnalysisCacheTests.swift */; };
 		B51E5A95BB49A6C0F5273E21 /* FileSize.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE522B406791BCE905BC55B /* FileSize.swift */; };
 		B52938BBD11842631314543D /* CategoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B0AF194677EAC1D5568785 /* CategoryDetailView.swift */; };
 		B928E4369A3FC4369F014A29 /* SmartCareCoreArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA389C4F50505795FB31A51 /* SmartCareCoreArtwork.swift */; };
@@ -218,6 +234,22 @@
 		AF0000000000000000000021 /* StorageAttributionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageAttributionModels.swift; sourceTree = "<group>"; };
 		AF0000000000000000000023 /* StorageAttributionAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageAttributionAnalyzer.swift; sourceTree = "<group>"; };
 		AF0000000000000000000025 /* StorageAttributionAnalyzerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageAttributionAnalyzerTests.swift; sourceTree = "<group>"; };
+		AF0000000000000000000031 /* TargetedCoverageGapMeasurementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetedCoverageGapMeasurementTests.swift; sourceTree = "<group>"; };
+		AF0000000000000000000041 /* APFSPhysicalReconciliationModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APFSPhysicalReconciliationModels.swift; sourceTree = "<group>"; };
+		AF0000000000000000000043 /* APFSPhysicalReconciliationAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APFSPhysicalReconciliationAnalyzer.swift; sourceTree = "<group>"; };
+		AF0000000000000000000045 /* APFSPhysicalReconciliationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APFSPhysicalReconciliationTests.swift; sourceTree = "<group>"; };
+		AF0000000000000000000047 /* DataVolumeInternalGapModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataVolumeInternalGapModels.swift; sourceTree = "<group>"; };
+		AF0000000000000000000049 /* DataVolumeInternalGapAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataVolumeInternalGapAnalyzer.swift; sourceTree = "<group>"; };
+		AF000000000000000000004B /* DataVolumeInternalGapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataVolumeInternalGapTests.swift; sourceTree = "<group>"; };
+		AF0000000000000000000051 /* ApplicationsStorageAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationsStorageAnalyzer.swift; sourceTree = "<group>"; };
+		AF0000000000000000000053 /* DataVolumeTopLevelSafetyNetModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataVolumeTopLevelSafetyNetModels.swift; sourceTree = "<group>"; };
+		AF0000000000000000000055 /* DataVolumeTopLevelSafetyNetChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataVolumeTopLevelSafetyNetChecker.swift; sourceTree = "<group>"; };
+		AF0000000000000000000057 /* ApplicationsStorageAnalyzerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationsStorageAnalyzerTests.swift; sourceTree = "<group>"; };
+		AF0000000000000000000059 /* DataVolumeTopLevelSafetyNetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataVolumeTopLevelSafetyNetTests.swift; sourceTree = "<group>"; };
+		AF000000000000000000005B /* StorageAnalysisPerformanceDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageAnalysisPerformanceDiagnostics.swift; sourceTree = "<group>"; };
+		AF000000000000000000005D /* StorageAnalysisPerformanceDiagnosticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageAnalysisPerformanceDiagnosticsTests.swift; sourceTree = "<group>"; };
+		AF000000000000000000005F /* StorageAnalysisCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageAnalysisCache.swift; sourceTree = "<group>"; };
+		AF0000000000000000000061 /* StorageAnalysisCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageAnalysisCacheTests.swift; sourceTree = "<group>"; };
 		B2CD0028599BE178B96F18A6 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B2EA41E1096FA8E3B916AD13 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B71E8F62DB76D85F41F9A2E9 /* OrphanListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrphanListView.swift; sourceTree = "<group>"; };
@@ -272,6 +304,13 @@
 				AF0000000000000000000002 /* StoragePathNormalizerTests.swift */,
 				AF0000000000000000000012 /* CoverageExpansionAnalyzerTests.swift */,
 				AF0000000000000000000025 /* StorageAttributionAnalyzerTests.swift */,
+				AF0000000000000000000031 /* TargetedCoverageGapMeasurementTests.swift */,
+				AF0000000000000000000045 /* APFSPhysicalReconciliationTests.swift */,
+				AF000000000000000000004B /* DataVolumeInternalGapTests.swift */,
+				AF0000000000000000000057 /* ApplicationsStorageAnalyzerTests.swift */,
+				AF0000000000000000000059 /* DataVolumeTopLevelSafetyNetTests.swift */,
+				AF000000000000000000005D /* StorageAnalysisPerformanceDiagnosticsTests.swift */,
+				AF0000000000000000000061 /* StorageAnalysisCacheTests.swift */,
 				AC0000000000000000000002 /* UserHomeStorageAnalyzerTests.swift */,
 				491771F923C93FD61A263893 /* AppLanguagePreferencesTests.swift */,
 				752603285F7DBBA12BB3AA91 /* AppStateTests.swift */,
@@ -294,6 +333,9 @@
 			isa = PBXGroup;
 			children = (
 				AA0000000000000000000001 /* APFSStorageModels.swift */,
+				AF0000000000000000000041 /* APFSPhysicalReconciliationModels.swift */,
+				AF0000000000000000000047 /* DataVolumeInternalGapModels.swift */,
+				AF0000000000000000000053 /* DataVolumeTopLevelSafetyNetModels.swift */,
 				82BB0904726B38DEB141BECA /* AppLanguage.swift */,
 				A50000000000000000000001 /* DockerStorageModels.swift */,
 				3667D46D8E2004EB4D73835A /* Models.swift */,
@@ -396,6 +438,9 @@
 				A10000000000000000000002 /* FileTreeScanner.swift */,
 				AE0000000000000000000002 /* StorageCoverageDiagnostics.swift */,
 				AF0000000000000000000001 /* StoragePathNormalizer.swift */,
+				AF0000000000000000000055 /* DataVolumeTopLevelSafetyNetChecker.swift */,
+				AF000000000000000000005B /* StorageAnalysisPerformanceDiagnostics.swift */,
+				AF000000000000000000005F /* StorageAnalysisCache.swift */,
 				A20000000000000000000003 /* SpecializedAnalyzers */,
 				AA0000000000000000000002 /* VolumeStatisticsProvider.swift */,
 			);
@@ -406,10 +451,13 @@
 			isa = PBXGroup;
 			children = (
 				AA0000000000000000000003 /* APFSStorageAnalyzer.swift */,
+				AF0000000000000000000051 /* ApplicationsStorageAnalyzer.swift */,
 				A20000000000000000000001 /* ApplicationSupportAnalyzer.swift */,
 				A30000000000000000000001 /* ContainersAnalyzer.swift */,
 				AF0000000000000000000011 /* CoverageExpansionAnalyzer.swift */,
 				AF0000000000000000000023 /* StorageAttributionAnalyzer.swift */,
+				AF0000000000000000000043 /* APFSPhysicalReconciliationAnalyzer.swift */,
+				AF0000000000000000000049 /* DataVolumeInternalGapAnalyzer.swift */,
 				A80000000000000000000001 /* DataVolumeHiddenStorageAnalyzer.swift */,
 				A90000000000000000000001 /* DeveloperSystemStorageAnalyzer.swift */,
 				A50000000000000000000002 /* DockerStorageAnalyzer.swift */,
@@ -635,6 +683,15 @@
 				AF0000000000000000000013 /* CoverageExpansionAnalyzer.swift in Sources */,
 				AF0000000000000000000022 /* StorageAttributionModels.swift in Sources */,
 				AF0000000000000000000024 /* StorageAttributionAnalyzer.swift in Sources */,
+				AF0000000000000000000042 /* APFSPhysicalReconciliationModels.swift in Sources */,
+				AF0000000000000000000044 /* APFSPhysicalReconciliationAnalyzer.swift in Sources */,
+				AF0000000000000000000048 /* DataVolumeInternalGapModels.swift in Sources */,
+				AF000000000000000000004A /* DataVolumeInternalGapAnalyzer.swift in Sources */,
+				AF0000000000000000000052 /* ApplicationsStorageAnalyzer.swift in Sources */,
+				AF0000000000000000000054 /* DataVolumeTopLevelSafetyNetModels.swift in Sources */,
+				AF0000000000000000000056 /* DataVolumeTopLevelSafetyNetChecker.swift in Sources */,
+				AF000000000000000000005C /* StorageAnalysisPerformanceDiagnostics.swift in Sources */,
+				AF0000000000000000000060 /* StorageAnalysisCache.swift in Sources */,
 				AC0000000000000000000003 /* UserHomeStorageAnalyzer.swift in Sources */,
 				AD0000000000000000000004 /* StorageIntelligenceState.swift in Sources */,
 				AD0000000000000000000005 /* StorageIntelligenceView.swift in Sources */,
@@ -713,6 +770,13 @@
 				AF0000000000000000000004 /* StoragePathNormalizerTests.swift in Sources */,
 				AF0000000000000000000014 /* CoverageExpansionAnalyzerTests.swift in Sources */,
 				AF0000000000000000000026 /* StorageAttributionAnalyzerTests.swift in Sources */,
+				AF0000000000000000000032 /* TargetedCoverageGapMeasurementTests.swift in Sources */,
+				AF0000000000000000000046 /* APFSPhysicalReconciliationTests.swift in Sources */,
+				AF000000000000000000004C /* DataVolumeInternalGapTests.swift in Sources */,
+				AF0000000000000000000058 /* ApplicationsStorageAnalyzerTests.swift in Sources */,
+				AF000000000000000000005A /* DataVolumeTopLevelSafetyNetTests.swift in Sources */,
+				AF000000000000000000005E /* StorageAnalysisPerformanceDiagnosticsTests.swift in Sources */,
+				AF0000000000000000000062 /* StorageAnalysisCacheTests.swift in Sources */,
 				AC0000000000000000000004 /* UserHomeStorageAnalyzerTests.swift in Sources */,
 				59B3096E2AE8ED0397B16798 /* AppLanguagePreferencesTests.swift in Sources */,
 				E2403D82F00D749C9AD4A6D4 /* AppStateTests.swift in Sources */,

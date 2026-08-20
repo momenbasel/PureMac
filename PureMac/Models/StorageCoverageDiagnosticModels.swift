@@ -178,9 +178,39 @@ struct StorageCoverageGap: Identifiable, Hashable, Codable, Sendable {
     let state: StorageCoverageMapState
     let confidence: StorageMeasurementConfidence
     let explanation: String
+    let allocatedBytes: Int64?
+    let logicalBytes: Int64?
+    let isFilesystemAdditive: Bool
+    let issueCount: Int
 
     var id: String {
         "\(kind.rawValue)|\(absolutePath.map { StoragePathNormalizer.normalize($0) } ?? name)"
+    }
+
+    init(
+        kind: StorageCoverageGapKind,
+        name: String,
+        absolutePath: String?,
+        category: StorageCoverageDiagnosticCategory,
+        state: StorageCoverageMapState,
+        confidence: StorageMeasurementConfidence,
+        explanation: String,
+        allocatedBytes: Int64? = nil,
+        logicalBytes: Int64? = nil,
+        isFilesystemAdditive: Bool = false,
+        issueCount: Int = 0
+    ) {
+        self.kind = kind
+        self.name = name
+        self.absolutePath = absolutePath
+        self.category = category
+        self.state = state
+        self.confidence = confidence
+        self.explanation = explanation
+        self.allocatedBytes = allocatedBytes
+        self.logicalBytes = logicalBytes
+        self.isFilesystemAdditive = isFilesystemAdditive
+        self.issueCount = issueCount
     }
 }
 

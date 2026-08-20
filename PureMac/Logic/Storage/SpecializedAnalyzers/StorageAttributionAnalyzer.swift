@@ -173,6 +173,7 @@ struct StorageAttributionAnalyzer: Sendable {
         // Add standard firmlinked top-level roots if they were not directly present in enumerator
         let existingNormalized = Set(results.map(\.normalizedPath))
         let standardEntries: [(name: String, path: String, owner: StorageCanonicalRoot, stage: StorageAnalyzerStage)] = [
+            ("Applications", "/Applications", .applications, .applications),
             ("Users", "/Users", .userHomeVisibleStorage, .userHomeStorage),
             ("Library", "/Library", .systemLibrary, .systemLibrary),
             ("private", "/private", .privateStorage, .privateStorage),
@@ -211,6 +212,8 @@ struct StorageAttributionAnalyzer: Sendable {
         normalizedPath: String
     ) -> (StorageCanonicalRoot?, StorageAnalyzerStage?) {
         switch normalizedPath {
+        case "/Applications":
+            return (.applications, .applications)
         case "/Users":
             return (.userHomeVisibleStorage, .userHomeStorage)
         case "/Library":
@@ -230,6 +233,9 @@ struct StorageAttributionAnalyzer: Sendable {
         if normalizedPath.hasPrefix("/System/Volumes/Data/.") || normalizedPath.hasPrefix("/.") {
             return (.dataVolumeHiddenStorage, .dataVolumeHiddenStorage)
         }
+        if normalizedPath.hasPrefix("/Applications") {
+            return (.applications, .applications)
+        }
         if normalizedPath.hasPrefix("/private") {
             return (.privateStorage, .privateStorage)
         }
@@ -246,6 +252,7 @@ struct StorageAttributionAnalyzer: Sendable {
         reconciliationReport: StorageReconciliationReport
     ) -> [DataVolumeRootAttribution] {
         let standardEntries: [(name: String, path: String, owner: StorageCanonicalRoot, stage: StorageAnalyzerStage)] = [
+            ("Applications", "/Applications", .applications, .applications),
             ("Users", "/Users", .userHomeVisibleStorage, .userHomeStorage),
             ("Library", "/Library", .systemLibrary, .systemLibrary),
             ("private", "/private", .privateStorage, .privateStorage),
@@ -351,16 +358,16 @@ struct StorageAttributionAnalyzer: Sendable {
 
         // Category 1: Measured Gaps (from Coverage Expansion)
         if let coverageReport = reconciliationReport.analyzerResults.coverageExpansion {
-            for candidate in coverageReport.largestDiscoveredRegions where candidate.status == .measured {
+            for candidate in coverageReport.largestDiscoveredRegions where candidate.status.isMeasuredOrPartial {
                 items.append(StorageAttributionItem(
                     id: "gap:\(candidate.normalizedPath)",
                     category: .measuredGaps,
                     name: candidate.name,
                     path: candidate.normalizedPath,
-                    status: .measured,
+                    status: candidate.status == .measured ? .measured : .partial,
                     allocatedBytes: candidate.allocatedBytes,
                     explanation: "Discovered and measured by storage coverage expansion (\(candidate.scope.rawValue)).",
-                    isFilesystemAdditive: true
+                    isFilesystemAdditive: candidate.contributesToExplainedBytes
                 ))
             }
         }

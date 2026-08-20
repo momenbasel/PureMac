@@ -7,7 +7,7 @@ final class StorageAnalysisCoordinatorTests: XCTestCase {
 
         XCTAssertEqual(report.coverageStatus, .completeForConfiguredRoots)
         XCTAssertFalse(report.wasCancelled)
-        XCTAssertEqual(report.progress.completedStages, 11)
+        XCTAssertEqual(report.progress.completedStages, 12)
     }
 
     func testExplainedBytesUseCanonicalAllocatedTotals() async {
@@ -191,7 +191,7 @@ final class StorageAnalysisCoordinatorTests: XCTestCase {
 
         XCTAssertEqual(report.coverageStatus, .completeForConfiguredRoots)
         XCTAssertTrue(report.incompleteCoverage)
-        XCTAssertEqual(report.canonicalRootCoverage.count, 10)
+        XCTAssertEqual(report.canonicalRootCoverage.count, 11)
     }
 
     func testIssuesAreAggregatedFromAnalyzerResults() async {
@@ -223,8 +223,8 @@ final class StorageAnalysisCoordinatorTests: XCTestCase {
         }
         let values = await recorder.values
 
-        XCTAssertEqual(values.first?.totalStages, 11)
-        XCTAssertEqual(values.last?.completedStages, 11)
+        XCTAssertEqual(values.first?.totalStages, 12)
+        XCTAssertEqual(values.last?.completedStages, 12)
         XCTAssertEqual(values.last?.runningStages, [])
         XCTAssertEqual(report.progress, values.last)
     }
@@ -351,6 +351,7 @@ final class StorageAnalysisCoordinatorTests: XCTestCase {
         let results = await Self.makeCoordinator().analyze().analyzerResults
 
         XCTAssertNotNil(results.userHomeStorage)
+        XCTAssertNotNil(results.applications)
         XCTAssertNotNil(results.applicationSupport)
         XCTAssertNotNil(results.containers)
         XCTAssertNotNil(results.groupContainers)
@@ -361,6 +362,28 @@ final class StorageAnalysisCoordinatorTests: XCTestCase {
         XCTAssertNotNil(results.dockerStorage)
         XCTAssertNotNil(results.apfsStorage)
         XCTAssertNotNil(results.coverageExpansion)
+    }
+
+    func testCoordinatorIncludesApplicationsBytes() async {
+        var inputs = Inputs.baseline
+        inputs.applications = Self.result(path: "/Applications", allocated: 150)
+
+        let report = await Self.makeCoordinator(inputs).analyze()
+        let contribution = Self.contribution(report, source: .applications)
+
+        XCTAssertEqual(contribution?.accountedAllocatedBytes, 150)
+        XCTAssertEqual(report.explainedAllocatedBytes, 510)
+    }
+
+    func testApplicationsDeduplicatedWithDataVolumeApplications() async {
+        var inputs = Inputs.baseline
+        inputs.applications = Self.result(path: "/Applications", allocated: 200)
+
+        let report = await Self.makeCoordinator(inputs).analyze()
+        let contributions = report.filesystemContributions.filter { $0.source == .applications }
+
+        XCTAssertEqual(contributions.count, 1)
+        XCTAssertEqual(contributions.first?.accountedAllocatedBytes, 200)
     }
 
     func testCoordinatorIncludesVisibleUserHomeBytes() async {
@@ -437,6 +460,7 @@ private extension StorageAnalysisCoordinatorTests {
 
     struct Inputs: Sendable {
         var userHome: UserHomeStorageReport
+        var applications: StorageAnalysisResult
         var applicationSupport: StorageAnalysisResult
         var containers: StorageAnalysisResult
         var groupContainers: StorageAnalysisResult
@@ -451,6 +475,7 @@ private extension StorageAnalysisCoordinatorTests {
         static var baseline: Inputs {
             Inputs(
                 userHome: userHomeReport(),
+                applications: result(path: "/Applications", allocated: 0),
                 applicationSupport: result(
                     path: "/Users/test/Library/Application Support",
                     allocated: 10
@@ -491,6 +516,10 @@ private extension StorageAnalysisCoordinatorTests {
             userHomeStorageAnalysis: {
                 if stage == .userHomeStorage { throw TestFailure() }
                 return inputs.userHome
+            },
+            applicationsAnalysis: {
+                if stage == .applications { throw TestFailure() }
+                return inputs.applications
             },
             applicationSupportAnalysis: {
                 if stage == .applicationSupport { throw TestFailure() }
@@ -546,6 +575,7 @@ private extension StorageAnalysisCoordinatorTests {
         return StorageAnalysisCoordinator(
             maxConcurrentAnalyzers: 2,
             userHomeStorageAnalysis: { try await delay(); return inputs.userHome },
+            applicationsAnalysis: { try await delay(); return inputs.applications },
             applicationSupportAnalysis: { try await delay(); return inputs.applicationSupport },
             containersAnalysis: { try await delay(); return inputs.containers },
             groupContainersAnalysis: { try await delay(); return inputs.groupContainers },
@@ -757,6 +787,47 @@ private extension StorageAnalysisCoordinatorTests {
             wasCancelled: false,
             issues: []
         )
+    }
+
+    func testCoordinatorWiresRunCacheAcrossLiveAnalyzersAndRecordsAvoidedTraversals() async throws {
+        let coordinator = StorageAnalysisCoordinator(
+            userHomeStorageAnalysis: {
+                Self.userHomeReport(roots: [("/Users/test/Documents", 1000)])
+            },
+            applicationsAnalysis: {
+                Self.result(path: "/Applications", allocated: 1000)
+            },
+            systemLibraryAnalysis: {
+                Self.result(path: "/Library", allocated: 1000)
+            },
+            privateStorageAnalysis: {
+                Self.result(path: "/private", allocated: 1000)
+            },
+            dataVolumeHiddenStorageAnalysis: {
+                Self.result(path: "/System/Volumes/Data/.hidden", allocated: 1000)
+            },
+            developerSystemStorageAnalysis: {
+                Self.developerReport(optSize: 1000)
+            },
+            apfsStorageAnalysis: {
+                Self.apfsReport(used: 10000)
+            },
+            coverageExpansionAnalysis: {
+                StorageCoverageExpansionReport.empty
+            },
+            coverageDiscovery: {
+                StorageCoverageDiscoveryResult(
+                    homeDirectoryPath: "/Users/test",
+                    hiddenHomeEntries: [],
+                    unspecializedLibraryEntries: [],
+                    issues: [],
+                    wasCancelled: false
+                )
+            }
+        )
+
+        let report = await coordinator.analyze()
+        XCTAssertGreaterThan(report.filesystemContributions.count, 0)
     }
 }
 

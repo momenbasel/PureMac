@@ -117,17 +117,20 @@ struct DeveloperSystemStorageAnalyzer: Sendable {
     private let optURL: URL
     private let usrLocalURL: URL
     private let scanner: FileTreeScanner
+    private let cache: StorageAnalysisCache?
     private let largeAllocatedSizeThreshold: Int64
 
     init(
         optURL: URL = DeveloperSystemStorageAnalyzer.defaultOptURL,
         usrLocalURL: URL = DeveloperSystemStorageAnalyzer.defaultUsrLocalURL,
         scanner: FileTreeScanner = FileTreeScanner(),
+        cache: StorageAnalysisCache? = nil,
         largeAllocatedSizeThreshold: Int64 = DeveloperSystemStorageAnalyzer.defaultLargeAllocatedSizeThreshold
     ) {
         self.optURL = optURL
         self.usrLocalURL = usrLocalURL
         self.scanner = scanner
+        self.cache = cache
         self.largeAllocatedSizeThreshold = max(largeAllocatedSizeThreshold, 1)
     }
 
@@ -135,6 +138,8 @@ struct DeveloperSystemStorageAnalyzer: Sendable {
         let scan = await scanner.scanIndependentRoots([optURL, usrLocalURL])
         let optResult = scan.results[0]
         let usrLocalResult = scan.results[1]
+        cache?.store(optResult, isFullSubtree: true)
+        cache?.store(usrLocalResult, isFullSubtree: true)
         let threshold = largeAllocatedSizeThreshold
 
         return await Task.detached(priority: .utility) {

@@ -12,6 +12,7 @@ struct CoverageExpansionAnalyzer: Sendable {
     private let homeDirectoryURL: URL
     private let dataVolumeURL: URL
     private let scanner: FileTreeScanner
+    private let cache: StorageAnalysisCache?
     private let maxConcurrentDirectoryReads: Int
     private let extraExcludedCanonicalPaths: [String]
 
@@ -51,13 +52,15 @@ struct CoverageExpansionAnalyzer: Sendable {
         homeDirectoryURL: URL = FileManager.default.homeDirectoryForCurrentUser,
         dataVolumeURL: URL = URL(fileURLWithPath: "/System/Volumes/Data"),
         scanner: FileTreeScanner = FileTreeScanner(),
-        maxConcurrentDirectoryReads: Int = 2,
+        cache: StorageAnalysisCache? = nil,
+        maxConcurrentDirectoryReads: Int = 4,
         extraExcludedCanonicalPaths: [String] = []
     ) {
         self.homeDirectoryURL = homeDirectoryURL.standardizedFileURL
         self.dataVolumeURL = dataVolumeURL.standardizedFileURL
         self.scanner = scanner
-        self.maxConcurrentDirectoryReads = max(1, min(maxConcurrentDirectoryReads, 4))
+        self.cache = cache
+        self.maxConcurrentDirectoryReads = max(1, min(maxConcurrentDirectoryReads, 8))
         self.extraExcludedCanonicalPaths = extraExcludedCanonicalPaths
     }
 
@@ -142,6 +145,9 @@ struct CoverageExpansionAnalyzer: Sendable {
         var treeResults: [StorageAnalysisResult] = []
         var finalCandidates = discoveredCandidates
 
+        let scannerRef = scanner
+        let cacheRef = cache
+
         await withTaskGroup(of: (Int, StorageAnalysisResult?).self) { group in
             var iterator = eligibleIndices.makeIterator()
             let initialBatch = min(maxConcurrentDirectoryReads, eligibleIndices.count)
@@ -150,7 +156,11 @@ struct CoverageExpansionAnalyzer: Sendable {
                 if let index = iterator.next() {
                     let path = finalCandidates[index].originalPath
                     group.addTask {
-                        let result = await scanner.scan(root: URL(fileURLWithPath: path))
+                        if let cached = cacheRef?.get(path: path) {
+                            return (index, cached)
+                        }
+                        let result = await scannerRef.scan(root: URL(fileURLWithPath: path))
+                        cacheRef?.store(result, isFullSubtree: true)
                         return (index, result)
                     }
                 }
@@ -163,17 +173,35 @@ struct CoverageExpansionAnalyzer: Sendable {
                     if result.wasCancelled {
                         finalCandidates[index] = updateCandidateStatus(finalCandidates[index], status: .cancelled)
                     } else {
+                        let hasIssues = !result.issues.isEmpty
+                        let allocated = max(result.root.allocatedSize, 0)
+                        let logical = max(result.root.logicalSize, 0)
+
+                        let status: StorageCoverageCandidateStatus
+                        let contributes: Bool
+
+                        if !hasIssues {
+                            status = .measured
+                            contributes = true
+                        } else if allocated > 0 {
+                            status = .partiallyMeasured
+                            contributes = true
+                        } else {
+                            status = .inaccessible
+                            contributes = false
+                        }
+
                         finalCandidates[index] = StorageCoverageCandidate(
                             originalPath: finalCandidates[index].originalPath,
                             normalizedPath: finalCandidates[index].normalizedPath,
                             name: finalCandidates[index].name,
                             scope: finalCandidates[index].scope,
-                            status: .measured,
-                            allocatedBytes: max(result.root.allocatedSize, 0),
-                            logicalBytes: max(result.root.logicalSize, 0),
+                            status: status,
+                            allocatedBytes: allocated,
+                            logicalBytes: logical,
                             issue: result.issues.first,
-                            exclusionReason: nil,
-                            contributesToExplainedBytes: true
+                            exclusionReason: hasIssues ? "Partial scan; access restricted for some items." : nil,
+                            contributesToExplainedBytes: contributes
                         )
                         treeResults.append(result)
                     }
@@ -193,7 +221,7 @@ struct CoverageExpansionAnalyzer: Sendable {
 
         finalCandidates.sort { $0.normalizedPath < $1.normalizedPath }
 
-        let measuredCandidates = finalCandidates.filter { $0.status == .measured }
+        let measuredCandidates = finalCandidates.filter { $0.status.isMeasuredOrPartial && $0.contributesToExplainedBytes }
         let totalNewlyMeasuredBytes = measuredCandidates.reduce(Int64(0)) {
             $0 + ($1.allocatedBytes ?? 0)
         }
@@ -204,8 +232,17 @@ struct CoverageExpansionAnalyzer: Sendable {
         return StorageCoverageExpansionReport(
             totalNewlyMeasuredBytes: totalNewlyMeasuredBytes,
             measuredCandidateCount: measuredCandidates.count,
-            excludedOverlapCount: finalCandidates.filter { $0.status == .excludedAlreadyAccounted || $0.status == .excludedNested }.count,
-            inaccessibleCandidateCount: finalCandidates.filter { $0.status == .inaccessible || $0.status == .excludedProtectedSystem }.count,
+            excludedOverlapCount: finalCandidates.filter {
+                $0.status == .excludedAlreadyAccounted
+                    || $0.status == .excludedNested
+                    || $0.status == .skippedAlreadyOwned
+                    || $0.status == .skippedUnsafeOverlap
+            }.count,
+            inaccessibleCandidateCount: finalCandidates.filter {
+                $0.status == .inaccessible
+                    || $0.status == .excludedProtectedSystem
+                    || $0.status == .partiallyMeasured
+            }.count,
             differentVolumeBoundaryCount: finalCandidates.filter { $0.status == .excludedDifferentVolume }.count,
             failedCandidateCount: finalCandidates.filter { $0.status == .failed }.count,
             candidates: finalCandidates,

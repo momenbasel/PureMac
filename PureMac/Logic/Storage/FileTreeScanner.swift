@@ -6,9 +6,14 @@ import Foundation
 final class FileTreeScanner: @unchecked Sendable {
     struct Configuration: Sendable {
         let maxConcurrentDirectoryReads: Int
+        let aggregateApplicationPackages: Bool
 
-        init(maxConcurrentDirectoryReads: Int = 4) {
+        init(
+            maxConcurrentDirectoryReads: Int = 8,
+            aggregateApplicationPackages: Bool = false
+        ) {
             self.maxConcurrentDirectoryReads = min(max(maxConcurrentDirectoryReads, 1), 16)
+            self.aggregateApplicationPackages = aggregateApplicationPackages
         }
     }
 
@@ -33,15 +38,42 @@ final class FileTreeScanner: @unchecked Sendable {
     }
 
     private let configuration: Configuration
+    private let cache: StorageAnalysisCache?
 
-    init(configuration: Configuration = Configuration()) {
+    init(configuration: Configuration = Configuration(), cache: StorageAnalysisCache? = nil) {
         self.configuration = configuration
+        self.cache = cache
     }
 
     /// Scans off the calling actor. Cancelling the caller returns a partial
     /// tree whose incomplete locations are represented as scan issues.
-    func scan(root: URL) async -> StorageAnalysisResult {
-        await scan(root: root, immediateChildFilter: nil)
+    func scan(
+        root: URL,
+        aggregateApplicationPackages: Bool? = nil
+    ) async -> StorageAnalysisResult {
+        let shouldAggregate = aggregateApplicationPackages ?? configuration.aggregateApplicationPackages
+        if let cache {
+            do {
+                return try await cache.scanOrCoalesce(path: root.path) {
+                    await self.scanDirectly(
+                        root: root,
+                        immediateChildFilter: nil,
+                        aggregateApplicationPackages: shouldAggregate
+                    )
+                }
+            } catch {
+                return await scanDirectly(
+                    root: root,
+                    immediateChildFilter: nil,
+                    aggregateApplicationPackages: shouldAggregate
+                )
+            }
+        }
+        return await scanDirectly(
+            root: root,
+            immediateChildFilter: nil,
+            aggregateApplicationPackages: shouldAggregate
+        )
     }
 
     /// Scans independent roots in one detached operation. Each root enforces
@@ -67,11 +99,19 @@ final class FileTreeScanner: @unchecked Sendable {
             )
         }
 
-        return await withTaskCancellationHandler {
+        let analysis = await withTaskCancellationHandler {
             await task.value
         } onCancel: {
             cancellation.cancel()
         }
+
+        if let cache {
+            for result in analysis.results {
+                cache.store(result, isFullSubtree: true)
+            }
+        }
+
+        return analysis
     }
 
     /// Enumerates the supplied root once, then recursively scans only the
@@ -80,21 +120,34 @@ final class FileTreeScanner: @unchecked Sendable {
     /// selected children only; the root directory's own bytes are excluded.
     func scanSelectedImmediateChildren(
         root: URL,
+        aggregateApplicationPackages: Bool? = nil,
         including include: @escaping @Sendable (ImmediateChild) -> Bool
     ) async -> StorageAnalysisResult {
-        await scan(root: root, immediateChildFilter: include)
+        let shouldAggregate = aggregateApplicationPackages ?? configuration.aggregateApplicationPackages
+        return await scanDirectly(
+            root: root,
+            immediateChildFilter: include,
+            aggregateApplicationPackages: shouldAggregate
+        )
     }
 
-    private func scan(
+    private func scanDirectly(
         root: URL,
-        immediateChildFilter: (@Sendable (ImmediateChild) -> Bool)?
+        immediateChildFilter: (@Sendable (ImmediateChild) -> Bool)?,
+        aggregateApplicationPackages: Bool
     ) async -> StorageAnalysisResult {
         let cancellation = ScanCancellationToken()
-        let configuration = configuration
+        var config = configuration
+        if config.aggregateApplicationPackages != aggregateApplicationPackages {
+            config = Configuration(
+                maxConcurrentDirectoryReads: configuration.maxConcurrentDirectoryReads,
+                aggregateApplicationPackages: aggregateApplicationPackages
+            )
+        }
         let task = Task.detached(priority: .utility) {
             Self.scanSynchronously(
                 root: root,
-                configuration: configuration,
+                configuration: config,
                 cancellation: cancellation,
                 immediateChildFilter: immediateChildFilter
             )
@@ -123,6 +176,8 @@ private extension FileTreeScanner {
         var itemType: StorageItemType
         let ownLogicalSize: Int64
         let ownAllocatedSize: Int64
+        var aggregateLogicalSize: Int64? = nil
+        var aggregateAllocatedSize: Int64? = nil
         let deviceIdentifier: UInt64?
         let inode: UInt64?
         let hardLinkCount: UInt64
@@ -131,6 +186,7 @@ private extension FileTreeScanner {
         var isCountedInParentTotals: Bool
         var accessibility: StorageAccessibility
         var issues: [StorageScanIssue]
+        var isPackageAggregate: Bool = false
     }
 
     struct DirectoryRead: Sendable {
@@ -140,6 +196,14 @@ private extension FileTreeScanner {
         let wasCancelled: Bool
     }
 
+    struct PackageMeasurement: Sendable {
+        let logicalSize: Int64
+        let allocatedSize: Int64
+        let accessibility: StorageAccessibility
+        let issues: [StorageScanIssue]
+        let entriesMeasured: Int
+    }
+
     struct FlatScan: Sendable {
         let rootPath: String
         let startedAt: Date
@@ -147,6 +211,8 @@ private extension FileTreeScanner {
         let rootDeviceIdentifier: UInt64?
         let wasCancelled: Bool
         var nodesByPath: [String: FlatNode]
+        var packagesAggregated: Int = 0
+        var descendantEntriesMeasured: Int = 0
     }
 
     final class DirectoryReadCollector: @unchecked Sendable {
@@ -233,8 +299,48 @@ private extension FileTreeScanner {
             rootMetadata.isCountedInParentTotals = false
         }
         let rootDevice = rootMetadata.deviceIdentifier
-        var nodesByPath = [rootPath: rootMetadata]
+        var seenHardLinks: [FileIdentity: String] = [:]
+        if rootMetadata.hardLinkCount > 1,
+           let dev = rootMetadata.deviceIdentifier,
+           let ino = rootMetadata.inode {
+            seenHardLinks[FileIdentity(device: dev, inode: ino)] = rootPath
+        }
 
+        var packagesAggregated = 0
+        var descendantEntriesMeasured = 0
+
+        // If the root itself is an application package boundary and package aggregation is enabled:
+        if configuration.aggregateApplicationPackages,
+           rootPath.hasSuffix(".app"),
+           rootMetadata.itemType == .directory {
+            let measurement = measurePackageSubtree(
+                packageRoot: rootMetadata,
+                rootDevice: rootDevice,
+                cancellation: cancellation,
+                seenHardLinks: &seenHardLinks
+            )
+            packagesAggregated += 1
+            descendantEntriesMeasured += max(measurement.entriesMeasured - 1, 0)
+
+            rootMetadata.aggregateLogicalSize = measurement.logicalSize
+            rootMetadata.aggregateAllocatedSize = measurement.allocatedSize
+            rootMetadata.accessibility = measurement.accessibility
+            rootMetadata.issues = measurement.issues
+            rootMetadata.isPackageAggregate = true
+
+            return FlatScan(
+                rootPath: rootPath,
+                startedAt: startedAt,
+                completedAt: Date(),
+                rootDeviceIdentifier: rootDevice,
+                wasCancelled: cancellation.isCancelled,
+                nodesByPath: [rootPath: rootMetadata],
+                packagesAggregated: packagesAggregated,
+                descendantEntriesMeasured: descendantEntriesMeasured
+            )
+        }
+
+        var nodesByPath = [rootPath: rootMetadata]
         var pendingDirectories: [String] = []
         if rootMetadata.itemType == .directory {
             pendingDirectories.append(rootPath)
@@ -258,30 +364,89 @@ private extension FileTreeScanner {
                     markCancelled(directoryRead.path, nodesByPath: &nodesByPath)
                 }
 
-                for entryName in directoryRead.entryNames {
-                    if cancellation.isCancelled {
-                        markCancelled(directoryRead.path, nodesByPath: &nodesByPath)
-                        break
+                let entryNames = directoryRead.entryNames
+                guard !entryNames.isEmpty else { continue }
+
+                let parentPath = directoryRead.path
+                var children = [FlatNode?](repeating: nil, count: entryNames.count)
+
+                if entryNames.count >= 8, !cancellation.isCancelled {
+                    DispatchQueue.concurrentPerform(iterations: entryNames.count) { index in
+                        if !cancellation.isCancelled {
+                            let childPath = appending(entryNames[index], to: parentPath)
+                            children[index] = readMetadata(
+                                at: childPath,
+                                parentPath: parentPath,
+                                rootDevice: rootDevice
+                            )
+                        }
                     }
+                } else {
+                    for index in entryNames.indices {
+                        if cancellation.isCancelled { break }
+                        let childPath = appending(entryNames[index], to: parentPath)
+                        children[index] = readMetadata(
+                            at: childPath,
+                            parentPath: parentPath,
+                            rootDevice: rootDevice
+                        )
+                    }
+                }
 
-                    let childPath = appending(entryName, to: directoryRead.path)
-                    guard nodesByPath[childPath] == nil else { continue }
+                if cancellation.isCancelled {
+                    markCancelled(parentPath, nodesByPath: &nodesByPath)
+                    break
+                }
 
-                    let child = readMetadata(
-                        at: childPath,
-                        parentPath: directoryRead.path,
-                        rootDevice: rootDevice
-                    )
+                for childOpt in children {
+                    guard var child = childOpt else { continue }
+                    guard nodesByPath[child.path] == nil else { continue }
 
-                    if directoryRead.path == rootPath,
+                    if parentPath == rootPath,
                        let immediateChildFilter,
                        !immediateChildFilter(immediateChild(from: child)) {
                         continue
                     }
-                    nodesByPath[childPath] = child
+
+                    // Check if child is an application package boundary
+                    if configuration.aggregateApplicationPackages,
+                       child.name.hasSuffix(".app"),
+                       child.itemType == .directory {
+                        let measurement = measurePackageSubtree(
+                            packageRoot: child,
+                            rootDevice: rootDevice,
+                            cancellation: cancellation,
+                            seenHardLinks: &seenHardLinks
+                        )
+                        packagesAggregated += 1
+                        descendantEntriesMeasured += max(measurement.entriesMeasured - 1, 0)
+
+                        child.aggregateLogicalSize = measurement.logicalSize
+                        child.aggregateAllocatedSize = measurement.allocatedSize
+                        child.accessibility = measurement.accessibility
+                        child.issues = measurement.issues
+                        child.isPackageAggregate = true
+
+                        nodesByPath[child.path] = child
+                        // Do NOT add to pendingDirectories; internal descendants are not materialized
+                        continue
+                    }
+
+                    if child.hardLinkCount > 1,
+                       let dev = child.deviceIdentifier,
+                       let ino = child.inode {
+                        let identity = FileIdentity(device: dev, inode: ino)
+                        if seenHardLinks[identity] == nil {
+                            seenHardLinks[identity] = child.path
+                        } else {
+                            child.isCountedInParentTotals = false
+                        }
+                    }
+
+                    nodesByPath[child.path] = child
 
                     if child.itemType == .directory {
-                        pendingDirectories.append(childPath)
+                        pendingDirectories.append(child.path)
                     }
                 }
             }
@@ -310,15 +475,149 @@ private extension FileTreeScanner {
             completedAt: Date(),
             rootDeviceIdentifier: rootDevice,
             wasCancelled: wasCancelled,
-            nodesByPath: nodesByPath
+            nodesByPath: nodesByPath,
+            packagesAggregated: packagesAggregated,
+            descendantEntriesMeasured: descendantEntriesMeasured
+        )
+    }
+
+    static func measurePackageSubtree(
+        packageRoot: FlatNode,
+        rootDevice: UInt64?,
+        cancellation: ScanCancellationToken,
+        seenHardLinks: inout [FileIdentity: String]
+    ) -> PackageMeasurement {
+        var totalLogical: Int64 = packageRoot.isCountedInParentTotals ? packageRoot.ownLogicalSize : 0
+        var totalAllocated: Int64 = packageRoot.isCountedInParentTotals ? packageRoot.ownAllocatedSize : 0
+        var issues: [StorageScanIssue] = packageRoot.issues
+        var accessibility = packageRoot.accessibility
+        var entriesMeasured = 1
+
+        var pendingDirs: [String] = [packageRoot.path]
+
+        while !pendingDirs.isEmpty, !cancellation.isCancelled {
+            let currentDir = pendingDirs.removeLast()
+            let dirRead = readDirectory(at: currentDir, cancellation: cancellation)
+
+            if let issue = dirRead.issue {
+                issues.append(issue)
+                if accessibility == .accessible {
+                    accessibility = .partiallyAccessible
+                }
+            }
+
+            if dirRead.wasCancelled {
+                if accessibility == .accessible {
+                    accessibility = .partiallyAccessible
+                }
+                break
+            }
+
+            for entryName in dirRead.entryNames {
+                if cancellation.isCancelled { break }
+                let entryPath = appending(entryName, to: currentDir)
+                let entryNode = readMetadata(at: entryPath, parentPath: currentDir, rootDevice: rootDevice)
+                entriesMeasured += 1
+
+                if !entryNode.issues.isEmpty {
+                    issues.append(contentsOf: entryNode.issues)
+                    if accessibility == .accessible {
+                        accessibility = .partiallyAccessible
+                    }
+                }
+
+                if entryNode.accessibility != .accessible {
+                    if accessibility == .accessible {
+                        accessibility = .partiallyAccessible
+                    }
+                }
+
+                if entryNode.itemType == .volumeBoundary {
+                    continue
+                }
+
+                if entryNode.itemType == .directory {
+                    if entryNode.isCountedInParentTotals {
+                        totalLogical = saturatedAdd(totalLogical, entryNode.ownLogicalSize)
+                        totalAllocated = saturatedAdd(totalAllocated, entryNode.ownAllocatedSize)
+                    }
+                    pendingDirs.append(entryNode.path)
+                } else if entryNode.itemType == .regularFile {
+                    if entryNode.hardLinkCount > 1,
+                       let dev = entryNode.deviceIdentifier,
+                       let ino = entryNode.inode {
+                        let identity = FileIdentity(device: dev, inode: ino)
+                        if seenHardLinks[identity] == nil {
+                            seenHardLinks[identity] = entryNode.path
+                            if entryNode.isCountedInParentTotals {
+                                totalLogical = saturatedAdd(totalLogical, entryNode.ownLogicalSize)
+                                totalAllocated = saturatedAdd(totalAllocated, entryNode.ownAllocatedSize)
+                            }
+                        }
+                    } else {
+                        if entryNode.isCountedInParentTotals {
+                            totalLogical = saturatedAdd(totalLogical, entryNode.ownLogicalSize)
+                            totalAllocated = saturatedAdd(totalAllocated, entryNode.ownAllocatedSize)
+                        }
+                    }
+                } else {
+                    // Symbolic link (not followed) or other special item
+                    if entryNode.isCountedInParentTotals {
+                        totalLogical = saturatedAdd(totalLogical, entryNode.ownLogicalSize)
+                        totalAllocated = saturatedAdd(totalAllocated, entryNode.ownAllocatedSize)
+                    }
+                }
+            }
+        }
+
+        if cancellation.isCancelled {
+            if accessibility == .accessible {
+                accessibility = .partiallyAccessible
+            }
+            issues.append(StorageScanIssue(
+                path: packageRoot.path,
+                kind: .cancelled,
+                message: "The storage scan was cancelled before it completed.",
+                posixErrorCode: nil
+            ))
+        }
+
+        return PackageMeasurement(
+            logicalSize: totalLogical,
+            allocatedSize: totalAllocated,
+            accessibility: accessibility,
+            issues: issues,
+            entriesMeasured: entriesMeasured
         )
     }
 
     static func finalize(_ flatScan: FlatScan) -> StorageAnalysisResult {
-        let storageRoot = buildTree(
+        var storageRoot = buildTree(
             rootPath: flatScan.rootPath,
             nodesByPath: flatScan.nodesByPath
         )
+        if flatScan.packagesAggregated > 0 {
+            var meta = storageRoot.metadata
+            meta.attributes["fileTreeScanner.packagesAggregated"] = "\(flatScan.packagesAggregated)"
+            meta.attributes["fileTreeScanner.descendantEntriesMeasured"] = "\(flatScan.descendantEntriesMeasured)"
+            meta.attributes["fileTreeScanner.descendantNodesAvoided"] = "\(flatScan.descendantEntriesMeasured)"
+            storageRoot = StorageNode(
+                name: storageRoot.name,
+                absolutePath: storageRoot.absolutePath,
+                logicalSize: storageRoot.logicalSize,
+                allocatedSize: storageRoot.allocatedSize,
+                ownLogicalSize: storageRoot.ownLogicalSize,
+                ownAllocatedSize: storageRoot.ownAllocatedSize,
+                itemType: storageRoot.itemType,
+                children: storageRoot.children,
+                accessibility: storageRoot.accessibility,
+                scanIssues: storageRoot.scanIssues,
+                isHidden: storageRoot.isHidden,
+                isSymbolicLink: storageRoot.isSymbolicLink,
+                isCountedInParentTotals: storageRoot.isCountedInParentTotals,
+                metadata: meta
+            )
+        }
         let issues = flatScan.nodesByPath.values
             .flatMap(\.issues)
             .sorted(by: issueSort)
@@ -598,11 +897,18 @@ private extension FileTreeScanner {
             guard let flatNode = nodesByPath[path] else { continue }
             let children = (childrenByParent[path] ?? []).sorted { $0.absolutePath < $1.absolutePath }
 
-            var logicalSize = flatNode.isCountedInParentTotals ? flatNode.ownLogicalSize : 0
-            var allocatedSize = flatNode.isCountedInParentTotals ? flatNode.ownAllocatedSize : 0
-            for child in children {
-                logicalSize = saturatedAdd(logicalSize, child.logicalSize)
-                allocatedSize = saturatedAdd(allocatedSize, child.allocatedSize)
+            var logicalSize: Int64
+            var allocatedSize: Int64
+            if flatNode.isPackageAggregate {
+                logicalSize = flatNode.aggregateLogicalSize ?? flatNode.ownLogicalSize
+                allocatedSize = flatNode.aggregateAllocatedSize ?? flatNode.ownAllocatedSize
+            } else {
+                logicalSize = flatNode.isCountedInParentTotals ? flatNode.ownLogicalSize : 0
+                allocatedSize = flatNode.isCountedInParentTotals ? flatNode.ownAllocatedSize : 0
+                for child in children {
+                    logicalSize = saturatedAdd(logicalSize, child.logicalSize)
+                    allocatedSize = saturatedAdd(allocatedSize, child.allocatedSize)
+                }
             }
 
             var accessibility = flatNode.accessibility

@@ -51,6 +51,7 @@ struct StorageIntelligenceView: View {
                     diagnostic: diagnostic,
                     summary: state.summary,
                     attribution: state.attributionPresentation,
+                    physicalReconciliation: state.physicalReconciliationPresentation,
                     fullDiskAccessGranted: appState.hasFullDiskAccess,
                     dismiss: state.dismissDiagnostics
                 )
@@ -652,13 +653,15 @@ private struct StorageTreeNodeView: View {
             row
         } else {
             DisclosureGroup(isExpanded: $isExpanded) {
-                LazyVStack(spacing: 5) {
-                    ForEach(node.children) { child in
-                        StorageTreeNodeView(node: child, state: state)
+                if isExpanded {
+                    LazyVStack(spacing: 5) {
+                        ForEach(state.sortedChildren(of: node)) { child in
+                            StorageTreeNodeView(node: child, state: state)
+                        }
                     }
+                    .padding(.leading, 18)
+                    .padding(.top, 5)
                 }
-                .padding(.leading, 18)
-                .padding(.top, 5)
             } label: {
                 row
             }
@@ -1004,12 +1007,19 @@ private struct StorageCoverageDiagnosticsView: View {
     let diagnostic: StorageCoverageDiagnostic
     let summary: StorageSummaryPresentation?
     let attribution: StorageAttributionPresentation?
+    let physicalReconciliation: APFSPhysicalReconciliationPresentation?
     let fullDiskAccessGranted: Bool
     let dismiss: () -> Void
 
     var body: some View {
         NavigationStack {
             List {
+                if let physicalReconciliation {
+                    Section("APFS physical reconciliation") {
+                        apfsPhysicalReconciliationBreakdown(physicalReconciliation)
+                    }
+                }
+
                 if let attribution {
                     Section("Unexplained storage attribution") {
                         VStack(alignment: .leading, spacing: 6) {
@@ -1154,27 +1164,7 @@ private struct StorageCoverageDiagnosticsView: View {
                         Text("No structural coverage gaps were discovered.")
                             .foregroundStyle(.secondary)
                     } else {
-                        ForEach(diagnostic.coverageGaps) { gap in
-                            VStack(alignment: .leading, spacing: 3) {
-                                HStack {
-                                    Text(gap.name).fontWeight(.medium)
-                                    Spacer()
-                                    Text(gap.confidence.displayName)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                if let path = gap.absolutePath {
-                                    Text(path)
-                                        .font(.caption.monospaced())
-                                        .foregroundStyle(.secondary)
-                                        .textSelection(.enabled)
-                                }
-                                Text(gap.explanation)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .padding(.vertical, 2)
-                        }
+                        coverageGapsBreakdown(diagnostic.coverageGaps)
                     }
                 }
 
@@ -1335,6 +1325,559 @@ private struct StorageCoverageDiagnosticsView: View {
             .clipShape(Capsule())
     }
 
+    private func coverageGapsBreakdown(_ gaps: [StorageCoverageGap]) -> some View {
+        let totalDiscovered = gaps.count
+        let measuredGaps = gaps.filter { $0.state == .measured && ($0.allocatedBytes ?? 0) > 0 }
+            .sorted { ($0.allocatedBytes ?? 0) > ($1.allocatedBytes ?? 0) }
+        let measuredBytes = measuredGaps.reduce(Int64(0)) { $0 + ($1.allocatedBytes ?? 0) }
+
+        let partialOrInaccessibleGaps = gaps.filter {
+            $0.state == .partiallyMeasured || $0.category == .permissionDenied || $0.category == .inaccessible
+        }
+
+        let alreadyAccountedGaps = gaps.filter {
+            $0.state == .measured && (($0.allocatedBytes == nil || $0.allocatedBytes == 0) || !$0.isFilesystemAdditive)
+        }
+
+        let stillUnmeasuredGaps = gaps.filter {
+            $0.state == .presentButUnmeasured || $0.state == .intentionallyUnmeasured || $0.state == .missingOptional
+        }
+
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Discovered")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text("\(totalDiscovered)")
+                        .font(.caption.weight(.semibold))
+                }
+                Spacer()
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Measured")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text("\(measuredGaps.count) (\(StorageValueFormatter.string(measuredBytes)))")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.green)
+                }
+                Spacer()
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Partial / Locked")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text("\(partialOrInaccessibleGaps.count)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.orange)
+                }
+                Spacer()
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Unmeasured")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text("\(stillUnmeasuredGaps.count)")
+                        .font(.caption.weight(.semibold))
+                }
+            }
+            .padding(8)
+            .background(Color.secondary.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+
+            if !measuredGaps.isEmpty {
+                DisclosureGroup(isExpanded: .constant(true)) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(measuredGaps) { gap in
+                            coverageGapRow(gap: gap, status: .measured)
+                        }
+                    }
+                    .padding(.top, 4)
+                } label: {
+                    HStack {
+                        Label("Measured gaps (\(measuredGaps.count))", systemImage: "checkmark.circle.fill")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.green)
+                        Spacer()
+                        Text(StorageValueFormatter.string(measuredBytes))
+                            .font(.subheadline.weight(.semibold).monospacedDigit())
+                    }
+                }
+            }
+
+            if !partialOrInaccessibleGaps.isEmpty {
+                DisclosureGroup {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(partialOrInaccessibleGaps) { gap in
+                            let status: StorageAttributionStatus = gap.category == .permissionDenied ? .protectedUnreadable : .partial
+                            coverageGapRow(gap: gap, status: status)
+                        }
+                    }
+                    .padding(.top, 4)
+                } label: {
+                    Label("Partial & restricted access (\(partialOrInaccessibleGaps.count))", systemImage: "lock.shield")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.orange)
+                }
+            }
+
+            if !alreadyAccountedGaps.isEmpty {
+                DisclosureGroup {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(alreadyAccountedGaps) { gap in
+                            coverageGapRow(gap: gap, status: .nonAdditive)
+                        }
+                    }
+                    .padding(.top, 4)
+                } label: {
+                    Label("Already accounted canonical roots (\(alreadyAccountedGaps.count))", systemImage: "arrow.triangle.merge")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.blue)
+                }
+            }
+
+            if !stillUnmeasuredGaps.isEmpty {
+                DisclosureGroup {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(stillUnmeasuredGaps) { gap in
+                            coverageGapRow(gap: gap, status: .unknown)
+                        }
+                    }
+                    .padding(.top, 4)
+                } label: {
+                    Label("Intentionally unmeasured regions (\(stillUnmeasuredGaps.count))", systemImage: "questionmark.circle")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    private func coverageGapRow(gap: StorageCoverageGap, status: StorageAttributionStatus) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(gap.name)
+                        .font(.caption.weight(.medium))
+                    gapStatusBadge(for: gap, defaultStatus: status)
+                }
+                if let path = gap.absolutePath {
+                    Text(path)
+                        .font(.caption2.monospaced())
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                }
+                Text(gap.explanation)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            if let allocated = gap.allocatedBytes, allocated > 0 {
+                VStack(alignment: .trailing, spacing: 1) {
+                    Text(StorageValueFormatter.string(allocated))
+                        .font(.caption.monospacedDigit().weight(.medium))
+                    if gap.isFilesystemAdditive {
+                        Text("Additive")
+                            .font(.caption2)
+                            .foregroundStyle(.green)
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 3)
+        .padding(.horizontal, 6)
+        .background(Color.secondary.opacity(0.04))
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+
+    private func gapStatusBadge(for gap: StorageCoverageGap, defaultStatus: StorageAttributionStatus) -> some View {
+        let title: String
+        let tint: Color
+        switch gap.state {
+        case .measured:
+            title = "Measured"
+            tint = .green
+        case .partiallyMeasured:
+            title = "Partial"
+            tint = .orange
+        case .presentButUnmeasured, .intentionallyUnmeasured:
+            title = "Unmeasured"
+            tint = .secondary
+        case .missingOptional:
+            title = "Optional"
+            tint = .secondary
+        case .unavailable:
+            title = "Inaccessible"
+            tint = .purple
+        case .nonAdditive:
+            title = "Non-additive"
+            tint = .cyan
+        }
+
+        return Text(title)
+            .font(.caption2.weight(.medium))
+            .padding(.horizontal, 5)
+            .padding(.vertical, 1.5)
+            .background(tint.opacity(0.15))
+            .foregroundColor(tint)
+            .clipShape(Capsule())
+    }
+
+    @ViewBuilder
+    private func apfsPhysicalReconciliationBreakdown(_ presentation: APFSPhysicalReconciliationPresentation) -> some View {
+        let rep = presentation.report
+        let m = rep.metrics
+
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Reconciliation of APFS physical container usage, sibling volumes, and filesystem-attributed bytes.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Physical Used")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(StorageValueFormatter.string(m.physicalVolumeUsedBytes))
+                        .font(.caption.weight(.semibold))
+                }
+                Spacer()
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Attributed")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(StorageValueFormatter.string(m.filesystemAttributedBytes))
+                        .font(.caption.weight(.semibold))
+                }
+                Spacer()
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Physical Gap")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(StorageValueFormatter.string(m.physicalAccountingGapBytes))
+                        .font(.caption.weight(.semibold))
+                }
+                Spacer()
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Purgeable")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(StorageValueFormatter.string(m.purgeableEstimateBytes))
+                        .font(.caption.weight(.semibold))
+                }
+            }
+            .padding(8)
+            .background(Color.secondary.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+
+            HStack(alignment: .top, spacing: 6) {
+                physicalStatusBadge(for: rep.status)
+                Text(rep.humanReadableInterpretation)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.top, 4)
+        }
+        .padding(.vertical, 2)
+
+        if let container = rep.container, !container.volumes.isEmpty {
+            DisclosureGroup {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Sibling APFS volumes sharing the same physical APFS container (\(container.containerReference)).")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    ForEach(container.volumes) { vol in
+                        HStack(alignment: .firstTextBaseline) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                HStack(spacing: 6) {
+                                    Text(vol.name)
+                                        .fontWeight(.medium)
+                                    Text("(\(vol.role))")
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Text(vol.deviceIdentifier)
+                                    .font(.caption2.monospaced())
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            if let bytes = vol.capacityInUseBytes {
+                                Text(StorageValueFormatter.string(bytes))
+                                    .font(.caption.weight(.semibold))
+                                    .monospacedDigit()
+                            } else {
+                                Text("—")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 2)
+                    }
+
+                    if container.totalSiblingVolumeBytesOutsideData > 0 {
+                        HStack {
+                            Text("Total sibling volume footprint outside Data")
+                                .font(.caption.weight(.medium))
+                            Spacer()
+                            Text(StorageValueFormatter.string(container.totalSiblingVolumeBytesOutsideData))
+                                .font(.caption.weight(.bold))
+                                .monospacedDigit()
+                        }
+                        .padding(.top, 4)
+                    }
+                }
+            } label: {
+                HStack {
+                    Text("Container sibling volumes")
+                        .fontWeight(.medium)
+                    Spacer()
+                    Text(StorageValueFormatter.string(container.totalSiblingVolumeBytesOutsideData))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+
+        if let target = rep.targetVolume {
+            DisclosureGroup {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("Volume Name:")
+                            .font(.caption.weight(.medium))
+                        Spacer()
+                        Text(target.name)
+                            .font(.caption)
+                    }
+                    HStack {
+                        Text("Mount Point:")
+                            .font(.caption.weight(.medium))
+                        Spacer()
+                        Text(target.mountPoint)
+                            .font(.caption.monospaced())
+                    }
+                    HStack {
+                        Text("Device Identifier:")
+                            .font(.caption.weight(.medium))
+                        Spacer()
+                        Text(target.deviceIdentifier)
+                            .font(.caption.monospaced())
+                    }
+                    if let inUse = target.capacityInUseBytes {
+                        HStack {
+                            Text("Reported In-Use Capacity:")
+                                .font(.caption.weight(.medium))
+                            Spacer()
+                            Text(StorageValueFormatter.string(inUse))
+                                .font(.caption.weight(.semibold))
+                        }
+                    }
+                    if let internalGap = m.dataVolumeInternalGapBytes {
+                        HStack {
+                            Text("Data Volume Internal Gap:")
+                                .font(.caption.weight(.medium))
+                            Spacer()
+                            Text(StorageValueFormatter.string(internalGap))
+                                .font(.caption.weight(.semibold))
+                        }
+                    }
+                }
+            } label: {
+                HStack {
+                    Text("Target Data-volume identity")
+                        .fontWeight(.medium)
+                    Spacer()
+                    Text(target.deviceIdentifier)
+                        .font(.caption.monospaced())
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+
+        if rep.snapshots.snapshotCount > 0 || rep.snapshots.totalReportedSnapshotBytes != nil {
+            DisclosureGroup {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(rep.snapshots.explanation)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    HStack {
+                        Text("Local Snapshots:")
+                            .font(.caption.weight(.medium))
+                        Spacer()
+                        Text("\(rep.snapshots.snapshotCount)")
+                            .font(.caption)
+                    }
+                    if let snapBytes = rep.snapshots.totalReportedSnapshotBytes {
+                        HStack {
+                            Text("Reported Logical Size:")
+                                .font(.caption.weight(.medium))
+                            Spacer()
+                            Text(StorageValueFormatter.string(snapBytes))
+                                .font(.caption.weight(.semibold))
+                        }
+                    }
+                }
+            } label: {
+                HStack {
+                    Text("APFS snapshot evidence (non-additive)")
+                        .fontWeight(.medium)
+                    Spacer()
+                    Text("\(rep.snapshots.snapshotCount) snapshot\(rep.snapshots.snapshotCount == 1 ? "" : "s")")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+
+        if let gap = rep.dataVolumeInternalGap {
+            DisclosureGroup {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(gap.humanReadableInterpretation)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    VStack(spacing: 4) {
+                        if let inUse = gap.dataVolumePhysicalInUseBytes {
+                            HStack {
+                                Text("Data Volume Physical In-Use")
+                                    .font(.caption.weight(.medium))
+                                Spacer()
+                                Text(StorageValueFormatter.string(inUse))
+                                    .font(.caption.weight(.semibold))
+                                    .monospacedDigit()
+                            }
+                        }
+                        HStack {
+                            Text("Filesystem Attributed Blocks")
+                                .font(.caption.weight(.medium))
+                            Spacer()
+                            Text(StorageValueFormatter.string(gap.filesystemAttributedBytes))
+                                .font(.caption.weight(.semibold))
+                                .monospacedDigit()
+                        }
+                        if let intGap = gap.internalPhysicalGapBytes {
+                            HStack {
+                                Text("Internal Physical Accounting Gap")
+                                    .font(.caption.weight(.bold))
+                                Spacer()
+                                Text(StorageValueFormatter.string(intGap))
+                                    .font(.caption.weight(.bold))
+                                    .monospacedDigit()
+                            }
+                        }
+                    }
+                    .padding(6)
+                    .background(Color.secondary.opacity(0.06))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                    Text("Evidence Waterfall")
+                        .font(.caption.weight(.bold))
+                        .padding(.top, 4)
+
+                    ForEach(gap.waterfallItems) { item in
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack {
+                                Text(item.title)
+                                    .font(.caption.weight(.medium))
+                                Spacer()
+                                waterfallTierBadge(for: item.tier, badgeText: item.badgeText)
+                                if let bytes = item.reportedBytes {
+                                    Text(StorageValueFormatter.string(bytes))
+                                        .font(.caption.weight(.semibold))
+                                        .monospacedDigit()
+                                } else {
+                                    Text("—")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            Text(item.explanation)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 2)
+                    }
+
+                    if gap.allocationDeltaSummary.totalMeasuredAllocatedBytes > 0 {
+                        Text("Allocation vs Logical Size Diagnostic")
+                            .font(.caption.weight(.bold))
+                            .padding(.top, 4)
+
+                        Text(gap.allocationDeltaSummary.explanation)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if !gap.protectedSummary.families.isEmpty {
+                        Text("macOS Protected Storage Families (\(gap.protectedSummary.families.count))")
+                            .font(.caption.weight(.bold))
+                            .padding(.top, 4)
+
+                        ForEach(gap.protectedSummary.families) { family in
+                            HStack {
+                                Text(family.name)
+                                    .font(.caption)
+                                Spacer()
+                                Text("\(family.issueCount) path\(family.issueCount == 1 ? "" : "s")")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+            } label: {
+                HStack {
+                    Text("Data Volume Internal Gap Waterfall")
+                        .fontWeight(.medium)
+                    Spacer()
+                    if let intGap = gap.internalPhysicalGapBytes {
+                        Text(StorageValueFormatter.string(intGap))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+    }
+
+    private func waterfallTierBadge(for tier: DataVolumeGapEvidenceTier, badgeText: String) -> some View {
+        let tint: Color
+        switch tier {
+        case .measuredAdditive: tint = .green
+        case .measuredNonAdditive: tint = .cyan
+        case .estimatedOSReported: tint = .orange
+        case .presenceOnly: tint = .blue
+        case .unknownProtected: tint = .purple
+        }
+
+        return Text(badgeText)
+            .font(.caption2.weight(.medium))
+            .padding(.horizontal, 5)
+            .padding(.vertical, 1.5)
+            .background(tint.opacity(0.15))
+            .foregroundColor(tint)
+            .clipShape(Capsule())
+    }
+
+    private func physicalStatusBadge(for status: APFSPhysicalReconciliationStatus) -> some View {
+        let tint: Color
+        switch status {
+        case .fullyReconciled: tint = .green
+        case .mostlyReconciled: tint = .blue
+        case .filesystemCoverageLimited: tint = .orange
+        case .apfsNonAdditiveFactorsPresent: tint = .cyan
+        case .protectedSystemStoragePresent: tint = .purple
+        case .physicalAccountingGapRemaining: tint = .secondary
+        case .insufficientEvidence: tint = .secondary
+        }
+
+        return Text(status.displayName)
+            .font(.caption2.weight(.medium))
+            .padding(.horizontal, 5)
+            .padding(.vertical, 1.5)
+            .background(tint.opacity(0.15))
+            .foregroundColor(tint)
+            .clipShape(Capsule())
+    }
+
     private func badgeBackground(for status: StorageAttributionStatus) -> Color {
         switch status {
         case .measured: return Color.green.opacity(0.15)
@@ -1389,6 +1932,7 @@ private extension StorageCanonicalRoot {
     var displayName: String {
         switch self {
         case .userHomeVisibleStorage: return "User Files"
+        case .applications: return "Applications"
         case .applicationSupport: return "Application Support"
         case .containers: return "Containers"
         case .groupContainers: return "Group Containers"
@@ -1443,6 +1987,7 @@ private extension StorageIntelligenceCategoryID {
     var icon: String {
         switch self {
         case .userFiles: return "person.crop.circle.fill"
+        case .applications: return "app.fill"
         case .applicationSupport: return "app.badge.fill"
         case .containers: return "shippingbox.fill"
         case .groupContainers: return "square.stack.3d.up.fill"
@@ -1458,6 +2003,7 @@ private extension StorageIntelligenceCategoryID {
     var tint: Color {
         switch self {
         case .userFiles: return Tint.blue
+        case .applications: return Tint.blue
         case .applicationSupport: return Tint.purple
         case .containers: return Tint.cyan
         case .groupContainers: return Tint.pink
@@ -1476,6 +2022,7 @@ private extension StorageAnalyzerStage {
         switch self {
         case .apfsVolume: return "APFS volume"
         case .userHomeStorage: return "user files"
+        case .applications: return "Applications"
         case .applicationSupport: return "Application Support"
         case .containers: return "containers"
         case .groupContainers: return "group containers"

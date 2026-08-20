@@ -575,6 +575,7 @@ final class StoragePathNormalizerTests: XCTestCase {
 
     private func makeCoordinator(
         userHome: UserHomeStorageReport? = nil,
+        applications: StorageAnalysisResult? = nil,
         applicationSupport: StorageAnalysisResult? = nil,
         containers: StorageAnalysisResult? = nil,
         groupContainers: StorageAnalysisResult? = nil,
@@ -589,6 +590,10 @@ final class StoragePathNormalizerTests: XCTestCase {
         StorageAnalysisCoordinator(
             userHomeStorageAnalysis: {
                 if let userHome { return userHome }
+                throw TestStageNotRun()
+            },
+            applicationsAnalysis: {
+                if let applications { return applications }
                 throw TestStageNotRun()
             },
             applicationSupportAnalysis: {

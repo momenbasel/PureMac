@@ -37,6 +37,7 @@ enum StorageIntelligenceAction: String, CaseIterable, Sendable {
 
 enum StorageIntelligenceCategoryID: String, CaseIterable, Identifiable, Sendable {
     case userFiles
+    case applications
     case applicationSupport
     case containers
     case groupContainers
@@ -52,6 +53,7 @@ enum StorageIntelligenceCategoryID: String, CaseIterable, Identifiable, Sendable
     var title: String {
         switch self {
         case .userFiles: return "User Files"
+        case .applications: return "Applications"
         case .applicationSupport: return "Application Support"
         case .containers: return "Containers"
         case .groupContainers: return "Group Containers"
@@ -67,6 +69,7 @@ enum StorageIntelligenceCategoryID: String, CaseIterable, Identifiable, Sendable
     var explanation: String {
         switch self {
         case .userFiles: return "Visible files and folders in your home directory."
+        case .applications: return "Installed applications and utilities in /Applications."
         case .applicationSupport: return "Application-owned support files and local data."
         case .containers: return "Sandboxed application data stored by macOS."
         case .groupContainers: return "Data shared by related sandboxed applications."
@@ -262,6 +265,10 @@ struct StorageAttributionPresentation: Equatable, Sendable {
     let purgeableEstimateBytes: Int64?
 }
 
+struct APFSPhysicalReconciliationPresentation: Equatable, Sendable {
+    let report: APFSPhysicalReconciliationReport
+}
+
 @MainActor
 final class StorageIntelligenceState: ObservableObject {
     typealias ProgressHandler = @Sendable (StorageAnalysisProgress) async -> Void
@@ -276,6 +283,7 @@ final class StorageIntelligenceState: ObservableObject {
     @Published private(set) var coverage: StorageCoveragePresentation?
     @Published private(set) var additionalCoverage: StorageAdditionalCoveragePresentation?
     @Published private(set) var attributionPresentation: StorageAttributionPresentation?
+    @Published private(set) var physicalReconciliationPresentation: APFSPhysicalReconciliationPresentation?
     @Published private(set) var coverageDiagnostic: StorageCoverageDiagnostic?
     @Published private(set) var categories: [StorageCategoryPresentation] = []
     @Published private(set) var dockerPresentation: StorageDockerPresentation?
@@ -349,14 +357,32 @@ final class StorageIntelligenceState: ObservableObject {
                     }
                 }
                 let callerWasCancelled = Task.isCancelled
+                let postScanStart = CFAbsoluteTimeGetCurrent()
                 let prepared = await Task.detached(priority: .utility) {
                     Self.prepare(report: result, sortOrder: .sizeDescending)
                 }.value
 
                 guard let self, self.scanIdentifier == identifier else { return }
+                let publishStart = CFAbsoluteTimeGetCurrent()
                 self.apply(result, prepared: prepared)
                 self.lifecycle = result.wasCancelled || callerWasCancelled ? .cancelled : .completed
                 self.progress = result.progress
+                let publishDuration = CFAbsoluteTimeGetCurrent() - publishStart
+                let totalPostScan = CFAbsoluteTimeGetCurrent() - postScanStart
+
+                #if DEBUG
+                Self.emitPostScanPerformanceReport(
+                    reconciliationDuration: result.duration,
+                    treePrepDuration: prepared.treePrepDuration,
+                    searchIndexDuration: prepared.searchIndexDuration,
+                    diagnosticsPrepDuration: prepared.diagnosticsPrepDuration,
+                    mainActorPublishDuration: publishDuration,
+                    totalPostScanDuration: totalPostScan,
+                    storageNodeCountReceived: prepared.storageNodeCountReceived,
+                    presentationNodeCountCreated: prepared.presentationNodeCountCreated,
+                    visibleRowsInitiallyRendered: prepared.categories.count
+                )
+                #endif
             } catch is CancellationError {
                 guard let self, self.scanIdentifier == identifier else { return }
                 self.lifecycle = .cancelled
@@ -446,6 +472,10 @@ final class StorageIntelligenceState: ObservableObject {
         revealHandler(node.absolutePath)
     }
 
+    func sortedChildren(of node: StorageNode) -> [StorageNode] {
+        node.children.sorted { Self.nodeSort($0, $1, order: sortOrder) }
+    }
+
     func waitForAnalysis() async {
         await analysisTask?.value
     }
@@ -459,7 +489,7 @@ final class StorageIntelligenceState: ObservableObject {
     }
 }
 
-private extension StorageIntelligenceState {
+extension StorageIntelligenceState {
     struct IndexedNode: Sendable {
         let result: StorageSearchResult
         let searchableText: String
@@ -470,11 +500,17 @@ private extension StorageIntelligenceState {
         let coverage: StorageCoveragePresentation
         let additionalCoverage: StorageAdditionalCoveragePresentation?
         let attribution: StorageAttributionPresentation?
+        let physicalReconciliation: APFSPhysicalReconciliationPresentation?
         let categories: [StorageCategoryPresentation]
         let docker: StorageDockerPresentation?
         let apfs: StorageAPFSPresentation?
         let diagnostic: StorageCoverageDiagnostic
         let searchIndex: [IndexedNode]
+        let treePrepDuration: Double
+        let searchIndexDuration: Double
+        let diagnosticsPrepDuration: Double
+        let storageNodeCountReceived: Int
+        let presentationNodeCountCreated: Int
     }
 
     func apply(_ report: StorageReconciliationReport, prepared: PreparedPresentation) {
@@ -488,6 +524,7 @@ private extension StorageIntelligenceState {
         coverage = prepared.coverage
         additionalCoverage = prepared.additionalCoverage
         attributionPresentation = prepared.attribution
+        physicalReconciliationPresentation = prepared.physicalReconciliation
         coverageDiagnostic = prepared.diagnostic
         categories = prepared.categories
         dockerPresentation = prepared.docker
@@ -504,18 +541,41 @@ private extension StorageIntelligenceState {
             return
         }
 
-        let index = searchIndex
+        let categories = categories
         let order = sortOrder
         let identifier = UUID()
         searchIdentifier = identifier
         searchTask = Task { [weak self] in
-            let matches = await Task.detached(priority: .utility) {
-                index
-                    .filter { $0.searchableText.contains(query) }
-                    .map(\.result)
-                    .sorted { Self.searchSort($0, $1, order: order) }
+            let matches = await Task.detached(priority: .utility) { () -> [StorageSearchResult] in
+                var results: [StorageSearchResult] = []
+                var seenPaths: Set<String> = []
+
+                for category in categories where !category.roots.isEmpty {
+                    var pending = category.roots
+                    while let node = pending.popLast() {
+                        if Task.isCancelled { return [] }
+                        pending.append(contentsOf: node.children)
+                        guard seenPaths.insert(node.absolutePath).inserted else { continue }
+
+                        let nameMatch = node.name.localizedCaseInsensitiveContains(query)
+                        let pathMatch = node.absolutePath.localizedCaseInsensitiveContains(query)
+                        let appMatch = node.metadata.owningApplicationName?.localizedCaseInsensitiveContains(query) == true
+
+                        if nameMatch || pathMatch || appMatch {
+                            results.append(StorageSearchResult(
+                                categoryID: category.id,
+                                node: StorageNodePresentation(node: node)
+                            ))
+                            if results.count >= 500 {
+                                break
+                            }
+                        }
+                    }
+                }
+                return results.sorted { Self.searchSort($0, $1, order: order) }
             }.value
-            guard let self, self.searchIdentifier == identifier else { return }
+
+            guard let self, self.searchIdentifier == identifier, !Task.isCancelled else { return }
             self.searchResults = matches
         }
     }
@@ -528,6 +588,7 @@ private extension StorageIntelligenceState {
         report: StorageReconciliationReport,
         sortOrder: StorageIntelligenceSortOrder
     ) -> PreparedPresentation {
+        let diagStart = CFAbsoluteTimeGetCurrent()
         let summary = StorageSummaryPresentation(
             totalCapacityBytes: report.totalCapacityBytes,
             usedBytes: report.usedCapacityBytes,
@@ -567,6 +628,15 @@ private extension StorageIntelligenceState {
         } else {
             attributionPresentation = nil
         }
+        let physicalPresentation: APFSPhysicalReconciliationPresentation?
+        if let phys = report.physicalReconciliation ?? report.analyzerResults.physicalReconciliation {
+            physicalPresentation = APFSPhysicalReconciliationPresentation(report: phys)
+        } else {
+            physicalPresentation = nil
+        }
+        let diagDuration = CFAbsoluteTimeGetCurrent() - diagStart
+
+        let treeStart = CFAbsoluteTimeGetCurrent()
         let unsortedCategories = makeCategories(report)
         let categories = unsortedCategories
             .map { category in
@@ -574,25 +644,36 @@ private extension StorageIntelligenceState {
                     id: category.id,
                     allocatedBytes: category.allocatedBytes,
                     observedAllocatedBytes: category.observedAllocatedBytes,
-                    roots: category.roots
-                        .map { sortedTree($0, order: sortOrder) }
-                        .sorted { nodeSort($0, $1, order: sortOrder) },
+                    roots: category.roots.sorted { nodeSort($0, $1, order: sortOrder) },
                     isFilesystemAdditive: category.isFilesystemAdditive,
                     issueCount: category.issueCount,
                     prominentNode: category.prominentNode
                 )
             }
             .sorted(by: categorySort)
+        let treeDuration = CFAbsoluteTimeGetCurrent() - treeStart
+
+        let initialPresentationNodes = categories.reduce(0) { count, cat in
+            count + (cat.prominentNode != nil ? 1 : 0) + cat.roots.count
+        }
+        let totalNodesReceived = countStorageNodes(in: categories)
+
         return PreparedPresentation(
             summary: summary,
             coverage: coverage,
             additionalCoverage: additionalCoverage,
             attribution: attributionPresentation,
+            physicalReconciliation: physicalPresentation,
             categories: categories,
             docker: dockerPresentation(report.analyzerResults.dockerStorage),
             apfs: apfsPresentation(report.analyzerResults.apfsStorage),
             diagnostic: report.coverageDiagnostic,
-            searchIndex: makeSearchIndex(categories)
+            searchIndex: [],
+            treePrepDuration: treeDuration,
+            searchIndexDuration: 0,
+            diagnosticsPrepDuration: diagDuration,
+            storageNodeCountReceived: totalNodesReceived,
+            presentationNodeCountCreated: initialPresentationNodes
         )
     }
 
@@ -678,6 +759,7 @@ private extension StorageIntelligenceState {
         }
 
         let userRoots = results.userHomeStorage?.roots.map(\.node) ?? []
+        let appRoots = results.applications?.root.children ?? []
         let applicationRoots = results.applicationSupport?.root.children ?? []
         let containerRoots = results.containers?.root.children ?? []
         let groupRoots = results.groupContainers?.root.children ?? []
@@ -697,6 +779,13 @@ private extension StorageIntelligenceState {
                 observed: results.userHomeStorage?.combinedUniqueAllocatedSize ?? 0,
                 roots: userRoots,
                 issues: results.userHomeStorage?.issues.count ?? 0
+            ),
+            category(
+                .applications,
+                sources: [.applications],
+                observed: results.applications?.root.allocatedSize ?? 0,
+                roots: appRoots,
+                issues: issueCount(results.applications)
             ),
             category(
                 .applicationSupport,
@@ -928,4 +1017,54 @@ private extension StorageIntelligenceState {
         let (value, overflow) = left.addingReportingOverflow(right)
         return overflow ? Int64.max : value
     }
+
+    nonisolated static func countStorageNodes(in categories: [StorageCategoryPresentation]) -> Int {
+        var count = 0
+        for category in categories {
+            for root in category.roots {
+                count += countNodes(in: root)
+            }
+        }
+        return count
+    }
+
+    private nonisolated static func countNodes(in node: StorageNode) -> Int {
+        var count = 1
+        for child in node.children {
+            count += countNodes(in: child)
+        }
+        return count
+    }
+
+    #if DEBUG
+    static func emitPostScanPerformanceReport(
+        reconciliationDuration: Double,
+        treePrepDuration: Double,
+        searchIndexDuration: Double,
+        diagnosticsPrepDuration: Double,
+        mainActorPublishDuration: Double,
+        totalPostScanDuration: Double,
+        storageNodeCountReceived: Int,
+        presentationNodeCountCreated: Int,
+        visibleRowsInitiallyRendered: Int
+    ) {
+        func formatDuration(_ duration: Double) -> String {
+            (String(format: "%.2f", duration) + "s").leftPadded(toLength: 7)
+        }
+
+        var output = "\n=== PureMac Post-Scan Presentation Performance ===\n"
+        output += "Reconciliation:          \(formatDuration(reconciliationDuration))\n"
+        output += "Tree preparation:        \(formatDuration(treePrepDuration))\n"
+        output += "Search index:            \(formatDuration(searchIndexDuration))\n"
+        output += "Diagnostics preparation: \(formatDuration(diagnosticsPrepDuration))\n"
+        output += "MainActor publish:       \(formatDuration(mainActorPublishDuration))\n"
+        output += "Total post-scan:         \(formatDuration(totalPostScanDuration))\n\n"
+        output += "Metrics:\n"
+        output += "  StorageNode count received:      \(storageNodeCountReceived)\n"
+        output += "  Presentation node count created: \(presentationNodeCountCreated)\n"
+        output += "  Visible rows initially rendered: \(visibleRowsInitiallyRendered)\n"
+        output += "==================================================\n"
+        print(output)
+    }
+    #endif
 }

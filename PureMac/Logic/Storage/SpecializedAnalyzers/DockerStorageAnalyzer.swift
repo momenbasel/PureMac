@@ -50,10 +50,12 @@ struct DockerStorageAnalyzer: Sendable {
     private let scanner: FileTreeScanner
     private let executableLocator: ExecutableLocator
     private let commandRunner: CommandRunner
+    private let cache: StorageAnalysisCache?
 
     init(
         hostStorageRoots: [URL] = DockerStorageAnalyzer.currentUserHostStorageRoots,
         scanner: FileTreeScanner = FileTreeScanner(),
+        cache: StorageAnalysisCache? = nil,
         executableLocator: @escaping ExecutableLocator = {
             DockerStorageAnalyzer.discoverDockerExecutable()
         },
@@ -63,6 +65,7 @@ struct DockerStorageAnalyzer: Sendable {
     ) {
         self.hostStorageRoots = hostStorageRoots
         self.scanner = scanner
+        self.cache = cache
         self.executableLocator = executableLocator
         self.commandRunner = commandRunner
     }
@@ -73,7 +76,13 @@ struct DockerStorageAnalyzer: Sendable {
 
         for root in roots {
             guard !Task.isCancelled else { break }
-            hostResults.append(await scanner.scan(root: root))
+            if let cached = cache?.get(path: root.path) {
+                hostResults.append(cached)
+            } else {
+                let result = await scanner.scan(root: root)
+                cache?.store(result, isFullSubtree: true)
+                hostResults.append(result)
+            }
         }
 
         let hostFootprint = await Task.detached(priority: .utility) {
