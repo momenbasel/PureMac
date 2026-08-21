@@ -69,6 +69,22 @@ xcodebuild -project PureMac.xcodeproj -scheme PureMac -configuration Release \
 open build/Build/Products/Release/PureMac.app
 ```
 
+### Linha de comando (beta)
+
+Prefere o terminal? O `puremac` é um companheiro de linha de comando que
+reutiliza as mesmas regras de limpeza e segurança para remover caches de
+desenvolvimento, limpar artefatos de build de projetos e analisar o uso do
+disco.
+
+```bash
+brew install momenbasel/tap/puremac-cli
+puremac clean dev --dry-run
+```
+
+![puremac escaneando e listando exatamente o que será removido antes de apagar qualquer item](../cli/screenshots/clean.png)
+
+Consulte [`cli/README.md`](../cli/README.md) para ver a referência completa de comandos.
+
 ## Comparativo
 
 |  | **PureMac** | CleanMyMac | Pearcleaner | Mole | OnyX |
