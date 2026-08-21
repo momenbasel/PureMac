@@ -5,21 +5,31 @@ import XCTest
 @MainActor
 final class ThemeManagerTests: XCTestCase {
     private var originalRawValue: String?
+    private var originalMode: AppearanceMode = .system
+    private var originalApplicationAppearance: NSAppearance?
 
     override func setUp() {
         super.setUp()
         originalRawValue = UserDefaults.standard.string(forKey: "PureMac.Appearance")
+        originalMode = ThemeManager.shared.appearance
+        originalApplicationAppearance = NSApp.appearance
     }
 
     override func tearDown() {
-        // The test host is the real app bundle, so put the user's persisted
-        // choice back and re-sync NSApp so the host window isn't left themed.
+        // Reset the singleton first: @AppStorage caches writes made through the
+        // wrapper, so changing UserDefaults directly is not enough to restore
+        // the value ThemeManager reads when applying the process-wide theme.
+        ThemeManager.shared.appearance = originalMode
+
+        // Preserve the exact defaults representation as well (including an
+        // absent or previously invalid value) and restore the AppKit override
+        // independently so this suite cannot leak appearance state.
         if let originalRawValue {
             UserDefaults.standard.set(originalRawValue, forKey: "PureMac.Appearance")
         } else {
             UserDefaults.standard.removeObject(forKey: "PureMac.Appearance")
         }
-        ThemeManager.shared.applyToApp()
+        NSApp.appearance = originalApplicationAppearance
         super.tearDown()
     }
 
