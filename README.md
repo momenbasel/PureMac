@@ -147,6 +147,8 @@ Smart Scan runs every category in parallel. Each category is its own deliberate 
 - **Node Cache** - npm, yarn classic, pnpm content-addressable store
 - **Docker Cache** - images, containers, build cache
 
+Right-click any file or folder in the scan results to add it to the cleaning exclusions. Excluded paths stay hidden from future scans and can be managed in **Settings → Cleaning**.
+
 > **On "purgeable space":** PureMac shows your APFS purgeable space in the storage breakdown for transparency, but it deliberately does **not** list it as junk to delete. Purgeable space is reserved and reclaimed by macOS itself - no third-party app can reliably free it, and even the Finder's purgeable figure is known to be inaccurate. Cleaners that claim to "reclaim purgeable space" are overpromising. We'd rather be honest than impressive.
 
 ### Scheduled Cleaning
