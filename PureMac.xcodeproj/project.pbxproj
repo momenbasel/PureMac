@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		013EF7B96BF046D4DB38FBC5 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 241E0895B09C71AB423B2F9E /* Localizable.strings */; };
+		0E0A5149C01BA4B013F85E2D /* XcodeBuildMCPDerivedDataSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FC5F44AB9CA4CD2DE774973 /* XcodeBuildMCPDerivedDataSupport.swift */; };
 		1B0D043102FDB245312A5147 /* AppFilesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 798B80977D14647A5691B0A0 /* AppFilesView.swift */; };
 		2253F11BDF561B617439C96B /* FullDiskAccessManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E866A1541D289C69144A5E62 /* FullDiskAccessManager.swift */; };
 		25E2304A3FF257F1740E304B /* FileProtection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7953B398E47A4C603DE287F1 /* FileProtection.swift */; };
@@ -90,6 +91,7 @@
 		1AB003A7751F05727DBFD1A5 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		1C0D9A6F75D0B8ADDB32FC2A /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = uk.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1D3AC5F17D7CA94FAB1E8D7A /* StringNormalization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringNormalization.swift; sourceTree = "<group>"; };
+		1FC5F44AB9CA4CD2DE774973 /* XcodeBuildMCPDerivedDataSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XcodeBuildMCPDerivedDataSupport.swift; sourceTree = "<group>"; };
 		231FF7CBB5F621B66F2AB8A5 /* FDADemoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FDADemoView.swift; sourceTree = "<group>"; };
 		23486A54A82EE3865B784D1C /* AppInfoFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppInfoFetcher.swift; sourceTree = "<group>"; };
 		25D1CF5248C1D471BCBD212F /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/ServicesMenu.strings; sourceTree = "<group>"; };
@@ -319,6 +321,7 @@
 				4AE790496C936424EF98320A /* OrphanSafetyPolicy.swift */,
 				8AFB912A9A6CFDCB972E978F /* ProviderPaths.swift */,
 				D74E66594478F53363BCB0F9 /* SimulatorRuntimeSupport.swift */,
+				1FC5F44AB9CA4CD2DE774973 /* XcodeBuildMCPDerivedDataSupport.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -528,6 +531,7 @@
 				340E424F759ACCDE7372F99F /* Theme.swift in Sources */,
 				6D449325D54B9850FC6C119F /* UniversalBinaryScanner.swift in Sources */,
 				41B27CACD7C6C7471EFD03F9 /* UpdateService.swift in Sources */,
+				0E0A5149C01BA4B013F85E2D /* XcodeBuildMCPDerivedDataSupport.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
