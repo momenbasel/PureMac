@@ -3,7 +3,7 @@ name: Build
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, feature/ai-dead-worktree-cleanup]
   pull_request:
     branches: [main]
 
