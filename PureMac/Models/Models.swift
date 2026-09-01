@@ -44,7 +44,7 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .smartScan: return "Scan everything at once"
         case .systemJunk: return "System caches, logs, and temporary files"
         case .userCache: return "Application caches and browser data"
-        case .aiApps: return "Local AI app logs, caches, and optional history"
+        case .aiApps: return "Local AI app data and stale coding worktrees"
         case .mailAttachments: return "Downloaded mail attachments"
         case .trashBins: return "Files in your Trash"
         case .largeFiles: return "Files over 100 MB or older than 1 year"
@@ -142,6 +142,10 @@ struct CleanableItem: Identifiable, Hashable {
     /// rather than a filesystem unlink. The UUID after the colon is the
     /// runtime disk-image identifier from `simctl runtime list`.
     static let simctlRuntimePathPrefix = "simctl-runtime:"
+    /// Prefix for linked worktrees that must be removed through
+    /// `git worktree remove`, never a raw filesystem unlink.
+    static let gitWorktreePathPrefix = "git-worktree:"
+
 
     let id = UUID()
     let name: String
@@ -165,6 +169,19 @@ struct CleanableItem: Identifiable, Hashable {
         guard path.hasPrefix(Self.simctlRuntimePathPrefix) else { return nil }
         let id = String(path.dropFirst(Self.simctlRuntimePathPrefix.count))
         return id.isEmpty ? nil : id
+    }
+
+    var gitWorktreePath: String? {
+        guard path.hasPrefix(Self.gitWorktreePathPrefix) else { return nil }
+        let worktreePath = String(path.dropFirst(Self.gitWorktreePathPrefix.count))
+        return worktreePath.isEmpty ? nil : worktreePath
+    }
+
+    /// Real path to show or reveal for both normal files and virtual
+    /// git-worktree cleanup rows.
+    var fileSystemPath: String? {
+        if let gitWorktreePath { return gitWorktreePath }
+        return isActionItem ? nil : path
     }
 
     func hash(into hasher: inout Hasher) {

@@ -279,7 +279,8 @@
 "Scan everything at once" = "Сканирование всех категорий сразу";
 "System caches, logs, and temporary files" = "Системные кэши, журналы и временные файлы";
 "Application caches and browser data" = "Кэши приложений и данные браузеров";
-"Local AI app logs, caches, and optional history" = "Локальные журналы, кэши и необязательная история ИИ-приложений";
+"Local AI app data and stale coding worktrees" = "Данные локальных ИИ-приложений и устаревшие рабочие деревья кода";
+"%@ Worktree — %@" = "Рабочее дерево %@ — %@";
 "Downloaded mail attachments" = "Загруженные почтовые вложения";
 "Files in your Trash" = "Файлы в Корзине";
 "Files over 100 MB or older than 1 year" = "Файлы размером более 100 МБ или старше 1 года";

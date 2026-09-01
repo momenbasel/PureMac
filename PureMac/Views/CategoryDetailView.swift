@@ -263,8 +263,8 @@ private struct FileRowView: View {
                         .lineLimit(1)
                         .truncationMode(.middle)
 
-                    if !item.isActionItem {
-                        Text(item.path)
+                    if let fileSystemPath = item.fileSystemPath {
+                        Text(fileSystemPath)
                             .font(.caption)
                             .foregroundStyle(.tertiary)
                             .lineLimit(1)
@@ -281,9 +281,9 @@ private struct FileRowView: View {
 
                 // Hover-revealed Finder shortcut; stays in the layout so the
                 // trailing size never shifts sideways.
-                if !item.isActionItem {
+                if let fileSystemPath = item.fileSystemPath {
                     Button {
-                        NSWorkspace.shared.selectFile(item.path, inFileViewerRootedAtPath: "")
+                        NSWorkspace.shared.selectFile(fileSystemPath, inFileViewerRootedAtPath: "")
                     } label: {
                         Image(systemName: "folder")
                             .font(.caption)
@@ -324,9 +324,9 @@ private struct FileRowView: View {
         .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: isSelected)
         .onHover { hovering = $0 }
         .contextMenu {
-            if !item.isActionItem {
+            if let fileSystemPath = item.fileSystemPath {
                 Button("Reveal in Finder") {
-                    NSWorkspace.shared.selectFile(item.path, inFileViewerRootedAtPath: "")
+                    NSWorkspace.shared.selectFile(fileSystemPath, inFileViewerRootedAtPath: "")
                 }
             }
         }
@@ -335,6 +335,9 @@ private struct FileRowView: View {
     private var fileIcon: String {
         if item.simctlRuntimeIdentifier != nil {
             return "iphone"
+        }
+        if item.gitWorktreePath != nil {
+            return "arrow.triangle.branch"
         }
         let ext = (item.name as NSString).pathExtension.lowercased()
         switch ext {
@@ -345,7 +348,9 @@ private struct FileRowView: View {
         case "pkg": return "shippingbox"
         default:
             var isDir: ObjCBool = false
-            if FileManager.default.fileExists(atPath: item.path, isDirectory: &isDir), isDir.boolValue {
+            if let fileSystemPath = item.fileSystemPath,
+               FileManager.default.fileExists(atPath: fileSystemPath, isDirectory: &isDir),
+               isDir.boolValue {
                 return "folder"
             }
             return "doc"
