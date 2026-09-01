@@ -7,8 +7,8 @@ final class GitWorktreeScannerTests: XCTestCase {
 
     override func setUpWithError() throws {
         try super.setUpWithError()
-        // Keep destructive Git fixtures on the checkout's own volume. Locally
-        // this is the external T7; CI gets the same-volume build directory.
+        // Keep destructive Git fixtures under the checkout's build directory.
+        // This is portable and keeps every fixture on the checkout's volume.
         let sourceRoot = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()

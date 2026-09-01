@@ -18,6 +18,20 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
 
+      - name: Test
+        run: |
+          xcodebuild -project PureMac.xcodeproj \
+            -scheme PureMac \
+            -configuration Debug \
+            -derivedDataPath build/tests \
+            -destination "platform=macOS" \
+            test \
+            ARCHS="$(uname -m)" \
+            ONLY_ACTIVE_ARCH=YES \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
       - name: Build (Universal Binary)
         run: |
           xcodebuild -project PureMac.xcodeproj \
