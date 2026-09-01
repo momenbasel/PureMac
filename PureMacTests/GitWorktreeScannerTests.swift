@@ -42,13 +42,14 @@ final class GitWorktreeScannerTests: XCTestCase {
         XCTAssertTrue(records[2].isPrunable)
     }
 
-    func testScanFindsCodexClaudeOMPCursorPiAndManualWorktrees() throws {
+    func testScanFindsCodexClaudeHerdrOMPCursorPiAndManualWorktrees() throws {
         let repository = try makeRepository(named: "provider-repo")
         let worktrees = [
             temporaryHome.appendingPathComponent(".codex/worktrees/session/provider-repo"),
             repository.appendingPathComponent(".claude/worktrees/claude-task"),
             temporaryHome.appendingPathComponent(".omp/wt/provider-repo/omp-task"),
             temporaryHome.appendingPathComponent(".cursor/worktrees/session/provider-repo"),
+            temporaryHome.appendingPathComponent(".herdr/worktrees/provider-repo/herdr-task"),
             temporaryHome.appendingPathComponent(".pi/worktrees/pi-task"),
             temporaryHome.appendingPathComponent("Developer/provider-repo-manual"),
         ]
@@ -65,9 +66,10 @@ final class GitWorktreeScannerTests: XCTestCase {
         let items = makeScanner().scan()
         let names = Set(items.map(\.name))
 
-        XCTAssertEqual(items.count, 6)
+        XCTAssertEqual(items.count, 7)
         XCTAssertTrue(names.contains("Codex Worktree — provider-repo"))
         XCTAssertTrue(names.contains("Claude Code Worktree — provider-repo"))
+        XCTAssertTrue(names.contains("Herdr Worktree — provider-repo"))
         XCTAssertTrue(names.contains("Oh My Pi Worktree — provider-repo"))
         XCTAssertTrue(names.contains("Cursor Worktree — provider-repo"))
         XCTAssertTrue(names.contains("Pi Worktree — provider-repo"))

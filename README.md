@@ -138,7 +138,7 @@ Smart Scan runs every category in parallel. Each category is its own deliberate 
 
 - **System Junk** - system caches, logs, temp files
 - **User Cache** - dynamically discovered, no hardcoded app list
-- **AI Apps** - Ollama and LM Studio logs, caches, and opt-in history cleanup, plus clean Git worktrees inactive for 30 days from Codex, Claude Code, Cursor, Oh My Pi, Pi, or manual workflows across the home directory and all connected writable local volumes. Worktrees are never auto-selected; locked, changed, and unreferenced detached worktrees are excluded and removal goes through `git worktree remove` without `--force`.
+- **AI Apps** - Ollama and LM Studio logs, caches, and opt-in history cleanup, plus clean Git worktrees inactive for 30 days from Codex, Claude Code, Cursor, Herdr, Oh My Pi, Pi, or manual workflows across the home directory and all connected writable local volumes. Worktrees are never auto-selected; locked, changed, and unreferenced detached worktrees are excluded and removal goes through `git worktree remove` without `--force`.
 - **Mail Files** - downloaded mail attachments
 - **Trash Bins** - empties all bins, including external volumes
 - **Large & Old Files** - >100 MB or older than 1 year (never auto-selected)

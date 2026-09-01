@@ -567,6 +567,10 @@ struct GitWorktreeScanner {
             return "Claude Code"
         }
         if normalized.contains("/.cursor/worktrees/") { return "Cursor" }
+        if normalized.contains("/.herdr/worktrees/")
+            || normalized.contains("/herdr-worktrees/") {
+            return "Herdr"
+        }
         if normalized.contains("/.omp/wt/") { return "Oh My Pi" }
         if normalized.contains("/.pi/") || normalized.contains("/.git/worktrees/")
             || normalized.contains("/.worktrees/") || normalized.contains("/.worktree/") {
