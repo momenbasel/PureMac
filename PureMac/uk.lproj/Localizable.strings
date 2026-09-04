@@ -385,6 +385,10 @@
 "Files inside these folders are skipped from the Large & Old Files scan (Downloads, Documents, Desktop)." = "Файли в цих папках пропускаються під час пошуку великих і старих файлів (Викачане, Документи, Робочий стіл).";
 "Remove from exclusions" = "Вилучити з винятків";
 "Add Folder…" = "Додати папку…";
+"Excluded Items" = "Винятки";
+"Files and folders in this list are hidden from future cleaning scans." = "Файли й папки з цього списку не відображатимуться під час наступних сканувань очищення.";
+"Add File or Folder…" = "Додати файл або папку…";
+"Add to Exclusions" = "Додати до винятків";
 
 /* v2.8.2: orphan ignore list (#114) */
 "Always Ignore" = "Завжди ігнорувати";

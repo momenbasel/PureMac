@@ -42,36 +42,42 @@ actor ScanEngine {
     ) async -> CategoryResult {
         self.onPath = onPath
         defer { self.onPath = nil }
+        let excludedPaths = ScanExclusions.paths()
+        let result: CategoryResult
         switch category {
         case .smartScan:
-            return CategoryResult(category: category, items: [], totalSize: 0)
+            result = CategoryResult(category: category, items: [], totalSize: 0)
         case .systemJunk:
-            return scanSystemJunk()
+            result = scanSystemJunk()
         case .userCache:
-            return scanUserCache()
+            result = scanUserCache()
         case .aiApps:
-            return scanAIApps()
+            result = scanAIApps()
         case .mailAttachments:
-            return scanMailAttachments()
+            result = scanMailAttachments()
         case .trashBins:
-            return scanTrash()
+            result = scanTrash()
         case .largeFiles:
-            return scanLargeFiles()
+            result = scanLargeFiles(excludedPaths: excludedPaths)
         case .purgeableSpace:
-            return scanPurgeableSpace()
+            result = scanPurgeableSpace()
         case .xcodeJunk:
-            return scanXcodeJunk()
+            result = scanXcodeJunk()
         case .brewCache:
-            return scanBrewCache()
+            result = scanBrewCache()
         case .nodeCache:
-            return scanNodeCache()
+            result = scanNodeCache()
         case .dockerCache:
-            return scanDockerCache()
+            result = scanDockerCache()
         case .universalBinaries:
-            return scanUniversalBinaries()
+            result = scanUniversalBinaries()
         case .languageFiles:
-            return scanLanguageFiles()
+            result = scanLanguageFiles()
         }
+        // An exclusion can be added from the still-visible previous results
+        // while this scan is running. Reload at the handoff boundary so a
+        // stale snapshot cannot put that item back into the UI.
+        return ScanExclusions.filtering(result, excludedPaths: ScanExclusions.paths())
     }
 
     func getDiskInfo() -> DiskInfo {
@@ -306,7 +312,7 @@ actor ScanEngine {
         return CategoryResult(category: .trashBins, items: items, totalSize: totalSize)
     }
 
-    private func scanLargeFiles() -> CategoryResult {
+    private func scanLargeFiles(excludedPaths: [String]) -> CategoryResult {
         var items: [CleanableItem] = []
 
         // Honor the thresholds the user set in Settings → Cleaning. These keys
@@ -319,14 +325,6 @@ actor ScanEngine {
         let oldCutoff = Calendar.current.date(byAdding: .month, value: -max(1, oldFileMonths), to: Date())
             ?? Date.distantPast
 
-        // Folders the user excluded from the large-file scan (issue #121) —
-        // e.g. VM images, media libraries, project assets they never want
-        // surfaced. Files anywhere inside an excluded folder are skipped, and
-        // the directory subtree is pruned so we don't even walk it.
-        let excludedFolders = (defaults.stringArray(forKey: "settings.cleaning.largeFileExcludedFolders") ?? [])
-            .map(normalizePath)
-            .filter { !$0.isEmpty }
-
         // Honor the "Skip hidden files during scan" toggle, which was a dead
         // control until now (no scanner read it). Default true preserves the
         // previous always-skip behavior.
@@ -335,8 +333,7 @@ actor ScanEngine {
         if skipHidden { enumerationOptions.insert(.skipsHiddenFiles) }
 
         func isExcluded(_ path: String) -> Bool {
-            let normalized = normalizePath(path)
-            return excludedFolders.contains { normalized == $0 || normalized.hasPrefix($0 + "/") }
+            ScanExclusions.contains(path, excludedPaths: excludedPaths)
         }
 
         let searchPaths = [
@@ -360,7 +357,7 @@ actor ScanEngine {
                 // Prune excluded subtrees: hitting the excluded directory itself
                 // skips its whole contents; for files the call is a harmless no-op.
                 // Skip the path normalization entirely when nothing is excluded.
-                if !excludedFolders.isEmpty, isExcluded(fileURL.path) {
+                if !excludedPaths.isEmpty, isExcluded(fileURL.path) {
                     enumerator.skipDescendants()
                     continue
                 }
