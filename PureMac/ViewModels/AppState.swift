@@ -863,10 +863,17 @@ final class AppState: ObservableObject {
 
     // MARK: - Cleaning
 
-    func cleanAll() {
+    func cleanAll(scheduled: Bool = false) {
         guard !scanState.isActive else { return }
 
-        let itemsToClean = allResults.flatMap { $0.items }.filter { isItemSelected($0) }
+        let itemsToClean = allResults.flatMap { $0.items }.filter { item in
+            if scheduled && XcodeBuildMCPDerivedDataSupport.isManagedDerivedDataPath(item.path) {
+                // Scheduled XcodeBuildMCP cleanup is intentionally stricter
+                // than ordinary Xcode Junk: only old, unlocked rows qualify.
+                return XcodeBuildMCPDerivedDataSupport.isEligibleForScheduledAutoClean(item)
+            }
+            return isItemSelected(item)
+        }
         guard !itemsToClean.isEmpty else { return }
 
         scanState = .cleaning(progress: 0)
@@ -1082,7 +1089,7 @@ final class AppState: ObservableObject {
         totalJunkSize = totalFound
 
         if scheduler.config.autoClean && totalFound >= scheduler.config.minimumCleanSize {
-            cleanAll()
+            cleanAll(scheduled: true)
         }
 
         // Purgeable space is intentionally NOT auto-purged: macOS reserves and
