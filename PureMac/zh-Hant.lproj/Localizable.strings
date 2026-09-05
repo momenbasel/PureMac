@@ -238,7 +238,8 @@
 "Scan everything at once" = "一次掃描所有項目";
 "System caches, logs, and temporary files" = "系統快取、紀錄與暫存檔案";
 "Application caches and browser data" = "應用程式快取與瀏覽器資料";
-"Local AI app logs, caches, and optional history" = "本地 AI 應用程式的紀錄、快取與選用記錄";
+"Local AI app data and stale coding worktrees" = "本地 AI 應用程式資料和過期的程式碼工作樹";
+"%@ Worktree — %@" = "%@ 工作樹 — %@";
 "Downloaded mail attachments" = "已下載的郵件附件";
 "Files in your Trash" = "垃圾桶中的檔案";
 "Files over 100 MB or older than 1 year" = "超過 100 MB 或一年以上的檔案";
