@@ -13,7 +13,7 @@ cask "puremac" do
 
   # Refresh LaunchServices so the Dock/Launchpad icon updates immediately on
   # (re)install instead of showing a stale cached icon (issue #111).
-  postflight do
+  postflight_steps do
     system_command "/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister",
                    args: ["-f", "#{appdir}/PureMac.app"]
   end
