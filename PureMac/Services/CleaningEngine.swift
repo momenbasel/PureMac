@@ -107,6 +107,24 @@ actor CleaningEngine {
                 continue
             }
 
+            if let worktreePath = item.gitWorktreePath {
+                // Linked worktrees carry shared Git metadata outside the
+                // checkout. Raw removal would leave stale registrations and
+                // could orphan detached commits, so revalidate and delegate to
+                // `git worktree remove` without `--force`.
+                let removal = GitWorktreeScanner().removeWorktree(at: worktreePath)
+                if removal.removed {
+                    result.freedSpace += item.size
+                    result.itemsCleaned += 1
+                    result.cleanedPaths.insert(item.path)
+                } else {
+                    let detail = removal.error ?? "Git refused to remove the worktree"
+                    result.errors.append("\(item.name) at \(worktreePath): \(detail)")
+                    Logger.shared.log("Worktree cleanup failed: \(worktreePath): \(detail)", level: .warning)
+                }
+                continue
+            }
+
             do {
                 let itemURL = URL(fileURLWithPath: item.path)
                 guard fileManager.fileExists(atPath: item.path) else { continue }

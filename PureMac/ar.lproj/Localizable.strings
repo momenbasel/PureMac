@@ -238,7 +238,8 @@
 "Scan everything at once" = "فحص كل شيء دفعة واحدة";
 "System caches, logs, and temporary files" = "ذاكرات النظام المؤقتة والسجلات والملفات المؤقتة";
 "Application caches and browser data" = "ذاكرات التطبيقات المؤقتة وبيانات المتصفح";
-"Local AI app logs, caches, and optional history" = "سجلات تطبيقات الذكاء الاصطناعي المحلية وذاكراتها المؤقتة والمحفوظات الاختيارية";
+"Local AI app data and stale coding worktrees" = "بيانات تطبيقات الذكاء الاصطناعي المحلية وأشجار العمل البرمجية القديمة";
+"%@ Worktree — %@" = "شجرة عمل %@ — %@";
 "Downloaded mail attachments" = "مرفقات البريد التي تم تنزيلها";
 "Files in your Trash" = "الملفات الموجودة في سلة المهملات";
 "Files over 100 MB or older than 1 year" = "الملفات التي يتجاوز حجمها 100 ميغابايت أو أقدم من سنة";

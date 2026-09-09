@@ -279,7 +279,8 @@
 "Scan everything at once" = "Усе за одне сканування";
 "System caches, logs, and temporary files" = "Системні кеші, журнали й тимчасові файли";
 "Application caches and browser data" = "Кеші програм і дані браузерів";
-"Local AI app logs, caches, and optional history" = "Журнали, кеші та, за бажанням, історія локальних програм ШІ";
+"Local AI app data and stale coding worktrees" = "Дані локальних програм ШІ та застарілі робочі дерева коду";
+"%@ Worktree — %@" = "Робоче дерево %@ — %@";
 "Downloaded mail attachments" = "Викачані вкладення Пошти";
 "Files in your Trash" = "Файли у Смітнику";
 "Files over 100 MB or older than 1 year" = "Файли розміром понад 100 МБ або старші за 1 рік";

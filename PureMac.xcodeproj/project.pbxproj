@@ -14,7 +14,9 @@
 		27F449EDD1B082FE11FEC9DF /* SchedulerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28181F034530331A550C6A3D /* SchedulerService.swift */; };
 		340E424F759ACCDE7372F99F /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5ADDC35F31E40780FB5D017 /* Theme.swift */; };
 		39BEE5E2BEC526CCADFC9DDD /* ServicesMenu.strings in Resources */ = {isa = PBXBuildFile; fileRef = 57FBBF8C7EF27C8E09126ED5 /* ServicesMenu.strings */; };
+		3F9F0BF014FE1CBB1EA9DACD /* GitWorktreeScannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AE2E4F04F1786EBAFC611C1 /* GitWorktreeScannerTests.swift */; };
 		41B27CACD7C6C7471EFD03F9 /* UpdateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 022D0EAEE2B6E54069FC2CBE /* UpdateService.swift */; };
+		4489E1FA82AF5E1D43E5898C /* GitWorktreeScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A64B3290A5E869004494017 /* GitWorktreeScanner.swift */; };
 		47C5ECD49C4DD75F271DB6CE /* StringNormalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D3AC5F17D7CA94FAB1E8D7A /* StringNormalization.swift */; };
 		48D1431A7C99C19EEBDB056B /* CleaningEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A8DE5D45BA19E2670B57DC5 /* CleaningEngine.swift */; };
 		4F754D89F4CE5142BE384062 /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = F31F91226CDCFBB8E303B7DA /* AppConstants.swift */; };
@@ -87,6 +89,7 @@
 		0A544093C897FBCBA8E256F9 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		10B0AF194677EAC1D5568785 /* CategoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryDetailView.swift; sourceTree = "<group>"; };
 		155CE1B8CDCCCA6F9FD028C1 /* LocalizationFilesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationFilesTests.swift; sourceTree = "<group>"; };
+		1A64B3290A5E869004494017 /* GitWorktreeScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitWorktreeScanner.swift; sourceTree = "<group>"; };
 		1AB003A7751F05727DBFD1A5 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		1C0D9A6F75D0B8ADDB32FC2A /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = uk.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1D3AC5F17D7CA94FAB1E8D7A /* StringNormalization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringNormalization.swift; sourceTree = "<group>"; };
@@ -96,6 +99,7 @@
 		2641C6376DD6F5889F35510E /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		28181F034530331A550C6A3D /* SchedulerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchedulerService.swift; sourceTree = "<group>"; };
 		2A8DE5D45BA19E2670B57DC5 /* CleaningEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleaningEngine.swift; sourceTree = "<group>"; };
+		2AE2E4F04F1786EBAFC611C1 /* GitWorktreeScannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitWorktreeScannerTests.swift; sourceTree = "<group>"; };
 		2D3F9FEDC493A8E49E910F67 /* AppBundleDragHandle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBundleDragHandle.swift; sourceTree = "<group>"; };
 		311078221878708524283765 /* PureMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PureMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		340D303C60FF878B019056B6 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -185,6 +189,7 @@
 			children = (
 				491771F923C93FD61A263893 /* AppLanguagePreferencesTests.swift */,
 				752603285F7DBBA12BB3AA91 /* AppStateTests.swift */,
+				2AE2E4F04F1786EBAFC611C1 /* GitWorktreeScannerTests.swift */,
 				155CE1B8CDCCCA6F9FD028C1 /* LocalizationFilesTests.swift */,
 				C7D81BE7EA5DB17F4A0300AD /* SimulatorRuntimeSupportTests.swift */,
 				55CE234DB2DB54ED53A4EFD6 /* ThemeManagerTests.swift */,
@@ -350,6 +355,7 @@
 				23486A54A82EE3865B784D1C /* AppInfoFetcher.swift */,
 				AC0FEE7141871ED5F9E36121 /* AppPathFinder.swift */,
 				CB94E06E145558123BB5BFB3 /* Conditions.swift */,
+				1A64B3290A5E869004494017 /* GitWorktreeScanner.swift */,
 				C0899FE169D270DF95334905 /* LanguageFilesScanner.swift */,
 				77D3D9A9BC52839E6D0A22BC /* Locations.swift */,
 				1D3AC5F17D7CA94FAB1E8D7A /* StringNormalization.swift */,
@@ -502,6 +508,7 @@
 				25E2304A3FF257F1740E304B /* FileProtection.swift in Sources */,
 				B51E5A95BB49A6C0F5273E21 /* FileSize.swift in Sources */,
 				2253F11BDF561B617439C96B /* FullDiskAccessManager.swift in Sources */,
+				4489E1FA82AF5E1D43E5898C /* GitWorktreeScanner.swift in Sources */,
 				A549D8A39A9E5E70D91B90A6 /* Haptics.swift in Sources */,
 				9E87638A3F12C12D93995DA7 /* LanguageFilesScanner.swift in Sources */,
 				E60B0A2C5D0A6CAE35BF4DFB /* Locations.swift in Sources */,
@@ -537,6 +544,7 @@
 			files = (
 				59B3096E2AE8ED0397B16798 /* AppLanguagePreferencesTests.swift in Sources */,
 				E2403D82F00D749C9AD4A6D4 /* AppStateTests.swift in Sources */,
+				3F9F0BF014FE1CBB1EA9DACD /* GitWorktreeScannerTests.swift in Sources */,
 				CFA64F54CDBF8A4765E0068D /* LocalizationFilesTests.swift in Sources */,
 				F4F02F966001A1504C2B4D33 /* SimulatorRuntimeSupportTests.swift in Sources */,
 				ABE3B80279483DB90B8EC1BC /* ThemeManagerTests.swift in Sources */,

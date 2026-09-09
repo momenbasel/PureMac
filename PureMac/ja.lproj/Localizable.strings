@@ -238,7 +238,8 @@
 "Scan everything at once" = "すべてを一度にスキャン";
 "System caches, logs, and temporary files" = "システムキャッシュ、ログ、一時ファイル";
 "Application caches and browser data" = "アプリケーションキャッシュとブラウザデータ";
-"Local AI app logs, caches, and optional history" = "ローカルAIアプリのログ、キャッシュ、任意の履歴";
+"Local AI app data and stale coding worktrees" = "ローカルAIアプリのデータと古いコーディング用ワークツリー";
+"%@ Worktree — %@" = "%@ ワークツリー — %@";
 "Downloaded mail attachments" = "ダウンロードしたメール添付ファイル";
 "Files in your Trash" = "ゴミ箱内のファイル";
 "Files over 100 MB or older than 1 year" = "100MB以上または1年以上前のファイル";

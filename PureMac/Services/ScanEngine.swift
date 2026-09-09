@@ -265,7 +265,7 @@ actor ScanEngine {
             ),
         ]
 
-        let items = deduplicatedItems(targets.compactMap { target in
+        var items = targets.compactMap { target in
             makeCleanupItem(
                 name: target.name,
                 path: target.path,
@@ -273,9 +273,23 @@ actor ScanEngine {
                 isSelected: target.isSelected,
                 minimumSize: target.minimumSize
             )
-        })
-        let totalSize = items.reduce(0) { $0 + $1.size }
-        return CategoryResult(category: .aiApps, items: items.sorted { $0.size > $1.size }, totalSize: totalSize)
+        }
+        let worktreeScanner = GitWorktreeScanner(
+            fileManager: fileManager,
+            homeURL: URL(fileURLWithPath: home, isDirectory: true)
+        )
+        items.append(contentsOf: worktreeScanner.scan(
+            report: onPath,
+            isCancelled: { Task.isCancelled }
+        ))
+
+        let uniqueItems = deduplicatedItems(items)
+        let totalSize = uniqueItems.reduce(0) { $0 + $1.size }
+        return CategoryResult(
+            category: .aiApps,
+            items: uniqueItems.sorted { $0.size > $1.size },
+            totalSize: totalSize
+        )
     }
 
     private func scanMailAttachments() -> CategoryResult {
