@@ -49,8 +49,9 @@ Flags on `clean` and `purge`:
 
 Homebrew, npm, Yarn, pnpm, pip, Cargo, Go, CocoaPods, VS Code, JetBrains, Maven,
 Gradle, Poetry, uv, Bun, Deno, mise, Flutter/Dart, NuGet/.NET, Swift Package
-Manager, Docker, and OrbStack. Only precise cache and build directories are
-targeted, never a whole config directory such as `~/.cargo` or `~/.docker`.
+Manager, Puppeteer, Playwright, node-gyp, Electron, Docker, and OrbStack. Only
+precise cache and build directories are targeted, never a whole config directory
+such as `~/.cargo` or `~/.docker`.
 
 ## What `purge` finds
 
