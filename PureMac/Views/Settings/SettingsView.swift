@@ -183,9 +183,6 @@ struct CleaningSettingsView: View {
     @AppStorage("settings.cleaning.largeFileThreshold") private var largeFileThresholdMB: Int = 100
     @AppStorage("settings.cleaning.oldFileMonths") private var oldFileMonths: Int = 12
 
-    private static let excludedFoldersKey = "settings.cleaning.largeFileExcludedFolders"
-    @State private var excludedFolders: [String] = []
-
     var body: some View {
         Form {
             Section("File Discovery") {
@@ -206,23 +203,23 @@ struct CleaningSettingsView: View {
                 )
             }
 
-            Section("Excluded Folders") {
-                if excludedFolders.isEmpty {
-                    Text("Files inside these folders are skipped from the Large & Old Files scan (Downloads, Documents, Desktop).")
+            Section("Excluded Items") {
+                if appState.excludedScanPaths.isEmpty {
+                    Text("Files and folders in this list are hidden from future cleaning scans.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 } else {
-                    ForEach(excludedFolders, id: \.self) { folder in
+                    ForEach(appState.excludedScanPaths, id: \.self) { path in
                         HStack(spacing: 8) {
-                            Image(systemName: "folder")
+                            Image(systemName: exclusionIcon(for: path))
                                 .foregroundStyle(.secondary)
-                            Text((folder as NSString).abbreviatingWithTildeInPath)
+                            Text((path as NSString).abbreviatingWithTildeInPath)
                                 .lineLimit(1)
                                 .truncationMode(.middle)
-                                .help(folder)
+                                .help(path)
                             Spacer()
                             Button {
-                                removeExcludedFolder(folder)
+                                appState.removeScanExclusion(path)
                             } label: {
                                 Image(systemName: "minus.circle.fill")
                                     .foregroundStyle(.secondary)
@@ -232,7 +229,7 @@ struct CleaningSettingsView: View {
                         }
                     }
                 }
-                Button("Add Folder…") { addExcludedFolder() }
+                Button("Add File or Folder…") { addExcludedItems() }
             }
 
             Section("Orphan Finder") {
@@ -256,31 +253,24 @@ struct CleaningSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .onAppear {
-            excludedFolders = UserDefaults.standard.stringArray(forKey: Self.excludedFoldersKey) ?? []
-        }
     }
 
-    private func persistExcludedFolders() {
-        UserDefaults.standard.set(excludedFolders, forKey: Self.excludedFoldersKey)
-    }
-
-    private func addExcludedFolder() {
+    private func addExcludedItems() {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
-        panel.canChooseFiles = false
+        panel.canChooseFiles = true
         panel.allowsMultipleSelection = true
-        panel.prompt = String(localized: "Add Folder…")
+        panel.prompt = String(localized: "Add File or Folder…")
         guard panel.runModal() == .OK else { return }
-        for url in panel.urls where !excludedFolders.contains(url.path) {
-            excludedFolders.append(url.path)
-        }
-        persistExcludedFolders()
+        appState.addScanExclusions(paths: panel.urls.map(\.path))
     }
 
-    private func removeExcludedFolder(_ folder: String) {
-        excludedFolders.removeAll { $0 == folder }
-        persistExcludedFolders()
+    private func exclusionIcon(for path: String) -> String {
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory) else {
+            return "doc"
+        }
+        return isDirectory.boolValue ? "folder" : "doc"
     }
 }
 

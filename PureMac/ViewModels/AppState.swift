@@ -78,6 +78,7 @@ final class AppState: ObservableObject {
     /// operation after the user grants Full Disk Access without forcing them
     /// to re-select anything.
     @Published var pendingPermissionRetryItems: [CleanableItem] = []
+    @Published private(set) var excludedScanPaths = ScanExclusions.paths()
 
     // MARK: - App Uninstaller State
 
@@ -635,6 +636,41 @@ final class AppState: ObservableObject {
         }
     }
 
+    // MARK: - Scan Exclusions
+
+    func addScanExclusion(for item: CleanableItem) {
+        guard !item.isActionItem else { return }
+        let updatedPaths = ScanExclusions.paths() + [item.path]
+        ScanExclusions.save(updatedPaths)
+        excludedScanPaths = ScanExclusions.paths()
+        removeExcludedItemsFromCurrentResults()
+        Logger.shared.log("Added scan exclusion: \(item.path)", level: .info)
+    }
+
+    func addScanExclusions(paths: [String]) {
+        guard !paths.isEmpty else { return }
+        ScanExclusions.save(ScanExclusions.paths() + paths)
+        excludedScanPaths = ScanExclusions.paths()
+        removeExcludedItemsFromCurrentResults()
+    }
+
+    func removeScanExclusion(_ path: String) {
+        let remaining = excludedScanPaths.filter { $0 != path }
+        ScanExclusions.save(remaining)
+        excludedScanPaths = ScanExclusions.paths()
+    }
+
+    private func removeExcludedItemsFromCurrentResults() {
+        for (category, result) in categoryResults {
+            let filtered = ScanExclusions.filtering(result, excludedPaths: excludedScanPaths)
+            let removedIDs = Set(result.items.map(\.id)).subtracting(filtered.items.map(\.id))
+            selectedCleanupItems.subtract(removedIDs)
+            deselectedItems.subtract(removedIDs)
+            categoryResults[category] = filtered
+        }
+        totalJunkSize = categoryResults.values.reduce(0) { $0 + $1.totalSize }
+    }
+
     func selectedSizeInCategory(_ category: CleaningCategory) -> Int64 {
         guard let result = categoryResults[category] else { return 0 }
         return result.items.filter { isItemSelected($0) }.reduce(0) { $0 + $1.size }
@@ -799,6 +835,10 @@ final class AppState: ObservableObject {
 
     // MARK: - Scanning
 
+    private func applyCurrentScanExclusions(to result: CategoryResult) -> CategoryResult {
+        ScanExclusions.filtering(result, excludedPaths: excludedScanPaths)
+    }
+
     func startSmartScan() {
         guard !scanState.isActive else { return }
 
@@ -823,8 +863,9 @@ final class AppState: ObservableObject {
                         self?.scanTicker.path = path
                     }
                 }
-                categoryResults[category] = result
-                totalJunkSize += result.totalSize
+                let filteredResult = applyCurrentScanExclusions(to: result)
+                categoryResults[category] = filteredResult
+                totalJunkSize += filteredResult.totalSize
             }
 
             scanProgress = 1.0
@@ -850,7 +891,7 @@ final class AppState: ObservableObject {
                     self?.scanTicker.path = path
                 }
             }
-            categoryResults[category] = result
+            categoryResults[category] = applyCurrentScanExclusions(to: result)
 
             totalJunkSize = categoryResults.values.reduce(0) { $0 + $1.totalSize }
             scanProgress = 1.0
@@ -1069,16 +1110,16 @@ final class AppState: ObservableObject {
         // installed apps behind the user's back.
         let categories = scheduler.config.categoriesToScan
             .filter { !CleaningCategory.appModifying.contains($0) }
-        var totalFound: Int64 = 0
         clearSelectionState()
         categoryResults = [:]
 
         for category in categories {
             let result = await scanEngine.scanCategory(category)
-            categoryResults[category] = result
-            totalFound += result.totalSize
+            let filteredResult = applyCurrentScanExclusions(to: result)
+            categoryResults[category] = filteredResult
         }
 
+        let totalFound = categoryResults.values.reduce(0) { $0 + $1.totalSize }
         totalJunkSize = totalFound
 
         if scheduler.config.autoClean && totalFound >= scheduler.config.minimumCleanSize {

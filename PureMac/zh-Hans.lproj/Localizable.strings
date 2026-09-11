@@ -385,6 +385,10 @@
 "Files inside these folders are skipped from the Large & Old Files scan (Downloads, Documents, Desktop)." = "这些文件夹中的文件会在“大文件和旧文件”扫描（下载、文稿、桌面）中被跳过。";
 "Remove from exclusions" = "从排除项中移除";
 "Add Folder…" = "添加文件夹…";
+"Excluded Items" = "排除的项目";
+"Files and folders in this list are hidden from future cleaning scans." = "此列表中的文件和文件夹不会显示在今后的清理扫描中。";
+"Add File or Folder…" = "添加文件或文件夹…";
+"Add to Exclusions" = "添加到排除项";
 
 /* v2.8.2: orphan ignore list (#114) */
 "Always Ignore" = "始终忽略";

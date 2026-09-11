@@ -385,6 +385,10 @@
 "Files inside these folders are skipped from the Large & Old Files scan (Downloads, Documents, Desktop)." = "これらのフォルダ内のファイルは「大きい/古いファイル」スキャン（ダウンロード、書類、デスクトップ）でスキップされます。";
 "Remove from exclusions" = "除外から削除";
 "Add Folder…" = "フォルダを追加…";
+"Excluded Items" = "除外する項目";
+"Files and folders in this list are hidden from future cleaning scans." = "このリストのファイルとフォルダは、今後のクリーンアップスキャンに表示されません。";
+"Add File or Folder…" = "ファイルまたはフォルダを追加…";
+"Add to Exclusions" = "除外リストに追加";
 
 /* v2.8.2: orphan ignore list (#114) */
 "Always Ignore" = "常に無視";

@@ -328,6 +328,11 @@ private struct FileRowView: View {
                 Button("Reveal in Finder") {
                     NSWorkspace.shared.selectFile(item.path, inFileViewerRootedAtPath: "")
                 }
+                Button {
+                    appState.addScanExclusion(for: item)
+                } label: {
+                    Label("Add to Exclusions", systemImage: "eye.slash")
+                }
             }
         }
     }

@@ -356,6 +356,10 @@
 "Files inside these folders are skipped from the Large & Old Files scan (Downloads, Documents, Desktop)." = "Les fichiers de ces dossiers sont ignorés lors de l'analyse Fichiers volumineux et anciens (Téléchargements, Documents, Bureau).";
 "Remove from exclusions" = "Retirer des exclusions";
 "Add Folder…" = "Ajouter un dossier…";
+"Excluded Items" = "Éléments exclus";
+"Files and folders in this list are hidden from future cleaning scans." = "Les fichiers et dossiers de cette liste sont masqués lors des prochaines analyses de nettoyage.";
+"Add File or Folder…" = "Ajouter un fichier ou un dossier…";
+"Add to Exclusions" = "Ajouter aux exclusions";
 
 /* v2.8.2: orphan ignore list (#114) */
 "Always Ignore" = "Toujours ignorer";

@@ -41,6 +41,80 @@ final class AppStateTests: XCTestCase {
         XCTAssertEqual(appState.currentAppFileSearchLocationCount, urls.count)
     }
 
+    func testScanExclusionsMergeLegacyPathsAndMigrateOnSave() throws {
+        let suiteName = "ScanExclusionsTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        defaults.set(["/tmp/legacy-folder"], forKey: ScanExclusions.legacyFoldersKey)
+        defaults.set(["/tmp/file", "/tmp/file"], forKey: ScanExclusions.pathsKey)
+        let expectedPaths = ["/tmp/file", "/tmp/legacy-folder"]
+            .map { URL(fileURLWithPath: $0).resolvingSymlinksInPath().path }
+            .sorted()
+
+        XCTAssertEqual(
+            ScanExclusions.paths(in: defaults),
+            expectedPaths
+        )
+
+        ScanExclusions.save(ScanExclusions.paths(in: defaults), in: defaults)
+
+        XCTAssertNil(defaults.object(forKey: ScanExclusions.legacyFoldersKey))
+        XCTAssertEqual(
+            defaults.stringArray(forKey: ScanExclusions.pathsKey),
+            expectedPaths
+        )
+    }
+
+    func testScanExclusionsRespectPathComponentBoundariesAndProtectAncestors() {
+        let exclusions = ["/tmp/cache/keep.txt"]
+
+        XCTAssertTrue(ScanExclusions.contains("/tmp/cache/keep.txt", excludedPaths: exclusions))
+        XCTAssertFalse(ScanExclusions.contains("/tmp/cache/keep.txt.bak", excludedPaths: exclusions))
+        XCTAssertTrue(ScanExclusions.excludes("/tmp/cache", excludedPaths: exclusions))
+        XCTAssertFalse(ScanExclusions.excludes("/tmp/cache-old", excludedPaths: exclusions))
+    }
+
+    func testScanExclusionsCanonicalizeSymlinkAliases() {
+        let uniqueName = "PureMac-scan-exclusion-\(UUID().uuidString)"
+
+        XCTAssertTrue(
+            ScanExclusions.contains(
+                "/private/tmp/\(uniqueName)",
+                excludedPaths: ["/tmp/\(uniqueName)"]
+            )
+        )
+    }
+
+    func testFilteringRecalculatesCategoryTotal() {
+        let kept = CleanableItem(
+            name: "keep.log",
+            path: "/tmp/keep.log",
+            size: 100,
+            category: .systemJunk,
+            isSelected: true,
+            lastModified: nil
+        )
+        let excluded = CleanableItem(
+            name: "excluded.log",
+            path: "/tmp/excluded.log",
+            size: 200,
+            category: .systemJunk,
+            isSelected: true,
+            lastModified: nil
+        )
+        let result = CategoryResult(
+            category: .systemJunk,
+            items: [kept, excluded],
+            totalSize: 300
+        )
+
+        let filtered = ScanExclusions.filtering(result, excludedPaths: [excluded.path])
+
+        XCTAssertEqual(filtered.items, [kept])
+        XCTAssertEqual(filtered.totalSize, kept.size)
+    }
+
     private func makeApp() -> InstalledApp {
         InstalledApp(
             id: UUID(),

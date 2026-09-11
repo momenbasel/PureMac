@@ -191,6 +191,94 @@ struct CategoryResult: Identifiable {
     var itemCount: Int { items.count }
 }
 
+// MARK: - Scan Exclusions
+
+/// Persistent file-system paths the user never wants cleaning scans to offer.
+/// The legacy key is merged on read so exclusions created before files were
+/// supported continue to work.
+enum ScanExclusions {
+    static let pathsKey = "settings.cleaning.excludedPaths"
+    static let legacyFoldersKey = "settings.cleaning.largeFileExcludedFolders"
+
+    static func paths(in defaults: UserDefaults = .standard) -> [String] {
+        let savedPaths = defaults.stringArray(forKey: pathsKey) ?? []
+        let legacyFolders = defaults.stringArray(forKey: legacyFoldersKey) ?? []
+
+        return normalizedPaths(savedPaths + legacyFolders)
+    }
+
+    static func save(_ paths: [String], in defaults: UserDefaults = .standard) {
+        defaults.set(normalizedPaths(paths), forKey: pathsKey)
+        defaults.removeObject(forKey: legacyFoldersKey)
+    }
+
+    static func excludes(_ path: String, excludedPaths: [String]) -> Bool {
+        guard !path.isEmpty, !path.hasPrefix(CleanableItem.simctlRuntimePathPrefix) else {
+            return false
+        }
+
+        let candidate = normalize(path)
+        return excludedPaths.contains { excludedPath in
+            let exclusion = normalize(excludedPath)
+            guard !exclusion.isEmpty else { return false }
+
+            // The second direction protects an excluded descendant when a
+            // scanner offers one of its ancestor folders as a single row.
+            return isSameOrDescendant(candidate, of: exclusion)
+                || isSameOrDescendant(exclusion, of: candidate)
+        }
+    }
+
+    static func contains(_ path: String, excludedPaths: [String]) -> Bool {
+        guard !path.isEmpty else { return false }
+        let candidate = normalize(path)
+        return excludedPaths.contains {
+            isSameOrDescendant(candidate, of: normalize($0))
+        }
+    }
+
+    static func filtering(_ result: CategoryResult, excludedPaths: [String]) -> CategoryResult {
+        guard !excludedPaths.isEmpty else { return result }
+        let items = result.items.filter { !excludes($0.path, excludedPaths: excludedPaths) }
+        return CategoryResult(
+            category: result.category,
+            items: items,
+            totalSize: items.reduce(0) { $0 + $1.size }
+        )
+    }
+
+    private static func normalizedPaths(_ paths: [String]) -> [String] {
+        Array(Set(paths.map(normalize).filter { !$0.isEmpty })).sorted()
+    }
+
+    private static func normalize(_ path: String) -> String {
+        guard !path.isEmpty else { return "" }
+        let expandedPath = (path as NSString).expandingTildeInPath
+        var existingPrefix = URL(fileURLWithPath: expandedPath).standardizedFileURL
+        var missingComponents: [String] = []
+
+        // resolvingSymlinksInPath() stops resolving when the leaf is missing.
+        // Resolve the nearest existing ancestor instead, then restore the tail
+        // so persisted exclusions remain canonical after a file is removed.
+        while existingPrefix.path != "/",
+              !FileManager.default.fileExists(atPath: existingPrefix.path) {
+            missingComponents.insert(existingPrefix.lastPathComponent, at: 0)
+            existingPrefix.deleteLastPathComponent()
+        }
+
+        return missingComponents.reduce(existingPrefix.resolvingSymlinksInPath()) {
+            $0.appendingPathComponent($1)
+        }
+        .standardizedFileURL.path
+    }
+
+    private static func isSameOrDescendant(_ path: String, of parent: String) -> Bool {
+        if path == parent { return true }
+        if parent == "/" { return path.hasPrefix("/") }
+        return path.hasPrefix(parent + "/")
+    }
+}
+
 // MARK: - Schedule Settings
 
 enum ScheduleInterval: String, CaseIterable, Identifiable, Codable {
