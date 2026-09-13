@@ -238,7 +238,8 @@
 "Scan everything at once" = "一次扫描所有内容";
 "System caches, logs, and temporary files" = "系统缓存、日志和临时文件";
 "Application caches and browser data" = "应用程序缓存和浏览器数据";
-"Local AI app logs, caches, and optional history" = "本地 AI 应用的日志、缓存和可选历史";
+"Local AI app data and stale coding worktrees" = "本地 AI 应用数据和过期的编码工作树";
+"%@ Worktree — %@" = "%@ 工作树 — %@";
 "Downloaded mail attachments" = "已下载的邮件附件";
 "Files in your Trash" = "废纸篓中的文件";
 "Files over 100 MB or older than 1 year" = "大于 100 MB 或超过 1 年的文件";

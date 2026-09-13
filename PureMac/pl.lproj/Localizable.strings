@@ -279,7 +279,8 @@
 "Scan everything at once" = "Skanuj wszystko naraz";
 "System caches, logs, and temporary files" = "Pamięci podręczne systemu, logi i pliki tymczasowe";
 "Application caches and browser data" = "Pamięci podręczne aplikacji i dane przeglądarek";
-"Local AI app logs, caches, and optional history" = "Logi aplikacji AI, pamięci podręczne i historia";
+"Local AI app data and stale coding worktrees" = "Dane lokalnych aplikacji AI i nieaktywne drzewa robocze kodu";
+"%@ Worktree — %@" = "Drzewo robocze %@ — %@";
 "Downloaded mail attachments" = "Pobrane załączniki poczty";
 "Files in your Trash" = "Pliki w koszu";
 "Files over 100 MB or older than 1 year" = "Pliki powyżej 100 MB lub starsze niż 1 rok";
