@@ -67,6 +67,9 @@ enum Catalog {
             Target(tool: "Ollama (logs/cache)", paths: [h(".ollama/logs"), h("Library/Caches/ollama"), h("Library/Caches/com.electron.ollama")]),
             Target(tool: "LM Studio (logs)", paths: [h(".lmstudio/server-logs")]),
             Target(tool: "Cursor (cache)", paths: [h("Library/Application Support/Cursor/Cache"), h("Library/Application Support/Cursor/CachedData"), h("Library/Application Support/Cursor/logs")]),
+            Target(tool: "Claude Desktop (cache)", paths: [h("Library/Application Support/Claude/Cache"), h("Library/Application Support/Claude/Code Cache"), h("Library/Application Support/Claude/GPUCache"), h("Library/Application Support/Claude/DawnGraphiteCache"), h("Library/Application Support/Claude/DawnWebGPUCache")]),
+            Target(tool: "ChatGPT Desktop (cache)", paths: [h("Library/Application Support/com.openai.chat/Cache"), h("Library/Application Support/com.openai.chat/Code Cache"), h("Library/Application Support/com.openai.chat/GPUCache")]),
+            Target(tool: "Hugging Face (~/.cache/huggingface — may hold large model downloads)", paths: [h(".cache/huggingface")], selectedByDefault: false),
         ]
     }
 
