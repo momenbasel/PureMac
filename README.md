@@ -164,7 +164,7 @@ Cleanup results support name/path search, size and age filters, sorting, and sel
 
 **Protection** checks Gatekeeper, FileVault, the application firewall, System Integrity Protection, and installed XProtect metadata. A failed or unavailable check stays unknown. It also provides shortcuts to privacy and permission settings. This is a configuration audit, not an antivirus or malware scanner.
 
-**Performance** shows CPU and memory information, lists third-party launch-agent/daemon definitions, and lists local snapshots. A launch definition is not proof that a process is running. You can open Login Items or Activity Monitor and delete a specific Time Machine local snapshot after confirmation. Snapshot sizes are not estimated, and system update snapshots cannot be removed here.
+**Performance** shows CPU and memory information, lists third-party launch-agent/daemon definitions in a collapsible card, and lists local snapshots. A launch definition is not proof that a process is running. You can open Login Items or Activity Monitor and delete a specific Time Machine local snapshot after confirmation. Snapshot sizes are not estimated, and system update snapshots cannot be removed here.
 
 ### App updates
 
