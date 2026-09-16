@@ -175,7 +175,7 @@ Optional. Configurable interval (hourly to monthly), with auto-clean threshold s
 
 ### Settings
 
-Open **Settings** using the gear in the sidebar or the standard macOS Settings command. General settings include language, System/Light/Dark appearance, Full Disk Access status and recheck, startup, menu-bar monitoring, sound and safety. Cleaning and scheduled scanning keep their existing preferences.
+Open **Settings** using the gear in the sidebar or the standard macOS Settings command. General settings include language, System/Light/Dark appearance, Full Disk Access status and recheck, startup, menu-bar monitoring, sound and safety. Cleaning and scheduled scanning keep their existing preferences. An amber Settings indicator highlights items that need review, with shortcuts to the relevant settings. Its gentle pulse respects Reduce Motion.
 
 The **Updates** tab shows the installed version and build and checks official GitHub app releases on request. CLI releases, drafts and prereleases are excluded. Choose the update method for Homebrew instructions or a DMG/ZIP download link. The check reports availability; it does not install an update or run Homebrew.
 

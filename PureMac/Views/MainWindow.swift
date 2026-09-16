@@ -3,6 +3,8 @@ import SwiftUI
 struct MainWindow: View {
     @EnvironmentObject var appState: AppState
     @ObservedObject private var permission = PermissionCoordinator.shared
+    @ObservedObject private var updater = UpdateService.shared
+    @Environment(\.scenePhase) private var scenePhase
     @State private var selectedSection: AppSection? = .cleaning(.smartScan)
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var cleanupExpanded = false
@@ -358,6 +360,13 @@ struct MainWindow: View {
             .ignoresSafeArea()
     }
 
+    private var settingsIssues: [SettingsAttention.Issue] {
+        SettingsAttention.issues(hasFullDiskAccess: appState.hasFullDiskAccess,
+                                 updateState: updater.state,
+                                 needsRestart: appState.settingsNeedLanguageRestart,
+                                 startupError: appState.settingsStartupError)
+    }
+
     private var sidebarFooter: some View {
         Button {
             selectSection(.settings)
@@ -365,15 +374,18 @@ struct MainWindow: View {
             SidebarNavRow(
                 label: "Settings",
                 icon: "gearshape.fill",
-                tint: Tint.accent,
-                badge: nil,
+                tint: settingsIssues.isEmpty ? Tint.accent : Tint.orange,
+                badge: settingsIssues.isEmpty ? nil : "!",
                 isSelected: selectedSection == .settings,
-                emphasized: false
+                emphasized: false,
+                pulseAttention: !settingsIssues.isEmpty && selectedSection != .settings
+                    && scenePhase == .active && !reduceMotion
             )
         }
         .buttonStyle(.plain)
         .focused($focusedSection, equals: .settings)
         .accessibilityIdentifier("sidebar.settings")
+        .accessibilityHint(settingsIssues.isEmpty ? Text("") : Text("Settings need attention"))
         .accessibilityAddTraits(selectedSection == .settings ? .isSelected : [])
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
@@ -491,6 +503,7 @@ private struct SidebarNavRow: View {
     let badge: String?
     let isSelected: Bool
     let emphasized: Bool
+    var pulseAttention = false
 
     @State private var hovering = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -506,6 +519,7 @@ private struct SidebarNavRow: View {
                 glow: isSelected,
                 vivid: emphasized && isSelected
             )
+            .modifier(SettingsIconPulse(enabled: pulseAttention))
             Text(label)
                 .font(.system(size: 12.5, weight: isSelected ? .semibold : .medium))
                 .foregroundStyle(labelColor)
@@ -556,3 +570,27 @@ private struct SidebarNavRow: View {
     }
 }
 
+/// Slow compositor animation; no polling, and no motion once Settings is open,
+/// the app is inactive, or Reduce Motion is enabled. The amber badge remains.
+private struct SettingsIconPulse: ViewModifier {
+    let enabled: Bool
+    @State private var pulse = false
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(enabled && pulse ? 0.5 : 1)
+            .scaleEffect(enabled && pulse ? 1.08 : 1)
+            .onAppear { synchronize() }
+            .onChange(of: enabled) { _ in synchronize() }
+    }
+
+    private func synchronize() {
+        if enabled {
+            withAnimation(.easeInOut(duration: 1.3).repeatForever(autoreverses: true)) { pulse = true }
+        } else {
+            var transaction = Transaction(animation: nil)
+            transaction.disablesAnimations = true
+            withTransaction(transaction) { pulse = false }
+        }
+    }
+}

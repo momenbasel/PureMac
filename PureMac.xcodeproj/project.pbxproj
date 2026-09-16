@@ -92,6 +92,8 @@
 		FF6B92CAF96A58625A56A1C0 /* ProtectionAudit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F9B44A9C1B4065126789622 /* ProtectionAudit.swift */; };
 		726848F8F1CA1E1829107904 /* UpdateServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E132B636229ED538463A35E /* UpdateServiceTests.swift */; };
 		C9A572DBF932E601574B64E6 /* AppUpdateSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583DCE8B0BCE0F50893B6734 /* AppUpdateSettingsView.swift */; };
+		F17BF69BB9CA54A64F1BD2B8 /* SettingsAttention.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAFE76434311AEE372E0A06F /* SettingsAttention.swift */; };
+		ABA2462684AAB22E75C2D6B4 /* SettingsAttentionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80DF58F110082ABB9A1AE47D /* SettingsAttentionTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -209,6 +211,8 @@
 		F9DCBD97CC88D77AE8DB01A4 /* PermissionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionCoordinator.swift; sourceTree = "<group>"; };
 		6E132B636229ED538463A35E /* UpdateServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateServiceTests.swift; sourceTree = "<group>"; };
 		583DCE8B0BCE0F50893B6734 /* AppUpdateSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateSettingsView.swift; sourceTree = "<group>"; };
+		CAFE76434311AEE372E0A06F /* SettingsAttention.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAttention.swift; sourceTree = "<group>"; };
+		80DF58F110082ABB9A1AE47D /* SettingsAttentionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAttentionTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -235,6 +239,7 @@
 		261FB8D961FEC76F15EA523A /* PureMacTests */ = {
 			isa = PBXGroup;
 			children = (
+				80DF58F110082ABB9A1AE47D /* SettingsAttentionTests.swift */,
 				6E132B636229ED538463A35E /* UpdateServiceTests.swift */,
 				491771F923C93FD61A263893 /* AppLanguagePreferencesTests.swift */,
 				F77B9D7D5353CD42BD03ADBB /* ApplicationUpdaterTests.swift */,
@@ -258,6 +263,7 @@
 		3CF46713F75B81F0F86D1C6F /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				CAFE76434311AEE372E0A06F /* SettingsAttention.swift */,
 				82BB0904726B38DEB141BECA /* AppLanguage.swift */,
 				D00EEBBBA38CC4B3F8077E7D /* CleanupReview.swift */,
 				3667D46D8E2004EB4D73835A /* Models.swift */,
@@ -565,6 +571,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F17BF69BB9CA54A64F1BD2B8 /* SettingsAttention.swift in Sources */,
 				C9A572DBF932E601574B64E6 /* AppUpdateSettingsView.swift in Sources */,
 				DC32253D26D0E29762006DA0 /* AppBundleDragHandle.swift in Sources */,
 				4F754D89F4CE5142BE384062 /* AppConstants.swift in Sources */,
@@ -636,6 +643,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ABA2462684AAB22E75C2D6B4 /* SettingsAttentionTests.swift in Sources */,
 				726848F8F1CA1E1829107904 /* UpdateServiceTests.swift in Sources */,
 				59B3096E2AE8ED0397B16798 /* AppLanguagePreferencesTests.swift in Sources */,
 				E2403D82F00D749C9AD4A6D4 /* AppStateTests.swift in Sources */,

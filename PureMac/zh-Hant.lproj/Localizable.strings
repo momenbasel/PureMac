@@ -462,6 +462,7 @@
 "Simulator runtime" = "模擬器執行環境";
 
 /* Additional interface strings. */
+"A PureMac update is available" = "A PureMac update is available";
 "Build %@" = "Build %@";
 "Check access" = "Check access";
 "Checking for updates…" = "Checking for updates…";
@@ -480,11 +481,17 @@
 "Open release page" = "Open release page";
 "PureMac %@ is available" = "PureMac %@ is available";
 "Ready for protected locations" = "Ready for protected locations";
+"Restart to apply your language" = "Restart to apply your language";
+"Review Full Disk Access" = "Review Full Disk Access";
+"Review launch at login" = "Review launch at login";
 "Settings" = "Settings";
+"Settings need attention" = "Settings need attention";
+"Settings to review" = "Settings to review";
 "Some locations are unavailable" = "Some locations are unavailable";
 "The release service is unavailable. Please try again later." = "The release service is unavailable. Please try again later.";
 "This build has no readable version. Open the releases page to check manually." = "This build has no readable version. Open the releases page to check manually.";
 "To update with Homebrew, run this command in Terminal. The cask may follow the GitHub release a little later." = "To update with Homebrew, run this command in Terminal. The cask may follow the GitHub release a little later.";
+"Try checking for updates again" = "Try checking for updates again";
 "Update method" = "Update method";
 
 "View releases" = "View releases";

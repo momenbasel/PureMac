@@ -9,6 +9,7 @@ struct SettingsView: View {
     var standalone = false
     @ObservedObject private var permission = PermissionCoordinator.shared
     @State private var selectedTab = SettingsTab.general
+    @ObservedObject private var updater = UpdateService.shared
 
     private enum SettingsTab: String, CaseIterable, Identifiable {
         case general = "General"
@@ -50,6 +51,32 @@ struct SettingsView: View {
             }
             .padding(.horizontal, 4)
 
+            if !settingsIssues.isEmpty {
+                CardSurface(padding: 12, elevation: .flat, tint: Tint.orange) {
+                    VStack(alignment: .leading, spacing: 9) {
+                        Label("Settings to review", systemImage: "exclamationmark.circle.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Tint.orange)
+                        ForEach(settingsIssues) { issue in
+                            Button {
+                                selectedTab = issue.opensUpdates ? .about : .general
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: issue.icon).frame(width: 18)
+                                    Text(issue.title)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                }
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .font(.system(size: 12))
+                            .accessibilityIdentifier("settings.review.\(issue.rawValue)")
+                        }
+                    }
+                }
+            }
+
             Picker("Settings", selection: $selectedTab) {
                 ForEach(SettingsTab.allCases) { tab in
                     Label(LocalizedStringKey(tab.rawValue), systemImage: tab.icon).tag(tab)
@@ -82,6 +109,13 @@ struct SettingsView: View {
             get: { standalone && permission.isRequesting && permission.presentation == .settingsWindow },
             set: { if !$0 && standalone && permission.presentation == .settingsWindow { permission.dismiss(callRetry: false) } }
         )) { PermissionSheet() }
+    }
+
+    private var settingsIssues: [SettingsAttention.Issue] {
+        SettingsAttention.issues(hasFullDiskAccess: appState.hasFullDiskAccess,
+                                 updateState: updater.state,
+                                 needsRestart: appState.settingsNeedLanguageRestart,
+                                 startupError: appState.settingsStartupError)
     }
 
     private func showRequestedUpdates() {
@@ -180,6 +214,9 @@ struct GeneralSettingsView: View {
 
             Section("Startup") {
                 Toggle("Launch PureMac at login", isOn: launchAtLoginBinding)
+                if let error = appState.settingsStartupError {
+                    Text(error).font(.caption).foregroundStyle(Tint.orange)
+                }
             }
 
             Section("App Scanning") {
@@ -264,9 +301,11 @@ struct GeneralSettingsView: View {
             } else {
                 try SMAppService.mainApp.unregister()
             }
+            appState.settingsStartupError = nil
         } catch {
             Logger.shared.log("Failed to \(enabled ? "enable" : "disable") launch at login: \(error.localizedDescription)", level: .error)
             launchAtLogin = !enabled
+            appState.settingsStartupError = error.localizedDescription
         }
     }
 

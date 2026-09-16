@@ -50,6 +50,7 @@ final class ScanProgressTicker: ObservableObject {
 final class AppState: ObservableObject {
     let languageAtLaunch = AppLanguage.current
     @Published var settingsNeedLanguageRestart = false
+    @Published var settingsStartupError: String?
     @Published var showUpdateSettings = false
     typealias AppFileScanner = @MainActor (
         _ app: InstalledApp,
