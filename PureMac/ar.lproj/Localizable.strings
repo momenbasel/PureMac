@@ -460,3 +460,11 @@
 
 /* Simulator runtimes */
 "Simulator runtime" = "وقت تشغيل المحاكي";
+
+/* Additional interface strings. */
+"Check access" = "Check access";
+"Full access" = "Full access";
+"Make PureMac work your way." = "Make PureMac work your way.";
+"Ready for protected locations" = "Ready for protected locations";
+"Settings" = "Settings";
+"Some locations are unavailable" = "Some locations are unavailable";
