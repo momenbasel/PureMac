@@ -14,7 +14,7 @@ struct SettingsView: View {
         case general = "General"
         case cleaning = "Cleaning"
         case schedule = "Schedule"
-        case about = "About"
+        case about = "Updates"
 
         var id: String { rawValue }
         var icon: String {
@@ -22,7 +22,7 @@ struct SettingsView: View {
             case .general: return "slider.horizontal.3"
             case .cleaning: return "trash"
             case .schedule: return "clock"
-            case .about: return "info.circle"
+            case .about: return "arrow.triangle.2.circlepath"
             }
         }
     }
@@ -39,6 +39,14 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
+                VStack(alignment: .trailing, spacing: 3) {
+                    Text(String(format: String(localized: "Version %@"), UpdateService.installedVersion))
+                    Text(String(format: String(localized: "Build %@"), UpdateService.installedBuild))
+                        .foregroundStyle(.tertiary)
+                }
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+                .textSelection(.enabled)
             }
             .padding(.horizontal, 4)
 
@@ -68,12 +76,20 @@ struct SettingsView: View {
         .background(AmbientBackdrop())
         .tint(Tint.accent)
         .navigationTitle("Settings")
+        .onAppear { showRequestedUpdates() }
+        .onChange(of: appState.showUpdateSettings) { _ in showRequestedUpdates() }
         .sheet(isPresented: Binding(
             get: { standalone && permission.isRequesting && permission.presentation == .settingsWindow },
             set: { if !$0 && standalone && permission.presentation == .settingsWindow { permission.dismiss(callRetry: false) } }
         )) { PermissionSheet() }
     }
 
+    private func showRequestedUpdates() {
+        if !standalone && appState.showUpdateSettings {
+            selectedTab = .about
+            appState.showUpdateSettings = false
+        }
+    }
 }
 
 // MARK: - General
@@ -464,7 +480,7 @@ struct AboutSettingsView: View {
                         Text(
                             String(
                                 format: String(localized: "Version %@"),
-                                Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+                                UpdateService.installedVersion
                             )
                         )
                             .foregroundStyle(.secondary)
@@ -473,6 +489,10 @@ struct AboutSettingsView: View {
                             .font(.caption)
                     }
                 }
+            }
+
+            Section("Updates") {
+                AppUpdateSettingsView()
             }
 
             Section {

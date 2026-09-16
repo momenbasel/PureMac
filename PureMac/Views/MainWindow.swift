@@ -45,8 +45,13 @@ struct MainWindow: View {
             selectSection(.apps)
             appState.pendingExternalApp = nil
         }
+        .onChange(of: appState.showUpdateSettings) { showUpdates in
+            if showUpdates { selectSection(.settings) }
+        }
         .onAppear {
-            if appState.pendingExternalApp != nil {
+            if appState.showUpdateSettings {
+                selectSection(.settings)
+            } else if appState.pendingExternalApp != nil {
                 selectSection(.apps)
                 appState.pendingExternalApp = nil
             } else if let selectedSection {
