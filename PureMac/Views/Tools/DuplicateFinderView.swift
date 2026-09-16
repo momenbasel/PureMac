@@ -98,7 +98,7 @@ struct DuplicateFinderView: View {
                     Button {
                         chooseFolder()
                     } label: {
-                        Label(result == nil ? "Choose Folder" : "Scan Another Folder", systemImage: "folder.badge.plus")
+                        Label(result == nil ? String(localized: "Choose Folder") : String(localized: "Scan Another Folder"), systemImage: "folder.badge.plus")
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(Tint.accent)
@@ -190,7 +190,7 @@ struct DuplicateFinderView: View {
                         .foregroundStyle(Tint.accent)
                 }
                 VStack(spacing: 7) {
-                    Text(progress.phase == .discovering ? "Looking through files" : "Verifying possible matches")
+                    Text(progress.phase == .discovering ? String(localized: "Looking through files") : String(localized: "Verifying possible matches"))
                         .font(.system(size: 18, weight: .semibold))
                     Text(progressSummary)
                         .font(.callout.monospacedDigit())
@@ -298,7 +298,7 @@ struct DuplicateFinderView: View {
         }
     }
 
-    private func summaryMetric(value: String, label: String, icon: String, tint: Color) -> some View {
+    private func summaryMetric(value: String, label: LocalizedStringKey, icon: String, tint: Color) -> some View {
         HStack(spacing: 9) {
             IconTile(systemName: icon, tint: tint, size: 30, corner: 8)
             VStack(alignment: .leading, spacing: 1) {
@@ -327,8 +327,8 @@ struct DuplicateFinderView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    StatusChip(label: "\(format(group.reclaimableSize)) reviewable", systemImage: "arrow.down.circle", tint: Tint.green)
-                    Button(groupCandidatesSelected(group) ? "Clear" : "Select copies") {
+                    StatusChip(label: String(localized: "\(format(group.reclaimableSize)) reviewable"), systemImage: "arrow.down.circle", tint: Tint.green)
+                    Button(groupCandidatesSelected(group) ? String(localized: "Clear Selection") : String(localized: "Select copies")) {
                         toggleGroupSelection(group)
                     }
                     .buttonStyle(.bordered)
@@ -340,7 +340,7 @@ struct DuplicateFinderView: View {
                             .frame(width: 16, height: 16)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(expandedGroupIDs.contains(group.id) ? "Collapse duplicate group" : "Expand duplicate group")
+                    .accessibilityLabel(expandedGroupIDs.contains(group.id) ? String(localized: "Collapse duplicate group") : String(localized: "Expand duplicate group"))
                 }
                 .padding(14)
 
@@ -386,7 +386,7 @@ struct DuplicateFinderView: View {
                         .font(.system(size: 13, weight: keeper ? .semibold : .regular))
                         .lineLimit(1)
                     if keeper {
-                        StatusChip(label: "Keep", systemImage: "lock.fill", tint: Tint.green)
+                        StatusChip(label: String(localized: "Keep"), systemImage: "lock.fill", tint: Tint.green)
                     }
                 }
                 Text(file.url.deletingLastPathComponent().path)
@@ -466,9 +466,9 @@ struct DuplicateFinderView: View {
         CardSurface(padding: 14, elevation: .raised, tint: selectedIDs.isEmpty ? nil : Tint.accent) {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(selectedIDs.isEmpty ? "Nothing selected" : "\(selectedIDs.count) selected")
+                    Text(selectedIDs.isEmpty ? String(localized: "Nothing selected") : String(localized: "\(selectedIDs.count) selected"))
                         .font(.system(size: 14, weight: .semibold).monospacedDigit())
-                    Text(selectedIDs.isEmpty ? "Select the extra copies you want to review" : "\(format(selectedSize)) will move to Trash")
+                    Text(selectedIDs.isEmpty ? String(localized: "Select the extra copies you want to review") : String(localized: "\(format(selectedSize)) will move to Trash"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -501,15 +501,15 @@ struct DuplicateFinderView: View {
         if state == .scanning, let current = progress.currentURL {
             return current.deletingLastPathComponent().path
         }
-        return selectedFolder?.path ?? "Exact-match cleanup with a protected copy in every group"
+        return selectedFolder?.path ?? String(localized: "Exact-match cleanup with a protected copy in every group")
     }
 
     private var progressSummary: String {
         switch progress.phase {
         case .discovering:
-            return "\(progress.filesInspected.formatted()) files inspected"
+            return String(localized: "\(progress.filesInspected.formatted()) files inspected")
         case .hashing:
-            return "\(progress.filesHashed.formatted()) of \(progress.filesToHash.formatted()) candidates · \(format(progress.bytesHashed)) verified"
+            return String(localized: "\(progress.filesHashed.formatted()) of \(progress.filesToHash.formatted()) candidates · \(format(progress.bytesHashed)) verified")
         }
     }
 
@@ -560,9 +560,9 @@ struct DuplicateFinderView: View {
     private func chooseFolder() {
         guard !isMovingToTrash else { return }
         let panel = NSOpenPanel()
-        panel.title = "Choose a folder to check for duplicate files"
-        panel.prompt = "Scan Folder"
-        panel.message = "PureMac reads the selected folder and does not change anything during a scan."
+        panel.title = String(localized: "Choose a folder to check for duplicate files")
+        panel.prompt = String(localized: "Scan Folder")
+        panel.message = String(localized: "PureMac reads the selected folder and does not change anything during a scan.")
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
@@ -662,12 +662,12 @@ struct DuplicateFinderView: View {
             applyTrashResult(movedFiles)
             if failures.isEmpty {
                 actionMessage = ActionMessage(
-                    title: "Moved to Trash",
-                    detail: "\(movedFiles.count) files totaling \(format(movedFiles.reduce(0) { $0 + $1.size })) were moved. Every protected copy remains in place."
+                    title: String(localized: "Moved to Trash"),
+                    detail: String(localized: "\(movedFiles.count) files totaling \(format(movedFiles.reduce(0) { $0 + $1.size })) were moved. Every protected copy remains in place.")
                 )
             } else {
                 actionMessage = ActionMessage(
-                    title: movedFiles.isEmpty ? "Nothing was moved" : "Some files were not moved",
+                    title: movedFiles.isEmpty ? String(localized: "Nothing was moved") : String(localized: "Some files were not moved"),
                     detail: failures.joined(separator: "\n")
                 )
             }
@@ -695,8 +695,8 @@ struct DuplicateFinderView: View {
 
     private func skippedSummary(_ skippedFiles: [DuplicateSkippedFile]) -> String {
         skippedFiles.isEmpty
-            ? "Every eligible file was checked."
-            : "\(skippedFiles.count) unsafe or unavailable items were skipped."
+            ? String(localized: "Every eligible file was checked.")
+            : String(localized: "\(skippedFiles.count) unsafe or unavailable items were skipped.")
     }
 
     private func format(_ bytes: Int64) -> String {

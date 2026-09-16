@@ -8,9 +8,9 @@ enum PerformanceStartupDomain: String, CaseIterable, Hashable, Sendable {
 
     var title: String {
         switch self {
-        case .userAgent: return "User agent"
-        case .systemAgent: return "System-wide agent"
-        case .systemDaemon: return "System daemon"
+        case .userAgent: return String(localized: "User agent")
+        case .systemAgent: return String(localized: "System-wide agent")
+        case .systemDaemon: return String(localized: "System daemon")
         }
     }
 }
@@ -35,9 +35,9 @@ struct PerformanceSnapshot: Identifiable, Hashable, Sendable {
 
         var title: String {
             switch self {
-            case .timeMachine: return "Time Machine"
-            case .systemUpdate: return "System update"
-            case .local: return "Local snapshot"
+            case .timeMachine: return String(localized: "Time Machine")
+            case .systemUpdate: return String(localized: "System update")
+            case .local: return String(localized: "Local snapshot")
             }
         }
     }
@@ -71,14 +71,14 @@ enum PerformanceInspectorError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .invalidPropertyList:
-            return "The launch item is not a property-list dictionary."
+            return String(localized: "The launch item is not a property-list dictionary.")
         case .invalidSnapshotIdentifier:
-            return "This snapshot does not have a verified Time Machine timestamp."
+            return String(localized: "This snapshot does not have a verified Time Machine timestamp.")
         case .timedOut(let command):
-            return "\(command) did not finish within the allowed time."
+            return String(format: String(localized: "%@ did not finish within the allowed time."), command)
         case .commandFailed(let command, let status, let detail):
             let suffix = detail.isEmpty ? "" : ": \(detail)"
-            return "\(command) exited with status \(status)\(suffix)"
+            return String(format: String(localized: "%@ exited with status %lld%@"), command, Int64(status), suffix)
         }
     }
 }
@@ -162,29 +162,29 @@ final class PerformanceInspector {
 
         var triggers: [String] = []
         if bool(dictionary["RunAtLoad"]) == true {
-            triggers.append("At login")
+            triggers.append(String(localized: "At login"))
         }
         if let keepAlive = dictionary["KeepAlive"] {
             if bool(keepAlive) == true {
-                triggers.append("Keep alive")
+                triggers.append(String(localized: "Keep alive"))
             } else if let conditions = keepAlive as? [String: Any], !conditions.isEmpty {
-                triggers.append("Conditional keep alive")
+                triggers.append(String(localized: "Conditional keep alive"))
             }
         }
         if let interval = number(dictionary["StartInterval"]), interval.intValue > 0 {
-            triggers.append("Every \(interval.intValue) seconds")
+            triggers.append(String(format: String(localized: "Every %lld seconds"), Int64(interval.intValue)))
         }
         if dictionary["StartCalendarInterval"] != nil {
-            triggers.append("Scheduled")
+            triggers.append(String(localized: "Scheduled"))
         }
         if !stringArray(dictionary["WatchPaths"]).isEmpty {
-            triggers.append("Watches paths")
+            triggers.append(String(localized: "Watches paths"))
         }
         if !stringArray(dictionary["QueueDirectories"]).isEmpty {
-            triggers.append("Watches folders")
+            triggers.append(String(localized: "Watches folders"))
         }
         if bool(dictionary["NetworkState"]) == true {
-            triggers.append("Network state")
+            triggers.append(String(localized: "Network state"))
         }
 
         return PerformanceStartupItem(
@@ -265,7 +265,7 @@ final class PerformanceInspector {
                 } catch {
                     issues.append(
                         PerformanceInspectionIssue(
-                            title: "Could not read \(directory.path)",
+                            title: String(format: String(localized: "Could not read %@"), directory.path),
                             detail: error.localizedDescription
                         )
                     )
@@ -282,7 +282,7 @@ final class PerformanceInspector {
                     } catch {
                         issues.append(
                             PerformanceInspectionIssue(
-                                title: "Could not inspect \(file.lastPathComponent)",
+                                title: String(format: String(localized: "Could not inspect %@"), file.lastPathComponent),
                                 detail: error.localizedDescription
                             )
                         )
@@ -311,8 +311,8 @@ final class PerformanceInspector {
             return (
                 [],
                 [PerformanceInspectionIssue(
-                    title: "Time Machine snapshots are unavailable",
-                    detail: "tmutil is not available on this Mac."
+                    title: String(localized: "Time Machine snapshots are unavailable"),
+                    detail: String(localized: "tmutil is not available on this Mac.")
                 )]
             )
         }
@@ -337,7 +337,7 @@ final class PerformanceInspector {
             return (
                 [],
                 [PerformanceInspectionIssue(
-                    title: "Could not list Time Machine snapshots",
+                    title: String(localized: "Could not list Time Machine snapshots"),
                     detail: error.localizedDescription
                 )]
             )

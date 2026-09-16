@@ -54,7 +54,7 @@ final class ProtectionAuditTests: XCTestCase {
         )
 
         XCTAssertEqual(finding.status, .unknown)
-        XCTAssertEqual(finding.detail, "The system returned an unrecognized status.")
+        XCTAssertEqual(finding.detail, String(localized: "The system returned an unrecognized status."))
     }
 
     func testCommandFailureCannotBeReportedAsEnabled() {
@@ -71,7 +71,7 @@ final class ProtectionAuditTests: XCTestCase {
         )
 
         XCTAssertEqual(finding.status, .unknown)
-        XCTAssertEqual(finding.detail, "PureMac could not read this setting.")
+        XCTAssertEqual(finding.detail, String(localized: "PureMac could not read this setting."))
     }
 
     func testTimeoutIsUnknown() {
@@ -88,7 +88,7 @@ final class ProtectionAuditTests: XCTestCase {
         )
 
         XCTAssertEqual(finding.status, .unknown)
-        XCTAssertEqual(finding.detail, "The check timed out.")
+        XCTAssertEqual(finding.detail, String(localized: "The check timed out."))
     }
 
     func testAuditPreservesCheckOrder() async {

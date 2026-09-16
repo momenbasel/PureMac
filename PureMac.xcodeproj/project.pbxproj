@@ -218,6 +218,9 @@
 		25275D5399E13B2C3E52ED3A /* ProcessResourceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessResourceMonitor.swift; sourceTree = "<group>"; };
 		BA5E26F5C1ABF23B4A8969F7 /* ProcessResourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessResourcesView.swift; sourceTree = "<group>"; };
 		E6A226A315BF27B4A2F9ED6B /* ProcessResourceMonitorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessResourceMonitorTests.swift; sourceTree = "<group>"; };
+		870F6C9B7A9A94DA88878638 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
+		CF61910BFBE0D80EF09C8ACF /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		156DAF7E7C8B81CDB5C0E20B /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/ServicesMenu.strings; sourceTree = "<group>"; };
 		CAFE76434311AEE372E0A06F /* SettingsAttention.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAttention.swift; sourceTree = "<group>"; };
 		0845EBC49E8E05462D2616BC /* MonitoringLifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonitoringLifecycleTests.swift; sourceTree = "<group>"; };
 		80DF58F110082ABB9A1AE47D /* SettingsAttentionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAttentionTests.swift; sourceTree = "<group>"; };
@@ -535,6 +538,7 @@
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				it,
 				Base,
 				ar,
 				en,
@@ -693,6 +697,7 @@
 		241E0895B09C71AB423B2F9E /* Localizable.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
+				870F6C9B7A9A94DA88878638 /* it */,
 				B2CD0028599BE178B96F18A6 /* ar */,
 				9F04B811BB0012F6D2F07F91 /* en */,
 				340D303C60FF878B019056B6 /* es */,
@@ -711,6 +716,7 @@
 		57FBBF8C7EF27C8E09126ED5 /* ServicesMenu.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
+				156DAF7E7C8B81CDB5C0E20B /* it */,
 				44392E486177839BA978685E /* en */,
 				25D1CF5248C1D471BCBD212F /* fr */,
 				6ED5C9C10C69C3143B1F5CA6 /* ru */,
@@ -722,6 +728,7 @@
 		B55B1419D88851567DFB783A /* InfoPlist.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
+				CF61910BFBE0D80EF09C8ACF /* it */,
 				40CD4855FB5FA866CAA52C10 /* en */,
 				0A544093C897FBCBA8E256F9 /* fr */,
 				ED0C4D8912DA94F81B2AEF8F /* ru */,
