@@ -2,10 +2,9 @@ import Foundation
 import Darwin
 
 /// Lightweight live system telemetry for the menu-bar monitor (CPU / memory /
-/// disk). Polls on a timer only while a SwiftUI view is observing it; the menu
-/// bar's `MenuBarExtra` keeps a single shared instance alive, and `start()` /
-/// `stop()` gate the timer so the app does no background sampling when the
-/// monitor is disabled in Settings.
+/// disk). Each visible consumer owns a sampling request. The fastest request
+/// determines the interval; releasing the last request stops sampling. The
+/// enabled menu-bar monitor can continue independently of the Performance page.
 ///
 /// All readings use public Mach / Foundation APIs (no sandbox-incompatible
 /// shelling out), so this stays valid under the app's hardened-runtime,
@@ -36,39 +35,68 @@ final class SystemMonitor: ObservableObject {
     /// increasing totals into a per-interval delta.
     private var previousBusy: UInt64 = 0
     private var previousTotal: UInt64 = 0
-    /// Number of live observers; the timer runs only while > 0 so two views
-    /// (menu-bar label + dropdown) share one timer and the app idles cleanly.
-    private var observerCount = 0
+    // Idempotent subscriptions prevent repeated view activation from leaking a
+    // timer. Each consumer releases only its own request.
+    private var requests: [UUID: TimeInterval] = [:]
+    private var timerGeneration = UUID()
+    private let sampleAction: (() -> Void)?
+    private(set) var samplingInterval: TimeInterval?
+    var isSampling: Bool { timer != nil }
 
-    private init() {}
-
-    /// Begin (or keep) sampling. Refcounted so multiple observers share a timer.
-    func start(interval: TimeInterval = 2.0) {
-        observerCount += 1
-        guard timer == nil else { return }
-        memoryTotal = Int64(ProcessInfo.processInfo.physicalMemory)
-        sample()
-        let t = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.sample() }
-        }
-        // .common so sampling continues while a menu/popover tracks the run loop.
-        RunLoop.main.add(t, forMode: .common)
-        timer = t
+    init(sampleAction: (() -> Void)? = nil) {
+        self.sampleAction = sampleAction
     }
 
-    /// Release one observer; the timer stops once the last one goes away.
-    func stop() {
-        observerCount = max(0, observerCount - 1)
-        guard observerCount == 0 else { return }
+    func start(owner: UUID, interval: TimeInterval = 2.0) {
+        requests[owner] = interval.isFinite ? max(0.1, interval) : 2
+        configureTimer()
+    }
+
+    func stop(owner: UUID) {
+        requests.removeValue(forKey: owner)
+        configureTimer()
+    }
+
+    private func configureTimer() {
+        let interval = requests.values.min()
+        guard interval != samplingInterval else { return }
+        let wasStopped = timer == nil
         timer?.invalidate()
         timer = nil
+        timerGeneration = UUID()
+        samplingInterval = interval
+        guard let interval else {
+            previousBusy = 0
+            previousTotal = 0
+            return
+        }
+        if wasStopped {
+            memoryTotal = Int64(ProcessInfo.processInfo.physicalMemory)
+            cpuUsage = 0
+            sample()
+        }
+        let generation = timerGeneration
+        let timer = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.timerGeneration == generation, !self.requests.isEmpty else { return }
+                self.sample()
+            }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        self.timer = timer
     }
 
     private func sample() {
-        sampleCPU()
-        sampleMemory()
-        sampleDisk()
+        if let sampleAction {
+            sampleAction()
+        } else {
+            sampleCPU()
+            sampleMemory()
+            sampleDisk()
+        }
     }
+
+    deinit { timer?.invalidate() }
 
     // MARK: - CPU
 

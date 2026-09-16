@@ -34,6 +34,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
     private let statusItem: NSStatusItem
     private let popover = NSPopover()
     private let monitor = SystemMonitor.shared
+    private let monitorOwner = UUID()
     private var cancellable: AnyCancellable?
 
     override init() {
@@ -45,7 +46,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         statusItem.autosaveName = "PureMacSystemMonitor"
         statusItem.isVisible = true
 
-        monitor.start()
+        monitor.start(owner: monitorOwner)
 
         if let button = statusItem.button {
             button.image = NSImage(
@@ -77,7 +78,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         cancellable = nil
         if popover.isShown { popover.performClose(nil) }
         NSStatusBar.system.removeStatusItem(statusItem)
-        monitor.stop()
+        monitor.stop(owner: monitorOwner)
     }
 
     private func updateTitle() {

@@ -82,8 +82,8 @@ struct MenuBarMonitorView: View {
         }
         .padding(14)
         .frame(width: 252)
-        .onAppear { monitor.start() }
-        .onDisappear { monitor.stop() }
+        // The owning MenuBarController keeps telemetry alive for the status
+        // item and popover together, and releases it explicitly on teardown.
     }
 
     private func byteDetail(_ used: Int64, _ total: Int64) -> String {

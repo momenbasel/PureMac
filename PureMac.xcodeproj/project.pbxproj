@@ -92,7 +92,11 @@
 		FF6B92CAF96A58625A56A1C0 /* ProtectionAudit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F9B44A9C1B4065126789622 /* ProtectionAudit.swift */; };
 		726848F8F1CA1E1829107904 /* UpdateServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E132B636229ED538463A35E /* UpdateServiceTests.swift */; };
 		C9A572DBF932E601574B64E6 /* AppUpdateSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583DCE8B0BCE0F50893B6734 /* AppUpdateSettingsView.swift */; };
+		777763CDC4E11A338252B0DF /* ProcessResourceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25275D5399E13B2C3E52ED3A /* ProcessResourceMonitor.swift */; };
+		77FC8733ABF2A74802D09574 /* ProcessResourcesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5E26F5C1ABF23B4A8969F7 /* ProcessResourcesView.swift */; };
+		3192C7DC906F406CF7CEE846 /* ProcessResourceMonitorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6A226A315BF27B4A2F9ED6B /* ProcessResourceMonitorTests.swift */; };
 		F17BF69BB9CA54A64F1BD2B8 /* SettingsAttention.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAFE76434311AEE372E0A06F /* SettingsAttention.swift */; };
+		C7BDBBB82BDD342F66D73E8F /* MonitoringLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0845EBC49E8E05462D2616BC /* MonitoringLifecycleTests.swift */; };
 		ABA2462684AAB22E75C2D6B4 /* SettingsAttentionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80DF58F110082ABB9A1AE47D /* SettingsAttentionTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -211,7 +215,11 @@
 		F9DCBD97CC88D77AE8DB01A4 /* PermissionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionCoordinator.swift; sourceTree = "<group>"; };
 		6E132B636229ED538463A35E /* UpdateServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateServiceTests.swift; sourceTree = "<group>"; };
 		583DCE8B0BCE0F50893B6734 /* AppUpdateSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateSettingsView.swift; sourceTree = "<group>"; };
+		25275D5399E13B2C3E52ED3A /* ProcessResourceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessResourceMonitor.swift; sourceTree = "<group>"; };
+		BA5E26F5C1ABF23B4A8969F7 /* ProcessResourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessResourcesView.swift; sourceTree = "<group>"; };
+		E6A226A315BF27B4A2F9ED6B /* ProcessResourceMonitorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessResourceMonitorTests.swift; sourceTree = "<group>"; };
 		CAFE76434311AEE372E0A06F /* SettingsAttention.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAttention.swift; sourceTree = "<group>"; };
+		0845EBC49E8E05462D2616BC /* MonitoringLifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonitoringLifecycleTests.swift; sourceTree = "<group>"; };
 		80DF58F110082ABB9A1AE47D /* SettingsAttentionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAttentionTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -240,6 +248,8 @@
 			isa = PBXGroup;
 			children = (
 				80DF58F110082ABB9A1AE47D /* SettingsAttentionTests.swift */,
+				0845EBC49E8E05462D2616BC /* MonitoringLifecycleTests.swift */,
+				E6A226A315BF27B4A2F9ED6B /* ProcessResourceMonitorTests.swift */,
 				6E132B636229ED538463A35E /* UpdateServiceTests.swift */,
 				491771F923C93FD61A263893 /* AppLanguagePreferencesTests.swift */,
 				F77B9D7D5353CD42BD03ADBB /* ApplicationUpdaterTests.swift */,
@@ -275,6 +285,7 @@
 		3FF7D3D9EA9340F29D4811FC /* Tools */ = {
 			isa = PBXGroup;
 			children = (
+				BA5E26F5C1ABF23B4A8969F7 /* ProcessResourcesView.swift */,
 				5A0AF1B9C42A20B6C9FC2DD9 /* AppUpdatesView.swift */,
 				1343918E4CD9C8DA99EFA588 /* DuplicateFinderView.swift */,
 				D84FB753A60BE6BF54D5126A /* PerformanceView.swift */,
@@ -313,6 +324,7 @@
 		6184B2EC3D01E6E95633406E /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				25275D5399E13B2C3E52ED3A /* ProcessResourceMonitor.swift */,
 				59873E44B520DE069F80CCD6 /* ApplicationUpdater.swift */,
 				69B24B648B82186FC3B6EF2B /* BinaryThinner.swift */,
 				2A8DE5D45BA19E2670B57DC5 /* CleaningEngine.swift */,
@@ -572,6 +584,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				F17BF69BB9CA54A64F1BD2B8 /* SettingsAttention.swift in Sources */,
+				77FC8733ABF2A74802D09574 /* ProcessResourcesView.swift in Sources */,
+				777763CDC4E11A338252B0DF /* ProcessResourceMonitor.swift in Sources */,
 				C9A572DBF932E601574B64E6 /* AppUpdateSettingsView.swift in Sources */,
 				DC32253D26D0E29762006DA0 /* AppBundleDragHandle.swift in Sources */,
 				4F754D89F4CE5142BE384062 /* AppConstants.swift in Sources */,
@@ -644,6 +658,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				ABA2462684AAB22E75C2D6B4 /* SettingsAttentionTests.swift in Sources */,
+				C7BDBBB82BDD342F66D73E8F /* MonitoringLifecycleTests.swift in Sources */,
+				3192C7DC906F406CF7CEE846 /* ProcessResourceMonitorTests.swift in Sources */,
 				726848F8F1CA1E1829107904 /* UpdateServiceTests.swift in Sources */,
 				59B3096E2AE8ED0397B16798 /* AppLanguagePreferencesTests.swift in Sources */,
 				E2403D82F00D749C9AD4A6D4 /* AppStateTests.swift in Sources */,

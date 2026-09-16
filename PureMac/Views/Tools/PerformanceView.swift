@@ -10,8 +10,15 @@ struct PerformanceView: View {
     }
 
     @ObservedObject private var monitor = SystemMonitor.shared
-    @State private var startupExpanded = false
     @State private var state: LoadState = .idle
+    @State private var resourcesExpanded = false
+    @State private var monitorOwner = UUID()
+    @State private var pageIsVisible = false
+    @State private var appIsActive = NSApplication.shared.isActive
+    @State private var windowIsMinimized = false
+    @State private var windowIsKey = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var startupExpanded = false
     @State private var snapshotPendingDeletion: PerformanceSnapshot?
     @State private var deletingSnapshotID: String?
     @State private var deletionError: String?
@@ -46,12 +53,45 @@ struct PerformanceView: View {
                 .help("Inspect startup items and local snapshots again")
             }
         }
-        .task {
-            monitor.start(interval: 1.5)
-            await refresh()
+        .task { await refresh() }
+        .onAppear {
+            pageIsVisible = true
+            appIsActive = NSApplication.shared.isActive
+            windowIsMinimized = WindowOpener.shared.mainWindow?.isMiniaturized ?? false
+            windowIsKey = WindowOpener.shared.mainWindow?.isKeyWindow ?? false
+            synchronizeMonitoring()
         }
         .onDisappear {
-            monitor.stop()
+            pageIsVisible = false
+            synchronizeMonitoring()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            appIsActive = true
+            synchronizeMonitoring()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
+            appIsActive = false
+            synchronizeMonitoring()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didMiniaturizeNotification)) { notification in
+            guard let window = notification.object as? NSWindow, window === WindowOpener.shared.mainWindow else { return }
+            windowIsMinimized = true
+            synchronizeMonitoring()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didDeminiaturizeNotification)) { notification in
+            guard let window = notification.object as? NSWindow, window === WindowOpener.shared.mainWindow else { return }
+            windowIsMinimized = false
+            synchronizeMonitoring()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { notification in
+            guard let window = notification.object as? NSWindow, window === WindowOpener.shared.mainWindow else { return }
+            windowIsKey = true
+            synchronizeMonitoring()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { notification in
+            guard let window = notification.object as? NSWindow, window === WindowOpener.shared.mainWindow else { return }
+            windowIsKey = false
+            synchronizeMonitoring()
         }
         .alert("Delete local snapshot?", isPresented: deletionConfirmationPresented) {
             Button("Cancel", role: .cancel) {
@@ -93,14 +133,45 @@ struct PerformanceView: View {
         .padding(.bottom, 2)
     }
 
+    private var resourcesAreActive: Bool {
+        pageIsVisible && appIsActive && windowIsKey && !windowIsMinimized
+    }
+
+    private func synchronizeMonitoring() {
+        if resourcesAreActive {
+            monitor.start(owner: monitorOwner, interval: 1.5)
+        } else {
+            monitor.stop(owner: monitorOwner)
+        }
+    }
+
     private var liveResources: some View {
         CardSurface(padding: 18, elevation: .standard, tint: Tint.accent) {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    SectionHeader("Live resources")
-                    Spacer()
-                    StatusChip(label: "Live", systemImage: "circle.fill", tint: Tint.green)
+            VStack(alignment: .leading, spacing: 18) {
+                Button {
+                    withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) {
+                        resourcesExpanded.toggle()
+                    }
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 11, weight: .semibold))
+                            .rotationEffect(.degrees(resourcesExpanded ? 90 : 0))
+                            .foregroundStyle(.secondary)
+                        IconTile(systemName: "cpu", tint: Tint.accent, size: 30, corner: 8)
+                        Text("CPU - Memory")
+                            .font(.system(size: 15, weight: .semibold))
+                        Spacer()
+                        StatusChip(label: resourcesAreActive ? String(localized: "Live") : String(localized: "Paused"),
+                                   systemImage: resourcesAreActive ? "circle.fill" : "pause.fill",
+                                   tint: resourcesAreActive ? Tint.green : .secondary)
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel("CPU - Memory")
+                .accessibilityValue(Text(LocalizedStringKey(resourcesExpanded ? "Expanded" : "Collapsed")))
+                .accessibilityIdentifier("performance.resourcesDisclosure")
 
                 HStack(spacing: 26) {
                     ResourceMeter(
@@ -109,14 +180,16 @@ struct PerformanceView: View {
                         detail: "\(Int((monitor.cpuUsage * 100).rounded()))%",
                         tint: Tint.accent
                     )
-                    Divider()
-                        .frame(height: 52)
+                    Divider().frame(height: 52)
                     ResourceMeter(
-                        title: "Memory pressure use",
+                        title: "Memory in use",
                         value: monitor.memoryFraction,
                         detail: memoryDetail,
                         tint: Tint.purple
                     )
+                }
+                if resourcesExpanded {
+                    ProcessResourcesView(isActive: resourcesAreActive)
                 }
             }
         }
@@ -306,7 +379,7 @@ struct PerformanceView: View {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .memory
         formatter.allowedUnits = [.useGB, .useMB]
-        return "\(formatter.string(fromByteCount: monitor.memoryUsed)) of \(formatter.string(fromByteCount: monitor.memoryTotal))"
+        return String(format: String(localized: "%@ of %@"), formatter.string(fromByteCount: monitor.memoryUsed), formatter.string(fromByteCount: monitor.memoryTotal))
     }
 
     private var deletionConfirmationPresented: Binding<Bool> {
@@ -382,7 +455,7 @@ struct PerformanceView: View {
 }
 
 private struct ResourceMeter: View {
-    let title: String
+    let title: LocalizedStringKey
     let value: Double
     let detail: String
     let tint: Color
