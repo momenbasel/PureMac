@@ -2,7 +2,6 @@ import SwiftUI
 
 struct MainWindow: View {
     @EnvironmentObject var appState: AppState
-    @EnvironmentObject var theme: ThemeManager
     @ObservedObject private var permission = PermissionCoordinator.shared
     @State private var selectedSection: AppSection? = .cleaning(.smartScan)
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
@@ -46,8 +45,13 @@ struct MainWindow: View {
             selectSection(.apps)
             appState.pendingExternalApp = nil
         }
+        .onChange(of: appState.showUpdateSettings) { showUpdates in
+            if showUpdates { selectSection(.settings) }
+        }
         .onAppear {
-            if appState.pendingExternalApp != nil {
+            if appState.showUpdateSettings {
+                selectSection(.settings)
+            } else if appState.pendingExternalApp != nil {
                 selectSection(.apps)
                 appState.pendingExternalApp = nil
             } else if let selectedSection {
@@ -73,8 +77,8 @@ struct MainWindow: View {
             Text(appState.cleanError ?? "")
         }
         .sheet(isPresented: Binding(
-            get: { permission.isRequesting },
-            set: { if !$0 { permission.dismiss(callRetry: false) } }
+            get: { permission.isRequesting && permission.presentation == .mainWindow },
+            set: { if !$0 && permission.presentation == .mainWindow { permission.dismiss(callRetry: false) } }
         )) {
             PermissionSheet()
         }
@@ -291,6 +295,7 @@ struct MainWindow: View {
         if advancedToolsExpanded {
             sections.append(contentsOf: Self.advancedCategories.map(AppSection.cleaning))
         }
+        sections.append(.settings)
         return sections
     }
 
@@ -308,6 +313,7 @@ struct MainWindow: View {
         case .similarPhotos: return "sidebar.similarPhotos"
         case .protection: return "sidebar.protection"
         case .performance: return "sidebar.performance"
+        case .settings: return "sidebar.settings"
         case .appUpdates: return "sidebar.appUpdates"
         case .cleaning(let category): return "sidebar.cleaning.\(category.id)"
         }
@@ -353,92 +359,26 @@ struct MainWindow: View {
     }
 
     private var sidebarFooter: some View {
-        VStack(spacing: 8) {
-            permissionStatus
-            appearanceMenu
-        }
-        .padding(.horizontal, 12)
-        .padding(.top, 9)
-        .padding(.bottom, 10)
-        .background(.regularMaterial)
-        .overlay(alignment: .top) {
-            Divider()
-        }
-    }
-
-    private var permissionStatus: some View {
-        let granted = appState.hasFullDiskAccess
-        let tint = granted ? Tint.green : Tint.orange
-
-        return HStack(spacing: 9) {
-            Circle()
-                .fill(tint)
-                .frame(width: 7, height: 7)
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text(granted ? "Full access" : "Limited access")
-                    .font(.system(size: 11.5, weight: .semibold))
-                    .foregroundStyle(sidebarLabelColor)
-                Text(granted ? "Ready for protected locations" : "Some locations are unavailable")
-                    .font(.system(size: 9.5))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-
-            Spacer(minLength: 4)
-
-            if !granted {
-                Button("Set up") {
-                    permission.requestAccess(context: .general) {
-                        appState.checkFullDiskAccess()
-                    }
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .tint(Tint.orange)
-            }
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .background {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color.primary.opacity(0.035))
-        }
-    }
-
-    private var appearanceMenu: some View {
-        Menu {
-            ForEach(AppearanceMode.allCases) { appearance in
-                Button {
-                    theme.appearance = appearance
-                } label: {
-                    Label(LocalizedStringKey(appearance.label), systemImage: appearance.icon)
-                }
-            }
+        Button {
+            selectSection(.settings)
         } label: {
-            HStack(spacing: 8) {
-                Image(systemName: theme.appearance.icon)
-                    .font(.system(size: 11, weight: .medium))
-                    .frame(width: 16)
-                Text("Appearance")
-                    .font(.system(size: 11.5, weight: .medium))
-                    .foregroundStyle(sidebarLabelColor)
-                Spacer()
-                Text(LocalizedStringKey(theme.appearance.label))
-                    .font(.system(size: 10.5))
-                    .foregroundStyle(.secondary)
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: 8, weight: .semibold))
-                    .foregroundStyle(.tertiary)
-            }
-            .frame(minHeight: 26)
-            .padding(.horizontal, 9)
-            .contentShape(Rectangle())
+            SidebarNavRow(
+                label: "Settings",
+                icon: "gearshape.fill",
+                tint: Tint.accent,
+                badge: nil,
+                isSelected: selectedSection == .settings,
+                emphasized: false
+            )
         }
         .buttonStyle(.plain)
-        .menuStyle(.borderlessButton)
-        .accessibilityLabel("Appearance")
-        .accessibilityValue(Text(LocalizedStringKey(theme.appearance.label)))
+        .focused($focusedSection, equals: .settings)
+        .accessibilityIdentifier("sidebar.settings")
+        .accessibilityAddTraits(selectedSection == .settings ? .isSelected : [])
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(.regularMaterial)
+        .overlay(alignment: .top) { Divider() }
     }
 
     private var sidebarLabelColor: Color {
@@ -448,7 +388,7 @@ struct MainWindow: View {
     @ViewBuilder
     private var detailContainer: some View {
         VStack(spacing: 0) {
-            if !appState.hasFullDiskAccess && !appState.fdaBannerDismissed {
+            if selectedSection != .settings && !appState.hasFullDiskAccess && !appState.fdaBannerDismissed {
                 accessBanner
                     .padding(.horizontal, 20)
                     .padding(.top, 14)
@@ -484,6 +424,8 @@ struct MainWindow: View {
             PerformanceView()
         case .appUpdates:
             AppUpdatesView()
+        case .settings:
+            SettingsView()
         case .cleaning(let category):
             if category == .smartScan {
                 DashboardView { selectSection($0) }
@@ -613,3 +555,4 @@ private struct SidebarNavRow: View {
         colorScheme == .dark ? Color.white.opacity(0.91) : Color.black.opacity(0.84)
     }
 }
+

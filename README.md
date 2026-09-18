@@ -173,6 +173,12 @@ Check for updates to Homebrew-managed cask apps and choose which ones to upgrade
 ### Scheduled Cleaning
 Optional. Configurable interval (hourly to monthly), with auto-clean threshold so background runs only fire when there's something meaningful to remove.
 
+### Settings
+
+Open **Settings** using the gear in the sidebar or the standard macOS Settings command. General settings include language, System/Light/Dark appearance, Full Disk Access status and recheck, startup, menu-bar monitoring, sound and safety. Cleaning and scheduled scanning keep their existing preferences.
+
+The **Updates** tab shows the installed version and build and checks official GitHub app releases on request. CLI releases, drafts and prereleases are excluded. Choose the update method for Homebrew instructions or a DMG/ZIP download link. The check reports availability; it does not install an update or run Homebrew.
+
 ## Permissions
 
 PureMac needs **Full Disk Access** to read the locations macOS hides from every app by default - Mail downloads, Safari data, the TCC database, protected app containers. Without it, some cleanup categories and app-container scans will be incomplete. The locations available depend on your macOS version and permissions.
