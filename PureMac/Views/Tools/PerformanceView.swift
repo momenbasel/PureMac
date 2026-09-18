@@ -10,6 +10,7 @@ struct PerformanceView: View {
     }
 
     @ObservedObject private var monitor = SystemMonitor.shared
+    @State private var startupExpanded = false
     @State private var state: LoadState = .idle
     @State private var snapshotPendingDeletion: PerformanceSnapshot?
     @State private var deletingSnapshotID: String?
@@ -22,7 +23,8 @@ struct PerformanceView: View {
                 .ignoresSafeArea()
 
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 14) {
+                // Only a few expandable cards: eager layout avoids unstable lazy height estimates.
+                VStack(alignment: .leading, spacing: 14) {
                     header
                     liveResources
                     inspectionContent
@@ -188,49 +190,49 @@ struct PerformanceView: View {
     }
 
     private func startupCard(_ items: [PerformanceStartupItem]) -> some View {
-        CardSurface(padding: 0, elevation: .standard) {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 10) {
-                    IconTile(systemName: "switch.2", tint: Tint.accent, size: 30, corner: 8)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Startup and background items")
-                            .font(.system(size: 15, weight: .semibold))
+        CardSurface(padding: 18, elevation: .standard) {
+            DisclosureGroup(isExpanded: $startupExpanded) {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
                         Text("Launch agents and daemons installed outside macOS system folders")
                             .font(.system(size: 11.5))
                             .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Login Items Settings") {
+                            openLoginItemsSettings()
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
                     }
-                    Spacer()
-                    StatusChip(label: "\(items.count) found", tint: Tint.accent)
-                    Button("Login Items Settings") {
-                        openLoginItemsSettings()
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                }
-                .padding(18)
-
-                Divider()
-
-                if items.isEmpty {
-                    EmptyInspectionRow(
-                        systemImage: "checkmark.circle.fill",
-                        title: "No launchd items found",
-                        detail: "The inspected user and third-party launch folders are empty."
-                    )
-                } else {
-                    LazyVStack(spacing: 0) {
-                        ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                            StartupItemRow(item: item) {
-                                reveal(item.sourceURL)
-                            }
-                            if index < items.count - 1 {
-                                Divider()
-                                    .padding(.leading, 58)
+                    Divider()
+                    if items.isEmpty {
+                        EmptyInspectionRow(
+                            systemImage: "checkmark.circle.fill",
+                            title: "No launchd items found",
+                            detail: "The inspected user and third-party launch folders are empty."
+                        )
+                    } else {
+                        LazyVStack(spacing: 0) {
+                            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                                StartupItemRow(item: item) { reveal(item.sourceURL) }
+                                if index < items.count - 1 {
+                                    Divider().padding(.leading, 58)
+                                }
                             }
                         }
                     }
                 }
+                .padding(.top, 14)
+            } label: {
+                HStack(spacing: 10) {
+                    IconTile(systemName: "switch.2", tint: Tint.accent, size: 30, corner: 8)
+                    Text("Startup and background items")
+                        .font(.system(size: 15, weight: .semibold))
+                    Spacer()
+                    StatusChip(label: String(format: String(localized: "%lld found"), Int64(items.count)), tint: Tint.accent)
+                }
             }
+            .accessibilityIdentifier("performance.startupDisclosure")
         }
     }
 
