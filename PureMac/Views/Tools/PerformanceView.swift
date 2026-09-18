@@ -11,6 +11,14 @@ struct PerformanceView: View {
 
     @ObservedObject private var monitor = SystemMonitor.shared
     @State private var state: LoadState = .idle
+    @State private var resourcesExpanded = false
+    @State private var monitorOwner = UUID()
+    @State private var pageIsVisible = false
+    @State private var appIsActive = NSApplication.shared.isActive
+    @State private var windowIsMinimized = false
+    @State private var windowIsKey = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var startupExpanded = false
     @State private var snapshotPendingDeletion: PerformanceSnapshot?
     @State private var deletingSnapshotID: String?
     @State private var deletionError: String?
@@ -22,7 +30,8 @@ struct PerformanceView: View {
                 .ignoresSafeArea()
 
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 14) {
+                // Only a few expandable cards: eager layout avoids unstable lazy height estimates.
+                VStack(alignment: .leading, spacing: 14) {
                     header
                     liveResources
                     inspectionContent
@@ -44,12 +53,45 @@ struct PerformanceView: View {
                 .help("Inspect startup items and local snapshots again")
             }
         }
-        .task {
-            monitor.start(interval: 1.5)
-            await refresh()
+        .task { await refresh() }
+        .onAppear {
+            pageIsVisible = true
+            appIsActive = NSApplication.shared.isActive
+            windowIsMinimized = WindowOpener.shared.mainWindow?.isMiniaturized ?? false
+            windowIsKey = WindowOpener.shared.mainWindow?.isKeyWindow ?? false
+            synchronizeMonitoring()
         }
         .onDisappear {
-            monitor.stop()
+            pageIsVisible = false
+            synchronizeMonitoring()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            appIsActive = true
+            synchronizeMonitoring()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
+            appIsActive = false
+            synchronizeMonitoring()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didMiniaturizeNotification)) { notification in
+            guard let window = notification.object as? NSWindow, window === WindowOpener.shared.mainWindow else { return }
+            windowIsMinimized = true
+            synchronizeMonitoring()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didDeminiaturizeNotification)) { notification in
+            guard let window = notification.object as? NSWindow, window === WindowOpener.shared.mainWindow else { return }
+            windowIsMinimized = false
+            synchronizeMonitoring()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { notification in
+            guard let window = notification.object as? NSWindow, window === WindowOpener.shared.mainWindow else { return }
+            windowIsKey = true
+            synchronizeMonitoring()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { notification in
+            guard let window = notification.object as? NSWindow, window === WindowOpener.shared.mainWindow else { return }
+            windowIsKey = false
+            synchronizeMonitoring()
         }
         .alert("Delete local snapshot?", isPresented: deletionConfirmationPresented) {
             Button("Cancel", role: .cancel) {
@@ -91,14 +133,45 @@ struct PerformanceView: View {
         .padding(.bottom, 2)
     }
 
+    private var resourcesAreActive: Bool {
+        pageIsVisible && appIsActive && windowIsKey && !windowIsMinimized
+    }
+
+    private func synchronizeMonitoring() {
+        if resourcesAreActive {
+            monitor.start(owner: monitorOwner, interval: 1.5)
+        } else {
+            monitor.stop(owner: monitorOwner)
+        }
+    }
+
     private var liveResources: some View {
         CardSurface(padding: 18, elevation: .standard, tint: Tint.accent) {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    SectionHeader("Live resources")
-                    Spacer()
-                    StatusChip(label: "Live", systemImage: "circle.fill", tint: Tint.green)
+            VStack(alignment: .leading, spacing: 18) {
+                Button {
+                    withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) {
+                        resourcesExpanded.toggle()
+                    }
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 11, weight: .semibold))
+                            .rotationEffect(.degrees(resourcesExpanded ? 90 : 0))
+                            .foregroundStyle(.secondary)
+                        IconTile(systemName: "cpu", tint: Tint.accent, size: 30, corner: 8)
+                        Text("CPU - Memory")
+                            .font(.system(size: 15, weight: .semibold))
+                        Spacer()
+                        StatusChip(label: resourcesAreActive ? String(localized: "Live") : String(localized: "Paused"),
+                                   systemImage: resourcesAreActive ? "circle.fill" : "pause.fill",
+                                   tint: resourcesAreActive ? Tint.green : .secondary)
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel("CPU - Memory")
+                .accessibilityValue(Text(LocalizedStringKey(resourcesExpanded ? "Expanded" : "Collapsed")))
+                .accessibilityIdentifier("performance.resourcesDisclosure")
 
                 HStack(spacing: 26) {
                     ResourceMeter(
@@ -107,14 +180,16 @@ struct PerformanceView: View {
                         detail: "\(Int((monitor.cpuUsage * 100).rounded()))%",
                         tint: Tint.accent
                     )
-                    Divider()
-                        .frame(height: 52)
+                    Divider().frame(height: 52)
                     ResourceMeter(
-                        title: "Memory pressure use",
+                        title: "Memory in use",
                         value: monitor.memoryFraction,
                         detail: memoryDetail,
                         tint: Tint.purple
                     )
+                }
+                if resourcesExpanded {
+                    ProcessResourcesView(isActive: resourcesAreActive)
                 }
             }
         }
@@ -188,49 +263,49 @@ struct PerformanceView: View {
     }
 
     private func startupCard(_ items: [PerformanceStartupItem]) -> some View {
-        CardSurface(padding: 0, elevation: .standard) {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 10) {
-                    IconTile(systemName: "switch.2", tint: Tint.accent, size: 30, corner: 8)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Startup and background items")
-                            .font(.system(size: 15, weight: .semibold))
+        CardSurface(padding: 18, elevation: .standard) {
+            DisclosureGroup(isExpanded: $startupExpanded) {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
                         Text("Launch agents and daemons installed outside macOS system folders")
                             .font(.system(size: 11.5))
                             .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Login Items Settings") {
+                            openLoginItemsSettings()
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
                     }
-                    Spacer()
-                    StatusChip(label: "\(items.count) found", tint: Tint.accent)
-                    Button("Login Items Settings") {
-                        openLoginItemsSettings()
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                }
-                .padding(18)
-
-                Divider()
-
-                if items.isEmpty {
-                    EmptyInspectionRow(
-                        systemImage: "checkmark.circle.fill",
-                        title: "No launchd items found",
-                        detail: "The inspected user and third-party launch folders are empty."
-                    )
-                } else {
-                    LazyVStack(spacing: 0) {
-                        ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                            StartupItemRow(item: item) {
-                                reveal(item.sourceURL)
-                            }
-                            if index < items.count - 1 {
-                                Divider()
-                                    .padding(.leading, 58)
+                    Divider()
+                    if items.isEmpty {
+                        EmptyInspectionRow(
+                            systemImage: "checkmark.circle.fill",
+                            title: "No launchd items found",
+                            detail: "The inspected user and third-party launch folders are empty."
+                        )
+                    } else {
+                        LazyVStack(spacing: 0) {
+                            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                                StartupItemRow(item: item) { reveal(item.sourceURL) }
+                                if index < items.count - 1 {
+                                    Divider().padding(.leading, 58)
+                                }
                             }
                         }
                     }
                 }
+                .padding(.top, 14)
+            } label: {
+                HStack(spacing: 10) {
+                    IconTile(systemName: "switch.2", tint: Tint.accent, size: 30, corner: 8)
+                    Text("Startup and background items")
+                        .font(.system(size: 15, weight: .semibold))
+                    Spacer()
+                    StatusChip(label: String(format: String(localized: "%lld found"), Int64(items.count)), tint: Tint.accent)
+                }
             }
+            .accessibilityIdentifier("performance.startupDisclosure")
         }
     }
 
@@ -304,7 +379,7 @@ struct PerformanceView: View {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .memory
         formatter.allowedUnits = [.useGB, .useMB]
-        return "\(formatter.string(fromByteCount: monitor.memoryUsed)) of \(formatter.string(fromByteCount: monitor.memoryTotal))"
+        return String(format: String(localized: "%@ of %@"), formatter.string(fromByteCount: monitor.memoryUsed), formatter.string(fromByteCount: monitor.memoryTotal))
     }
 
     private var deletionConfirmationPresented: Binding<Bool> {
@@ -380,7 +455,7 @@ struct PerformanceView: View {
 }
 
 private struct ResourceMeter: View {
-    let title: String
+    let title: LocalizedStringKey
     let value: Double
     let detail: String
     let tint: Color

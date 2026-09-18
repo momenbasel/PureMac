@@ -11,6 +11,19 @@ struct WindowOpenerCapture: View {
         Color.clear
             .frame(width: 0, height: 0)
             .onAppear { WindowOpener.shared.open = { id in openWindow(id: id) } }
+            .background(MainWindowReference())
+    }
+}
+
+private struct MainWindowReference: NSViewRepresentable {
+    func makeNSView(context: Context) -> ReferenceView { ReferenceView() }
+    func updateNSView(_ nsView: ReferenceView, context: Context) {}
+
+    final class ReferenceView: NSView {
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            if let window { WindowOpener.shared.mainWindow = window }
+        }
     }
 }
 
@@ -69,8 +82,8 @@ struct MenuBarMonitorView: View {
         }
         .padding(14)
         .frame(width: 252)
-        .onAppear { monitor.start() }
-        .onDisappear { monitor.stop() }
+        // The owning MenuBarController keeps telemetry alive for the status
+        // item and popover together, and releases it explicitly on teardown.
     }
 
     private func byteDetail(_ used: Int64, _ total: Int64) -> String {
