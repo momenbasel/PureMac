@@ -347,7 +347,7 @@ struct ProtectionAudit: Sendable {
                 return finding(check, .disabled, "The startup disk is not encrypted with FileVault.")
             }
         case .firewall:
-            if output.contains("firewall is enabled") || output.contains("state = 1") {
+           if output.contains("firewall is enabled") || output.contains("state = 1") || output.contains("state = 2") {
                 return finding(check, .enabled, "Incoming network connections are filtered.")
             }
             if output.contains("firewall is disabled") || output.contains("state = 0") {
