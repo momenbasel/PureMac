@@ -11,6 +11,19 @@ struct WindowOpenerCapture: View {
         Color.clear
             .frame(width: 0, height: 0)
             .onAppear { WindowOpener.shared.open = { id in openWindow(id: id) } }
+            .background(MainWindowReference())
+    }
+}
+
+private struct MainWindowReference: NSViewRepresentable {
+    func makeNSView(context: Context) -> ReferenceView { ReferenceView() }
+    func updateNSView(_ nsView: ReferenceView, context: Context) {}
+
+    final class ReferenceView: NSView {
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            if let window { WindowOpener.shared.mainWindow = window }
+        }
     }
 }
 
