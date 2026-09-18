@@ -75,7 +75,7 @@ struct AppUpdatesView: View {
                 Button {
                     Task { await updater.checkForUpdates() }
                 } label: {
-                    Label(updater.hasChecked ? "Check Again" : "Check for Updates", systemImage: "arrow.clockwise")
+                    Label(updater.hasChecked ? String(localized: "Check Again") : String(localized: "Check for Updates"), systemImage: "arrow.clockwise")
                 }
                 .disabled(updater.isBusy || !updater.isHomebrewAvailable)
             }
@@ -272,7 +272,7 @@ struct AppUpdatesView: View {
                         .font(.system(size: 14, weight: .semibold))
                         .lineLimit(1)
                     if update.isPinned {
-                        StatusChip(label: "Pinned", systemImage: "pin.fill", tint: Tint.orange)
+                        StatusChip(label: String(localized: "Pinned"), systemImage: "pin.fill", tint: Tint.orange)
                     }
                 }
                 Text(updateDetail(update))
@@ -328,7 +328,7 @@ struct AppUpdatesView: View {
     }
 
     private func updateDetail(_ update: ManagedAppUpdate) -> String {
-        let installed = "Installed \(update.installedVersion)"
+        let installed = String(localized: "Installed \(update.installedVersion)")
         guard AppUpdateIdentityMatcher.shouldShowTokenDetail(update.token) else { return installed }
         return "\(update.token)  ·  \(installed)"
     }
@@ -353,7 +353,7 @@ struct AppUpdatesView: View {
         }
     }
 
-    private func stateCard(title: String, message: String, systemImage: String, tint: Color) -> some View {
+    private func stateCard(title: LocalizedStringKey, message: LocalizedStringKey, systemImage: String, tint: Color) -> some View {
         CardSurface(padding: 28, elevation: .standard, tint: tint) {
             VStack(spacing: 12) {
                 IconTile(systemName: systemImage, tint: tint, size: 48, corner: 13)
@@ -384,7 +384,7 @@ struct AppUpdatesView: View {
 
     private var upgradeBar: some View {
         HStack {
-            Text(updater.selectedCount == 0 ? "Select apps to update" : selectedCountTitle)
+            Text(updater.selectedCount == 0 ? String(localized: "Select apps to update") : selectedCountTitle)
                 .font(.callout.weight(.medium))
                 .foregroundStyle(updater.selectedCount == 0 ? Color.secondary : Color.primary)
             Spacer()
@@ -417,27 +417,27 @@ struct AppUpdatesView: View {
     }
 
     private var updateCountTitle: String {
-        updater.updates.count == 1 ? "1 update available" : "\(updater.updates.count) updates available"
+        updater.updates.count == 1 ? String(localized: "1 update available") : String(localized: "\(updater.updates.count) updates available")
     }
 
     private var selectedCountTitle: String {
-        updater.selectedCount == 1 ? "1 app selected" : "\(updater.selectedCount) apps selected"
+        updater.selectedCount == 1 ? String(localized: "1 app selected") : String(localized: "\(updater.selectedCount) apps selected")
     }
 
     private func upgradeConfirmationLabel(count: Int) -> String {
-        count == 1 ? "Upgrade 1 App" : "Upgrade \(count) Apps"
+        count == 1 ? String(localized: "Upgrade 1 App") : String(localized: "Upgrade \(count) Apps")
     }
 
     private var upgradeConfirmationMessage: String {
         let versions = confirmationSelection.map {
-            "\(displayName(for: $0.token)) \($0.installedVersion) to \($0.currentVersion)"
+            String(localized: "\(displayName(for: $0.token)) \($0.installedVersion) to \($0.currentVersion)")
         }
         let selectionSummary: String
         if versions.count <= 5 {
             selectionSummary = versions.joined(separator: ", ")
         } else {
-            selectionSummary = versions.prefix(5).joined(separator: ", ") + ", and \(versions.count - 5) more"
+            selectionSummary = versions.prefix(5).joined(separator: ", ") + String(localized: ", and \(versions.count - 5) more")
         }
-        return "Homebrew will upgrade \(selectionSummary). It may quit running apps and remove superseded cask versions as part of its normal upgrade process."
+        return String(localized: "Homebrew will upgrade \(selectionSummary). It may quit running apps and remove superseded cask versions as part of its normal upgrade process.")
     }
 }

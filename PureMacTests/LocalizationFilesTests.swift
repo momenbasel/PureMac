@@ -1,6 +1,25 @@
 import XCTest
 
 final class LocalizationFilesTests: XCTestCase {
+    func testItalianLocalizationExistsAndIncludesTranslatedLanguageName() throws {
+        let localizationFiles = try localizableStringsFiles()
+        let italianURL = try XCTUnwrap(localizationFiles["it"])
+        let strings = try localizedStrings(in: italianURL)
+        XCTAssertEqual(strings["Language"], "Lingua")
+        XCTAssertEqual(strings["Italian"], "Italiano")
+    }
+
+    func testItalianPermissionAndServiceResourcesHaveEnglishKeyParity() throws {
+        let localizationFiles = try localizableStringsFiles()
+        let sourceDirectory = try XCTUnwrap(localizationFiles["en"])
+            .deletingLastPathComponent().deletingLastPathComponent()
+        for resource in ["InfoPlist", "ServicesMenu"] {
+            let englishURL = sourceDirectory.appendingPathComponent("en.lproj/\(resource).strings")
+            let italianURL = sourceDirectory.appendingPathComponent("it.lproj/\(resource).strings")
+            XCTAssertEqual(try localizedKeys(in: italianURL), try localizedKeys(in: englishURL))
+        }
+    }
+
     func testRussianAndUkrainianLocalizationsExist() throws {
         let localizationFiles = try localizableStringsFiles()
 
@@ -8,14 +27,14 @@ final class LocalizationFilesTests: XCTestCase {
         XCTAssertNotNil(localizationFiles["uk"], "Expected uk.lproj/Localizable.strings to exist")
     }
 
-    func testBuiltAppBundleContainsRussianAndUkrainianLocalizations() throws {
-        for language in ["ru", "uk"] {
+    func testBuiltAppBundleContainsRussianUkrainianAndItalianLocalizations() throws {
+        for language in ["ru", "uk", "it"] {
             XCTAssertTrue(
                 Bundle.main.localizations.contains(language),
                 "Expected the built app bundle to register the \(language) localization"
             )
             for resource in ["Localizable", "InfoPlist", "ServicesMenu"] {
-                XCTAssertNotNil(
+                let resourcePath = try XCTUnwrap(
                     Bundle.main.path(
                         forResource: resource,
                         ofType: "strings",
@@ -23,6 +42,11 @@ final class LocalizationFilesTests: XCTestCase {
                         forLocalization: language
                     ),
                     "Expected the built app bundle to contain \(language).lproj/\(resource).strings"
+                )
+                XCTAssertEqual(
+                    URL(fileURLWithPath: resourcePath).deletingLastPathComponent().lastPathComponent,
+                    "\(language).lproj",
+                    "Expected an actual \(language) resource, not a fallback localization"
                 )
             }
 
@@ -152,7 +176,7 @@ final class LocalizationFilesTests: XCTestCase {
     }
 
     private func formatSignature(in value: String) -> [String] {
-        let pattern = #"%(?:(\d+)\$)?(lld|@|%)"#
+        let pattern = #"%(?:(\d+)\$)?(lld|d|@|%)"#
         let regex = try! NSRegularExpression(pattern: pattern)
         let range = NSRange(value.startIndex..., in: value)
         var sequentialPosition = 1

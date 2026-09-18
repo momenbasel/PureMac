@@ -56,15 +56,15 @@ enum StorageExplorerError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .notDirectory(let path):
-            return "The selected item is not a folder: \(path)"
+            return String(localized: "The selected item is not a folder: \(path)")
         case .symbolicLink(let path):
-            return "Symbolic links cannot be scanned: \(path)"
+            return String(localized: "Symbolic links cannot be scanned: \(path)")
         case .package(let path):
-            return "App and document packages are excluded: \(path)"
+            return String(localized: "App and document packages are excluded: \(path)")
         case .cloudOnly(let path):
-            return "The selected folder is stored in the cloud and has not been downloaded: \(path)"
+            return String(localized: "The selected folder is stored in the cloud and has not been downloaded: \(path)")
         case .unavailable(let path):
-            return "The selected folder could not be read: \(path)"
+            return String(localized: "The selected folder could not be read: \(path)")
         }
     }
 }

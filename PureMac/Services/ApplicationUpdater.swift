@@ -34,19 +34,19 @@ enum ApplicationUpdaterError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .homebrewNotInstalled:
-            return "Homebrew was not found in a standard installation location."
+            return String(localized: "Homebrew was not found in a standard installation location.")
         case .invalidResponse:
-            return "Homebrew returned update information PureMac could not read."
+            return String(localized: "Homebrew returned update information PureMac could not read.")
         case .invalidCaskIdentifier(let token):
-            return "Homebrew returned an invalid cask identifier: \(token)"
+            return String(localized: "Homebrew returned an invalid cask identifier: \(token)")
         case .noSelection:
-            return "Select at least one app to update."
+            return String(localized: "Select at least one app to update.")
         case .commandFailed(let message):
             return message
         case .timedOut:
-            return "Homebrew did not finish before the operation timed out."
+            return String(localized: "Homebrew did not finish before the operation timed out.")
         case .outputLimitExceeded:
-            return "Homebrew produced more output than PureMac could safely retain."
+            return String(localized: "Homebrew produced more output than PureMac could safely retain.")
         }
     }
 }
@@ -152,17 +152,17 @@ final class ApplicationUpdater: ObservableObject {
                 selectedTokens.formIntersection(Set(updates.filter { !$0.isPinned }.map(\.token)))
                 if remaining.isEmpty {
                     statusMessage = tokens.count == 1
-                        ? "Homebrew updated the selected app."
-                        : "Homebrew updated the \(tokens.count) selected apps."
+                        ? String(localized: "Homebrew updated the selected app.")
+                        : String(localized: "Homebrew updated the \(tokens.count) selected apps.")
                 } else {
                     statusMessage = remaining.count == 1
-                        ? "Homebrew finished, but 1 selected app still reports an update."
-                        : "Homebrew finished, but \(remaining.count) selected apps still report updates."
+                        ? String(localized: "Homebrew finished, but 1 selected app still reports an update.")
+                        : String(localized: "Homebrew finished, but \(remaining.count) selected apps still report updates.")
                 }
             } catch is CancellationError {
-                statusMessage = "Homebrew finished. Check again to verify installed versions."
+                statusMessage = String(localized: "Homebrew finished. Check again to verify installed versions.")
             } catch {
-                statusMessage = "Homebrew finished. Check again to verify installed versions."
+                statusMessage = String(localized: "Homebrew finished. Check again to verify installed versions.")
                 errorMessage = Self.displayMessage(for: error)
             }
         } catch is CancellationError {
@@ -295,7 +295,7 @@ final class ApplicationUpdater: ObservableObject {
         let stdout = String(decoding: output.stdout, as: UTF8.self)
             .trimmingCharacters(in: .whitespacesAndNewlines)
         let detail = stderr.isEmpty ? stdout : stderr
-        return detail.isEmpty ? "Homebrew exited with status \(output.status)." : detail
+        return detail.isEmpty ? String(localized: "Homebrew exited with status \(output.status).") : detail
     }
 
     nonisolated private static func fetchUpdates(using brewURL: URL) async throws -> [ManagedAppUpdate] {

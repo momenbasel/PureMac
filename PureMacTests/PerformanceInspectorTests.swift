@@ -34,7 +34,7 @@ final class PerformanceInspectorTests: XCTestCase {
         XCTAssertEqual(item.arguments, ["--background"])
         XCTAssertEqual(item.domain, .userAgent)
         XCTAssertTrue(item.isDisabled)
-        XCTAssertEqual(item.triggers, ["At login", "Conditional keep alive", "Every 300 seconds"])
+        XCTAssertEqual(item.triggers, [String(localized: "At login"), String(localized: "Conditional keep alive"), String(format: String(localized: "Every %lld seconds"), Int64(300))])
         XCTAssertEqual(item.sourceURL, url)
     }
 
@@ -60,7 +60,7 @@ final class PerformanceInspectorTests: XCTestCase {
         XCTAssertEqual(item.label, "com.example.helper")
         XCTAssertEqual(item.program, "/usr/local/bin/example-helper")
         XCTAssertEqual(item.arguments, ["--mode", "quiet"])
-        XCTAssertEqual(item.triggers, ["Watches paths"])
+        XCTAssertEqual(item.triggers, [String(localized: "Watches paths")])
         XCTAssertFalse(item.isDisabled)
     }
 

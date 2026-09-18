@@ -1,0 +1,8 @@
+/* Richieste di permesso di macOS */
+"NSAppleEventsUsageDescription" = "PureMac usa gli eventi Apple per interagire con il Finder quando mostra i file.";
+"NSDesktopFolderUsageDescription" = "PureMac richiede l'accesso alla Scrivania per trovare file inutili e residui.";
+"NSDocumentsFolderUsageDescription" = "PureMac richiede l'accesso ai Documenti per trovare file inutili e residui.";
+"NSDownloadsFolderUsageDescription" = "PureMac richiede l'accesso ai Download per trovare file inutili e residui.";
+"NSRemovableVolumesUsageDescription" = "PureMac richiede l'accesso ai volumi rimovibili per cercare file inutili.";
+"NSSystemAdministrationUsageDescription" = "PureMac richiede i privilegi di amministratore per pulire le cache e disinstallare completamente le app.";
+"NSHumanReadableCopyright" = "Copyright 2026. Licenza MIT.";
