@@ -14,6 +14,7 @@ enum AppSection: Hashable {
     case protection
     case performance
     case appUpdates
+    case settings
     case cleaning(CleaningCategory)
 }
 
@@ -47,6 +48,8 @@ final class ScanProgressTicker: ObservableObject {
 
 @MainActor
 final class AppState: ObservableObject {
+    let languageAtLaunch = AppLanguage.current
+    @Published var settingsNeedLanguageRestart = false
     typealias AppFileScanner = @MainActor (
         _ app: InstalledApp,
         _ locations: Locations,
