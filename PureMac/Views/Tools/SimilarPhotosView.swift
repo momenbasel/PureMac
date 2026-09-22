@@ -382,7 +382,7 @@ struct SimilarPhotosView: View {
         }
     }
 
-    private func messageState(title: String, message: String, systemImage: String, tint: Color) -> some View {
+    private func messageState(title: LocalizedStringKey, message: String, systemImage: String, tint: Color) -> some View {
         CardSurface(padding: 30, elevation: .standard, tint: tint) {
             VStack(spacing: 13) {
                 IconTile(systemName: systemImage, tint: tint, size: 54, corner: 15)
