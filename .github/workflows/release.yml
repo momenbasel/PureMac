@@ -89,9 +89,11 @@ jobs:
 
           基于 PureMac 的 Qpure fork，包含简体中文界面、繁体中文资源和重新设计的应用图标。
 
-          下载 `${ZIP}`，解压后将 Qpure.app 拖入“应用程序”文件夹。
+          下载 [${ZIP}](https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/${ZIP})（[SHA-256 校验文件](https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/${CHECKSUM})），解压后将 Qpure.app 拖入“应用程序”文件夹。
 
-          **安全说明：**此预览包未使用 Developer ID 签名或 Apple 公证。macOS 首次打开时可能显示安全提示；也可以从源码自行构建。
+          ### 安全说明
+
+          此预览包未使用 Developer ID 签名或 Apple 公证。macOS 首次打开时可能显示安全提示；也可以从源码自行构建。
           EOF
           gh release create "${RELEASE_TAG}" \
             "${ZIP}" \
