@@ -520,7 +520,7 @@ private struct StorageEntryRow: View {
     }
 
     private static func countLabel(_ count: Int, singular: String) -> String {
-        let key = count == 1 ? "%lld file" : "%lld files"
+        let key: String.LocalizationValue = count == 1 ? "%lld file" : "%lld files"
         if singular == "folder" {
             return String(format: String(localized: count == 1 ? "%lld folder" : "%lld folders"), Int64(count))
         }

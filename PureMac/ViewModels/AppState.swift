@@ -472,7 +472,7 @@ final class AppState: ObservableObject {
         }
 
         if !failed.isEmpty {
-            let key = attemptedAdmin
+            let key: String.LocalizationValue = attemptedAdmin
                 ? "%lld files could not be removed with administrator privileges. The items may have changed or macOS denied access."
                 : "%lld files could not be removed. Check that the items still exist and are not in use."
             return String(format: String(localized: key), Int64(failed.count))
