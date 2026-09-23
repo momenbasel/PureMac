@@ -57,6 +57,7 @@ targets:
       - target: PureMac
     settings:
       base:
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Qpure.app/Contents/MacOS/Qpure"
         CODE_SIGNING_ALLOWED: "NO"
         CODE_SIGNING_REQUIRED: "NO"
 
