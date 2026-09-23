@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="../screenshots/smart-care.png" alt="PureMac" width="700">
+  <img src="../screenshots/smart-care.png" alt="Qpure" width="700">
 </p>
 
 <p align="center">
-  <a href="../README.md">English</a> |
+  <a href="../README.en.md">English (upstream)</a> |
   <a href="README.ar.md">العربية</a> |
   <a href="README.es.md">Español</a> |
   <a href="README.ja.md">日本語</a> |
@@ -12,7 +12,9 @@
   <a href="README.zh-Hant.md">繁體中文</a>
 </p>
 
-<h1 align="center">PureMac</h1>
+<h1 align="center">Qpure</h1>
+
+<p align="center"><img src="../assets/qpure-icon-source.png" alt="Qpure logo" width="112"></p>
 
 <p align="center">
   <b>免费、开源的 macOS 应用管理器与系统清理工具。</b><br>
@@ -21,13 +23,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/momenbasel/PureMac/releases/latest"><img src="https://img.shields.io/github/v/release/momenbasel/PureMac?style=flat-square&label=%E4%B8%8B%E8%BD%BD" alt="最新版本"></a>
-  <a href="https://github.com/momenbasel/PureMac/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/momenbasel/PureMac/build.yml?style=flat-square&label=Build" alt="构建状态"></a>
+  <a href="https://github.com/qg-hs/Qpure/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/qg-hs/Qpure/build.yml?style=flat-square&label=Build" alt="构建状态"></a>
   <img src="https://img.shields.io/badge/macOS-13.0+-blue?style=flat-square" alt="macOS 13.0+">
   <img src="https://img.shields.io/badge/Swift-5.9-orange?style=flat-square" alt="Swift 5.9">
-  <a href="../LICENSE"><img src="https://img.shields.io/github/license/momenbasel/PureMac?style=flat-square" alt="MIT 许可证"></a>
-  <a href="https://github.com/momenbasel/PureMac/stargazers"><img src="https://img.shields.io/github/stars/momenbasel/PureMac?style=flat-square" alt="Stars"></a>
-  <a href="https://github.com/momenbasel/PureMac/releases"><img src="https://img.shields.io/github/downloads/momenbasel/PureMac/total?style=flat-square&label=%E4%B8%8B%E8%BD%BD%E9%87%8F" alt="下载量"></a>
+  <a href="../LICENSE"><img src="https://img.shields.io/github/license/qg-hs/Qpure?style=flat-square" alt="MIT 许可证"></a>
+  <a href="https://github.com/qg-hs/Qpure/stargazers"><img src="https://img.shields.io/github/stars/qg-hs/Qpure?style=flat-square" alt="Stars"></a>
 </p>
 
 <p align="center">
@@ -41,29 +41,30 @@
 
 ## 安装
 
-### Homebrew（推荐）
+### Homebrew
 
 ```bash
-brew update
-brew install --cask puremac
+# Qpure 当前尚未发布独立的 Homebrew 安装包
 ```
 
 ### 直接下载
 
-从 [Releases](https://github.com/momenbasel/PureMac/releases/latest) 下载最新的 `.dmg`，打开后将 PureMac 拖到 `/Applications` 目录。
-
-> 已使用 Apple Developer ID 签名并公证 — 安装时不会出现 Gatekeeper 警告。
+当前 fork 尚未发布独立的 Qpure 安装包。PureMac 上游的下载版本不包含 Qpure 的汉化和新图标。
 
 ### 从源码构建
 
 ```bash
 brew install xcodegen
-git clone https://github.com/momenbasel/PureMac.git
-cd PureMac
+git clone https://github.com/qg-hs/Qpure.git
+cd Qpure
 xcodegen generate
 xcodebuild -project PureMac.xcodeproj -scheme PureMac -configuration Release -derivedDataPath build build
-open build/Build/Products/Release/PureMac.app
+open build/Build/Products/Release/Qpure.app
 ```
+
+## 语言与国际化
+
+在「设置 → 通用 → 语言」中选择系统默认或指定语言，切换后重启应用即可生效。界面包含简体中文、繁體中文及其他 9 种语言。添加翻译的方法见[国际化说明](i18n.md)。
 
 ## 功能
 
@@ -125,7 +126,7 @@ open build/Build/Products/Release/PureMac.app
 ## 架构
 
 ```
-PureMac/
+Qpure/
   Logic/Scanning/     - 启发式扫描引擎、位置数据库、条件
   Logic/Utilities/    - 结构化日志
   Models/             - 数据模型、类型化错误

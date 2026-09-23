@@ -9,9 +9,9 @@
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleName</key>
-	<string>PureMac</string>
+	<string>Qpure</string>
 	<key>CFBundleDisplayName</key>
-	<string>PureMac</string>
+	<string>Qpure</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -25,24 +25,24 @@
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright 2026. MIT License.</string>
 	<key>NSDesktopFolderUsageDescription</key>
-	<string>PureMac needs access to your Desktop to find junk and orphaned files.</string>
+	<string>Qpure needs access to your Desktop to find junk and orphaned files.</string>
 	<key>NSDocumentsFolderUsageDescription</key>
-	<string>PureMac needs access to your Documents to find junk and orphaned files.</string>
+	<string>Qpure needs access to your Documents to find junk and orphaned files.</string>
 	<key>NSDownloadsFolderUsageDescription</key>
-	<string>PureMac needs access to your Downloads to find junk and orphaned files.</string>
+	<string>Qpure needs access to your Downloads to find junk and orphaned files.</string>
 	<key>NSRemovableVolumesUsageDescription</key>
-	<string>PureMac needs access to removable volumes to scan for junk files.</string>
+	<string>Qpure needs access to removable volumes to scan for junk files.</string>
 	<key>NSSystemAdministrationUsageDescription</key>
-	<string>PureMac needs system administration access to clean caches and uninstall apps completely.</string>
+	<string>Qpure needs system administration access to clean caches and uninstall apps completely.</string>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>PureMac uses Apple Events to interact with Finder when revealing files.</string>
+	<string>Qpure uses Apple Events to interact with Finder when revealing files.</string>
 	<key>NSServices</key>
 	<array>
 		<dict>
 			<key>NSMenuItem</key>
 			<dict>
 				<key>default</key>
-				<string>Uninstall with PureMac</string>
+				<string>Uninstall with Qpure</string>
 			</dict>
 			<key>NSMessage</key>
 			<string>uninstallApp</string>

@@ -32,7 +32,7 @@ final class SimilarPhotosViewModel: ObservableObject {
     func chooseFolder() {
         let panel = NSOpenPanel()
         panel.title = "Choose a photo folder"
-        panel.message = "PureMac compares local image thumbnails without changing your photos."
+        panel.message = "Qpure compares local image thumbnails without changing your photos."
         panel.prompt = "Scan Photos"
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
@@ -224,7 +224,7 @@ struct SimilarPhotosView: View {
                 IconTile(systemName: "photo.on.rectangle.angled", tint: Tint.pink, size: 62, corner: 17)
                 Text("Choose a folder of photos")
                     .font(.system(size: 19, weight: .semibold))
-                Text("PureMac builds small local thumbnails, compares their visual structure and color, then groups likely matches for review.")
+                Text("Qpure builds small local thumbnails, compares their visual structure and color, then groups likely matches for review.")
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -327,7 +327,7 @@ struct SimilarPhotosView: View {
                         IconTile(systemName: "checkmark.circle.fill", tint: Tint.green, size: 52, corner: 14)
                         Text("No similar groups found")
                             .font(.system(size: 18, weight: .semibold))
-                        Text("The analyzed photos did not meet PureMac's visual similarity threshold.")
+                        Text("The analyzed photos did not meet Qpure's visual similarity threshold.")
                             .font(.system(size: 13))
                             .foregroundStyle(.secondary)
                     }

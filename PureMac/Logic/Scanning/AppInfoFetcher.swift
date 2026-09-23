@@ -97,7 +97,7 @@ final class AppInfoFetcher {
     }
 
     /// Build an `InstalledApp` from a single bundle URL. Used by the Finder
-    /// Services handler ("Uninstall with PureMac") to resolve a right-clicked
+    /// Services handler ("Uninstall with Qpure") to resolve a right-clicked
     /// .app into the uninstaller without re-scanning every app. Enforces the
     /// same protections as the full scan: no /System apps, and no protected
     /// Apple bundle IDs (Safari, Mail, Xcode, App Store, …) — so a right-click

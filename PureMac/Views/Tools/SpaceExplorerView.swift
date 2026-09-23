@@ -34,7 +34,7 @@ final class SpaceExplorerViewModel: ObservableObject {
     func chooseFolder() {
         let panel = NSOpenPanel()
         panel.title = "Choose a folder to inspect"
-        panel.message = "PureMac measures allocated disk space without changing files."
+        panel.message = "Qpure measures allocated disk space without changing files."
         panel.prompt = "Inspect"
         panel.canChooseFiles = false
         panel.canChooseDirectories = true

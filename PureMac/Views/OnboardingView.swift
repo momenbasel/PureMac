@@ -352,7 +352,7 @@ private struct PermissionScene: View {
                     .multilineTextAlignment(.center)
                 Text(LocalizedStringKey(
                     hasFda
-                        ? "PureMac can now reach the locations macOS protects by default."
+                        ? "Qpure can now reach the locations macOS protects by default."
                         : "macOS hides certain folders from every app until you say otherwise. We need them to find caches and uninstall cleanly."
                 ))
                     .font(.system(size: 13))
@@ -384,7 +384,7 @@ private struct PermissionScene: View {
                         Button {
                             openSettings()
                         } label: {
-                            Label(LocalizedStringKey(hasOpenedSettings ? "Reopen Settings" : "Open Settings & reveal PureMac"),
+                            Label(LocalizedStringKey(hasOpenedSettings ? "Reopen Settings" : "Open Settings & reveal Qpure"),
                                   systemImage: "gear")
                                 .font(.system(size: 13, weight: .semibold))
                                 .frame(minWidth: 240)

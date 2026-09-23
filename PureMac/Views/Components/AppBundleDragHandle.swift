@@ -40,7 +40,7 @@ struct AppBundleDragHandle: View {
             .animation(.easeOut(duration: 0.18), value: hovering)
 
             VStack(spacing: 1) {
-                Text("PureMac.app")
+                Text("Qpure.app")
                     .font(.system(size: 11.5, weight: .semibold))
                 Text("Drag to the Settings list")
                     .font(.system(size: 10.5))

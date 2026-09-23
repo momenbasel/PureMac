@@ -36,7 +36,7 @@ enum ApplicationUpdaterError: LocalizedError, Equatable {
         case .homebrewNotInstalled:
             return "Homebrew was not found in a standard installation location."
         case .invalidResponse:
-            return "Homebrew returned update information PureMac could not read."
+            return "Homebrew returned update information Qpure could not read."
         case .invalidCaskIdentifier(let token):
             return "Homebrew returned an invalid cask identifier: \(token)"
         case .noSelection:
@@ -46,7 +46,7 @@ enum ApplicationUpdaterError: LocalizedError, Equatable {
         case .timedOut:
             return "Homebrew did not finish before the operation timed out."
         case .outputLimitExceeded:
-            return "Homebrew produced more output than PureMac could safely retain."
+            return "Homebrew produced more output than Qpure could safely retain."
         }
     }
 }

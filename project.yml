@@ -40,7 +40,7 @@ targets:
         product: Sparkle
     settings:
       base:
-        PRODUCT_NAME: PureMac
+        PRODUCT_NAME: Qpure
         SWIFT_EMIT_LOC_STRINGS: "YES"
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
       configs:

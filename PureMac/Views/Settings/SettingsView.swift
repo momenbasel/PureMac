@@ -49,7 +49,7 @@ struct GeneralSettingsView: View {
     var body: some View {
         Form {
             Section("Startup") {
-                Toggle("Launch PureMac at login", isOn: launchAtLoginBinding)
+                Toggle("Launch Qpure at login", isOn: launchAtLoginBinding)
             }
 
             Section("App Scanning") {
@@ -75,7 +75,7 @@ struct GeneralSettingsView: View {
                 }
 
                 if languageNeedsRelaunch {
-                    Text("Restart PureMac to apply the selected language.")
+                    Text("Restart Qpure to apply the selected language.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .transition(.opacity.combined(with: .move(edge: .top)))
@@ -89,7 +89,7 @@ struct GeneralSettingsView: View {
 
             Section("System Monitor") {
                 Toggle("Show system monitor in menu bar", isOn: menuBarMonitorBinding)
-                Text("Live CPU, memory, and disk meters in the menu bar. PureMac keeps running in the background while this is on.")
+                Text("Live CPU, memory, and disk meters in the menu bar. Qpure keeps running in the background while this is on.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -170,7 +170,7 @@ struct GeneralSettingsView: View {
             try task.run()
             NSApp.terminate(nil)
         } catch {
-            Logger.shared.log("Failed to relaunch PureMac: \(error.localizedDescription)", level: .error)
+            Logger.shared.log("Failed to relaunch Qpure: \(error.localizedDescription)", level: .error)
         }
     }
 }
@@ -356,7 +356,7 @@ struct AboutSettingsView: View {
                             .frame(width: 64, height: 64)
                     }
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("PureMac")
+                        Text("Qpure")
                             .font(.title2.bold())
                         Text(
                             String(
@@ -373,8 +373,8 @@ struct AboutSettingsView: View {
             }
 
             Section {
-                Link("GitHub Repository", destination: URL(string: "https://github.com/momenbasel/PureMac")!)
-                Link("Report an Issue", destination: URL(string: "https://github.com/momenbasel/PureMac/issues")!)
+                Link("GitHub Repository", destination: URL(string: "https://github.com/qg-hs/Qpure")!)
+                Link("Report an Issue", destination: URL(string: "https://github.com/qg-hs/Qpure/issues")!)
             }
 
             Section {

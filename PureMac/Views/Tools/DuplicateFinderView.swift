@@ -144,7 +144,7 @@ struct DuplicateFinderView: View {
                 }
                 Text("Find copies that are exactly the same")
                     .font(.system(size: 18, weight: .semibold))
-                Text("Choose a folder. PureMac compares file sizes first, then verifies matching files byte for byte. Nothing is selected or removed automatically.")
+                Text("Choose a folder. Qpure compares file sizes first, then verifies matching files byte for byte. Nothing is selected or removed automatically.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -562,7 +562,7 @@ struct DuplicateFinderView: View {
         let panel = NSOpenPanel()
         panel.title = "Choose a folder to check for duplicate files"
         panel.prompt = "Scan Folder"
-        panel.message = "PureMac reads the selected folder and does not change anything during a scan."
+        panel.message = "Qpure reads the selected folder and does not change anything during a scan."
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false

@@ -18,12 +18,12 @@ enum AppSection: Hashable {
 }
 
 extension Notification.Name {
-    /// Posted by the Finder Services handler ("Uninstall with PureMac") with a
+    /// Posted by the Finder Services handler ("Uninstall with Qpure") with a
     /// `["path": String]` userInfo pointing at the right-clicked .app bundle.
     static let pureMacExternalUninstall = Notification.Name("PureMac.ExternalUninstall")
 }
 
-/// Cold-launch buffer for Finder Services. A "Uninstall with PureMac" request
+/// Cold-launch buffer for Finder Services. A "Uninstall with Qpure" request
 /// can arrive before the SwiftUI scene (and thus AppState) exists; the posted
 /// notification then has no subscriber and is lost (NotificationCenter has no
 /// replay). AppDelegate stashes the path here and AppState drains it in init.
@@ -169,7 +169,7 @@ final class AppState: ObservableObject {
         self.appFileScanner = appFileScanner
         self.appFileTrasher = appFileTrasher
 
-        // Listen for right-click "Uninstall with PureMac" hand-offs from the
+        // Listen for right-click "Uninstall with Qpure" hand-offs from the
         // Finder Services handler in AppDelegate.
         externalUninstallObserver = NotificationCenter.default
             .publisher(for: .pureMacExternalUninstall)
@@ -463,7 +463,7 @@ final class AppState: ObservableObject {
     ) -> String? {
         if needsFullDiskAccess {
             let prefix = failed.isEmpty ? "Some selected files" : "\(failed.count) file\(failed.count == 1 ? "" : "s")"
-            return "\(prefix) could not be removed because PureMac does not have Full Disk Access. Grant Full Disk Access in System Settings, then try again."
+            return "\(prefix) could not be removed because Qpure does not have Full Disk Access. Grant Full Disk Access in System Settings, then try again."
         }
 
         if !failed.isEmpty {
@@ -1151,7 +1151,7 @@ final class AppState: ObservableObject {
 
     private func sendNotification(freed: Int64) {
         let content = UNMutableNotificationContent()
-        content.title = "PureMac"
+        content.title = "Qpure"
         let sizeStr = ByteCountFormatter.string(fromByteCount: freed, countStyle: .file)
         content.body = String(format: NSLocalizedString("Found %@ of junk files.", comment: ""), sizeStr)
         content.sound = .default

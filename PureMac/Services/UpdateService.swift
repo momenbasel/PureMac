@@ -28,14 +28,14 @@ final class UpdateService: ObservableObject {
                 self.updaterController?.updater.checkForUpdates()
             } else {
                 // Fallback: open Releases page when no feed is configured.
-                if let url = URL(string: "https://github.com/momenbasel/PureMac/releases/latest") {
+                if let url = URL(string: "https://github.com/qg-hs/Qpure/releases/latest") {
                     NSWorkspace.shared.open(url)
                 }
             }
         }
         #else
         // Fallback: open Releases page
-        if let url = URL(string: "https://github.com/momenbasel/PureMac/releases/latest") {
+        if let url = URL(string: "https://github.com/qg-hs/Qpure/releases/latest") {
             NSWorkspace.shared.open(url)
         }
         #endif

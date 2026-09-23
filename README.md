@@ -1,295 +1,162 @@
 <p align="center">
-  <img src="screenshots/smart-care.png" alt="PureMac Smart Care - storage overview and cleanup review" width="820">
+  <img src="screenshots/smart-care.png" alt="Qpure" width="700">
 </p>
 
 <p align="center">
-  <img src="screenshots/smart-care-dark.png" alt="PureMac Smart Care in dark appearance" width="820">
-</p>
-
-<p align="center">
-  <b>English</b> |
+  <a href="README.en.md">English (upstream)</a> |
   <a href="docs/README.ar.md">العربية</a> |
   <a href="docs/README.es.md">Español</a> |
   <a href="docs/README.ja.md">日本語</a> |
   <a href="docs/README.pt-BR.md">Português (Brasil)</a> |
-  <a href="docs/README.zh-Hans.md">简体中文</a> |
+  <b>简体中文</b> |
   <a href="docs/README.zh-Hant.md">繁體中文</a>
 </p>
 
-<h1 align="center">PureMac</h1>
+<h1 align="center">Qpure</h1>
+
+<p align="center"><img src="assets/qpure-icon-source.png" alt="Qpure logo" width="112"></p>
 
 <p align="center">
-  <b>Reclaim your Mac.</b><br>
-  Free, open-source Mac care: cleanup, app management, storage exploration, and system checks. No subscription or telemetry.
+  <b>免费、开源的 macOS 应用管理器与系统清理工具。</b><br>
+  彻底卸载应用。查找孤立文件。清理系统垃圾。<br>
+  无订阅。无遥测。无数据收集。
 </p>
 
 <p align="center">
-  <a href="https://github.com/momenbasel/PureMac/releases/latest"><img src="https://img.shields.io/github/v/release/momenbasel/PureMac?style=flat-square&label=Download" alt="Latest Release"></a>
+  <a href="https://github.com/qg-hs/Qpure/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/qg-hs/Qpure/build.yml?style=flat-square&label=Build" alt="构建状态"></a>
   <img src="https://img.shields.io/badge/macOS-13.0+-blue?style=flat-square" alt="macOS 13.0+">
-  <img src="https://img.shields.io/badge/Signed%20%26%20Notarized-Apple-success?style=flat-square" alt="Signed & Notarized by Apple">
-  <img src="https://img.shields.io/badge/telemetry-none-success?style=flat-square" alt="No telemetry">
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/momenbasel/PureMac?style=flat-square" alt="MIT License"></a>
-  <a href="https://github.com/momenbasel/PureMac/stargazers"><img src="https://img.shields.io/github/stars/momenbasel/PureMac?style=flat-square" alt="Stars"></a>
-  <a href="https://github.com/momenbasel/PureMac/releases"><img src="https://img.shields.io/github/downloads/momenbasel/PureMac/total?style=flat-square&label=Downloads" alt="Downloads"></a>
+  <img src="https://img.shields.io/badge/Swift-5.9-orange?style=flat-square" alt="Swift 5.9">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/qg-hs/Qpure?style=flat-square" alt="MIT 许可证"></a>
+  <a href="https://github.com/qg-hs/Qpure/stargazers"><img src="https://img.shields.io/github/stars/qg-hs/Qpure?style=flat-square" alt="Stars"></a>
 </p>
 
 <p align="center">
-  <a href="#install">Install</a> -
-  <a href="#why-this-exists">Why this exists</a> -
-  <a href="#how-it-compares">How it compares</a> -
-  <a href="#our-promise">Our promise</a> -
-  <a href="#what-it-does">What it does</a> -
-  <a href="#permissions">Permissions</a> -
-  <a href="#contributing">Contributing</a>
-</p>
-
-<p align="center">
-  <sub>Want more open source? Try <a href="https://github.com/momenbasel/pesty"><b>Pesty</b></a> - a free, native clipboard manager for macOS.</sub>
+  <a href="#安装">安装</a> -
+  <a href="#功能">功能</a> -
+  <a href="#截图">截图</a> -
+  <a href="#贡献">贡献</a>
 </p>
 
 ---
 
-## Install
+## 安装
+
+### Homebrew
 
 ```bash
-brew install --cask puremac
+# Qpure 当前尚未发布独立的 Homebrew 安装包
 ```
 
-Or download the signed, notarized `.dmg` from [Releases](https://github.com/momenbasel/PureMac/releases/latest) and drag PureMac into `/Applications`. No Gatekeeper warnings, no quarantine workaround.
+### 直接下载
 
-### Build from source
+当前 fork 尚未发布独立的 Qpure 安装包。PureMac 上游的下载版本不包含 Qpure 的汉化和新图标。
+
+### 从源码构建
 
 ```bash
 brew install xcodegen
-git clone https://github.com/momenbasel/PureMac.git
-cd PureMac
+git clone https://github.com/qg-hs/Qpure.git
+cd Qpure
 xcodegen generate
-xcodebuild -project PureMac.xcodeproj -scheme PureMac -configuration Release \
-  -derivedDataPath build build
-open build/Build/Products/Release/PureMac.app
+xcodebuild -project PureMac.xcodeproj -scheme PureMac -configuration Release -derivedDataPath build build
+open build/Build/Products/Release/Qpure.app
 ```
 
-### Command line
+## 语言与国际化
 
-Open `puremac` for a keyboard-driven workspace. Select individual cache paths,
-review project artifacts, or browse your storage by size. Cleanup shows the exact
-selection and asks for confirmation before permanently removing it.
+在「设置 → 通用 → 语言」中选择系统默认或指定语言，切换后重启应用即可生效。界面包含简体中文、繁體中文及其他 9 种语言。添加翻译的方法见[国际化说明](docs/i18n.md)。
 
-```bash
-brew install momenbasel/tap/puremac-cli
-puremac
-```
+## 功能
 
-![PureMac CLI with individual selections and a running size total](cli/screenshots/clean.png)
+### 应用卸载器
+- 从 `/Applications` 和 `~/Applications` 发现所有已安装应用
+- 基于启发式的文件发现引擎,采用**10 级匹配**(Bundle ID、公司名称、entitlements、团队标识符、Spotlight 元数据、容器发现)
+- **3 种灵敏度**:严格(安全)、增强(平衡)、深度(彻底)
+- 展示所有相关文件:缓存、偏好设置、容器、日志、支持文件、启动代理
+- 系统应用保护 — 排除 27 个 Apple 应用,避免误删
+- 主从视图:左侧为应用列表,右侧为发现的文件
 
-Use `puremac clean dev --dry-run` for a preview or `--json` for scripts. See
-[`cli/README.md`](cli/README.md) for controls, commands, and cleanup boundaries.
+### 孤立文件查找
+- 检测 `~/Library` 中已卸载应用残留的文件
+- 将 Library 内容与所有已安装应用的标识符进行比对
+- 一键清理孤立文件
 
-## How it compares
+### 系统清理
+- **智能扫描** — 一键扫描所有类别
+- **系统垃圾** — 系统缓存、日志和临时文件
+- **用户缓存** — 动态发现所有应用缓存(无需硬编码应用列表)
+- **AI 应用** — Ollama 和 LM Studio 日志、缓存，以及可选的本地历史记录清理
+- **邮件附件** — 已下载的邮件附件
+- **废纸篓** — 清空所有废纸篓
+- **大文件与旧文件** — 超过 100 MB 或超过 1 年的文件
+- **可清除空间** — 检测 APFS 可清除磁盘空间
+- **Xcode 垃圾** — DerivedData、Archives、模拟器缓存与已下载的 simulator runtimes（通过 `simctl runtime delete` 删除，不会自动勾选）
+- **Brew 缓存** — Homebrew 下载缓存(可识别自定义 HOMEBREW_CACHE)
+- **定时清理** — 按可配置的间隔自动扫描
 
-|  | **PureMac** | CleanMyMac | Pearcleaner | Mole | OnyX |
-|---|:---:|:---:|:---:|:---:|:---:|
-| Price | **Free** | $40+/yr | Free | CLI free / GUI paid | Free |
-| Open source | **Yes (MIT)** | No | Source-available¹ | CLI only | No |
-| Native Mac GUI | **Yes** | Yes | Yes | Terminal-first | Yes |
-| No telemetry | **Yes** | No | Yes | Yes | Yes |
-| No subscription | **Yes** | No | Yes | — | Yes |
-| Signed + notarized | **Yes** | Yes | Yes | — | Yes |
-| App uninstaller + orphans | **Yes** | Yes | Yes | Partial | No |
-| App-uninstall Trash support | **Yes** | Partial | Yes | Partial | No |
-| Honest about purgeable space | **Yes** | No | n/a | n/a | n/a |
+### 原生 macOS 体验
+- 使用 SwiftUI 和原生 macOS 组件构建
+- `NavigationSplitView`、`Toggle`、`ProgressView`、`Form`、`GroupBox`、`Table`
+- 自动遵循系统浅色/深色模式
+- 无自定义渐变、发光或 Web 应用样式
+- 首次启动引导,支持完整磁盘访问设置
 
-<sub>¹ Pearcleaner is Apache 2.0 **+ Commons Clause** - source-available but not OSI-approved (you may not sell it). PureMac is true MIT. Comparison reflects publicly documented features as of 2026; corrections welcome via PR.</sub>
+### 安全性
+- 所有破坏性操作前都有确认对话框
+- 防御符号链接攻击 — 删除前解析并验证路径
+- 系统应用保护 — Apple 应用无法被卸载
+- 大文件与旧文件永远不会被自动选中
+- AI 提示和对话历史记录会显示供用户检查，但永远不会自动选中
+- 通过 `os.log` 进行结构化日志记录(可在“控制台”应用中查看)
 
-## Our promise
+## 截图
 
-A Mac cleaner asks for the deepest permission macOS grants - Full Disk Access - and then deletes your files. That demands a level of trust the category has spent twenty years burning. Here's the contract PureMac holds itself to, and you can verify every line of it in the source:
-
-- **Deletion behavior is explicit.** App uninstalls, orphan removal, and exact-duplicate removal use the Trash at user level. Dashboard/category cleanup, scheduled auto-clean, Trash emptying, Docker/Xcode runtime cleanup, administrator-authorized removal, local snapshot deletion, and CLI cleanup can permanently delete data. Review selections carefully and use CLI dry runs.
-- **No telemetry, ever.** No analytics, no crash reporting, no "anonymous usage stats," no network calls to us. The app doesn't know you exist.
-- **No fake urgency.** No dramatized "47 GB of junk detected!" badge, no red alarm counters, no "your Mac is at risk." We show you neutral facts and let you decide.
-- **No overpromising.** We don't claim to "reclaim purgeable space," "boost RAM," or "speed up your Mac" - things no app can reliably do. See the purgeable-space note below.
-- **Reviewable selection.** Manual cleanup, app-file removal, orphan removal, duplicate removal, and local snapshot deletion require confirmation. Cleanup filters show when selected items are hidden; select-visible controls affect only the rows on screen. Scheduled auto-clean remains unattended once enabled.
-- **Auditable.** It's MIT. The exact code that decides what gets removed is in [`PureMac/Services`](PureMac/Services) and [`PureMac/Logic/Scanning`](PureMac/Logic/Scanning). Read it. Fork it. Ship your own.
-
-If PureMac ever adds telemetry, a paywall on core features, or a fear-based scan, it will have become the thing it was built to replace. Hold us to this.
-
-## Why this exists
-
-Apple sells base-model Macs with 256 GB SSDs that you can't upgrade. The Mac mini, the Air, every entry-level MacBook Pro - the drive is soldered down. The next storage tier costs more than a midrange Windows laptop. Once you've paid it, every gigabyte you've already bought matters.
-
-Most Mac cleaners are subscription apps that hide their disk usage behind a paywall, ship telemetry by default, and trade on FUD ("47 GB of junk detected!"). PureMac is the opposite:
-
-- **One-time install.** No subscription, no trial, no account.
-- **No telemetry.** It never phones home. It doesn't even know you exist.
-- **Open source under MIT.** Read the code, fork it, audit it.
-- **Honest scans.** "Junk" means actually-junk: cache directories the OS itself would purge, orphaned files left by apps you've already deleted, broken installer receipts, that 4 GB Xcode DerivedData blob from 2023.
-- **Real uninstalls.** Drag an app, see every preference plist, cache folder, container, launch agent and log file it dropped across your library, remove all of it at once.
-
-## What it does
-
-### App Uninstaller
-Discovers everything in `/Applications` and `~/Applications`, then uses a 10-level matching engine (bundle ID, team identifier, entitlements, Spotlight metadata, container discovery, company-name heuristics, partial path matches) to find related files on your disk. Matching is heuristic, so review the results before removal. Three sensitivity tiers - Strict, Enhanced, Deep - let you choose how aggressive that match is. Apple system apps are excluded from the uninstall list automatically. You can also right-click any app in Finder and choose **Services → Uninstall with PureMac** to jump straight into its related-files scan.
-
-### Orphan Finder
-Walks `~/Library` and surfaces files left behind by apps that no longer exist on disk. The matcher compares against bundle identifiers and normalized names of every installed app, so a leftover `~/Library/Containers/com.foo.bar` from an app you deleted in 2022 shows up clearly.
-
-### System Cleaner
-Smart Scan checks each category in sequence and reports progress as files are found. You can stop a scan and keep the categories already completed:
-
-- **System Junk** - system caches, logs, temp files
-- **User Cache** - dynamically discovered, no hardcoded app list
-- **AI Apps** - Ollama and LM Studio logs, caches, opt-in history cleanup
-- **Mail Files** - downloaded mail attachments
-- **Trash Bins** - empties all bins, including external volumes
-- **Large & Old Files** - >100 MB or older than 1 year (never auto-selected)
-- **Xcode Junk** - DerivedData, Archives, simulator caches, and downloaded simulator runtimes (deleted via `simctl runtime delete`; never auto-selected)
-- **Brew Cache** - Homebrew download caches within approved cache locations
-- **Node Cache** - npm, yarn classic, pnpm content-addressable store
-- **Docker Cache** - images, containers, build cache
-
-> **On "purgeable space":** PureMac shows your APFS purgeable space in the storage breakdown for transparency, but it deliberately does **not** list it as junk to delete. Purgeable space is reserved and reclaimed by macOS itself - no third-party app can reliably free it, and even the Finder's purgeable figure is known to be inaccurate. Cleaners that claim to "reclaim purgeable space" are overpromising. We'd rather be honest than impressive.
-
-### Storage and file review
-
-**Space Explorer** measures the allocated space inside a folder you choose. Drill into directories, compare their sizes, and reveal an item in Finder. Packages are measured without exposing their contents as navigable folders. Skipped and inaccessible items are reported.
-
-**Duplicate Finder** groups files with matching sizes and SHA-256 content hashes. Hard links are not counted as separate recoverable copies. Every group keeps one protected copy; selected extras move to the Trash only after confirmation and a fresh identity/content check. Emptying the Trash is a separate step.
-
-**Similar Photos** compares image thumbnails using perceptual hashes, color, and aspect ratio. Review likely matches side by side and reveal them in Finder. Similarity is an estimate, so this tool does not remove photos. Each scan checks up to 500 images and 10,000 directory entries, with a visible notice when a limit is reached. Photo libraries, app packages, symbolic links, and cloud-only files are skipped.
-
-Cleanup results support name/path search, size and age filters, sorting, and selection of visible rows. Right-click a cleanup result to always exclude its path. Exclusions also protect containing folders from cleanup and apply to scheduled runs; manage them in Settings.
-
-### Protection and performance
-
-**Protection** checks Gatekeeper, FileVault, the application firewall, System Integrity Protection, and installed XProtect metadata. A failed or unavailable check stays unknown. It also provides shortcuts to privacy and permission settings. This is a configuration audit, not an antivirus or malware scanner.
-
-**Performance** shows CPU and memory information, lists third-party launch-agent/daemon definitions, and lists local snapshots. A launch definition is not proof that a process is running. You can open Login Items or Activity Monitor and delete a specific Time Machine local snapshot after confirmation. Snapshot sizes are not estimated, and system update snapshots cannot be removed here.
-
-### App updates
-
-Check for updates to Homebrew-managed cask apps and choose which ones to upgrade. PureMac runs Homebrew with analytics disabled and shows command failures. These actions use the network and Homebrew's package sources. Apps installed outside Homebrew are not covered; an App Store shortcut is provided for those managed by Apple.
-
-### Scheduled Cleaning
-Optional. Configurable interval (hourly to monthly), with auto-clean threshold so background runs only fire when there's something meaningful to remove.
-
-## Permissions
-
-PureMac needs **Full Disk Access** to read the locations macOS hides from every app by default - Mail downloads, Safari data, the TCC database, protected app containers. Without it, some cleanup categories and app-container scans will be incomplete. The locations available depend on your macOS version and permissions.
-
-The first-launch onboarding walks you through granting it with an animated preview of the exact toggle you need to flip. If you skip it, the dashboard surfaces a single-click "Set up" pill. If a cleanup fails because of a permission issue, PureMac opens System Settings, reveals its bundle in Finder so you can drag it into the FDA list, polls the permission state every second, and auto-retries the failed batch the moment you grant access. You never have to re-select anything.
-
-What PureMac does *not* do:
-- It does not collect telemetry, crash reports, or usage analytics.
-- Local scans and cleanup work offline. Checking for or installing Homebrew app updates requires a network connection.
-- It does not upload or transmit scanned paths or deleted data.
-
-## Troubleshooting
-
-### Launchpad / Dock shows a stale or dull PureMac icon
-
-macOS aggressively caches app icons in LaunchServices. After a Homebrew **reinstall or upgrade** the Dock and Launchpad can keep showing the old cached icon. PureMac's cask runs `lsregister -f` on install to refresh it automatically. If a stale icon persists, re-register only PureMac and restart the Dock (adjust the app path if you installed it elsewhere):
-
-```bash
-/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister \
-  -f "/Applications/PureMac.app"
-killall Dock
-```
-
-Give it a minute to re-seed, then open PureMac once. If it still sticks, a restart (or Safe Mode boot) forces a full rebuild.
-
-## Screenshots
-
-| Smart Care | Dark appearance |
+| 引导 | 应用卸载器 |
 |---|---|
-| ![Smart Care](screenshots/smart-care.png) | ![Dark appearance](screenshots/smart-care-dark.png) |
+| ![引导](../screenshots/onboarding.png) | ![应用卸载器](../screenshots/app-uninstaller.png) |
 
-| Space Explorer | Duplicate Finder |
+| 系统垃圾 | Xcode 垃圾 |
 |---|---|
-| ![Space Explorer](screenshots/space-explorer.png) | ![Duplicate Finder](screenshots/duplicate-finder.png) |
+| ![系统垃圾](../screenshots/system-junk.png) | ![Xcode 垃圾](../screenshots/xcode-junk.png) |
 
-| Protection | App Updates |
-|---|---|
-| ![Protection](screenshots/protection.png) | ![App Updates](screenshots/app-updates.png) |
+| 用户缓存 |
+|---|
+| ![用户缓存](../screenshots/user-cache.png) |
 
-<p align="center">
-  <img src="screenshots/similar-photos.png" alt="Similar Photos comparing sample images for manual review" width="820">
-</p>
-
-Screenshots show the running macOS app. File tools use sample files and images.
-
-## Architecture
+## 架构
 
 ```
-PureMac/
-  Logic/Scanning/     - Heuristic scan engine, locations database, conditions
-  Logic/Utilities/    - Structured logging
-  Models/             - Data models, typed errors
-  Services/           - Scanning, cleanup, file tools, protection, updates, scheduler
-  ViewModels/         - Centralized app state
-  Views/              - Native SwiftUI views
-    Apps/             - App uninstaller views
-    Components/       - Shared components (FDA demo, permission sheet, theme)
-    Orphans/          - Orphan finder
-    Tools/            - Space, duplicates, similar photos, protection, performance, updates
-    Settings/         - Native Form-based settings
+Qpure/
+  Logic/Scanning/     - 启发式扫描引擎、位置数据库、条件
+  Logic/Utilities/    - 结构化日志
+  Models/             - 数据模型、类型化错误
+  Services/           - 扫描引擎、清理引擎、调度器
+  ViewModels/         - 集中式应用状态
+  Views/              - 原生 SwiftUI 视图
+    Apps/             - 应用卸载器视图
+    Cleaning/         - 智能扫描与分类视图
+    Orphans/          - 孤立文件查找
+    Settings/         - 基于原生 Form 的设置
+    Components/       - 共享组件
 ```
 
-Key components:
-- **AppPathFinder** - 10-level heuristic matching engine for discovering app-related files
-- **Locations** - 120+ macOS filesystem search paths
-- **Conditions** - 25 per-app matching rules for edge cases (Xcode, Chrome, VS Code, etc.)
-- **PermissionCoordinator** - Single source of truth for FDA prompts, polling, and post-grant retries
-- **FullDiskAccessManager** - TCC probe + registration; broad probe paths (Mail, Safari, Messages, AddressBook, Calendars) so macOS catalogs the bundle reliably
-- **CleaningEngine** - Symlink-resistant deletion with an allow-list, NSAppleScript-based admin escalation for root-owned items, NUL-separated path staging for xargs
+核心组件:
+- **AppPathFinder** — 用于发现应用相关文件的 10 级启发式匹配引擎
+- **Locations** — 120+ 个 macOS 文件系统搜索路径
+- **Conditions** — 25 条针对特殊情况的应用级匹配规则(Xcode、Chrome、VS Code 等)
+- **AppInfoFetcher** — 使用 Spotlight 元数据,并以 Info.plist 作为回退的应用发现
+- **Logger** — 基于 Apple `os.log` 的统一日志
 
-## Security
+## 贡献
 
-- Core-cleaner symlink-risk reduction: `CleaningEngine` resolves paths before validation and again near user-level deletion. Because final removal remains path-based, this narrows but cannot eliminate every TOCTOU race; other removal workflows have separate checks.
-- Core-cleaner allow-list: `CleaningEngine` refuses a user-level path outside its explicit safe roots. App-uninstaller and orphan flows use their own policies.
-- Admin escalation is gated by its own explicit allow-list; root-owned items outside those permitted roots are refused.
-- System app protection: Apple's bundles cannot be uninstalled, regardless of selection.
-- Manual destructive workflows require confirmation. Exact duplicates retain one protected copy and recheck files before moving extras to the Trash. Scheduled auto-clean remains unattended after enablement.
+欢迎贡献。请参阅 [CONTRIBUTING.md](CONTRIBUTING.md) 了解指南。
 
-If you find a vulnerability, please open a private security advisory rather than a public issue.
+特别欢迎的贡献方向:
+- 分类视图中的大小/日期过滤器预设
+- AppState 与扫描引擎的 XCTest 覆盖
+- 本地化(其他语言)
+- 应用图标设计
 
-## Contributing
+## 许可证
 
-Pull requests welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-Especially welcome:
-- Per-category size and date filter presets
-- Wider XCTest coverage for `AppState` and the scan engine
-- Translations beyond the current set (en, ar, es, ja, pl, pt-BR, ru, uk, zh-Hans, zh-Hant)
-- App icon design
-
-## Acknowledgments
-
-- **[@nguyenhuy158](https://github.com/nguyenhuy158)** - Search and filter feature ([#18](https://github.com/momenbasel/PureMac/issues/18), [#29](https://github.com/momenbasel/PureMac/pull/29))
-- **[@edufalcao](https://github.com/edufalcao)** - Cleaning safety guards and confirmation dialogs ([#30](https://github.com/momenbasel/PureMac/pull/30))
-- **[@zeck00](https://github.com/zeck00)** - UI overhaul ([#31](https://github.com/momenbasel/PureMac/pull/31)), app uninstaller with system app protection ([#32](https://github.com/momenbasel/PureMac/pull/32)), onboarding experience ([#33](https://github.com/momenbasel/PureMac/pull/33))
-- **[@0x-man](https://github.com/0x-man)** - Symlink security vulnerability report ([#25](https://github.com/momenbasel/PureMac/issues/25))
-- **[@ansidev](https://github.com/ansidev)** - Checkbox interaction bug report ([#34](https://github.com/momenbasel/PureMac/issues/34))
-- **[@fengcheng01](https://github.com/fengcheng01)** - App uninstaller feature request ([#28](https://github.com/momenbasel/PureMac/issues/28))
-- **[@scholzfuni](https://github.com/scholzfuni)** - Modularization proposal ([#23](https://github.com/momenbasel/PureMac/issues/23))
-- **[@Zonharo](https://github.com/Zonharo)** - In-app auto-update request ([#94](https://github.com/momenbasel/PureMac/issues/94))
-
-## Star History
-
-If PureMac saved you some disk space, a star helps other people find it.
-
-<a href="https://github.com/momenbasel/PureMac/stargazers">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/star-history-dark.svg" />
-    <source media="(prefers-color-scheme: light)" srcset="assets/star-history.svg" />
-    <img alt="PureMac star history chart" src="assets/star-history.svg" width="720" />
-  </picture>
-</a>
-
-## More open source
-
-- **[Pesty](https://github.com/momenbasel/pesty)** - a free, open-source clipboard manager for macOS. Color-coded history, pinboards, instant search, keyboard-fast paste. Signed, notarized, `brew install --cask momenbasel/pesty/pesty`.
-
-## License
-
-MIT. See [LICENSE](LICENSE). Use it, fork it, ship it under your own name if you want - the only thing the license asks is that the notice stays.
+MIT 许可证。详情请参阅 [LICENSE](../LICENSE)。

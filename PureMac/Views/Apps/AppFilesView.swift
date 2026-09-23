@@ -130,7 +130,7 @@ struct AppFilesView: View {
             }
             Button("Cancel", role: .cancel) { pendingRemoval = [] }
         } message: {
-            Text("PureMac will move the selected app and related files to the Trash. Items requiring administrator authorization may be permanently deleted. Review the selection before continuing.")
+            Text("Qpure will move the selected app and related files to the Trash. Items requiring administrator authorization may be permanently deleted. Review the selection before continuing.")
         }
         .onChange(of: appState.removalNeedsFullDiskAccess) { needs in
             // FDA-fixable removals jump straight into the rich sheet, the

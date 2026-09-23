@@ -325,7 +325,7 @@ struct ProtectionAudit: Sendable {
             return ProtectionFinding(
                 check: check,
                 status: .unknown,
-                detail: result.timedOut ? "The check timed out." : "PureMac could not read this setting.",
+                detail: result.timedOut ? "The check timed out." : "Qpure could not read this setting.",
                 version: nil
             )
         }
@@ -380,7 +380,7 @@ struct ProtectionAudit: Sendable {
             return ProtectionFinding(
                 check: .xProtect,
                 status: .unknown,
-                detail: "PureMac could not confirm the local XProtect installation.",
+                detail: "Qpure could not confirm the local XProtect installation.",
                 version: nil
             )
         }

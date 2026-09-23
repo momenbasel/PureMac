@@ -125,7 +125,7 @@
 		28181F034530331A550C6A3D /* SchedulerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchedulerService.swift; sourceTree = "<group>"; };
 		2A8DE5D45BA19E2670B57DC5 /* CleaningEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleaningEngine.swift; sourceTree = "<group>"; };
 		2D3F9FEDC493A8E49E910F67 /* AppBundleDragHandle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBundleDragHandle.swift; sourceTree = "<group>"; };
-		311078221878708524283765 /* PureMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PureMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		311078221878708524283765 /* Qpure.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Qpure.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		340D303C60FF878B019056B6 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		3667D46D8E2004EB4D73835A /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		374A3BE46E71E54B6927E9EF /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = uk.lproj/ServicesMenu.strings; sourceTree = "<group>"; };
@@ -205,6 +205,10 @@
 		F661A0F64CF93E482CB1728F /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		F77B9D7D5353CD42BD03ADBB /* ApplicationUpdaterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationUpdaterTests.swift; sourceTree = "<group>"; };
 		F9DCBD97CC88D77AE8DB01A4 /* PermissionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionCoordinator.swift; sourceTree = "<group>"; };
+		EC60698AA3894719A2FDBD17 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		386487C581EA43D796A9F17E /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		7AE33DBE19904B19AC527038 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/ServicesMenu.strings"; sourceTree = "<group>"; };
+		C9D592CD7DAD4D16ADCBA0D5 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/ServicesMenu.strings"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -277,7 +281,7 @@
 		4562CA9E5625FA4EEEFECB6D /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				311078221878708524283765 /* PureMac.app */,
+				311078221878708524283765 /* Qpure.app */,
 				607B9A8C7B34D6A7DCF4FFE2 /* PureMacTests.xctest */,
 			);
 			name = Products;
@@ -466,8 +470,8 @@
 			packageProductDependencies = (
 				9CC8F66E27BE52A6639E904B /* Sparkle */,
 			);
-			productName = PureMac;
-			productReference = 311078221878708524283765 /* PureMac.app */;
+			productName = Qpure;
+			productReference = 311078221878708524283765 /* Qpure.app */;
 			productType = "com.apple.product-type.application";
 		};
 		FBA8B0DE95746207A043B802 /* PureMacTests */ = {
@@ -683,6 +687,8 @@
 				25D1CF5248C1D471BCBD212F /* fr */,
 				6ED5C9C10C69C3143B1F5CA6 /* ru */,
 				374A3BE46E71E54B6927E9EF /* uk */,
+				7AE33DBE19904B19AC527038 /* zh-Hans */,
+				C9D592CD7DAD4D16ADCBA0D5 /* zh-Hant */,
 			);
 			name = ServicesMenu.strings;
 			sourceTree = "<group>";
@@ -694,6 +700,8 @@
 				0A544093C897FBCBA8E256F9 /* fr */,
 				ED0C4D8912DA94F81B2AEF8F /* ru */,
 				DFC4A1FD7DB92C82725B4314 /* uk */,
+				EC60698AA3894719A2FDBD17 /* zh-Hans */,
+				386487C581EA43D796A9F17E /* zh-Hant */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
@@ -785,7 +793,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = PureMac/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				PRODUCT_NAME = PureMac;
+				PRODUCT_NAME = Qpure;
 				SDKROOT = macosx;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
@@ -804,7 +812,7 @@
 					"@loader_path/../Frameworks",
 				);
 				SDKROOT = macosx;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PureMac.app/Contents/MacOS/PureMac";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Qpure.app/Contents/MacOS/Qpure";
 			};
 			name = Debug;
 		};
@@ -821,7 +829,7 @@
 					"@loader_path/../Frameworks",
 				);
 				SDKROOT = macosx;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PureMac.app/Contents/MacOS/PureMac";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Qpure.app/Contents/MacOS/Qpure";
 			};
 			name = Release;
 		};
@@ -901,7 +909,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = PureMac/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				PRODUCT_NAME = PureMac;
+				PRODUCT_NAME = Qpure;
 				SDKROOT = macosx;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 			};

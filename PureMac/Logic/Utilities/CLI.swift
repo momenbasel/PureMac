@@ -143,7 +143,7 @@ struct CLI {
 
     private static func printUsage() {
         print("""
-        PureMac CLI
+        Qpure CLI
 
         Usage: puremac <command> [options]
 
@@ -163,7 +163,7 @@ struct CLI {
 
     private static func printVersion() {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "2.0.0"
-        print("PureMac \(version)")
+        print("Qpure \(version)")
     }
 
     private static func printError(_ message: String) {

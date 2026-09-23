@@ -1,0 +1,10 @@
+/* Qpure app identity */
+"CFBundleDisplayName" = "Qpure";
+"CFBundleName" = "Qpure";
+"NSAppleEventsUsageDescription" = "Qpure 使用 Apple 事件与访达交互，以便显示文件位置。";
+"NSDesktopFolderUsageDescription" = "Qpure 需要访问桌面文件夹，以查找垃圾和残留文件。";
+"NSDocumentsFolderUsageDescription" = "Qpure 需要访问文稿文件夹，以查找垃圾和残留文件。";
+"NSDownloadsFolderUsageDescription" = "Qpure 需要访问下载文件夹，以查找垃圾和残留文件。";
+"NSHumanReadableCopyright" = "Copyright 2026. MIT 许可证。";
+"NSRemovableVolumesUsageDescription" = "Qpure 需要访问可移动宗卷，以扫描垃圾文件。";
+"NSSystemAdministrationUsageDescription" = "Qpure 需要系统管理权限，以清理缓存并完整卸载应用。";

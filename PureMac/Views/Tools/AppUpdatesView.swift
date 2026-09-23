@@ -133,7 +133,7 @@ struct AppUpdatesView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Updates from Homebrew")
                         .font(.system(size: 14, weight: .semibold))
-                    Text("Checking asks Homebrew to refresh its package data as needed and contacts Homebrew's configured sources. PureMac only lists cask apps managed by this Homebrew installation.")
+                    Text("Checking asks Homebrew to refresh its package data as needed and contacts Homebrew's configured sources. Qpure only lists cask apps managed by this Homebrew installation.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -199,7 +199,7 @@ struct AppUpdatesView: View {
                     IconTile(systemName: "arrow.triangle.2.circlepath", tint: Tint.accent, size: 48, corner: 13)
                     Text("Check installed cask apps")
                         .font(.title3.weight(.semibold))
-                    Text("PureMac will ask Homebrew for available versions when you start the check.")
+                    Text("Qpure will ask Homebrew for available versions when you start the check.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)

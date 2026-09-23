@@ -233,7 +233,7 @@ struct DashboardView: View {
                     Text("Find space to reclaim.")
                         .font(.system(size: 25, weight: .semibold))
                         .tracking(-0.35)
-                    Text("PureMac checks caches, logs, developer data, downloads, and Trash. You review the result before anything is removed.")
+                    Text("Qpure checks caches, logs, developer data, downloads, and Trash. You review the result before anything is removed.")
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -521,7 +521,7 @@ struct DashboardView: View {
                     Text(
                         appState.scanWasCancelled
                             ? "Run the scan again when you are ready to check every area."
-                            : "PureMac did not find removable items in the selected scan areas."
+                            : "Qpure did not find removable items in the selected scan areas."
                     )
                     .font(.system(size: 12.5))
                     .foregroundStyle(.secondary)
@@ -559,7 +559,7 @@ struct DashboardView: View {
                 VStack(spacing: 6) {
                     Text("Cleaning selected items")
                         .font(.system(size: 24, weight: .semibold))
-                    Text("Keep PureMac open until this pass finishes.")
+                    Text("Keep Qpure open until this pass finishes.")
                         .font(.system(size: 12.5))
                         .foregroundStyle(.secondary)
                 }

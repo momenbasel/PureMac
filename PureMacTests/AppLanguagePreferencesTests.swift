@@ -9,6 +9,13 @@ final class AppLanguagePreferencesTests: XCTestCase {
         XCTAssertTrue(AppLanguage.allCases.contains(.ukrainian))
     }
 
+    func testChineseLanguagesUseExpectedIdentifiers() {
+        XCTAssertEqual(AppLanguage.simplifiedChinese.rawValue, "zh-Hans")
+        XCTAssertEqual(AppLanguage.traditionalChinese.rawValue, "zh-Hant")
+        XCTAssertTrue(AppLanguage.allCases.contains(.simplifiedChinese))
+        XCTAssertTrue(AppLanguage.allCases.contains(.traditionalChinese))
+    }
+
     func testApplyCustomLanguageSetsAppleLanguagesAndPreservesLocale() {
         let context = makeDefaults()
         let defaults = context.defaults

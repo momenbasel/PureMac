@@ -8,6 +8,19 @@ final class LocalizationFilesTests: XCTestCase {
         XCTAssertNotNil(localizationFiles["uk"], "Expected uk.lproj/Localizable.strings to exist")
     }
 
+    func testChinesePermissionAndFinderMenuLocalizationsExist() throws {
+        for language in ["zh-Hans", "zh-Hant"] {
+            XCTAssertNotNil(
+                Bundle.main.path(forResource: "InfoPlist", ofType: "strings", inDirectory: nil, forLocalization: language),
+                "Expected the built app to include the \(language) permission prompt localization"
+            )
+            XCTAssertNotNil(
+                Bundle.main.path(forResource: "ServicesMenu", ofType: "strings", inDirectory: nil, forLocalization: language),
+                "Expected the built app to include the \(language) Finder Services localization"
+            )
+        }
+    }
+
     func testBuiltAppBundleContainsRussianAndUkrainianLocalizations() throws {
         for language in ["ru", "uk"] {
             XCTAssertTrue(

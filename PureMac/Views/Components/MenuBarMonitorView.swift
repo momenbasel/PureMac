@@ -51,7 +51,7 @@ struct MenuBarMonitorView: View {
                 Button {
                     openMainWindow()
                 } label: {
-                    Text("Open PureMac")
+                    Text("Open Qpure")
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
@@ -61,7 +61,7 @@ struct MenuBarMonitorView: View {
                 Button {
                     NSApp.terminate(nil)
                 } label: {
-                    Text("Quit PureMac")
+                    Text("Quit Qpure")
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)

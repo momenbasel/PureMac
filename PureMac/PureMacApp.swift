@@ -8,7 +8,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Normally PureMac quits when its window closes. When the menu-bar system
     /// monitor is enabled the app stays resident so the meters keep updating in
-    /// the menu bar; "Open PureMac" in that menu reopens the window.
+    /// the menu bar; "Open Qpure" in that menu reopens the window.
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         !UserDefaults.standard.bool(forKey: "settings.general.menuBarMonitor")
     }
@@ -28,7 +28,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Touch TCC-protected paths so macOS registers PureMac in the
         // Full Disk Access pane on first launch (fixes issue #75).
         FullDiskAccessManager.shared.triggerRegistration()
-        // Register the Finder Services provider so "Uninstall with PureMac"
+        // Register the Finder Services provider so "Uninstall with Qpure"
         // appears when an .app bundle is right-clicked (issue #109).
         NSApp.servicesProvider = self
         NSUpdateDynamicServices()

@@ -213,7 +213,7 @@ struct MainWindow: View {
         .environment(\.defaultMinListRowHeight, 35)
         .scrollContentBackground(.hidden)
         .background(sidebarBackground)
-        .navigationTitle("PureMac")
+        .navigationTitle("Qpure")
         .onMoveCommand(perform: moveSelection)
         .onChange(of: selectedSection) { section in
             guard case let .cleaning(category)? = section else { return }
@@ -492,7 +492,7 @@ struct MainWindow: View {
             }
         case nil:
             EmptyStateView(
-                "PureMac",
+                "Qpure",
                 systemImage: "sparkles",
                 description: "Select a tool from the sidebar."
             )
