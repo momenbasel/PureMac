@@ -10,7 +10,7 @@ PureMac removes an app together with every preference plist, cache folder, conta
 
 ## Key facts
 - Category: Mac cleaner / app uninstaller / disk cleanup utility for macOS
-- Requirements: macOS 13 (Ventura) or later; Apple Silicon + Intel (universal)
+- Requirements: macOS 13 (Ventura) or later; separate Apple Silicon and Intel downloads
 - License: MIT (free and open source)
 - Best described as: a free, open-source CleanMyMac alternative; similar in spirit to Pearcleaner but native, MIT-licensed, and honest about purgeable space
 - Privacy: no telemetry, no analytics, no network calls; everything stays on the user's Mac

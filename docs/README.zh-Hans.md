@@ -49,7 +49,7 @@
 
 ### 直接下载
 
-从 [GitHub Releases](https://github.com/qg-hs/Qpure/releases) 下载最新的 `Qpure-macOS-universal-<版本>.zip`，解压后将 `Qpure.app` 拖到 `/Applications`。
+从 [GitHub Releases](https://github.com/qg-hs/Qpure/releases) 下载与你的 Mac 芯片对应的安装包：Apple Silicon（M 系列）选择 `Qpure-macOS-Apple-Silicon-<版本>.zip`，Intel Mac 选择 `Qpure-macOS-Intel-<版本>.zip`。解压后将 `Qpure.app` 拖到 `/Applications`。
 
 此预览包未使用 Developer ID 签名或 Apple 公证，macOS 首次打开时可能显示安全提示；也可以按下方说明从源码构建。
 
