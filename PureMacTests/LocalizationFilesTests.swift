@@ -92,7 +92,7 @@ final class LocalizationFilesTests: XCTestCase {
         for language in ["zh-Hans", "zh-Hant"] {
             let fileURL = try XCTUnwrap(localizationFiles[language])
             let localized = try localizedStrings(in: fileURL)
-            let untranslated = englishStrings.compactMap { key, englishValue in
+            let untranslated: [String] = englishStrings.compactMap { key, englishValue -> String? in
                 guard !technicalTerms.contains(key), localized[key] == englishValue else { return nil }
                 return key
             }.sorted()
