@@ -71,7 +71,7 @@ final class ProtectionAuditTests: XCTestCase {
         )
 
         XCTAssertEqual(finding.status, .unknown)
-        XCTAssertEqual(finding.detail, "PureMac could not read this setting.")
+        XCTAssertEqual(finding.detail, "Qpure could not read this setting.")
     }
 
     func testTimeoutIsUnknown() {
