@@ -93,7 +93,11 @@ final class LocalizationFilesTests: XCTestCase {
             let fileURL = try XCTUnwrap(localizationFiles[language])
             let localized = try localizedStrings(in: fileURL)
             let untranslated: [String] = englishStrings.compactMap { key, englishValue -> String? in
-                guard !technicalTerms.contains(key), localized[key] == englishValue else { return nil }
+                guard
+                    !technicalTerms.contains(key),
+                    englishValue.rangeOfCharacter(from: .letters) != nil,
+                    localized[key] == englishValue
+                else { return nil }
                 return key
             }.sorted()
 
@@ -124,7 +128,9 @@ final class LocalizationFilesTests: XCTestCase {
             let range = NSRange(source.startIndex..., in: source)
             for match in regex.matches(in: source, range: range) {
                 guard let keyRange = Range(match.range(at: 1), in: source) else { continue }
-                let key = String(source[keyRange]).replacingOccurrences(of: "\\\"", with: "\"")
+                let key = String(source[keyRange])
+                    .replacingOccurrences(of: "\\n", with: "\n")
+                    .replacingOccurrences(of: "\\\"", with: "\"")
                 if !englishKeys.contains(key) {
                     missing.append("\(fileURL.lastPathComponent): \(key)")
                 }
