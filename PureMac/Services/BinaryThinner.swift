@@ -68,21 +68,21 @@ actor BinaryThinner {
         var errorDescription: String? {
             switch self {
             case .needsAdmin(let path):
-                return "Not writable by current user: \(path)"
+                return String(format: String(localized: "Not writable by current user: %@"), path)
             case .restrictedEntitlements(let app):
-                return "Cannot modify \(app): its entitlements require the original developer signature"
+                return String(format: String(localized: "Cannot modify %@: its entitlements require the original developer signature"), app)
             case .signatureProtected(let app):
-                return "Cannot thin \(app): it is signed and notarized, and stripping a slice would break its signature"
+                return String(format: String(localized: "Cannot thin %@: it is signed and notarized, and stripping a slice would break its signature"), app)
             case .lipoFailed(let path, let detail):
-                return "lipo failed for \(path): \(detail)"
+                return String(format: String(localized: "lipo failed for %@: %@"), path, detail)
             case .swapFailed(let path, let detail):
-                return "Could not swap modified bundle into place at \(path): \(detail)"
+                return String(format: String(localized: "Could not swap modified bundle into place at %@: %@"), path, detail)
             case .codesignFailed(let app, let detail):
-                return "Re-signing failed for \(app): \(detail)"
+                return String(format: String(localized: "Re-signing failed for %@: %@"), app, detail)
             case .verificationFailed(let app, let detail):
-                return "Signature verification failed for \(app): \(detail)"
+                return String(format: String(localized: "Signature verification failed for %@: %@"), app, detail)
             case .nothingToThin(let app):
-                return "No removable slices in \(app)"
+                return String(format: String(localized: "No removable slices in %@"), app)
             }
         }
     }

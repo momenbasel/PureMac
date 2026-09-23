@@ -83,6 +83,57 @@ final class LocalizationFilesTests: XCTestCase {
         }
     }
 
+    func testChineseLocalizationsDoNotLeaveEnglishEntriesUntranslated() throws {
+        let localizationFiles = try localizableStringsFiles()
+        let englishURL = try XCTUnwrap(localizationFiles["en"])
+        let englishStrings = try localizedStrings(in: englishURL)
+        let technicalTerms = Set(["Qpure", "Qpure.app", "Finder", "CPU", "Time Machine", "%lld", "%lld × %lld", "%lld%%"])
+
+        for language in ["zh-Hans", "zh-Hant"] {
+            let fileURL = try XCTUnwrap(localizationFiles[language])
+            let localized = try localizedStrings(in: fileURL)
+            let untranslated = englishStrings.compactMap { key, englishValue in
+                guard !technicalTerms.contains(key), localized[key] == englishValue else { return nil }
+                return key
+            }.sorted()
+
+            XCTAssertTrue(
+                untranslated.isEmpty,
+                "\(language).lproj still has English values for:\n\(untranslated.joined(separator: "\n"))"
+            )
+        }
+    }
+
+    func testStringLocalizedCallsHaveEnglishResourceKeys() throws {
+        let sourceRoot = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("PureMac")
+        let englishURL = try XCTUnwrap(localizableStringsFiles()["en"])
+        let englishKeys = try localizedKeys(in: englishURL)
+        let regex = try NSRegularExpression(pattern: #"String\(localized:\s*"((?:\\.|[^"\\])*)""#)
+        let enumerator = FileManager.default.enumerator(
+            at: sourceRoot,
+            includingPropertiesForKeys: [.isRegularFileKey]
+        )
+        var missing: [String] = []
+
+        while let fileURL = enumerator?.nextObject() as? URL {
+            guard fileURL.pathExtension == "swift" else { continue }
+            let source = try String(contentsOf: fileURL, encoding: .utf8)
+            let range = NSRange(source.startIndex..., in: source)
+            for match in regex.matches(in: source, range: range) {
+                guard let keyRange = Range(match.range(at: 1), in: source) else { continue }
+                let key = String(source[keyRange]).replacingOccurrences(of: "\\\"", with: "\"")
+                if !englishKeys.contains(key) {
+                    missing.append("\(fileURL.lastPathComponent): \(key)")
+                }
+            }
+        }
+
+        XCTAssertTrue(missing.isEmpty, "Missing Localizable.strings keys:\n\(missing.sorted().joined(separator: "\n"))")
+    }
+
     func testAllLocalizedValuesPreserveEnglishFormatSpecifiers() throws {
         let localizationFiles = try localizableStringsFiles()
         let englishURL = try XCTUnwrap(localizationFiles["en"])

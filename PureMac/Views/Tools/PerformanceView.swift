@@ -68,7 +68,7 @@ struct PerformanceView: View {
                 deletionError = nil
             }
         } message: {
-            Text(deletionError ?? "Unknown error")
+            Text(deletionError ?? String(localized: "Unknown error"))
         }
     }
 
@@ -304,7 +304,7 @@ struct PerformanceView: View {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .memory
         formatter.allowedUnits = [.useGB, .useMB]
-        return "\(formatter.string(fromByteCount: monitor.memoryUsed)) of \(formatter.string(fromByteCount: monitor.memoryTotal))"
+        return String(format: String(localized: "%@ of %@"), formatter.string(fromByteCount: monitor.memoryUsed), formatter.string(fromByteCount: monitor.memoryTotal))
     }
 
     private var deletionConfirmationPresented: Binding<Bool> {
@@ -316,9 +316,9 @@ struct PerformanceView: View {
 
     private var snapshotDeletionMessage: String {
         guard let snapshot = snapshotPendingDeletion else {
-            return "This permanently removes the selected Time Machine snapshot."
+            return String(localized: "This permanently removes the selected Time Machine snapshot.")
         }
-        return "This permanently removes \(snapshot.identifier). Its size is unknown, and the action cannot be undone."
+        return String(format: String(localized: "This permanently removes %@. Its size is unknown, and the action cannot be undone."), snapshot.identifier)
     }
 
     private var deletionErrorPresented: Binding<Bool> {
@@ -423,7 +423,7 @@ private struct StartupItemRow: View {
                         .font(.system(size: 13, weight: .medium))
                         .lineLimit(1)
                     StatusChip(
-                        label: item.isDisabled ? "Disabled" : item.domain.title,
+                        label: item.isDisabled ? String(localized: "Disabled") : item.domain.title,
                         tint: item.isDisabled ? Color.secondary : Tint.accent
                     )
                     ForEach(item.triggers.prefix(2), id: \.self) { trigger in
@@ -431,7 +431,7 @@ private struct StartupItemRow: View {
                     }
                 }
 
-                Text(item.program ?? "Program not declared in this plist")
+                Text(item.program ?? String(localized: "Program not declared in this plist"))
                     .font(.system(size: 11.5, design: .monospaced))
                     .foregroundStyle(item.program == nil ? Tint.orange : .secondary)
                     .lineLimit(1)

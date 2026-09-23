@@ -328,9 +328,9 @@ struct AppUpdatesView: View {
     }
 
     private func updateDetail(_ update: ManagedAppUpdate) -> String {
-        let installed = "Installed \(update.installedVersion)"
+        let installed = String(format: String(localized: "Installed %@"), update.installedVersion)
         guard AppUpdateIdentityMatcher.shouldShowTokenDetail(update.token) else { return installed }
-        return "\(update.token)  ·  \(installed)"
+        return String(format: String(localized: "%@ · Installed %@"), update.token, update.installedVersion)
     }
 
     private var unmanagedAppsCard: some View {
@@ -417,27 +417,33 @@ struct AppUpdatesView: View {
     }
 
     private var updateCountTitle: String {
-        updater.updates.count == 1 ? "1 update available" : "\(updater.updates.count) updates available"
+        updater.updates.count == 1
+            ? String(localized: "1 update available")
+            : String(format: String(localized: "%lld updates available"), Int64(updater.updates.count))
     }
 
     private var selectedCountTitle: String {
-        updater.selectedCount == 1 ? "1 app selected" : "\(updater.selectedCount) apps selected"
+        updater.selectedCount == 1
+            ? String(localized: "1 app selected")
+            : String(format: String(localized: "%lld apps selected"), Int64(updater.selectedCount))
     }
 
     private func upgradeConfirmationLabel(count: Int) -> String {
-        count == 1 ? "Upgrade 1 App" : "Upgrade \(count) Apps"
+        count == 1
+            ? String(localized: "Upgrade 1 App")
+            : String(format: String(localized: "Upgrade %lld Apps"), Int64(count))
     }
 
     private var upgradeConfirmationMessage: String {
         let versions = confirmationSelection.map {
-            "\(displayName(for: $0.token)) \($0.installedVersion) to \($0.currentVersion)"
+            String(format: String(localized: "%@ %@ to %@"), displayName(for: $0.token), $0.installedVersion, $0.currentVersion)
         }
         let selectionSummary: String
         if versions.count <= 5 {
             selectionSummary = versions.joined(separator: ", ")
         } else {
-            selectionSummary = versions.prefix(5).joined(separator: ", ") + ", and \(versions.count - 5) more"
+            selectionSummary = versions.prefix(5).joined(separator: ", ") + ", " + String(format: String(localized: "and %lld more"), Int64(versions.count - 5))
         }
-        return "Homebrew will upgrade \(selectionSummary). It may quit running apps and remove superseded cask versions as part of its normal upgrade process."
+        return String(format: String(localized: "Homebrew will upgrade %@. It may quit running apps and remove superseded cask versions as part of its normal upgrade process."), selectionSummary)
     }
 }

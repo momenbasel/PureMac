@@ -7,7 +7,7 @@ on:
         description: Release tag for this Qpure preview
         required: true
         type: string
-        default: v3.0.0-zh.2
+        default: v3.0.0-zh.3
 
 permissions:
   contents: write
@@ -70,7 +70,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             build
 
-      - name: Package architecture-specific apps and checksums
+      - name: Package architecture-specific DMGs and checksums
         id: package
         env:
           RELEASE_TAG: ${{ inputs.tag }}
@@ -81,28 +81,38 @@ jobs:
           INTEL_APP='build-x86_64/Build/Products/Release/Qpure.app'
           ARM_BINARY="${ARM_APP}/Contents/MacOS/Qpure"
           INTEL_BINARY="${INTEL_APP}/Contents/MacOS/Qpure"
-          ARM_ZIP="Qpure-macOS-Apple-Silicon-${VERSION}.zip"
-          INTEL_ZIP="Qpure-macOS-Intel-${VERSION}.zip"
+          ARM_DMG="Qpure-macOS-Apple-Silicon-${VERSION}.dmg"
+          INTEL_DMG="Qpure-macOS-Intel-${VERSION}.dmg"
+          ARM_STAGE="$(mktemp -d)"
+          INTEL_STAGE="$(mktemp -d)"
+          trap 'rm -rf "${ARM_STAGE}" "${INTEL_STAGE}"' EXIT
+
           test -d "${ARM_APP}"
           test -d "${INTEL_APP}"
           test "$(lipo -archs "${ARM_BINARY}")" = 'arm64'
           test "$(lipo -archs "${INTEL_BINARY}")" = 'x86_64'
-          ditto -c -k --keepParent --sequesterRsrc "${ARM_APP}" "${ARM_ZIP}"
-          ditto -c -k --keepParent --sequesterRsrc "${INTEL_APP}" "${INTEL_ZIP}"
-          shasum -a 256 "${ARM_ZIP}" > "${ARM_ZIP}.sha256"
-          shasum -a 256 "${INTEL_ZIP}" > "${INTEL_ZIP}.sha256"
-          echo "arm_zip=${ARM_ZIP}" >> "$GITHUB_OUTPUT"
-          echo "arm_checksum=${ARM_ZIP}.sha256" >> "$GITHUB_OUTPUT"
-          echo "intel_zip=${INTEL_ZIP}" >> "$GITHUB_OUTPUT"
-          echo "intel_checksum=${INTEL_ZIP}.sha256" >> "$GITHUB_OUTPUT"
+
+          ditto "${ARM_APP}" "${ARM_STAGE}/Qpure.app"
+          ditto "${INTEL_APP}" "${INTEL_STAGE}/Qpure.app"
+          ln -s /Applications "${ARM_STAGE}/Applications"
+          ln -s /Applications "${INTEL_STAGE}/Applications"
+
+          hdiutil create -volname 'Qpure Apple Silicon' -srcfolder "${ARM_STAGE}" -ov -format UDZO "${ARM_DMG}"
+          hdiutil create -volname 'Qpure Intel' -srcfolder "${INTEL_STAGE}" -ov -format UDZO "${INTEL_DMG}"
+          shasum -a 256 "${ARM_DMG}" > "${ARM_DMG}.sha256"
+          shasum -a 256 "${INTEL_DMG}" > "${INTEL_DMG}.sha256"
+          echo "arm_dmg=${ARM_DMG}" >> "$GITHUB_OUTPUT"
+          echo "arm_checksum=${ARM_DMG}.sha256" >> "$GITHUB_OUTPUT"
+          echo "intel_dmg=${INTEL_DMG}" >> "$GITHUB_OUTPUT"
+          echo "intel_checksum=${INTEL_DMG}.sha256" >> "$GITHUB_OUTPUT"
 
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.tag }}
-          ARM_ZIP: ${{ steps.package.outputs.arm_zip }}
+          ARM_DMG: ${{ steps.package.outputs.arm_dmg }}
           ARM_CHECKSUM: ${{ steps.package.outputs.arm_checksum }}
-          INTEL_ZIP: ${{ steps.package.outputs.intel_zip }}
+          INTEL_DMG: ${{ steps.package.outputs.intel_dmg }}
           INTEL_CHECKSUM: ${{ steps.package.outputs.intel_checksum }}
         run: |
           set -euo pipefail
@@ -111,24 +121,24 @@ jobs:
             exit 1
           fi
           VERSION="${RELEASE_TAG#v}"
-          cat > release-notes.md <<EOF
+          cat > release-notes.md <<EOF_NOTES
           ## Qpure ${VERSION} 中文化预览版
 
           基于 PureMac 的 Qpure fork，包含简体中文界面、繁体中文资源和重新设计的应用图标。
 
-          - Apple Silicon（M 系列）：[${ARM_ZIP}](https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/${ARM_ZIP})（[SHA-256](https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/${ARM_CHECKSUM})）
-          - Intel：[${INTEL_ZIP}](https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/${INTEL_ZIP})（[SHA-256](https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/${INTEL_CHECKSUM})）
+          - Apple Silicon（M 系列）：[${ARM_DMG}](https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/${ARM_DMG})（[SHA-256](https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/${ARM_CHECKSUM})）
+          - Intel：[${INTEL_DMG}](https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/${INTEL_DMG})（[SHA-256](https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/${INTEL_CHECKSUM})）
 
-          下载与你的 Mac 芯片对应的 ZIP，解压后将 Qpure.app 拖入“应用程序”文件夹。
+          下载与你的 Mac 芯片对应的 DMG，打开后将 Qpure 拖入“应用程序”文件夹。
 
           ### 安全说明
 
           此预览包未使用 Developer ID 签名或 Apple 公证。macOS 首次打开时可能显示安全提示；也可以从源码自行构建。
-          EOF
+          EOF_NOTES
           gh release create "${RELEASE_TAG}" \
-            "${ARM_ZIP}" \
+            "${ARM_DMG}" \
             "${ARM_CHECKSUM}" \
-            "${INTEL_ZIP}" \
+            "${INTEL_DMG}" \
             "${INTEL_CHECKSUM}" \
             --repo "${GITHUB_REPOSITORY}" \
             --target "${GITHUB_SHA}" \

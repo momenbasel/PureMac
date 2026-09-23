@@ -307,7 +307,7 @@ final class AppState: ObservableObject {
         }
         guard !urls.isEmpty else {
             if !blocked.isEmpty {
-                removalError = "Refused to delete \(blocked.count) protected item(s) (home credential directory or similar)."
+                removalError = String(format: String(localized: "Refused to delete %lld protected item(s) (home credential directory or similar)."), Int64(blocked.count))
             }
             return
         }
@@ -462,19 +462,24 @@ final class AppState: ObservableObject {
         adminError: String?
     ) -> String? {
         if needsFullDiskAccess {
-            let prefix = failed.isEmpty ? "Some selected files" : "\(failed.count) file\(failed.count == 1 ? "" : "s")"
-            return "\(prefix) could not be removed because Qpure does not have Full Disk Access. Grant Full Disk Access in System Settings, then try again."
+            guard !failed.isEmpty else {
+                return String(localized: "Some selected files could not be removed because Qpure does not have Full Disk Access. Grant Full Disk Access in System Settings, then try again.")
+            }
+            return String(
+                format: String(localized: "%lld files could not be removed because Qpure does not have Full Disk Access. Grant Full Disk Access in System Settings, then try again."),
+                Int64(failed.count)
+            )
         }
 
         if !failed.isEmpty {
-            if attemptedAdmin {
-                return "\(failed.count) file\(failed.count == 1 ? "" : "s") could not be removed with administrator privileges. The items may have changed or macOS denied access."
-            }
-            return "\(failed.count) file\(failed.count == 1 ? "" : "s") could not be removed. Check that the items still exist and are not in use."
+            let key = attemptedAdmin
+                ? "%lld files could not be removed with administrator privileges. The items may have changed or macOS denied access."
+                : "%lld files could not be removed. Check that the items still exist and are not in use."
+            return String(format: String(localized: key), Int64(failed.count))
         }
 
         if let adminError, !adminError.isEmpty {
-            return "Administrator removal failed: \(adminError)"
+            return String(format: String(localized: "Administrator removal failed: %@"), adminError)
         }
         return nil
     }

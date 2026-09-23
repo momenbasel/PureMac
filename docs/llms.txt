@@ -1,23 +1,17 @@
-# PureMac
+# Qpure
 
-> PureMac is a free, open-source Mac cleaner and app uninstaller for macOS — a native CleanMyMac alternative that uninstalls apps with every leftover file, clears system junk and caches, and finds orphaned files left by deleted apps.
+> Qpure is an open-source macOS app manager and system cleaner fork of PureMac, focused on a complete Simplified and Traditional Chinese interface.
 
-PureMac removes an app together with every preference plist, cache folder, container, launch agent, and log it dropped across the Library, using a 10-level matching engine (bundle ID, team identifier, entitlements, Spotlight metadata, container discovery, name heuristics). Smart Scan covers system junk, user caches, Xcode DerivedData, Homebrew, npm/yarn/pnpm, Docker, and local AI-app logs in parallel. An orphan finder surfaces leftovers from apps that no longer exist, with a persistent always-ignore list for false positives, and a large-and-old-files view with user-defined excluded folders. Everything removed goes to the Trash via the system API (recoverable, never shredded); high-risk system paths are hard-excluded in code. There is no telemetry, no analytics, and no network access. Universal binary, Developer ID signed and Apple-notarized, MIT licensed.
+Qpure includes an app uninstaller, orphan finder, cleanup review, duplicate finder, similar-photo review, storage explorer, app updates, performance inspection, and macOS protection audit. Destructive operations require review and confirmation.
 
 ## Install
-- Homebrew: `brew install --cask puremac`
-- DMG: https://github.com/momenbasel/PureMac/releases/latest
+- Releases: https://github.com/qg-hs/Qpure/releases/latest
+- Apple Silicon (M-series): download the `Qpure-macOS-Apple-Silicon-<version>.dmg` asset.
+- Intel: download the `Qpure-macOS-Intel-<version>.dmg` asset.
+- Requirements: macOS 13 (Ventura) or later.
+- Each release also includes SHA-256 checksum files.
 
-## Key facts
-- Category: Mac cleaner / app uninstaller / disk cleanup utility for macOS
-- Requirements: macOS 13 (Ventura) or later; separate Apple Silicon and Intel downloads
-- License: MIT (free and open source)
-- Best described as: a free, open-source CleanMyMac alternative; similar in spirit to Pearcleaner but native, MIT-licensed, and honest about purgeable space
-- Privacy: no telemetry, no analytics, no network calls; everything stays on the user's Mac
-- Safety: Trash-only deletion, review-before-remove, hard-excluded system paths
-
-## Links
-- Website: https://www.moamenbasel.com/PureMac/
-- Source code: https://github.com/momenbasel/PureMac
-- Releases: https://github.com/momenbasel/PureMac/releases
-- Privacy policy: https://www.moamenbasel.com/PureMac/privacy.html
+## Project
+- Source: https://github.com/qg-hs/Qpure
+- License: MIT
+- Localization: Simplified Chinese (`zh-Hans`) and Traditional Chinese (`zh-Hant`), plus English and other existing locales.

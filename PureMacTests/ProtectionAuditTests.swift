@@ -88,7 +88,7 @@ final class ProtectionAuditTests: XCTestCase {
         )
 
         XCTAssertEqual(finding.status, .unknown)
-        XCTAssertEqual(finding.detail, "The check timed out.")
+        XCTAssertEqual(finding.detail, String(localized: "The check timed out."))
     }
 
     func testAuditPreservesCheckOrder() async {

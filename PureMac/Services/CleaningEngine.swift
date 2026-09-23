@@ -32,7 +32,7 @@ actor CleaningEngine {
             let progress = Double(index + 1) / Double(total)
             defer { progressHandler(progress) }
             if CleanupExclusions.excludes(item.path, paths: exclusions) {
-                result.errors.append("Excluded from cleanup: \(item.name)")
+                result.errors.append(String(format: String(localized: "Excluded from cleanup: %@"), item.name))
                 continue
             }
 
@@ -115,7 +115,7 @@ actor CleaningEngine {
             do {
                 let itemURL = URL(fileURLWithPath: item.path)
                 guard !hasUnexpectedSymlink(in: item.path) else {
-                    let msg = "Skipped symlink or unsafe path: \(item.path)"
+                    let msg = String(format: String(localized: "Skipped symlink or unsafe path: %@"), item.path)
                     Logger.shared.log(msg, level: .warning)
                     result.errors.append(msg)
                     continue
@@ -139,7 +139,7 @@ actor CleaningEngine {
                     return isSafeToDelete(resolvedPath: resolved)
                 }()
                 guard pathAccepted else {
-                    let msg = "Skipped symlink or unsafe path: \(item.path) -> \(resolved)"
+                    let msg = String(format: String(localized: "Skipped symlink or unsafe path: %@ -> %@"), item.path, resolved)
                     Logger.shared.log(msg, level: .warning)
                     result.errors.append(msg)
                     continue
@@ -150,7 +150,7 @@ actor CleaningEngine {
                 // swap between check and delete aborts the operation.
                 let reResolved = itemURL.resolvingSymlinksInPath().path
                 guard reResolved == resolved, !hasUnexpectedSymlink(in: item.path) else {
-                    let msg = "Aborting delete: path resolution changed between check and unlink for \(item.path)"
+                    let msg = String(format: String(localized: "Aborting delete: path resolution changed between check and unlink for %@"), item.path)
                     Logger.shared.log(msg, level: .warning)
                     result.errors.append(msg)
                     continue
@@ -182,7 +182,7 @@ actor CleaningEngine {
                     result.requiresAdmin.append(item)
                     Logger.shared.log("Deferring to admin pass: \(item.path)", level: .info)
                 } else {
-                    let detail = "\(item.name) at \(item.path): \(error.localizedDescription)"
+                    let detail = String(format: String(localized: "%@ at %@: %@"), item.name, item.path, error.localizedDescription)
                     result.errors.append(detail)
                     Logger.shared.log("Clean failed: \(detail)", level: .error)
                 }
@@ -317,7 +317,7 @@ actor CleaningEngine {
                 result.freedSpace += item.size
                 Logger.shared.log("Deleted and recreated by its daemon (live log): \(item.path)", level: .info)
             } else {
-                let detail = "\(item.name) at \(item.path) survived admin removal"
+                let detail = String(format: String(localized: "%@ at %@ survived admin removal"), item.name, item.path)
                 result.errors.append(detail)
                 Logger.shared.log("Admin pass survivor: \(detail)", level: .error)
             }
@@ -621,7 +621,7 @@ actor CleaningEngine {
         let resolved = URL(fileURLWithPath: item.path).resolvingSymlinksInPath().path
         guard isAppBundlePath((resolved as NSString).standardizingPath, rootedAt: "/Applications")
             || isAppBundlePath((resolved as NSString).standardizingPath, rootedAt: "\(fileManager.homeDirectoryForCurrentUser.path)/Applications") else {
-            let msg = "Skipped unsafe path for thinning: \(item.path) -> \(resolved)"
+            let msg = String(format: String(localized: "Skipped unsafe path for thinning: %@ -> %@"), item.path, resolved)
             Logger.shared.log(msg, level: .warning)
             return (0, false, msg)
         }
@@ -638,11 +638,11 @@ actor CleaningEngine {
             return (freed, true, nil)
         case .failure(let error):
             if case BinaryThinner.ThinningError.needsAdmin = error {
-                let msg = "\(item.name): needs administrator access to thin; skipped"
+                let msg = String(format: String(localized: "%@ needs administrator access to thin; skipped"), item.name)
                 Logger.shared.log(msg, level: .warning)
                 return (0, false, msg)
             }
-            let msg = "Couldn't thin \(item.name): \(error.localizedDescription)"
+            let msg = String(format: String(localized: "Couldn't thin %@: %@"), item.name, error.localizedDescription)
             Logger.shared.log(msg, level: .error)
             return (0, false, msg)
         }
@@ -657,7 +657,7 @@ actor CleaningEngine {
         let resolved = URL(fileURLWithPath: item.path).resolvingSymlinksInPath().path
         let normalized = (resolved as NSString).standardizingPath
         guard isRemovableLprojPath(normalized) else {
-            let msg = "Skipped symlink or unsafe path: \(item.path) -> \(resolved)"
+            let msg = String(format: String(localized: "Skipped symlink or unsafe path: %@ -> %@"), item.path, resolved)
             Logger.shared.log(msg, level: .warning)
             return (0, false, msg)
         }
@@ -678,11 +678,11 @@ actor CleaningEngine {
             return (item.size, true, nil)
         case .failure(let error):
             if case BinaryThinner.ThinningError.needsAdmin = error {
-                let msg = "\(item.name): needs administrator access to modify the app; skipped"
+                let msg = String(format: String(localized: "%@ needs administrator access to modify the app; skipped"), item.name)
                 Logger.shared.log(msg, level: .warning)
                 return (0, false, msg)
             }
-            let msg = "Couldn't remove localization \(item.name): \(error.localizedDescription)"
+            let msg = String(format: String(localized: "Couldn't remove localization %@: %@"), item.name, error.localizedDescription)
             Logger.shared.log(msg, level: .error)
             return (0, false, msg)
         }

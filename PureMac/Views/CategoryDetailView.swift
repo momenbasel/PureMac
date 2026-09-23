@@ -185,8 +185,15 @@ struct CategoryDetailView: View {
     private var confirmationMessage: String {
         let size = ByteCountFormatter.string(fromByteCount: pendingItems.reduce(0) { $0 + $1.size }, countStyle: .file)
         let names = pendingItems.prefix(5).map(\.name).joined(separator: "\n")
-        let more = pendingItems.count > 5 ? "\nAnd \(pendingItems.count - 5) more." : ""
-        return "\(size) selected. This permanently removes the selected files or runs the listed cleanup actions. It cannot be undone.\n\n\(names)\(more)"
+        let more = pendingItems.count > 5
+            ? "\n" + String(format: String(localized: "And %lld more."), Int64(pendingItems.count - 5))
+            : ""
+        return String(
+            format: String(localized: "%@ selected. This permanently removes the selected files or runs the listed cleanup actions. It cannot be undone.\n\n%@%@"),
+            size,
+            names,
+            more
+        )
     }
 }
 

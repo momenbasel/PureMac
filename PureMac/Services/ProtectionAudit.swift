@@ -325,7 +325,7 @@ struct ProtectionAudit: Sendable {
             return ProtectionFinding(
                 check: check,
                 status: .unknown,
-                detail: result.timedOut ? "The check timed out." : "Qpure could not read this setting.",
+                detail: result.timedOut ? String(localized: "The check timed out.") : String(localized: "Qpure could not read this setting."),
                 version: nil
             )
         }
@@ -334,31 +334,31 @@ struct ProtectionAudit: Sendable {
         switch check {
         case .gatekeeper:
             if output.contains("assessments enabled") {
-                return finding(check, .enabled, "App downloads are checked before opening.")
+                return finding(check, .enabled, String(localized: "App downloads are checked before opening."))
             }
             if output.contains("assessments disabled") {
-                return finding(check, .disabled, "Downloaded apps are not being assessed by Gatekeeper.")
+                return finding(check, .disabled, String(localized: "Downloaded apps are not being assessed by Gatekeeper."))
             }
         case .fileVault:
             if output.contains("filevault is on") {
-                return finding(check, .enabled, "The startup disk is encrypted with FileVault.")
+                return finding(check, .enabled, String(localized: "The startup disk is encrypted with FileVault."))
             }
             if output.contains("filevault is off") {
-                return finding(check, .disabled, "The startup disk is not encrypted with FileVault.")
+                return finding(check, .disabled, String(localized: "The startup disk is not encrypted with FileVault."))
             }
         case .firewall:
             if output.contains("firewall is enabled") || output.contains("state = 1") {
-                return finding(check, .enabled, "Incoming network connections are filtered.")
+                return finding(check, .enabled, String(localized: "Incoming network connections are filtered."))
             }
             if output.contains("firewall is disabled") || output.contains("state = 0") {
-                return finding(check, .disabled, "The macOS application firewall is turned off.")
+                return finding(check, .disabled, String(localized: "The macOS application firewall is turned off."))
             }
         case .systemIntegrityProtection:
             if output.contains("system integrity protection status: enabled") {
-                return finding(check, .enabled, "Protected system locations and processes are restricted.")
+                return finding(check, .enabled, String(localized: "Protected system locations and processes are restricted."))
             }
             if output.contains("system integrity protection status: disabled") {
-                return finding(check, .disabled, "System Integrity Protection is turned off.")
+                return finding(check, .disabled, String(localized: "System Integrity Protection is turned off."))
             }
         case .xProtect:
             break
@@ -367,7 +367,7 @@ struct ProtectionAudit: Sendable {
         return ProtectionFinding(
             check: check,
             status: .unknown,
-            detail: "The system returned an unrecognized status.",
+            detail: String(localized: "The system returned an unrecognized status."),
             version: nil
         )
     }
@@ -380,20 +380,20 @@ struct ProtectionAudit: Sendable {
             return ProtectionFinding(
                 check: .xProtect,
                 status: .unknown,
-                detail: "Qpure could not confirm the local XProtect installation.",
+                detail: String(localized: "Qpure could not confirm the local XProtect installation."),
                 version: nil
             )
         }
 
         let parts = [
-            engine.map { "engine \($0)" },
-            definitions.map { "definitions \($0)" }
+            engine.map { String(format: String(localized: "engine %@"), $0) },
+            definitions.map { String(format: String(localized: "definitions %@"), $0) }
         ].compactMap { $0 }
         let version = parts.joined(separator: ", ")
         return ProtectionFinding(
             check: .xProtect,
             status: .enabled,
-            detail: "Apple's built-in malware protection is installed. Update recency is managed by macOS.",
+            detail: String(localized: "Apple's built-in malware protection is installed. Update recency is managed by macOS."),
             version: version
         )
     }

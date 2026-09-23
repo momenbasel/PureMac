@@ -31,9 +31,9 @@ final class SimilarPhotosViewModel: ObservableObject {
 
     func chooseFolder() {
         let panel = NSOpenPanel()
-        panel.title = "Choose a photo folder"
-        panel.message = "Qpure compares local image thumbnails without changing your photos."
-        panel.prompt = "Scan Photos"
+        panel.title = String(localized: "Choose a photo folder")
+        panel.message = String(localized: "Qpure compares local image thumbnails without changing your photos.")
+        panel.prompt = String(localized: "Scan Photos")
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
@@ -252,7 +252,7 @@ struct SimilarPhotosView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(progressTitle)
                             .font(.system(size: 16, weight: .semibold))
-                        Text(model.progress?.currentURL?.lastPathComponent ?? "Preparing visual comparison")
+                        Text(model.progress?.currentURL?.lastPathComponent ?? String(localized: "Preparing visual comparison"))
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
@@ -271,18 +271,18 @@ struct SimilarPhotosView: View {
 
                 HStack(spacing: 8) {
                     StatusChip(
-                        label: "\(model.progress?.entriesVisited ?? 0) items",
+                        label: String(format: String(localized: "%lld items"), Int64(model.progress?.entriesVisited ?? 0)),
                         systemImage: "doc.on.doc",
                         tint: Tint.pink
                     )
                     StatusChip(
-                        label: "\(model.progress?.candidatesFound ?? 0) photos",
+                        label: String(format: String(localized: "%lld photos"), Int64(model.progress?.candidatesFound ?? 0)),
                         systemImage: "photo",
                         tint: Tint.pink
                     )
                     if let progress = model.progress, progress.photosAnalyzed > 0 {
                         StatusChip(
-                            label: "\(progress.photosAnalyzed) compared",
+                            label: String(format: String(localized: "%lld compared"), Int64(progress.photosAnalyzed)),
                             systemImage: "viewfinder",
                             tint: Tint.blue
                         )
@@ -295,11 +295,11 @@ struct SimilarPhotosView: View {
     private var progressTitle: String {
         switch model.progress?.phase {
         case .discovering, .none:
-            return "Finding local photos"
+            return String(localized: "Finding local photos")
         case .analyzing:
-            return "Building visual signatures"
+            return String(localized: "Building visual signatures")
         case .comparing:
-            return "Grouping similar shots"
+            return String(localized: "Grouping similar shots")
         }
     }
 
@@ -374,7 +374,7 @@ struct SimilarPhotosView: View {
                 Spacer()
 
                 StatusChip(
-                    label: result.isPartial ? "Sample limit reached" : "Scan complete",
+                    label: String(localized: result.isPartial ? "Sample limit reached" : "Scan complete"),
                     systemImage: result.isPartial ? "exclamationmark.triangle" : "checkmark.circle",
                     tint: result.isPartial ? Tint.orange : Tint.green
                 )

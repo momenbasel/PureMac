@@ -33,9 +33,9 @@ final class SpaceExplorerViewModel: ObservableObject {
 
     func chooseFolder() {
         let panel = NSOpenPanel()
-        panel.title = "Choose a folder to inspect"
-        panel.message = "Qpure measures allocated disk space without changing files."
-        panel.prompt = "Inspect"
+        panel.title = String(localized: "Choose a folder to inspect")
+        panel.message = String(localized: "Qpure measures allocated disk space without changing files.")
+        panel.prompt = String(localized: "Inspect")
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
@@ -264,7 +264,7 @@ struct SpaceExplorerView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Measuring allocated space")
                             .font(.system(size: 16, weight: .semibold))
-                        Text(model.progress?.currentURL.lastPathComponent ?? "Preparing scan")
+                        Text(model.progress?.currentURL.lastPathComponent ?? String(localized: "Preparing scan"))
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
@@ -377,7 +377,7 @@ struct SpaceExplorerView: View {
                 Spacer()
 
                 StatusChip(
-                    label: result.isPartial ? "Partial result" : "Complete",
+                    label: String(localized: result.isPartial ? "Partial result" : "Complete"),
                     systemImage: result.isPartial ? "exclamationmark.triangle" : "checkmark.circle",
                     tint: result.isPartial ? Tint.orange : Tint.green
                 )
@@ -505,22 +505,26 @@ private struct StorageEntryRow: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(entry.name), \(Self.format(entry.allocatedSize))")
-        .accessibilityHint(entry.isDirectory ? "Open folder" : (entry.isPackage ? "Package" : "File"))
+        .accessibilityHint(entry.isDirectory ? String(localized: "Open folder") : (entry.isPackage ? String(localized: "Package") : String(localized: "File")))
     }
 
     private var detailText: String {
         if entry.isPackage {
-            return "Package · \(Self.countLabel(entry.fileCount, singular: "file"))"
+            return String(format: String(localized: "Package · %@"), Self.countLabel(entry.fileCount, singular: "file"))
         }
         if entry.isDirectory {
             let childFolderCount = max(0, entry.directoryCount - 1)
-            return "\(Self.countLabel(entry.fileCount, singular: "file")) · \(Self.countLabel(childFolderCount, singular: "folder"))"
+            return String(format: String(localized: "%@ · %@"), Self.countLabel(entry.fileCount, singular: "file"), Self.countLabel(childFolderCount, singular: "folder"))
         }
-        return "File"
+        return String(localized: "File")
     }
 
     private static func countLabel(_ count: Int, singular: String) -> String {
-        "\(count) \(singular)\(count == 1 ? "" : "s")"
+        let key = count == 1 ? "%lld file" : "%lld files"
+        if singular == "folder" {
+            return String(format: String(localized: count == 1 ? "%lld folder" : "%lld folders"), Int64(count))
+        }
+        return String(format: String(localized: key), Int64(count))
     }
 
     private static func format(_ bytes: Int64) -> String {

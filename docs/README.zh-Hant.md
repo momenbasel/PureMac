@@ -21,13 +21,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/momenbasel/PureMac/releases/latest"><img src="https://img.shields.io/github/v/release/momenbasel/PureMac?style=flat-square&label=%E4%B8%8B%E8%BC%89" alt="最新版本"></a>
-  <a href="https://github.com/momenbasel/PureMac/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/momenbasel/PureMac/build.yml?style=flat-square&label=Build" alt="建置狀態"></a>
+  <a href="https://github.com/qg-hs/Qpure/releases/latest"><img src="https://img.shields.io/github/v/release/momenbasel/PureMac?style=flat-square&label=%E4%B8%8B%E8%BC%89" alt="最新版本"></a>
+  <a href="https://github.com/qg-hs/Qpure/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/momenbasel/PureMac/build.yml?style=flat-square&label=Build" alt="建置狀態"></a>
   <img src="https://img.shields.io/badge/macOS-13.0+-blue?style=flat-square" alt="macOS 13.0+">
   <img src="https://img.shields.io/badge/Swift-5.9-orange?style=flat-square" alt="Swift 5.9">
   <a href="../LICENSE"><img src="https://img.shields.io/github/license/momenbasel/PureMac?style=flat-square" alt="MIT 授權"></a>
-  <a href="https://github.com/momenbasel/PureMac/stargazers"><img src="https://img.shields.io/github/stars/momenbasel/PureMac?style=flat-square" alt="Stars"></a>
-  <a href="https://github.com/momenbasel/PureMac/releases"><img src="https://img.shields.io/github/downloads/momenbasel/PureMac/total?style=flat-square&label=%E4%B8%8B%E8%BC%89%E6%95%B8" alt="下載數"></a>
+  <a href="https://github.com/qg-hs/Qpure/stargazers"><img src="https://img.shields.io/github/stars/momenbasel/PureMac?style=flat-square" alt="Stars"></a>
+  <a href="https://github.com/qg-hs/Qpure/releases"><img src="https://img.shields.io/github/downloads/momenbasel/PureMac/total?style=flat-square&label=%E4%B8%8B%E8%BC%89%E6%95%B8" alt="下載數"></a>
 </p>
 
 <p align="center">
@@ -50,19 +50,19 @@ brew install --cask puremac
 
 ### 直接下載
 
-從 [Releases](https://github.com/momenbasel/PureMac/releases/latest) 下載最新的 `.dmg`,開啟後將 PureMac 拖曳到 `/Applications`。
+從 [Releases](https://github.com/qg-hs/Qpure/releases/latest) 下載與晶片相符的 DMG：Apple Silicon（M 系列）選擇 `Qpure-macOS-Apple-Silicon-<版本>.dmg`，Intel Mac 選擇 `Qpure-macOS-Intel-<版本>.dmg`。開啟 DMG，將 Qpure 拖曳到「應用程式」資料夾。
 
-> 已使用 Apple Developer ID 簽署並公證 — 安裝時不會出現 Gatekeeper 警告。
+> 此預覽版尚未使用 Developer ID 簽署或 Apple 公證，首次開啟時 macOS 可能會顯示安全性提示。
 
 ### 由原始碼建置
 
 ```bash
 brew install xcodegen
-git clone https://github.com/momenbasel/PureMac.git
-cd PureMac
+git clone https://github.com/qg-hs/Qpure.git
+cd Qpure
 xcodegen generate
 xcodebuild -project PureMac.xcodeproj -scheme PureMac -configuration Release -derivedDataPath build build
-open build/Build/Products/Release/PureMac.app
+open build/Build/Products/Release/Qpure.app
 ```
 
 ## 功能
