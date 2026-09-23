@@ -49,7 +49,9 @@
 
 ### 直接下载
 
-当前 fork 尚未发布独立的 Qpure 安装包。PureMac 上游的下载版本不包含 Qpure 的汉化和新图标。
+从 [GitHub Releases](https://github.com/qg-hs/Qpure/releases) 下载最新的 `Qpure-macOS-universal-<版本>.zip`，解压后将 `Qpure.app` 拖到 `/Applications`。
+
+此预览包未使用 Developer ID 签名或 Apple 公证，macOS 首次打开时可能显示安全提示；也可以按下方说明从源码构建。
 
 ### 从源码构建
 

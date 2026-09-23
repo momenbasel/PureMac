@@ -1,633 +1,103 @@
-name: Release
+name: Release Qpure
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Version to release (e.g. 2.2.0). Must match project.yml MARKETING_VERSION.'
+      tag:
+        description: Release tag for this Qpure preview
         required: true
         type: string
-      dry_run:
-        description: 'Build + sign + notarize but skip release upload + homebrew bump.'
-        required: false
-        default: false
-        type: boolean
+        default: v3.0.0-zh.1
 
 permissions:
   contents: write
 
 concurrency:
-  group: puremac-release
+  group: qpure-release
   cancel-in-progress: false
-
-env:
-  APP_NAME: PureMac
-  BUNDLE_ID: com.puremac.app
-  TEAM_ID: H3WXHVTP97
-  SCHEME: PureMac
-  PROJECT: PureMac.xcodeproj
-  CONFIGURATION: Release
 
 jobs:
   release:
-    name: Build, sign, notarize, release
+    name: Test, build, and publish Qpure
     runs-on: macos-15
     timeout-minutes: 60
-
     steps:
-      - name: Checkout
+      - name: Check out source
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Resolve and validate release target
-        id: ver
-        env:
-          REQUESTED_VERSION: ${{ inputs.version }}
-          REQUESTED_DRY_RUN: ${{ inputs.dry_run }}
-        run: |
-          set -euo pipefail
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            VERSION="${REQUESTED_VERSION}"
-          else
-            VERSION="${GITHUB_REF_NAME#v}"
-          fi
-
-          SEMVER_RE='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'
-          if [[ ! "${VERSION}" =~ ${SEMVER_RE} ]]; then
-            echo "::error::Version must be strict SemVer core (for example, 2.9.8; no leading zeroes): ${VERSION}"
-            exit 1
-          fi
-
-          TAG="v${VERSION}"
-          BUILD_SHA="$(git rev-parse 'HEAD^{commit}')"
-
-          git fetch --no-tags origin main
-          if ! git merge-base --is-ancestor "${BUILD_SHA}" origin/main; then
-            echo "::error::Release commit ${BUILD_SHA} is not on origin/main."
-            exit 1
-          fi
-
-          if [[ "${{ github.event_name }}" == "push" ]]; then
-            if [[ "${GITHUB_REF}" != "refs/tags/${TAG}" || "${GITHUB_REF_NAME}" != "${TAG}" ]]; then
-              echo "::error::Tag trigger (${GITHUB_REF}) does not exactly match ${TAG}."
-              exit 1
-            fi
-            if ! TAG_SHA="$(git rev-parse "${TAG}^{commit}" 2>/dev/null)"; then
-              echo "::error::Release tag ${TAG} is not available in the checkout."
-              exit 1
-            fi
-            if [[ "${TAG_SHA}" != "${BUILD_SHA}" ]]; then
-              echo "::error::Release tag ${TAG} resolves to ${TAG_SHA}, but the build checkout is ${BUILD_SHA}."
-              exit 1
-            fi
-          elif [[ "${REQUESTED_DRY_RUN}" != "true" ]]; then
-            echo "::error::Manual dispatch is dry-run only. Publish by pushing the reviewed ${TAG} tag."
-            exit 1
-          fi
-
-          {
-            printf 'version=%s\n' "${VERSION}"
-            printf 'tag=%s\n' "${TAG}"
-            printf 'build_sha=%s\n' "${BUILD_SHA}"
-          } >> "${GITHUB_OUTPUT}"
-          echo "Releasing ${VERSION} from ${BUILD_SHA}"
-
-      - name: Verify version matches project.yml
-        run: |
-          set -euo pipefail
-          PROJ_VERSION=$(sed -nE 's/^[[:space:]]*MARKETING_VERSION:[[:space:]]*"([^"]+)".*/\1/p' project.yml)
-          if [[ "${PROJ_VERSION}" != "${{ steps.ver.outputs.version }}" ]]; then
-            echo "::error::project.yml MARKETING_VERSION (${PROJ_VERSION}) != release version (${{ steps.ver.outputs.version }}). Bump project.yml first."
-            exit 1
-          fi
-
-      - name: Verify real-release publishing credentials
-        if: ${{ github.event_name == 'push' || inputs.dry_run == false }}
-        env:
-          HOMEBREW_TAP_DEPLOY_KEY: ${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}
-        run: |
-          set -euo pipefail
-          if [[ -z "${HOMEBREW_TAP_DEPLOY_KEY:-}" ]]; then
-            echo "::error::HOMEBREW_TAP_DEPLOY_KEY is required for a real release."
-            exit 1
-          fi
-
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.4.app
-
-      - name: Install release tools
-        run: |
-          brew install xcodegen create-dmg xcbeautify
+      - name: Install XcodeGen
+        run: brew install xcodegen
 
       - name: Generate Xcode project
         run: xcodegen generate
 
-      - name: Import Developer ID signing certificate
-        env:
-          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
-          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+      - name: Run macOS tests
         run: |
-          set -euo pipefail
-          CERT_PATH="${RUNNER_TEMP}/certificate.p12"
-          KEYCHAIN_PATH="${RUNNER_TEMP}/app-signing.keychain-db"
-          echo -n "${BUILD_CERTIFICATE_BASE64}" | base64 --decode -o "${CERT_PATH}"
-          security create-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
-          security set-keychain-settings -lut 21600 "${KEYCHAIN_PATH}"
-          security unlock-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
-          security import "${CERT_PATH}" -P "${P12_PASSWORD}" -A -t cert -f pkcs12 -k "${KEYCHAIN_PATH}"
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}" >/dev/null
-          CURRENT_KEYCHAINS=()
-          while IFS= read -r CURRENT_KEYCHAIN; do
-            CURRENT_KEYCHAINS+=("${CURRENT_KEYCHAIN}")
-          done < <(security list-keychain -d user | sed -E 's/^[[:space:]]*"//; s/"[[:space:]]*$//')
-          security list-keychain -d user -s "${KEYCHAIN_PATH}" "${CURRENT_KEYCHAINS[@]}"
-          # Verify identity loaded
-          security find-identity -v -p codesigning "${KEYCHAIN_PATH}" | grep "Developer ID Application: Moamen Basel"
-
-      - name: Run tests before signing
-        run: |
-          set -euo pipefail
-          xcodebuild -project "${PROJECT}" \
-            -scheme "${SCHEME}" \
+          xcodebuild -project PureMac.xcodeproj \
+            -scheme PureMac \
             -configuration Debug \
             -destination 'platform=macOS' \
             -derivedDataPath build-tests \
-            CODE_SIGNING_ALLOWED=NO test | xcbeautify
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            test
 
-      - name: Archive (universal arm64 + x86_64)
+      - name: Build universal app
         run: |
-          set -euo pipefail
-          xcodebuild \
-            -project "${PROJECT}" \
-            -scheme "${SCHEME}" \
-            -configuration "${CONFIGURATION}" \
+          xcodebuild -project PureMac.xcodeproj \
+            -scheme PureMac \
+            -configuration Release \
             -destination 'generic/platform=macOS' \
-            -archivePath build/PureMac.xcarchive \
-            ARCHS="arm64 x86_64" \
+            -derivedDataPath build \
+            ARCHS='arm64 x86_64' \
             ONLY_ACTIVE_ARCH=NO \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="Developer ID Application: Moamen Basel (H3WXHVTP97)" \
-            DEVELOPMENT_TEAM="${TEAM_ID}" \
-            OTHER_CODE_SIGN_FLAGS="--timestamp --options=runtime" \
-            archive | xcbeautify
+            CODE_SIGN_IDENTITY='' \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
 
-      - name: Export signed app
-        run: |
-          set -euo pipefail
-          cat > build/ExportOptions.plist <<'PLIST'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key><string>developer-id</string>
-            <key>teamID</key><string>H3WXHVTP97</string>
-            <key>signingStyle</key><string>manual</string>
-            <key>signingCertificate</key><string>Developer ID Application</string>
-          </dict>
-          </plist>
-          PLIST
-          xcodebuild -exportArchive \
-            -archivePath build/PureMac.xcarchive \
-            -exportPath build/export \
-            -exportOptionsPlist build/ExportOptions.plist | xcbeautify
-
-      - name: Verify codesign + hardened runtime
-        run: |
-          set -euo pipefail
-          APP="build/export/PureMac.app"
-          codesign --verify --deep --strict --verbose=2 "${APP}"
-          codesign -dvv "${APP}" 2>&1 | tee /tmp/cs-info.txt
-          grep -q "flags=0x10000(runtime)" /tmp/cs-info.txt || { echo "::error::Hardened runtime missing"; exit 1; }
-          # Universal arch check
-          lipo -archs "${APP}/Contents/MacOS/PureMac" | grep -q "x86_64" && lipo -archs "${APP}/Contents/MacOS/PureMac" | grep -q "arm64"
-
-      - name: Write App Store Connect API key
+      - name: Package app and checksum
+        id: package
         env:
-          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          RELEASE_TAG: ${{ inputs.tag }}
         run: |
           set -euo pipefail
-          KEY_PATH="${RUNNER_TEMP}/asc_api_key.p8"
-          printf '%s' "${APP_STORE_CONNECT_PRIVATE_KEY}" > "${KEY_PATH}"
-          chmod 600 "${KEY_PATH}"
-          echo "ASC_KEY_PATH=${KEY_PATH}" >> "$GITHUB_ENV"
+          APP='build/Build/Products/Release/Qpure.app'
+          VERSION="${RELEASE_TAG#v}"
+          ZIP="Qpure-macOS-universal-${VERSION}.zip"
+          test -d "${APP}"
+          ditto -c -k --keepParent --sequesterRsrc "${APP}" "${ZIP}"
+          shasum -a 256 "${ZIP}" > "${ZIP}.sha256"
+          echo "zip=${ZIP}" >> "$GITHUB_OUTPUT"
+          echo "checksum=${ZIP}.sha256" >> "$GITHUB_OUTPUT"
 
-      - name: Notarize, staple, and validate app
+      - name: Publish GitHub Release
         env:
-          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          ZIP: ${{ steps.package.outputs.zip }}
+          CHECKSUM: ${{ steps.package.outputs.checksum }}
         run: |
           set -euo pipefail
-          APP="build/export/PureMac.app"
-          NOTARY_ZIP="build/PureMac-app-notary.zip"
-          ditto -c -k --keepParent --sequesterRsrc "${APP}" "${NOTARY_ZIP}"
-          xcrun notarytool submit "${NOTARY_ZIP}" \
-            --key "${ASC_KEY_PATH}" \
-            --key-id "${ASC_KEY_ID}" \
-            --issuer "${ASC_ISSUER_ID}" \
-            --wait \
-            --timeout 30m
-          xcrun stapler staple "${APP}"
-          xcrun stapler validate "${APP}"
-          codesign --verify --deep --strict --verbose=2 "${APP}"
-          spctl --assess --type execute --verbose=4 "${APP}"
-          rm -f "${NOTARY_ZIP}"
-
-      - name: Build DMG from stapled app
-        env:
-          VERSION: ${{ steps.ver.outputs.version }}
-        run: |
-          set -euo pipefail
-          DMG="build/PureMac-${VERSION}.dmg"
-          create-dmg \
-            --volname "PureMac ${VERSION}" \
-            --window-size 540 360 \
-            --icon-size 100 \
-            --icon "PureMac.app" 140 180 \
-            --hide-extension "PureMac.app" \
-            --app-drop-link 400 180 \
-            --no-internet-enable \
-            "${DMG}" \
-            build/export/PureMac.app
-          codesign --sign "Developer ID Application: Moamen Basel (H3WXHVTP97)" --timestamp "${DMG}"
-          codesign --verify --verbose=2 "${DMG}"
-
-      - name: Notarize, staple, and validate DMG
-        env:
-          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          VERSION: ${{ steps.ver.outputs.version }}
-        run: |
-          set -euo pipefail
-          DMG="build/PureMac-${VERSION}.dmg"
-          xcrun notarytool submit "${DMG}" \
-            --key "${ASC_KEY_PATH}" \
-            --key-id "${ASC_KEY_ID}" \
-            --issuer "${ASC_ISSUER_ID}" \
-            --wait \
-            --timeout 30m
-          xcrun stapler staple "${DMG}"
-          xcrun stapler validate "${DMG}"
-          spctl --assess --type install --verbose=4 "${DMG}"
-
-      - name: Build final ZIP from stapled app
-        env:
-          VERSION: ${{ steps.ver.outputs.version }}
-        run: |
-          set -euo pipefail
-          ZIP="build/PureMac-${VERSION}.zip"
-          ditto -c -k --keepParent --sequesterRsrc build/export/PureMac.app "${ZIP}"
-
-      - name: Compute SHA256 checksums
-        id: sha
-        env:
-          VERSION: ${{ steps.ver.outputs.version }}
-        run: |
-          set -euo pipefail
-          DMG_SHA=$(shasum -a 256 "build/PureMac-${VERSION}.dmg" | awk '{print $1}')
-          ZIP_SHA=$(shasum -a 256 "build/PureMac-${VERSION}.zip" | awk '{print $1}')
-          echo "dmg=${DMG_SHA}" >> "$GITHUB_OUTPUT"
-          echo "zip=${ZIP_SHA}" >> "$GITHUB_OUTPUT"
-          {
-            echo "## Checksums"
-            echo ""
-            echo "| Asset | SHA-256 |"
-            echo "|-------|---------|"
-            echo "| PureMac-${VERSION}.dmg | \`${DMG_SHA}\` |"
-            echo "| PureMac-${VERSION}.zip | \`${ZIP_SHA}\` |"
-          } > build/CHECKSUMS.md
-
-      - name: Upload artifacts (always, for inspection)
-        uses: actions/upload-artifact@v4
-        with:
-          name: puremac-${{ steps.ver.outputs.version }}
-          path: |
-            build/PureMac-${{ steps.ver.outputs.version }}.dmg
-            build/PureMac-${{ steps.ver.outputs.version }}.zip
-            build/CHECKSUMS.md
-          retention-days: 14
-
-      - name: Prepare and publish GitHub release
-        id: release
-        if: ${{ github.event_name == 'push' || inputs.dry_run == false }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.ver.outputs.version }}
-          TAG: ${{ steps.ver.outputs.tag }}
-          BUILD_SHA: ${{ steps.ver.outputs.build_sha }}
-          DMG_SHA: ${{ steps.sha.outputs.dmg }}
-          ZIP_SHA: ${{ steps.sha.outputs.zip }}
-        run: |
-          set -euo pipefail
-          NOTES_FILE=build/release-notes.md
-          write_notes() {
-            local canonical_dmg_sha="$1" canonical_zip_sha="$2"
-            {
-              echo "## PureMac ${VERSION}"
-              echo ""
-              echo "Universal binary (Intel + Apple Silicon). Signed with Developer ID + notarized + stapled by Apple."
-              echo ""
-              if [[ "${VERSION}" == "3.0.0" ]]; then
-                echo "### What changed"
-                echo "- Redesigned dashboard and navigation, with clearer storage and cleanup review."
-                echo "- New Space Explorer, exact Duplicate Finder, and Similar Photos review."
-                echo "- Protection checks, startup and snapshot inspection, and Homebrew app updates."
-                echo "- Cleanup filters, persistent exclusions, stop-scan support, and safer removal confirmations."
-                echo ""
-                echo "Protection checks inspect macOS settings; they are not a malware scanner. App updates cover Homebrew casks. Similar Photos groups images for manual review."
-                echo ""
-              elif [[ "${VERSION}" == "2.9.8" ]]; then
-                echo "### What changed"
-                echo ""
-                echo "- Fixed switching Appearance from Dark back to System so the entire window updates immediately (#152)."
-                echo "- Fixed Smart Care progress-bar shimmer clipping and synchronization, including at low progress values, while preserving Reduce Motion (#153)."
-                echo "- Added Brazilian Portuguese documentation and synchronized its CLI setup section (#154)."
-                echo "- Corrected cleanup and security documentation to distinguish recoverable Trash operations from permanent and administrator-authorized cleanup paths."
-                echo "- Hardened release packaging so the DMG and Homebrew ZIP contain the Apple-stapled app, with serialized and retryable Homebrew publication."
-                echo ""
-              fi
-              echo "## Checksums"
-              echo ""
-              echo "| Asset | SHA-256 |"
-              echo "|-------|---------|"
-              echo "| PureMac-${VERSION}.dmg | \`${canonical_dmg_sha}\` |"
-              echo "| PureMac-${VERSION}.zip | \`${canonical_zip_sha}\` |"
-              echo ""
-              echo "### Install"
-              echo ""
-              echo "\`\`\`"
-              echo "brew install --cask momenbasel/tap/puremac"
-              echo "\`\`\`"
-            } > "${NOTES_FILE}"
-          }
-
-          validate_published_assets() {
-            local asset_dir="$1"
-            local published_dmg="${asset_dir}/PureMac-${VERSION}.dmg"
-            local published_zip="${asset_dir}/PureMac-${VERSION}.zip"
-            local expanded_dir="${asset_dir}/expanded"
-            hdiutil verify "${published_dmg}"
-            xcrun stapler validate "${published_dmg}"
-            spctl --assess --type install --verbose=4 "${published_dmg}"
-            mkdir -p "${expanded_dir}"
-            ditto -x -k "${published_zip}" "${expanded_dir}"
-            local published_app="${expanded_dir}/PureMac.app"
-            codesign --verify --deep --strict --verbose=4 "${published_app}"
-            xcrun stapler validate "${published_app}"
-            spctl --assess --type execute --verbose=4 "${published_app}"
-            codesign -dvv "${published_app}" 2>&1 | grep -Fq 'TeamIdentifier=H3WXHVTP97'
-            local app_archs app_version
-            app_archs=$(lipo -archs "${published_app}/Contents/MacOS/PureMac")
-            grep -qw arm64 <<< "${app_archs}"
-            grep -qw x86_64 <<< "${app_archs}"
-            app_version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "${published_app}/Contents/Info.plist")
-            [[ "${app_version}" == "${VERSION}" ]]
-          }
-
-          # Re-fetch immediately before publication so a moved/deleted remote
-          # tag cannot mutate release assets before the mismatch is detected.
-          if ! git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
-            echo "::error::Remote release tag ${TAG} does not exist."
+          if gh release view "${RELEASE_TAG}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            echo "::error::A release already exists for ${RELEASE_TAG}. Choose a new tag."
             exit 1
           fi
-          git fetch --force origin "refs/tags/${TAG}:refs/tags/${TAG}"
-          REMOTE_TAG_SHA=$(git rev-parse "${TAG}^{commit}")
-          if [[ "${REMOTE_TAG_SHA}" != "${BUILD_SHA}" ]]; then
-            echo "::error::Remote tag ${TAG} resolves to ${REMOTE_TAG_SHA}, not built commit ${BUILD_SHA}."
-            exit 1
-          fi
+          VERSION="${RELEASE_TAG#v}"
+          cat > release-notes.md <<EOF
+          ## Qpure ${VERSION} 中文化预览版
 
-          if RELEASE_JSON=$(gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" --json isDraft,isPrerelease 2>/dev/null); then
-            IS_DRAFT=$(jq -r '.isDraft' <<< "${RELEASE_JSON}")
-            IS_PRERELEASE=$(jq -r '.isPrerelease' <<< "${RELEASE_JSON}")
-            if [[ "${IS_PRERELEASE}" == "true" ]]; then
-              echo "::error::${TAG} is a prerelease; refusing to point the stable cask at it."
-              exit 1
-            fi
+          基于 PureMac 的 Qpure fork，包含简体中文界面、繁体中文资源和重新设计的应用图标。
 
-            if [[ "${IS_DRAFT}" == "true" ]]; then
-              # Draft assets are not public, so a failed prior attempt can be
-              # repaired safely before the draft becomes the stable release.
-              gh release upload "${TAG}" \
-                "build/PureMac-${VERSION}.dmg" \
-                "build/PureMac-${VERSION}.zip" \
-                --repo "${GITHUB_REPOSITORY}" --clobber
-              CANONICAL_DMG_SHA="${DMG_SHA}"
-              CANONICAL_ZIP_SHA="${ZIP_SHA}"
-              write_notes "${CANONICAL_DMG_SHA}" "${CANONICAL_ZIP_SHA}"
-              gh release edit "${TAG}" \
-                --title "PureMac ${TAG}" \
-                --notes-file "${NOTES_FILE}" \
-                --draft=false \
-                --prerelease=false \
-                --repo "${GITHUB_REPOSITORY}"
-            else
-              # A published release is immutable in this workflow. Its signed,
-              # notarized assets become the source of truth for cask recovery.
-              VERIFY_DIR="${RUNNER_TEMP}/existing-release-${VERSION}"
-              mkdir -p "${VERIFY_DIR}"
-              gh release download "${TAG}" \
-                --pattern "PureMac-${VERSION}.dmg" \
-                --pattern "PureMac-${VERSION}.zip" \
-                --dir "${VERIFY_DIR}" \
-                --repo "${GITHUB_REPOSITORY}"
-              validate_published_assets "${VERIFY_DIR}"
-              CANONICAL_DMG_SHA=$(shasum -a 256 "${VERIFY_DIR}/PureMac-${VERSION}.dmg" | awk '{print $1}')
-              CANONICAL_ZIP_SHA=$(shasum -a 256 "${VERIFY_DIR}/PureMac-${VERSION}.zip" | awk '{print $1}')
-              write_notes "${CANONICAL_DMG_SHA}" "${CANONICAL_ZIP_SHA}"
-              gh release edit "${TAG}" \
-                --title "PureMac ${TAG}" \
-                --notes-file "${NOTES_FILE}" \
-                --repo "${GITHUB_REPOSITORY}"
-            fi
-          else
-            CANONICAL_DMG_SHA="${DMG_SHA}"
-            CANONICAL_ZIP_SHA="${ZIP_SHA}"
-            write_notes "${CANONICAL_DMG_SHA}" "${CANONICAL_ZIP_SHA}"
-            gh release create "${TAG}" \
-              "build/PureMac-${VERSION}.dmg" \
-              "build/PureMac-${VERSION}.zip" \
-              --verify-tag \
-              --draft \
-              --title "PureMac ${TAG}" \
-              --notes-file "${NOTES_FILE}" \
-              --repo "${GITHUB_REPOSITORY}"
-            gh release edit "${TAG}" \
-              --draft=false \
-              --prerelease=false \
-              --repo "${GITHUB_REPOSITORY}"
-          fi
+          下载 `${ZIP}`，解压后将 Qpure.app 拖入“应用程序”文件夹。
 
-          RELEASE_SHA=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${TAG}" --jq .sha)
-          if [[ "${RELEASE_SHA}" != "${BUILD_SHA}" ]]; then
-            echo "::error::Published tag ${TAG} resolves to ${RELEASE_SHA}, not built commit ${BUILD_SHA}."
-            exit 1
-          fi
-          RELEASE_STATE=$(gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" --json isDraft,isPrerelease)
-          if [[ "$(jq -r '.isDraft' <<< "${RELEASE_STATE}")" != "false" || "$(jq -r '.isPrerelease' <<< "${RELEASE_STATE}")" != "false" ]]; then
-            echo "::error::${TAG} is not a published stable release."
-            exit 1
-          fi
-          {
-            printf 'dmg_sha=%s\n' "${CANONICAL_DMG_SHA}"
-            printf 'zip_sha=%s\n' "${CANONICAL_ZIP_SHA}"
-          } >> "${GITHUB_OUTPUT}"
-
-      - name: Bump in-repo homebrew formula
-        if: ${{ github.event_name == 'push' || inputs.dry_run == false }}
-        env:
-          VERSION: ${{ steps.ver.outputs.version }}
-          ZIP_SHA: ${{ steps.release.outputs.zip_sha }}
-        run: |
-          set -euo pipefail
-          SEMVER_RE='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'
-          version_is_older() {
-            local candidate_major candidate_minor candidate_patch current_major current_minor current_patch
-            IFS=. read -r candidate_major candidate_minor candidate_patch <<< "$1"
-            IFS=. read -r current_major current_minor current_patch <<< "$2"
-            (( 10#${candidate_major} < 10#${current_major} )) && return 0
-            (( 10#${candidate_major} > 10#${current_major} )) && return 1
-            (( 10#${candidate_minor} < 10#${current_minor} )) && return 0
-            (( 10#${candidate_minor} > 10#${current_minor} )) && return 1
-            (( 10#${candidate_patch} < 10#${current_patch} ))
-          }
-          validate_formula_state() {
-            local current_version="$1" current_sha="$2"
-            if [[ ! "${current_version}" =~ ${SEMVER_RE} ]]; then
-              echo "::error::Existing Homebrew version is not strict SemVer: ${current_version}"
-              exit 1
-            fi
-            if version_is_older "${VERSION}" "${current_version}"; then
-              echo "::error::Refusing to downgrade Homebrew from ${current_version} to ${VERSION}."
-              exit 1
-            fi
-            if [[ "${VERSION}" == "${current_version}" && "${ZIP_SHA}" != "${current_sha}" ]]; then
-              echo "::error::Homebrew already has ${VERSION} with a different SHA; refusing replacement."
-              exit 1
-            fi
-          }
-          FORMULA=homebrew/puremac.rb
-          for attempt in 1 2 3; do
-            git fetch origin main
-            REMOTE_VERSION=$(git show "origin/main:${FORMULA}" | sed -nE 's/^  version "([^"]+)"/\1/p')
-            REMOTE_SHA=$(git show "origin/main:${FORMULA}" | sed -nE 's/^  sha256 "([^"]+)"/\1/p')
-            validate_formula_state "${REMOTE_VERSION}" "${REMOTE_SHA}"
-            if [[ "${REMOTE_VERSION}" == "${VERSION}" && "${REMOTE_SHA}" == "${ZIP_SHA}" ]]; then
-              echo "The in-repo Homebrew cask is already at ${VERSION} with the expected SHA."
-              exit 0
-            fi
-
-            FORMULA_WORKTREE="${RUNNER_TEMP}/puremac-formula-${attempt}"
-            git worktree add --detach "${FORMULA_WORKTREE}" origin/main
-            FORMULA_PATH="${FORMULA_WORKTREE}/${FORMULA}"
-            /usr/bin/sed -i '' -E "s/^  version \".*\"/  version \"${VERSION}\"/" "${FORMULA_PATH}"
-            /usr/bin/sed -i '' -E "s/^  sha256 \".*\"/  sha256 \"${ZIP_SHA}\"/" "${FORMULA_PATH}"
-            grep -Fqx "  version \"${VERSION}\"" "${FORMULA_PATH}"
-            grep -Fqx "  sha256 \"${ZIP_SHA}\"" "${FORMULA_PATH}"
-            git -C "${FORMULA_WORKTREE}" config user.name "github-actions[bot]"
-            git -C "${FORMULA_WORKTREE}" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git -C "${FORMULA_WORKTREE}" add "${FORMULA}"
-            git -C "${FORMULA_WORKTREE}" commit -m "homebrew: bump to ${VERSION} (sha256 ${ZIP_SHA:0:12})"
-            if git -C "${FORMULA_WORKTREE}" push origin HEAD:main; then
-              git worktree remove "${FORMULA_WORKTREE}"
-              break
-            fi
-            git worktree remove --force "${FORMULA_WORKTREE}"
-            if [[ "${attempt}" -eq 3 ]]; then
-              echo "::error::Could not push the in-repo Homebrew update after ${attempt} attempts."
-              exit 1
-            fi
-            echo "main moved; recreating the formula update before retry $((attempt + 1))/3."
-          done
-
-      - name: Bump tap formula (momenbasel/homebrew-tap)
-        # Auth is a write deploy key scoped to the tap repo only — least
-        # privilege vs a PAT. github.com's ed25519 host key is pinned so the
-        # runner never trusts-on-first-use.
-        if: ${{ github.event_name == 'push' || inputs.dry_run == false }}
-        env:
-          HOMEBREW_TAP_DEPLOY_KEY: ${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}
-          VERSION: ${{ steps.ver.outputs.version }}
-          ZIP_SHA: ${{ steps.release.outputs.zip_sha }}
-        run: |
-          set -euo pipefail
-          SEMVER_RE='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'
-          version_is_older() {
-            local candidate_major candidate_minor candidate_patch current_major current_minor current_patch
-            IFS=. read -r candidate_major candidate_minor candidate_patch <<< "$1"
-            IFS=. read -r current_major current_minor current_patch <<< "$2"
-            (( 10#${candidate_major} < 10#${current_major} )) && return 0
-            (( 10#${candidate_major} > 10#${current_major} )) && return 1
-            (( 10#${candidate_minor} < 10#${current_minor} )) && return 0
-            (( 10#${candidate_minor} > 10#${current_minor} )) && return 1
-            (( 10#${candidate_patch} < 10#${current_patch} ))
-          }
-          validate_formula_state() {
-            local current_version="$1" current_sha="$2"
-            if [[ ! "${current_version}" =~ ${SEMVER_RE} ]]; then
-              echo "::error::Existing tap version is not strict SemVer: ${current_version}"
-              exit 1
-            fi
-            if version_is_older "${VERSION}" "${current_version}"; then
-              echo "::error::Refusing to downgrade the tap from ${current_version} to ${VERSION}."
-              exit 1
-            fi
-            if [[ "${VERSION}" == "${current_version}" && "${ZIP_SHA}" != "${current_sha}" ]]; then
-              echo "::error::The tap already has ${VERSION} with a different SHA; refusing replacement."
-              exit 1
-            fi
-          }
-          if [[ -z "${HOMEBREW_TAP_DEPLOY_KEY:-}" ]]; then
-            echo "::error::HOMEBREW_TAP_DEPLOY_KEY is required for a real release."
-            exit 1
-          fi
-          KEY_FILE="${RUNNER_TEMP}/tap_deploy_key"
-          printf '%s\n' "${HOMEBREW_TAP_DEPLOY_KEY}" > "${KEY_FILE}"
-          chmod 600 "${KEY_FILE}"
-          KNOWN_HOSTS="${RUNNER_TEMP}/tap_known_hosts"
-          echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" > "${KNOWN_HOSTS}"
-          export GIT_SSH_COMMAND="ssh -i ${KEY_FILE} -o IdentitiesOnly=yes -o UserKnownHostsFile=${KNOWN_HOSTS} -o StrictHostKeyChecking=yes"
-          FORMULA=Casks/puremac.rb
-          for attempt in 1 2 3; do
-            TAP_DIR="${RUNNER_TEMP}/homebrew-tap-${attempt}"
-            git clone --depth 1 --branch main git@github.com:momenbasel/homebrew-tap.git "${TAP_DIR}"
-            FORMULA_PATH="${TAP_DIR}/${FORMULA}"
-            if [[ ! -f "${FORMULA_PATH}" ]]; then
-              echo "::error::${FORMULA} not found in tap"
-              exit 1
-            fi
-            CURRENT_VERSION=$(sed -nE 's/^  version "([^"]+)"/\1/p' "${FORMULA_PATH}")
-            CURRENT_SHA=$(sed -nE 's/^  sha256 "([^"]+)"/\1/p' "${FORMULA_PATH}")
-            validate_formula_state "${CURRENT_VERSION}" "${CURRENT_SHA}"
-            if [[ "${CURRENT_VERSION}" == "${VERSION}" && "${CURRENT_SHA}" == "${ZIP_SHA}" ]]; then
-              echo "The external tap is already at ${VERSION} with the expected SHA."
-              exit 0
-            fi
-
-            /usr/bin/sed -i '' -E "s/^  version \".*\"/  version \"${VERSION}\"/" "${FORMULA_PATH}"
-            /usr/bin/sed -i '' -E "s/^  sha256 \".*\"/  sha256 \"${ZIP_SHA}\"/" "${FORMULA_PATH}"
-            grep -Fqx "  version \"${VERSION}\"" "${FORMULA_PATH}"
-            grep -Fqx "  sha256 \"${ZIP_SHA}\"" "${FORMULA_PATH}"
-            git -C "${TAP_DIR}" config user.name "github-actions[bot]"
-            git -C "${TAP_DIR}" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git -C "${TAP_DIR}" add "${FORMULA}"
-            git -C "${TAP_DIR}" commit -m "puremac: bump to ${VERSION} (sha256 ${ZIP_SHA:0:12})"
-            if git -C "${TAP_DIR}" push origin HEAD:main; then
-              break
-            fi
-            if [[ "${attempt}" -eq 3 ]]; then
-              echo "::error::Could not push the tap update after ${attempt} attempts."
-              exit 1
-            fi
-            echo "Tap main moved; recreating the update before retry $((attempt + 1))/3."
-          done
-
-      - name: Cleanup keychain + ASC key + tap deploy key
-        if: always()
-        run: |
-          security delete-keychain "${RUNNER_TEMP}/app-signing.keychain-db" || true
-          rm -f "${RUNNER_TEMP}/asc_api_key.p8" "${RUNNER_TEMP}/tap_deploy_key" || true
+          **安全说明：**此预览包未使用 Developer ID 签名或 Apple 公证。macOS 首次打开时可能显示安全提示；也可以从源码自行构建。
+          EOF
+          gh release create "${RELEASE_TAG}" \
+            "${ZIP}" \
+            "${CHECKSUM}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --target "${GITHUB_SHA}" \
+            --title "Qpure ${VERSION} 中文化预览版" \
+            --prerelease \
+            --notes-file release-notes.md
