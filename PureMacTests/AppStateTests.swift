@@ -1,6 +1,6 @@
 import AppKit
 import XCTest
-@testable import PureMac
+@testable import Qpure
 
 @MainActor
 final class AppStateTests: XCTestCase {

@@ -1,6 +1,6 @@
 import Darwin
 import XCTest
-@testable import PureMac
+@testable import Qpure
 
 final class StorageExplorerTests: XCTestCase {
     private var temporaryRoot: URL!

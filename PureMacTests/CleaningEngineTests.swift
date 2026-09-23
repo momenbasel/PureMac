@@ -1,5 +1,5 @@
 import XCTest
-@testable import PureMac
+@testable import Qpure
 
 final class CleaningEngineTests: XCTestCase {
     private let fileManager = FileManager.default

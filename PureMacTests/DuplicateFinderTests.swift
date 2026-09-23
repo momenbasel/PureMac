@@ -1,7 +1,7 @@
 import Foundation
 import Darwin
 import XCTest
-@testable import PureMac
+@testable import Qpure
 
 final class DuplicateFinderTests: XCTestCase {
     private var temporaryFolders: [URL] = []

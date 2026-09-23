@@ -3,7 +3,7 @@ import Foundation
 import ImageIO
 import UniformTypeIdentifiers
 import XCTest
-@testable import PureMac
+@testable import Qpure
 
 final class SimilarPhotoFinderTests: XCTestCase {
     private var temporaryFolders: [URL] = []
