@@ -3,18 +3,126 @@ import SwiftUI
 import ServiceManagement
 
 struct SettingsView: View {
-    var body: some View {
-        TabView {
-            GeneralSettingsView()
-                .tabItem { Label("General", systemImage: "gear") }
-            CleaningSettingsView()
-                .tabItem { Label("Cleaning", systemImage: "trash") }
-            ScheduleSettingsView()
-                .tabItem { Label("Schedule", systemImage: "clock") }
-            AboutSettingsView()
-                .tabItem { Label("About", systemImage: "info.circle") }
+    @EnvironmentObject private var appState: AppState
+    /// The dedicated macOS Settings window owns its permission sheet. The main
+    /// window already presents the shared coordinator's sheet for every page.
+    var standalone = false
+    @ObservedObject private var permission = PermissionCoordinator.shared
+    @State private var selectedTab = SettingsTab.general
+    @ObservedObject private var updater = UpdateService.shared
+
+    private enum SettingsTab: String, CaseIterable, Identifiable {
+        case general = "General"
+        case cleaning = "Cleaning"
+        case schedule = "Schedule"
+        case about = "Updates"
+
+        var id: String { rawValue }
+        var icon: String {
+            switch self {
+            case .general: return "slider.horizontal.3"
+            case .cleaning: return "trash"
+            case .schedule: return "clock"
+            case .about: return "arrow.triangle.2.circlepath"
+            }
         }
-        .frame(width: 480, height: 430)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(spacing: 14) {
+                IconTile(systemName: "gearshape.fill", tint: Tint.accent, size: 44, corner: 12)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Settings")
+                        .font(.system(size: 26, weight: .bold))
+                    Text("Make PureMac work your way.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 3) {
+                    Text(String(format: String(localized: "Version %@"), UpdateService.installedVersion))
+                    Text(String(format: String(localized: "Build %@"), UpdateService.installedBuild))
+                        .foregroundStyle(.tertiary)
+                }
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+                .textSelection(.enabled)
+            }
+            .padding(.horizontal, 4)
+
+            if !settingsIssues.isEmpty {
+                CardSurface(padding: 12, elevation: .flat, tint: Tint.orange) {
+                    VStack(alignment: .leading, spacing: 9) {
+                        Label("Settings to review", systemImage: "exclamationmark.circle.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Tint.orange)
+                        ForEach(settingsIssues) { issue in
+                            Button {
+                                selectedTab = issue.opensUpdates ? .about : .general
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: issue.icon).frame(width: 18)
+                                    Text(issue.title)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                }
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .font(.system(size: 12))
+                            .accessibilityIdentifier("settings.review.\(issue.rawValue)")
+                        }
+                    }
+                }
+            }
+
+            Picker("Settings", selection: $selectedTab) {
+                ForEach(SettingsTab.allCases) { tab in
+                    Label(LocalizedStringKey(tab.rawValue), systemImage: tab.icon).tag(tab)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .accessibilityIdentifier("settings.tabs")
+
+            Group {
+                switch selectedTab {
+                case .general: GeneralSettingsView(permissionPresentation: standalone ? .settingsWindow : .mainWindow)
+                case .cleaning: CleaningSettingsView()
+                case .schedule: ScheduleSettingsView()
+                case .about: AboutSettingsView()
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+        }
+        .padding(24)
+        .frame(maxWidth: 960)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(AmbientBackdrop())
+        .tint(Tint.accent)
+        .navigationTitle("Settings")
+        .onAppear { showRequestedUpdates() }
+        .onChange(of: appState.showUpdateSettings) { _ in showRequestedUpdates() }
+        .sheet(isPresented: Binding(
+            get: { standalone && permission.isRequesting && permission.presentation == .settingsWindow },
+            set: { if !$0 && standalone && permission.presentation == .settingsWindow { permission.dismiss(callRetry: false) } }
+        )) { PermissionSheet() }
+    }
+
+    private var settingsIssues: [SettingsAttention.Issue] {
+        SettingsAttention.issues(hasFullDiskAccess: appState.hasFullDiskAccess,
+                                 updateState: updater.state,
+                                 needsRestart: appState.settingsNeedLanguageRestart,
+                                 startupError: appState.settingsStartupError)
+    }
+
+    private func showRequestedUpdates() {
+        if !standalone && appState.showUpdateSettings {
+            selectedTab = .about
+            appState.showUpdateSettings = false
+        }
     }
 }
 
@@ -37,34 +145,51 @@ enum SearchSensitivity: String, CaseIterable, Identifiable, Codable {
 }
 
 struct GeneralSettingsView: View {
+    var permissionPresentation: PermissionCoordinator.Presentation = .mainWindow
+    @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var theme: ThemeManager
+    @ObservedObject private var permission = PermissionCoordinator.shared
     @AppStorage("settings.general.launchAtLogin") private var launchAtLogin = false
     @AppStorage("settings.general.searchSensitivity") private var sensitivity: SearchSensitivity = .enhanced
     @AppStorage("settings.general.confirmBeforeDelete") private var confirmBeforeDelete = true
     @AppStorage("settings.general.menuBarMonitor") private var menuBarMonitor = false
     @AppStorage(Haptics.soundEffectsKey) private var soundEffects = true
     @AppStorage(AppLanguage.preferenceKey) private var appLanguageRaw = AppLanguage.current.rawValue
-    @State private var languageNeedsRelaunch = false
+    private var languageNeedsRelaunch: Bool { appState.settingsNeedLanguageRestart }
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         Form {
-            Section("Startup") {
-                Toggle("Launch PureMac at login", isOn: launchAtLoginBinding)
-            }
-
-            Section("App Scanning") {
-                Picker("Search sensitivity", selection: $sensitivity) {
-                    ForEach(SearchSensitivity.allCases) { level in
-                        VStack(alignment: .leading) {
-                            Text(LocalizedStringKey(level.rawValue))
-                            Text(LocalizedStringKey(level.description))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .tag(level)
+            Section("Appearance") {
+                Picker("Appearance", selection: $theme.appearance) {
+                    ForEach(AppearanceMode.allCases) { appearance in
+                        Label(LocalizedStringKey(appearance.label), systemImage: appearance.icon)
+                            .tag(appearance)
                     }
                 }
-                .pickerStyle(.radioGroup)
+                .pickerStyle(.segmented)
+            }
+
+            Section("Full Disk Access") {
+                HStack(spacing: 12) {
+                    IconTile(systemName: appState.hasFullDiskAccess ? "checkmark.shield.fill" : "lock.shield",
+                             tint: appState.hasFullDiskAccess ? Tint.green : Tint.orange, size: 32, corner: 9)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(LocalizedStringKey(appState.hasFullDiskAccess ? "Full access" : "Limited access"))
+                            .font(.system(size: 13, weight: .semibold))
+                        Text(LocalizedStringKey(appState.hasFullDiskAccess ? "Ready for protected locations" : "Some locations are unavailable"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Button("Check access") { refreshAccess() }
+                    if !appState.hasFullDiskAccess {
+                        Button("Set up") {
+                            permission.requestAccess(context: .general, presentation: permissionPresentation) { refreshAccess() }
+                        }
+                        .tint(Tint.accent)
+                    }
+                }
             }
 
             Section("Language") {
@@ -87,6 +212,28 @@ struct GeneralSettingsView: View {
                 }
             }
 
+            Section("Startup") {
+                Toggle("Launch PureMac at login", isOn: launchAtLoginBinding)
+                if let error = appState.settingsStartupError {
+                    Text(error).font(.caption).foregroundStyle(Tint.orange)
+                }
+            }
+
+            Section("App Scanning") {
+                Picker("Search sensitivity", selection: $sensitivity) {
+                    ForEach(SearchSensitivity.allCases) { level in
+                        VStack(alignment: .leading) {
+                            Text(LocalizedStringKey(level.rawValue))
+                            Text(LocalizedStringKey(level.description))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .tag(level)
+                    }
+                }
+                .pickerStyle(.radioGroup)
+            }
+
             Section("System Monitor") {
                 Toggle("Show system monitor in menu bar", isOn: menuBarMonitorBinding)
                 Text("Live CPU, memory, and disk meters in the menu bar. PureMac keeps running in the background while this is on.")
@@ -103,8 +250,17 @@ struct GeneralSettingsView: View {
             }
         }
         .formStyle(.grouped)
+        .onAppear { refreshAccess() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            refreshAccess()
+        }
         .animation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.85),
                    value: languageNeedsRelaunch)
+    }
+
+    private func refreshAccess() {
+        appState.checkFullDiskAccess()
+        permission.refreshStatus()
     }
 
     private var menuBarMonitorBinding: Binding<Bool> {
@@ -145,15 +301,17 @@ struct GeneralSettingsView: View {
             } else {
                 try SMAppService.mainApp.unregister()
             }
+            appState.settingsStartupError = nil
         } catch {
             Logger.shared.log("Failed to \(enabled ? "enable" : "disable") launch at login: \(error.localizedDescription)", level: .error)
             launchAtLogin = !enabled
+            appState.settingsStartupError = error.localizedDescription
         }
     }
 
     private func applyLanguage(_ language: AppLanguage) {
         AppLanguagePreferences.apply(language)
-        languageNeedsRelaunch = true
+        appState.settingsNeedLanguageRestart = language != appState.languageAtLaunch
     }
 
     private func relaunchApp() {
@@ -361,7 +519,7 @@ struct AboutSettingsView: View {
                         Text(
                             String(
                                 format: String(localized: "Version %@"),
-                                Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+                                UpdateService.installedVersion
                             )
                         )
                             .foregroundStyle(.secondary)
@@ -370,6 +528,10 @@ struct AboutSettingsView: View {
                             .font(.caption)
                     }
                 }
+            }
+
+            Section("Updates") {
+                AppUpdateSettingsView()
             }
 
             Section {

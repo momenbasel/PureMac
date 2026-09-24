@@ -11,6 +11,16 @@ import Combine
 final class WindowOpener {
     static let shared = WindowOpener()
     var open: ((String) -> Void)?
+    weak var mainWindow: NSWindow?
+
+    func showMainWindow() {
+        if let mainWindow, mainWindow.isVisible || mainWindow.isMiniaturized {
+            mainWindow.deminiaturize(nil)
+            mainWindow.makeKeyAndOrderFront(nil)
+        } else {
+            open?("main")
+        }
+    }
     private init() {}
 }
 
