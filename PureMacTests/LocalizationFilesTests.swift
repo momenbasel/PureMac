@@ -108,6 +108,82 @@ final class LocalizationFilesTests: XCTestCase {
         }
     }
 
+    func testChineseDashboardAndCategoryEmptyStateStringsAreTranslated() throws {
+        let files = try localizableStringsFiles()
+        let keys = [
+            "Tools",
+            "Focused utilities for storage, apps, and system maintenance",
+            "Space Explorer",
+            "Duplicate Finder",
+            "Similar Photos",
+            "Uninstaller",
+            "App Updates",
+            "Protection",
+            "Performance",
+            "Find what uses the most disk space",
+            "Review matching files side by side",
+            "Compare visually similar photos",
+            "Remove apps and their related files",
+            "Check installed apps for new versions",
+            "Review built-in privacy and safety checks",
+            "Inspect memory and background activity",
+            "See what is taking up space",
+            "Scan first, then review the exact files before removing anything.",
+            "Scan this category"
+        ]
+
+        let english = try localizedStrings(in: XCTUnwrap(files["en"]))
+        for language in ["zh-Hans", "zh-Hant"] {
+            let localized = try localizedStrings(in: XCTUnwrap(files[language]))
+            for key in keys {
+                XCTAssertNotEqual(
+                    localized[key],
+                    english[key],
+                    "Expected \(language) to translate the visible UI string: \(key)"
+                )
+            }
+        }
+    }
+
+    func testStaticSwiftUIStringsHaveEnglishLocalizationKeys() throws {
+        let sourceRoot = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("PureMac/Views")
+        let englishKeys = try localizedKeys(in: XCTUnwrap(localizableStringsFiles()["en"]))
+        let patterns = [
+            #"\b(?:Text|Button|Label|Section|TextField|Toggle|Picker|LabeledContent|EmptyStateView|SectionHeader|StatusChip|dashboardSection|sectionLabel)\(\s*\"((?:\\.|[^\"\\])*)\""#,
+            #"\.(?:navigationTitle|help|accessibilityLabel|accessibilityValue|alert|confirmationDialog)\(\s*\"((?:\\.|[^\"\\])*)\""#,
+            #"\b(?:title|detail|message|label):\s*\"((?:\\.|[^\"\\])*)\""#
+        ]
+        let expressions = try patterns.map { try NSRegularExpression(pattern: $0) }
+        let enumerator = FileManager.default.enumerator(
+            at: sourceRoot,
+            includingPropertiesForKeys: [.isRegularFileKey]
+        )
+        var missing: [String] = []
+
+        while let fileURL = enumerator?.nextObject() as? URL {
+            guard fileURL.pathExtension == "swift" else { continue }
+            let source = try String(contentsOf: fileURL, encoding: .utf8)
+            let range = NSRange(source.startIndex..., in: source)
+            for expression in expressions {
+                for match in expression.matches(in: source, range: range) {
+                    guard let keyRange = Range(match.range(at: 1), in: source) else { continue }
+                    let key = String(source[keyRange])
+                        .replacingOccurrences(of: "\\n", with: "\n")
+                        .replacingOccurrences(of: "\\\"", with: "\"")
+                    guard !key.isEmpty, !key.contains("\\(") else { continue }
+                    if !englishKeys.contains(key) {
+                        missing.append("\(fileURL.lastPathComponent): \(key)")
+                    }
+                }
+            }
+        }
+
+        XCTAssertTrue(missing.isEmpty, "Static SwiftUI strings missing English keys:\n\(missing.sorted().joined(separator: "\n"))")
+    }
+
     func testStringLocalizedCallsHaveEnglishResourceKeys() throws {
         let sourceRoot = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()

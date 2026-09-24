@@ -154,9 +154,15 @@ struct CategoryDetailView: View {
                 Text("\(selectedItems.count) selected · \(ByteCountFormatter.string(fromByteCount: selectedSize, countStyle: .file))")
                     .font(.system(size: 13, weight: .semibold))
                     .monospacedDigit()
-                Text(hiddenCount > 0 ? "Includes \(hiddenCount) selected items hidden by filters." : "Selected cleanup items are permanently removed.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                if hiddenCount > 0 {
+                    Text("Includes \(hiddenCount) selected items hidden by filters.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("Selected cleanup items are permanently removed.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             Spacer(minLength: 8)
             if !selectedItems.isEmpty {
@@ -217,7 +223,7 @@ private struct CleanupFileRow: View {
                     .font(.system(size: 13, weight: .medium))
                     .lineLimit(1)
                     .truncationMode(.middle)
-                Text(item.isActionItem ? "Managed cleanup action" : (item.path as NSString).abbreviatingWithTildeInPath)
+                Text(item.isActionItem ? String(localized: "Managed cleanup action") : (item.path as NSString).abbreviatingWithTildeInPath)
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)

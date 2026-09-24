@@ -380,7 +380,7 @@ struct PerformanceView: View {
 }
 
 private struct ResourceMeter: View {
-    let title: String
+    let title: LocalizedStringKey
     let value: Double
     let detail: String
     let tint: Color
@@ -423,11 +423,11 @@ private struct StartupItemRow: View {
                         .font(.system(size: 13, weight: .medium))
                         .lineLimit(1)
                     StatusChip(
-                        label: item.isDisabled ? String(localized: "Disabled") : item.domain.title,
+                        verbatimLabel: item.isDisabled ? String(localized: "Disabled") : item.domain.title,
                         tint: item.isDisabled ? Color.secondary : Tint.accent
                     )
                     ForEach(item.triggers.prefix(2), id: \.self) { trigger in
-                        StatusChip(label: trigger, tint: Tint.purple)
+                        StatusChip(verbatimLabel: trigger, tint: Tint.purple)
                     }
                 }
 
@@ -533,9 +533,9 @@ private struct EmptyInspectionRow: View {
                 .foregroundStyle(Tint.green)
                 .frame(width: 30)
             VStack(alignment: .leading, spacing: 3) {
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.system(size: 13, weight: .medium))
-                Text(detail)
+                Text(LocalizedStringKey(detail))
                     .font(.system(size: 11.5))
                     .foregroundStyle(.secondary)
             }

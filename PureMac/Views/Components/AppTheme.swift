@@ -214,9 +214,21 @@ enum CardElevation {
 }
 
 struct StatusChip: View {
-    let label: String
+    let label: Text
     var systemImage: String? = nil
     var tint: Color = Tint.accent
+
+    init(label: LocalizedStringKey, systemImage: String? = nil, tint: Color = Tint.accent) {
+        self.label = Text(label)
+        self.systemImage = systemImage
+        self.tint = tint
+    }
+
+    init(verbatimLabel: String, systemImage: String? = nil, tint: Color = Tint.accent) {
+        self.label = Text(verbatim: verbatimLabel)
+        self.systemImage = systemImage
+        self.tint = tint
+    }
 
     var body: some View {
         HStack(spacing: 5) {
@@ -224,7 +236,7 @@ struct StatusChip: View {
                 Image(systemName: systemImage)
                     .font(.system(size: 9, weight: .semibold))
             }
-            Text(label)
+            label
                 .font(.system(size: 10.5, weight: .semibold))
                 .monospacedDigit()
         }

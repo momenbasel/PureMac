@@ -271,18 +271,18 @@ struct SimilarPhotosView: View {
 
                 HStack(spacing: 8) {
                     StatusChip(
-                        label: String(format: String(localized: "%lld items"), Int64(model.progress?.entriesVisited ?? 0)),
+                        verbatimLabel: String(format: String(localized: "%lld items"), Int64(model.progress?.entriesVisited ?? 0)),
                         systemImage: "doc.on.doc",
                         tint: Tint.pink
                     )
                     StatusChip(
-                        label: String(format: String(localized: "%lld photos"), Int64(model.progress?.candidatesFound ?? 0)),
+                        verbatimLabel: String(format: String(localized: "%lld photos"), Int64(model.progress?.candidatesFound ?? 0)),
                         systemImage: "photo",
                         tint: Tint.pink
                     )
                     if let progress = model.progress, progress.photosAnalyzed > 0 {
                         StatusChip(
-                            label: String(format: String(localized: "%lld compared"), Int64(progress.photosAnalyzed)),
+                            verbatimLabel: String(format: String(localized: "%lld compared"), Int64(progress.photosAnalyzed)),
                             systemImage: "viewfinder",
                             tint: Tint.blue
                         )
@@ -350,7 +350,7 @@ struct SimilarPhotosView: View {
                         .font(.system(size: 32, weight: .bold, design: .rounded))
                         .monospacedDigit()
                         .foregroundStyle(Tint.pink)
-                    Text(result.groups.count == 1 ? "similar group" : "similar groups")
+                    Text(LocalizedStringKey(result.groups.count == 1 ? "similar group" : "similar groups"))
                         .font(.system(size: 12.5))
                         .foregroundStyle(.secondary)
                 }
@@ -364,7 +364,7 @@ struct SimilarPhotosView: View {
                         StatusChip(label: "\(result.matchedPhotoCount) matched", systemImage: "photo.stack", tint: Tint.blue)
                     }
                     HStack(spacing: 8) {
-                        StatusChip(label: Self.format(result.matchedPhotoSize), systemImage: "internaldrive", tint: Tint.purple)
+                        StatusChip(verbatimLabel: Self.format(result.matchedPhotoSize), systemImage: "internaldrive", tint: Tint.purple)
                         if result.skippedItems > 0 {
                             StatusChip(label: "\(result.skippedItems) skipped", systemImage: "forward", tint: Tint.orange)
                         }
@@ -374,7 +374,7 @@ struct SimilarPhotosView: View {
                 Spacer()
 
                 StatusChip(
-                    label: String(localized: result.isPartial ? "Sample limit reached" : "Scan complete"),
+                    verbatimLabel: String(localized: result.isPartial ? "Sample limit reached" : "Scan complete"),
                     systemImage: result.isPartial ? "exclamationmark.triangle" : "checkmark.circle",
                     tint: result.isPartial ? Tint.orange : Tint.green
                 )
@@ -386,9 +386,9 @@ struct SimilarPhotosView: View {
         CardSurface(padding: 30, elevation: .standard, tint: tint) {
             VStack(spacing: 13) {
                 IconTile(systemName: systemImage, tint: tint, size: 54, corner: 15)
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.system(size: 18, weight: .semibold))
-                Text(message)
+                Text(LocalizedStringKey(message))
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)

@@ -357,9 +357,9 @@ struct AppUpdatesView: View {
         CardSurface(padding: 28, elevation: .standard, tint: tint) {
             VStack(spacing: 12) {
                 IconTile(systemName: systemImage, tint: tint, size: 48, corner: 13)
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.title3.weight(.semibold))
-                Text(message)
+                Text(LocalizedStringKey(message))
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -384,7 +384,7 @@ struct AppUpdatesView: View {
 
     private var upgradeBar: some View {
         HStack {
-            Text(updater.selectedCount == 0 ? "Select apps to update" : selectedCountTitle)
+            Text(updater.selectedCount == 0 ? String(localized: "Select apps to update") : selectedCountTitle)
                 .font(.callout.weight(.medium))
                 .foregroundStyle(updater.selectedCount == 0 ? Color.secondary : Color.primary)
             Spacer()

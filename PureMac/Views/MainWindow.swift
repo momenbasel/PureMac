@@ -376,10 +376,10 @@ struct MainWindow: View {
                 .frame(width: 7, height: 7)
 
             VStack(alignment: .leading, spacing: 1) {
-                Text(granted ? "Full access" : "Limited access")
+                Text(LocalizedStringKey(granted ? "Full access" : "Limited access"))
                     .font(.system(size: 11.5, weight: .semibold))
                     .foregroundStyle(sidebarLabelColor)
-                Text(granted ? "Ready for protected locations" : "Some locations are unavailable")
+                Text(LocalizedStringKey(granted ? "Ready for protected locations" : "Some locations are unavailable"))
                     .font(.system(size: 9.5))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)

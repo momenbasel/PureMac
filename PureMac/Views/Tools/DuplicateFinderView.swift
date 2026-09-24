@@ -190,7 +190,7 @@ struct DuplicateFinderView: View {
                         .foregroundStyle(Tint.accent)
                 }
                 VStack(spacing: 7) {
-                    Text(progress.phase == .discovering ? "Looking through files" : "Verifying possible matches")
+                    Text(LocalizedStringKey(progress.phase == .discovering ? "Looking through files" : "Verifying possible matches"))
                         .font(.system(size: 18, weight: .semibold))
                     Text(progressSummary)
                         .font(.callout.monospacedDigit())
@@ -219,7 +219,7 @@ struct DuplicateFinderView: View {
                 IconTile(systemName: "exclamationmark.triangle.fill", tint: Tint.red, size: 54, corner: 14)
                 Text("Scan could not finish")
                     .font(.system(size: 18, weight: .semibold))
-                Text(message)
+                Text(LocalizedStringKey(message))
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -298,7 +298,7 @@ struct DuplicateFinderView: View {
         }
     }
 
-    private func summaryMetric(value: String, label: String, icon: String, tint: Color) -> some View {
+    private func summaryMetric(value: String, label: LocalizedStringKey, icon: String, tint: Color) -> some View {
         HStack(spacing: 9) {
             IconTile(systemName: icon, tint: tint, size: 30, corner: 8)
             VStack(alignment: .leading, spacing: 1) {
@@ -466,11 +466,19 @@ struct DuplicateFinderView: View {
         CardSurface(padding: 14, elevation: .raised, tint: selectedIDs.isEmpty ? nil : Tint.accent) {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(selectedIDs.isEmpty ? "Nothing selected" : "\(selectedIDs.count) selected")
-                        .font(.system(size: 14, weight: .semibold).monospacedDigit())
-                    Text(selectedIDs.isEmpty ? "Select the extra copies you want to review" : "\(format(selectedSize)) will move to Trash")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    if selectedIDs.isEmpty {
+                        Text("Nothing selected")
+                            .font(.system(size: 14, weight: .semibold).monospacedDigit())
+                        Text("Select the extra copies you want to review")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("\(selectedIDs.count) selected")
+                            .font(.system(size: 14, weight: .semibold).monospacedDigit())
+                        Text("\(format(selectedSize)) will move to Trash")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 Spacer()
                 if !selectedIDs.isEmpty {

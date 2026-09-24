@@ -54,7 +54,7 @@ struct DashboardView: View {
 
             VStack(alignment: .trailing, spacing: 7) {
                 let status = headerStatus
-                StatusChip(label: status.label, systemImage: status.icon, tint: status.tint)
+                StatusChip(verbatimLabel: status.label, systemImage: status.icon, tint: status.tint)
                 TimelineView(.periodic(from: .now, by: 60)) { timeline in
                     Text(lastCareText(relativeTo: timeline.date))
                         .font(.system(size: 10.5))
@@ -329,7 +329,7 @@ struct DashboardView: View {
         }
     }
 
-    private func diskLegendRow(id: String, color: Color, label: String, value: String) -> some View {
+    private func diskLegendRow(id: String, color: Color, label: LocalizedStringKey, value: String) -> some View {
         HStack(spacing: 8) {
             Circle()
                 .fill(color)
@@ -449,7 +449,7 @@ struct DashboardView: View {
                     )
 
                     VStack(alignment: .leading, spacing: 5) {
-                        Text(appState.scanWasCancelled ? "Scan stopped" : "Scan complete")
+                        Text(LocalizedStringKey(appState.scanWasCancelled ? "Scan stopped" : "Scan complete"))
                             .font(.system(size: 23, weight: .semibold))
                             .tracking(-0.3)
                         Text(resultSummary)
@@ -516,13 +516,13 @@ struct DashboardView: View {
             HStack(spacing: 18) {
                 SuccessMedal(tint: Tint.green, size: 72)
                 VStack(alignment: .leading, spacing: 5) {
-                    Text(appState.scanWasCancelled ? "No results yet" : "Nothing to clean")
+                    Text(LocalizedStringKey(appState.scanWasCancelled ? "No results yet" : "Nothing to clean"))
                         .font(.system(size: 18, weight: .semibold))
-                    Text(
+                    Text(LocalizedStringKey(
                         appState.scanWasCancelled
                             ? "Run the scan again when you are ready to check every area."
                             : "Qpure did not find removable items in the selected scan areas."
-                    )
+                    ))
                     .font(.system(size: 12.5))
                     .foregroundStyle(.secondary)
                 }
@@ -580,7 +580,7 @@ struct DashboardView: View {
             HStack(spacing: 34) {
                 SuccessMedal(tint: appState.lastCleanupHadFailures ? Tint.orange : Tint.green, size: 126)
                 VStack(alignment: .leading, spacing: 9) {
-                    Text(appState.lastCleanupHadFailures ? "Some items need attention" : "Cleanup complete")
+                    Text(LocalizedStringKey(appState.lastCleanupHadFailures ? "Some items need attention" : "Cleanup complete"))
                         .font(.system(size: 25, weight: .semibold))
                     if appState.totalFreedSpace > 0 {
                         CountUpBytes(bytes: appState.totalFreedSpace)
@@ -638,7 +638,7 @@ struct DashboardView: View {
         )
     }
 
-    private func dashboardSection(_ title: LocalizedStringKey, detail: String? = nil) -> some View {
+    private func dashboardSection(_ title: LocalizedStringKey, detail: LocalizedStringKey? = nil) -> some View {
         HStack(alignment: .firstTextBaseline) {
             Text(title)
                 .font(.system(size: 16, weight: .semibold))

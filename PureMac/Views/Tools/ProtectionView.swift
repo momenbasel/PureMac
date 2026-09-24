@@ -250,7 +250,7 @@ private struct ProtectionFindingRow: View {
                     Text(finding.check.title)
                         .font(.system(size: 13, weight: .semibold))
                     StatusChip(
-                        label: finding.status.label(for: finding.check),
+                        verbatimLabel: finding.status.label(for: finding.check),
                         systemImage: finding.status.chipIcon,
                         tint: finding.status.tint
                     )

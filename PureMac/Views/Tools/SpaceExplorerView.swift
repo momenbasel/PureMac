@@ -288,7 +288,7 @@ struct SpaceExplorerView: View {
                         tint: Tint.accent
                     )
                     StatusChip(
-                        label: Self.format(model.progress?.allocatedSize ?? 0),
+                        verbatimLabel: Self.format(model.progress?.allocatedSize ?? 0),
                         systemImage: "internaldrive",
                         tint: Tint.accent
                     )
@@ -377,7 +377,7 @@ struct SpaceExplorerView: View {
                 Spacer()
 
                 StatusChip(
-                    label: String(localized: result.isPartial ? "Partial result" : "Complete"),
+                    verbatimLabel: String(localized: result.isPartial ? "Partial result" : "Complete"),
                     systemImage: result.isPartial ? "exclamationmark.triangle" : "checkmark.circle",
                     tint: result.isPartial ? Tint.orange : Tint.green
                 )
@@ -389,9 +389,9 @@ struct SpaceExplorerView: View {
         CardSurface(padding: 28, elevation: .standard, tint: tint) {
             VStack(spacing: 12) {
                 IconTile(systemName: systemImage, tint: tint, size: 54, corner: 15)
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.system(size: 18, weight: .semibold))
-                Text(message)
+                Text(LocalizedStringKey(message))
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
