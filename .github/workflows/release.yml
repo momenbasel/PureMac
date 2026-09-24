@@ -1,13 +1,16 @@
 name: Release Qpure
 
 on:
+  push:
+    branches:
+      - 'v*'
   workflow_dispatch:
     inputs:
       tag:
         description: Release tag for this Qpure preview
         required: true
         type: string
-        default: v3.0.0-zh.3
+        default: v3.0.0-zh.4
 
 permissions:
   contents: write
@@ -73,7 +76,7 @@ jobs:
       - name: Package architecture-specific DMGs and checksums
         id: package
         env:
-          RELEASE_TAG: ${{ inputs.tag }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           set -euo pipefail
           VERSION="${RELEASE_TAG#v}"
@@ -109,7 +112,7 @@ jobs:
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ inputs.tag }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
           ARM_DMG: ${{ steps.package.outputs.arm_dmg }}
           ARM_CHECKSUM: ${{ steps.package.outputs.arm_checksum }}
           INTEL_DMG: ${{ steps.package.outputs.intel_dmg }}
