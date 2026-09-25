@@ -164,7 +164,7 @@ Cleanup results support name/path search, size and age filters, sorting, and sel
 
 **Protection** checks Gatekeeper, FileVault, the application firewall, System Integrity Protection, and installed XProtect metadata. A failed or unavailable check stays unknown. It also provides shortcuts to privacy and permission settings. This is a configuration audit, not an antivirus or malware scanner.
 
-**Performance** shows CPU and memory information, lists third-party launch-agent/daemon definitions, and lists local snapshots. A launch definition is not proof that a process is running. You can open Login Items or Activity Monitor and delete a specific Time Machine local snapshot after confirmation. Snapshot sizes are not estimated, and system update snapshots cannot be removed here.
+**Performance** includes a collapsible CPU–Memory card with live app/process usage, app icons, sorting, search and helper grouping. CPU percentages use the Mac’s total capacity; memory shows resident usage, so shared pages can appear in more than one process. Process sampling pauses when the card is closed or the Performance window loses focus. Summary sampling also stops outside the active Performance page unless the menu-bar system monitor is enabled. Startup/background items have their own collapsible card, and local snapshots are listed separately. A launch definition is not proof that a process is running. You can open Login Items or Activity Monitor and delete a specific Time Machine local snapshot after confirmation. Snapshot sizes are not estimated, and system update snapshots cannot be removed here.
 
 ### App updates
 
@@ -172,6 +172,12 @@ Check for updates to Homebrew-managed cask apps and choose which ones to upgrade
 
 ### Scheduled Cleaning
 Optional. Configurable interval (hourly to monthly), with auto-clean threshold so background runs only fire when there's something meaningful to remove.
+
+### Settings
+
+Open **Settings** using the gear in the sidebar or the standard macOS Settings command. General settings include language (including Italian), System/Light/Dark appearance, Full Disk Access status and recheck, startup, menu-bar monitoring, sound and safety. Cleaning and scheduled scanning keep their existing preferences. An amber Settings indicator highlights items that need review, with shortcuts to the relevant settings. Its gentle pulse respects Reduce Motion.
+
+The **Updates** tab shows the installed version and build and checks official GitHub app releases on request. CLI releases, drafts and prereleases are excluded. Choose the update method for Homebrew instructions or a DMG/ZIP download link. The check reports availability; it does not install an update or run Homebrew.
 
 ## Permissions
 

@@ -304,21 +304,21 @@ struct DashboardView: View {
                         diskLegendRow(
                             id: "used",
                             color: Color.primary.opacity(0.56),
-                            label: "Used",
+                            label: String(localized: "Used"),
                             value: appState.diskInfo.formattedUsed
                         )
                         if appState.diskInfo.purgeableSpace > 0 {
                             diskLegendRow(
                                 id: "purgeable",
                                 color: Tint.cyan,
-                                label: "Purgeable",
+                                label: String(localized: "Purgeable"),
                                 value: appState.diskInfo.formattedPurgeable
                             )
                         }
                         diskLegendRow(
                             id: "free",
                             color: Tint.accent,
-                            label: "Available",
+                            label: String(localized: "Available"),
                             value: appState.diskInfo.formattedFree
                         )
                     }
@@ -638,7 +638,7 @@ struct DashboardView: View {
         )
     }
 
-    private func dashboardSection(_ title: LocalizedStringKey, detail: String? = nil) -> some View {
+    private func dashboardSection(_ title: LocalizedStringKey, detail: LocalizedStringKey? = nil) -> some View {
         HStack(alignment: .firstTextBaseline) {
             Text(title)
                 .font(.system(size: 16, weight: .semibold))

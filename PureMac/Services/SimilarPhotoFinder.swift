@@ -65,7 +65,7 @@ enum SimilarPhotoFinderError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .invalidFolder(let path):
-            return "The selected folder cannot be scanned: \(path)"
+            return String(localized: "The selected folder cannot be scanned: \(path)")
         }
     }
 }

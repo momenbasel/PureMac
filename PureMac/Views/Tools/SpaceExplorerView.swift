@@ -33,9 +33,9 @@ final class SpaceExplorerViewModel: ObservableObject {
 
     func chooseFolder() {
         let panel = NSOpenPanel()
-        panel.title = "Choose a folder to inspect"
-        panel.message = "PureMac measures allocated disk space without changing files."
-        panel.prompt = "Inspect"
+        panel.title = String(localized: "Choose a folder to inspect")
+        panel.message = String(localized: "PureMac measures allocated disk space without changing files.")
+        panel.prompt = String(localized: "Inspect")
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
@@ -155,7 +155,7 @@ struct SpaceExplorerView: View {
             Button {
                 model.chooseFolder()
             } label: {
-                Label(model.currentURL == nil ? "Choose Folder" : "Choose Another Folder", systemImage: "folder.badge.plus")
+                Label(model.currentURL == nil ? String(localized: "Choose Folder") : String(localized: "Choose Another Folder"), systemImage: "folder.badge.plus")
             }
             .buttonStyle(.borderedProminent)
             .tint(Tint.accent)
@@ -229,7 +229,7 @@ struct SpaceExplorerView: View {
         case .cancelled:
             messageState(
                 title: "Scan stopped",
-                message: "No files were changed. Rescan this folder when you are ready.",
+                message: String(localized: "No files were changed. Rescan this folder when you are ready."),
                 systemImage: "stop.circle",
                 tint: .secondary
             )
@@ -264,7 +264,7 @@ struct SpaceExplorerView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Measuring allocated space")
                             .font(.system(size: 16, weight: .semibold))
-                        Text(model.progress?.currentURL.lastPathComponent ?? "Preparing scan")
+                        Text(model.progress?.currentURL.lastPathComponent ?? String(localized: "Preparing scan"))
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
@@ -283,7 +283,7 @@ struct SpaceExplorerView: View {
 
                 HStack(spacing: 8) {
                     StatusChip(
-                        label: "\(model.progress?.scannedItemCount ?? 0) items",
+                        label: String(localized: "\(model.progress?.scannedItemCount ?? 0) items"),
                         systemImage: "doc.on.doc",
                         tint: Tint.accent
                     )
@@ -293,10 +293,10 @@ struct SpaceExplorerView: View {
                         tint: Tint.accent
                     )
                     if let progress = model.progress, progress.skippedCount > 0 {
-                        StatusChip(label: "\(progress.skippedCount) skipped", systemImage: "forward", tint: Tint.orange)
+                        StatusChip(label: String(localized: "\(progress.skippedCount) skipped"), systemImage: "forward", tint: Tint.orange)
                     }
                     if let progress = model.progress, progress.inaccessibleCount > 0 {
-                        StatusChip(label: "\(progress.inaccessibleCount) inaccessible", systemImage: "lock", tint: Tint.orange)
+                        StatusChip(label: String(localized: "\(progress.inaccessibleCount) inaccessible"), systemImage: "lock", tint: Tint.orange)
                     }
                 }
             }
@@ -357,17 +357,17 @@ struct SpaceExplorerView: View {
 
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 8) {
-                        StatusChip(label: "\(result.fileCount) files", systemImage: "doc", tint: Tint.accent)
-                        StatusChip(label: "\(result.directoryCount) folders", systemImage: "folder", tint: Tint.accent)
+                        StatusChip(label: String(localized: "\(result.fileCount) files"), systemImage: "doc", tint: Tint.accent)
+                        StatusChip(label: String(localized: "\(result.directoryCount) folders"), systemImage: "folder", tint: Tint.accent)
                     }
                     HStack(spacing: 8) {
                         StatusChip(
-                            label: "\(result.skippedCount) skipped",
+                            label: String(localized: "\(result.skippedCount) skipped"),
                             systemImage: "forward",
                             tint: result.skippedCount == 0 ? Tint.green : Tint.orange
                         )
                         StatusChip(
-                            label: "\(result.inaccessibleCount) inaccessible",
+                            label: String(localized: "\(result.inaccessibleCount) inaccessible"),
                             systemImage: "lock",
                             tint: result.inaccessibleCount == 0 ? Tint.green : Tint.orange
                         )
@@ -377,7 +377,7 @@ struct SpaceExplorerView: View {
                 Spacer()
 
                 StatusChip(
-                    label: result.isPartial ? "Partial result" : "Complete",
+                    label: result.isPartial ? String(localized: "Partial result") : String(localized: "Complete"),
                     systemImage: result.isPartial ? "exclamationmark.triangle" : "checkmark.circle",
                     tint: result.isPartial ? Tint.orange : Tint.green
                 )
@@ -385,7 +385,7 @@ struct SpaceExplorerView: View {
         }
     }
 
-    private func messageState(title: String, message: String, systemImage: String, tint: Color) -> some View {
+    private func messageState(title: LocalizedStringKey, message: String, systemImage: String, tint: Color) -> some View {
         CardSurface(padding: 28, elevation: .standard, tint: tint) {
             VStack(spacing: 12) {
                 IconTile(systemName: systemImage, tint: tint, size: 54, corner: 15)
@@ -505,22 +505,24 @@ private struct StorageEntryRow: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(entry.name), \(Self.format(entry.allocatedSize))")
-        .accessibilityHint(entry.isDirectory ? "Open folder" : (entry.isPackage ? "Package" : "File"))
+        .accessibilityHint(entry.isDirectory ? String(localized: "Open folder") : (entry.isPackage ? String(localized: "Package") : String(localized: "File")))
     }
 
     private var detailText: String {
+        let files = entry.fileCount == 1
+            ? String(localized: "1 file")
+            : String(localized: "\(entry.fileCount) files")
         if entry.isPackage {
-            return "Package · \(Self.countLabel(entry.fileCount, singular: "file"))"
+            return String(localized: "Package · \(files)")
         }
         if entry.isDirectory {
             let childFolderCount = max(0, entry.directoryCount - 1)
-            return "\(Self.countLabel(entry.fileCount, singular: "file")) · \(Self.countLabel(childFolderCount, singular: "folder"))"
+            let folders = childFolderCount == 1
+                ? String(localized: "1 folder")
+                : String(localized: "\(childFolderCount) folders")
+            return String(localized: "\(files) · \(folders)")
         }
-        return "File"
-    }
-
-    private static func countLabel(_ count: Int, singular: String) -> String {
-        "\(count) \(singular)\(count == 1 ? "" : "s")"
+        return String(localized: "File")
     }
 
     private static func format(_ bytes: Int64) -> String {

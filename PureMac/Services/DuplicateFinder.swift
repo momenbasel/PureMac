@@ -55,13 +55,13 @@ enum DuplicateSkipReason: String, Hashable, Sendable {
 
     var label: String {
         switch self {
-        case .symbolicLink: return "Symbolic link"
-        case .package: return "Package contents"
-        case .cloudPlaceholder: return "Cloud-only file"
-        case .hardLink: return "Hard-linked copy"
-        case .inaccessible: return "Access denied"
-        case .changedDuringScan: return "Changed during scan"
-        case .unreadable: return "Could not read"
+        case .symbolicLink: return String(localized: "Symbolic link")
+        case .package: return String(localized: "Package contents")
+        case .cloudPlaceholder: return String(localized: "Cloud-only file")
+        case .hardLink: return String(localized: "Hard-linked copy")
+        case .inaccessible: return String(localized: "Access denied")
+        case .changedDuringScan: return String(localized: "Changed during scan")
+        case .unreadable: return String(localized: "Could not read")
         }
     }
 }
@@ -128,15 +128,15 @@ enum DuplicateFinderError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .invalidFolder(let path):
-            return "The selected folder cannot be scanned: \(path)"
+            return String(localized: "The selected folder cannot be scanned: \(path)")
         case .invalidSelection(let path):
-            return "The protected copy cannot be moved to Trash: \(path)"
+            return String(localized: "The protected copy cannot be moved to Trash: \(path)")
         case .keeperChanged(let path):
-            return "The copy marked Keep is missing or changed: \(path)"
+            return String(localized: "The copy marked Keep is missing or changed: \(path)")
         case .fileChanged(let path):
-            return "A selected file is missing or changed: \(path)"
+            return String(localized: "A selected file is missing or changed: \(path)")
         case .contentChanged(let path):
-            return "A selected file no longer matches its kept copy: \(path)"
+            return String(localized: "A selected file no longer matches its kept copy: \(path)")
         }
     }
 }
@@ -241,7 +241,7 @@ actor DuplicateFinder {
                 skipped.append(DuplicateSkippedFile(
                     url: normalizedURL,
                     reason: .hardLink,
-                    detail: "Shares storage with \(firstURL.lastPathComponent)"
+                    detail: String(localized: "Shares storage with \(firstURL.lastPathComponent)")
                 ))
             } else {
                 seenPhysicalFiles[identity.physicalID] = normalizedURL
@@ -357,7 +357,7 @@ actor DuplicateFinder {
         }
         let selectedFiles = group.files.filter { selectedIDs.contains($0.url) }
         guard selectedFiles.count == selectedIDs.count else {
-            let unknownPath = selectedIDs.first { !group.contains($0) }?.path ?? "Unknown file"
+            let unknownPath = selectedIDs.first { !group.contains($0) }?.path ?? String(localized: "Unknown file")
             throw DuplicateFinderError.invalidSelection(unknownPath)
         }
         guard !selectedFiles.isEmpty else {

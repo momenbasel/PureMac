@@ -31,9 +31,9 @@ final class SimilarPhotosViewModel: ObservableObject {
 
     func chooseFolder() {
         let panel = NSOpenPanel()
-        panel.title = "Choose a photo folder"
-        panel.message = "PureMac compares local image thumbnails without changing your photos."
-        panel.prompt = "Scan Photos"
+        panel.title = String(localized: "Choose a photo folder")
+        panel.message = String(localized: "PureMac compares local image thumbnails without changing your photos.")
+        panel.prompt = String(localized: "Scan Photos")
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
@@ -151,7 +151,7 @@ struct SimilarPhotosView: View {
             Button {
                 model.chooseFolder()
             } label: {
-                Label(model.folder == nil ? "Choose Folder" : "Choose Another Folder", systemImage: "folder.badge.plus")
+                Label(model.folder == nil ? String(localized: "Choose Folder") : String(localized: "Choose Another Folder"), systemImage: "folder.badge.plus")
             }
             .buttonStyle(.borderedProminent)
             .tint(Tint.pink)
@@ -211,7 +211,7 @@ struct SimilarPhotosView: View {
         case .cancelled:
             messageState(
                 title: "Scan stopped",
-                message: "No photos were changed. You can scan the folder again at any time.",
+                message: String(localized: "No photos were changed. You can scan the folder again at any time."),
                 systemImage: "stop.circle",
                 tint: .secondary
             )
@@ -230,9 +230,9 @@ struct SimilarPhotosView: View {
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: 520)
                 HStack(spacing: 8) {
-                    StatusChip(label: "Review only", systemImage: "eye", tint: Tint.green)
-                    StatusChip(label: "500 photo limit", systemImage: "photo.stack", tint: Tint.pink)
-                    StatusChip(label: "Local files", systemImage: "lock.shield", tint: Tint.blue)
+                    StatusChip(label: String(localized: "Review only"), systemImage: "eye", tint: Tint.green)
+                    StatusChip(label: String(localized: "500 photo limit"), systemImage: "photo.stack", tint: Tint.pink)
+                    StatusChip(label: String(localized: "Local files"), systemImage: "lock.shield", tint: Tint.blue)
                 }
                 Text("Symbolic links, app packages, hidden files and cloud-only placeholders are skipped. Photos are never uploaded or deleted.")
                     .font(.system(size: 11.5))
@@ -252,7 +252,7 @@ struct SimilarPhotosView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(progressTitle)
                             .font(.system(size: 16, weight: .semibold))
-                        Text(model.progress?.currentURL?.lastPathComponent ?? "Preparing visual comparison")
+                        Text(model.progress?.currentURL?.lastPathComponent ?? String(localized: "Preparing visual comparison"))
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
@@ -271,18 +271,18 @@ struct SimilarPhotosView: View {
 
                 HStack(spacing: 8) {
                     StatusChip(
-                        label: "\(model.progress?.entriesVisited ?? 0) items",
+                        label: String(localized: "\(model.progress?.entriesVisited ?? 0) items"),
                         systemImage: "doc.on.doc",
                         tint: Tint.pink
                     )
                     StatusChip(
-                        label: "\(model.progress?.candidatesFound ?? 0) photos",
+                        label: String(localized: "\(model.progress?.candidatesFound ?? 0) photos"),
                         systemImage: "photo",
                         tint: Tint.pink
                     )
                     if let progress = model.progress, progress.photosAnalyzed > 0 {
                         StatusChip(
-                            label: "\(progress.photosAnalyzed) compared",
+                            label: String(localized: "\(progress.photosAnalyzed) compared"),
                             systemImage: "viewfinder",
                             tint: Tint.blue
                         )
@@ -295,11 +295,11 @@ struct SimilarPhotosView: View {
     private var progressTitle: String {
         switch model.progress?.phase {
         case .discovering, .none:
-            return "Finding local photos"
+            return String(localized: "Finding local photos")
         case .analyzing:
-            return "Building visual signatures"
+            return String(localized: "Building visual signatures")
         case .comparing:
-            return "Grouping similar shots"
+            return String(localized: "Grouping similar shots")
         }
     }
 
@@ -350,7 +350,7 @@ struct SimilarPhotosView: View {
                         .font(.system(size: 32, weight: .bold, design: .rounded))
                         .monospacedDigit()
                         .foregroundStyle(Tint.pink)
-                    Text(result.groups.count == 1 ? "similar group" : "similar groups")
+                    Text(result.groups.count == 1 ? String(localized: "similar group") : String(localized: "similar groups"))
                         .font(.system(size: 12.5))
                         .foregroundStyle(.secondary)
                 }
@@ -360,13 +360,13 @@ struct SimilarPhotosView: View {
 
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 8) {
-                        StatusChip(label: "\(result.photosAnalyzed) analyzed", systemImage: "viewfinder", tint: Tint.pink)
-                        StatusChip(label: "\(result.matchedPhotoCount) matched", systemImage: "photo.stack", tint: Tint.blue)
+                        StatusChip(label: String(localized: "\(result.photosAnalyzed) analyzed"), systemImage: "viewfinder", tint: Tint.pink)
+                        StatusChip(label: String(localized: "\(result.matchedPhotoCount) matched"), systemImage: "photo.stack", tint: Tint.blue)
                     }
                     HStack(spacing: 8) {
                         StatusChip(label: Self.format(result.matchedPhotoSize), systemImage: "internaldrive", tint: Tint.purple)
                         if result.skippedItems > 0 {
-                            StatusChip(label: "\(result.skippedItems) skipped", systemImage: "forward", tint: Tint.orange)
+                            StatusChip(label: String(localized: "\(result.skippedItems) skipped"), systemImage: "forward", tint: Tint.orange)
                         }
                     }
                 }
@@ -374,7 +374,7 @@ struct SimilarPhotosView: View {
                 Spacer()
 
                 StatusChip(
-                    label: result.isPartial ? "Sample limit reached" : "Scan complete",
+                    label: result.isPartial ? String(localized: "Sample limit reached") : String(localized: "Scan complete"),
                     systemImage: result.isPartial ? "exclamationmark.triangle" : "checkmark.circle",
                     tint: result.isPartial ? Tint.orange : Tint.green
                 )
@@ -382,7 +382,7 @@ struct SimilarPhotosView: View {
         }
     }
 
-    private func messageState(title: String, message: String, systemImage: String, tint: Color) -> some View {
+    private func messageState(title: LocalizedStringKey, message: String, systemImage: String, tint: Color) -> some View {
         CardSurface(padding: 30, elevation: .standard, tint: tint) {
             VStack(spacing: 13) {
                 IconTile(systemName: systemImage, tint: tint, size: 54, corner: 15)
@@ -431,7 +431,7 @@ private struct SimilarPhotoGroupCard: View {
                     }
                     Spacer()
                     StatusChip(
-                        label: "\(Int((group.similarity * 100).rounded()))% visual score",
+                        label: String(localized: "\(Int((group.similarity * 100).rounded()))% visual score"),
                         systemImage: "viewfinder",
                         tint: Tint.pink
                     )
