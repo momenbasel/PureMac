@@ -2,9 +2,11 @@ import XCTest
 @testable import PureMac
 
 final class AppLanguagePreferencesTests: XCTestCase {
-    func testRussianAndUkrainianLanguagesUseExpectedIdentifiers() {
+    func testGermanRussianAndUkrainianLanguagesUseExpectedIdentifiers() {
+        XCTAssertEqual(AppLanguage.german.rawValue, "de")
         XCTAssertEqual(AppLanguage.russian.rawValue, "ru")
         XCTAssertEqual(AppLanguage.ukrainian.rawValue, "uk")
+        XCTAssertTrue(AppLanguage.allCases.contains(.german))
         XCTAssertTrue(AppLanguage.allCases.contains(.russian))
         XCTAssertTrue(AppLanguage.allCases.contains(.ukrainian))
     }
@@ -20,9 +22,12 @@ final class AppLanguagePreferencesTests: XCTestCase {
         XCTAssertEqual(defaults.string(forKey: "AppleLocale"), "pt_BR")
     }
 
-    func testApplyRussianAndUkrainianLanguagesSetsAppleLanguages() {
+    func testApplyGermanRussianAndUkrainianLanguagesSetsAppleLanguages() {
         let context = makeDefaults()
         let defaults = context.defaults
+
+        AppLanguagePreferences.apply(.german, defaults: defaults)
+        XCTAssertEqual(defaults.array(forKey: "AppleLanguages") as? [String], ["de"])
 
         AppLanguagePreferences.apply(.russian, defaults: defaults)
         XCTAssertEqual(defaults.array(forKey: "AppleLanguages") as? [String], ["ru"])

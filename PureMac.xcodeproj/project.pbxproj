@@ -205,6 +205,9 @@
 		F661A0F64CF93E482CB1728F /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		F77B9D7D5353CD42BD03ADBB /* ApplicationUpdaterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationUpdaterTests.swift; sourceTree = "<group>"; };
 		F9DCBD97CC88D77AE8DB01A4 /* PermissionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionCoordinator.swift; sourceTree = "<group>"; };
+		F94DAD176D54AB03A6677FAF /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F510447E628E9B32C34FBFF1 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		C1FD0CEAEB27230F68F9054C /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/ServicesMenu.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -513,6 +516,7 @@
 			knownRegions = (
 				Base,
 				ar,
+				de,
 				en,
 				es,
 				fr,
@@ -662,6 +666,7 @@
 			isa = PBXVariantGroup;
 			children = (
 				B2CD0028599BE178B96F18A6 /* ar */,
+				F94DAD176D54AB03A6677FAF /* de */,
 				9F04B811BB0012F6D2F07F91 /* en */,
 				340D303C60FF878B019056B6 /* es */,
 				8F97E4CB93302BFE911DB1FF /* fr */,
@@ -680,6 +685,7 @@
 			isa = PBXVariantGroup;
 			children = (
 				44392E486177839BA978685E /* en */,
+				C1FD0CEAEB27230F68F9054C /* de */,
 				25D1CF5248C1D471BCBD212F /* fr */,
 				6ED5C9C10C69C3143B1F5CA6 /* ru */,
 				374A3BE46E71E54B6927E9EF /* uk */,
@@ -691,6 +697,7 @@
 			isa = PBXVariantGroup;
 			children = (
 				40CD4855FB5FA866CAA52C10 /* en */,
+				F510447E628E9B32C34FBFF1 /* de */,
 				0A544093C897FBCBA8E256F9 /* fr */,
 				ED0C4D8912DA94F81B2AEF8F /* ru */,
 				DFC4A1FD7DB92C82725B4314 /* uk */,
