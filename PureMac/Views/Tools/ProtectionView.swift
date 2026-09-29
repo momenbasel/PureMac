@@ -212,11 +212,11 @@ struct ProtectionView: View {
     private var auditButtonTitle: String {
         switch phase {
         case .idle:
-            return "Run audit"
+            return String(localized: "Run audit")
         case .running:
-            return "Checking"
+            return String(localized: "Checking")
         case .complete:
-            return "Check again"
+            return String(localized: "Check again")
         }
     }
 
@@ -277,7 +277,7 @@ private struct ProtectionFindingRow: View {
 }
 
 private struct SettingsButton: View {
-    let title: String
+    let title: LocalizedStringKey
     let icon: String
     let action: () -> Void
 

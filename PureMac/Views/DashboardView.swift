@@ -329,7 +329,7 @@ struct DashboardView: View {
         }
     }
 
-    private func diskLegendRow(id: String, color: Color, label: String, value: String) -> some View {
+    private func diskLegendRow(id: String, color: Color, label: LocalizedStringKey, value: String) -> some View {
         HStack(spacing: 8) {
             Circle()
                 .fill(color)
@@ -638,7 +638,7 @@ struct DashboardView: View {
         )
     }
 
-    private func dashboardSection(_ title: LocalizedStringKey, detail: String? = nil) -> some View {
+    private func dashboardSection(_ title: LocalizedStringKey, detail: LocalizedStringKey? = nil) -> some View {
         HStack(alignment: .firstTextBaseline) {
             Text(title)
                 .font(.system(size: 16, weight: .semibold))

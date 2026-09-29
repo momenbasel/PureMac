@@ -298,7 +298,7 @@ struct DuplicateFinderView: View {
         }
     }
 
-    private func summaryMetric(value: String, label: String, icon: String, tint: Color) -> some View {
+    private func summaryMetric(value: String, label: LocalizedStringKey, icon: String, tint: Color) -> some View {
         HStack(spacing: 9) {
             IconTile(systemName: icon, tint: tint, size: 30, corner: 8)
             VStack(alignment: .leading, spacing: 1) {
