@@ -20,7 +20,7 @@ struct CategoryDetailView: View {
             if case .scanning = appState.scanState {
                 HStack(spacing: 12) {
                     ProgressView().controlSize(.small)
-                    Text("Scanning \(appState.currentScanCategory)…")
+                    Text("Scanning \(Text(LocalizedStringKey(appState.currentScanCategory)))…")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                     Spacer()
@@ -116,16 +116,16 @@ struct CategoryDetailView: View {
             .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 8))
             HStack(spacing: 12) {
                 Picker("Size", selection: $filter.size) {
-                    ForEach(CleanupSizeFilter.allCases) { Text($0.rawValue).tag($0) }
+                    ForEach(CleanupSizeFilter.allCases) { Text(LocalizedStringKey($0.rawValue)).tag($0) }
                 }
                 .frame(maxWidth: 180)
                 Picker("Modified", selection: $filter.age) {
-                    ForEach(CleanupAgeFilter.allCases) { Text($0.rawValue).tag($0) }
+                    ForEach(CleanupAgeFilter.allCases) { Text(LocalizedStringKey($0.rawValue)).tag($0) }
                 }
                 .frame(maxWidth: 210)
                 Spacer(minLength: 0)
                 Picker("Sort", selection: $filter.order) {
-                    ForEach(CleanupSortOrder.allCases) { Text($0.rawValue).tag($0) }
+                    ForEach(CleanupSortOrder.allCases) { Text(LocalizedStringKey($0.rawValue)).tag($0) }
                 }
                 .frame(maxWidth: 185)
             }
@@ -185,8 +185,8 @@ struct CategoryDetailView: View {
     private var confirmationMessage: String {
         let size = ByteCountFormatter.string(fromByteCount: pendingItems.reduce(0) { $0 + $1.size }, countStyle: .file)
         let names = pendingItems.prefix(5).map(\.name).joined(separator: "\n")
-        let more = pendingItems.count > 5 ? "\nAnd \(pendingItems.count - 5) more." : ""
-        return "\(size) selected. This permanently removes the selected files or runs the listed cleanup actions. It cannot be undone.\n\n\(names)\(more)"
+        let more = pendingItems.count > 5 ? String(localized: "\nAnd \(pendingItems.count - 5) more.") : ""
+        return String(localized: "\(size) selected. This permanently removes the selected files or runs the listed cleanup actions. It cannot be undone.") + "\n\n" + names + more
     }
 }
 
@@ -210,7 +210,7 @@ private struct CleanupFileRow: View {
                     .font(.system(size: 13, weight: .medium))
                     .lineLimit(1)
                     .truncationMode(.middle)
-                Text(item.isActionItem ? "Managed cleanup action" : (item.path as NSString).abbreviatingWithTildeInPath)
+                Text(item.isActionItem ? String(localized: "Managed cleanup action") : (item.path as NSString).abbreviatingWithTildeInPath)
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)

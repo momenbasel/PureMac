@@ -8,8 +8,8 @@ final class LocalizationFilesTests: XCTestCase {
         XCTAssertNotNil(localizationFiles["uk"], "Expected uk.lproj/Localizable.strings to exist")
     }
 
-    func testBuiltAppBundleContainsRussianAndUkrainianLocalizations() throws {
-        for language in ["ru", "uk"] {
+    func testBuiltAppBundleContainsRussianUkrainianAndSimplifiedChineseLocalizations() throws {
+        for language in ["ru", "uk", "zh-Hans"] {
             XCTAssertTrue(
                 Bundle.main.localizations.contains(language),
                 "Expected the built app bundle to register the \(language) localization"
@@ -104,6 +104,20 @@ final class LocalizationFilesTests: XCTestCase {
         }
     }
 
+    func testSimplifiedChineseHasNoEnglishPlaceholderValues() throws {
+        let files = try localizableStringsFiles()
+        let english = try localizedStrings(in: XCTUnwrap(files["en"]))
+        let chinese = try localizedStrings(in: XCTUnwrap(files["zh-Hans"]))
+        let unchangedNames: Set<String> = ["PureMac", "PureMac.app", "CPU", "XProtect"]
+
+        for (key, value) in english where !unchangedNames.contains(key) {
+            XCTAssertNotEqual(
+                chinese[key], value,
+                "Simplified Chinese still uses the English placeholder for: \(key)"
+            )
+        }
+    }
+
     private func localizableStringsFiles() throws -> [String: URL] {
         let sourceRoot = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -152,7 +166,7 @@ final class LocalizationFilesTests: XCTestCase {
     }
 
     private func formatSignature(in value: String) -> [String] {
-        let pattern = #"%(?:(\d+)\$)?(lld|@|%)"#
+        let pattern = #"%(?:(\d+)\$)?(lld|llu|ld|lu|d|u|f|@|%)"#
         let regex = try! NSRegularExpression(pattern: pattern)
         let range = NSRange(value.startIndex..., in: value)
         var sequentialPosition = 1

@@ -212,11 +212,11 @@ struct ProtectionView: View {
     private var auditButtonTitle: String {
         switch phase {
         case .idle:
-            return "Run audit"
+            return String(localized: "Run audit")
         case .running:
-            return "Checking"
+            return String(localized: "Checking")
         case .complete:
-            return "Check again"
+            return String(localized: "Check again")
         }
     }
 
@@ -277,7 +277,7 @@ private struct ProtectionFindingRow: View {
 }
 
 private struct SettingsButton: View {
-    let title: String
+    let title: LocalizedStringKey
     let icon: String
     let action: () -> Void
 
@@ -322,30 +322,30 @@ private extension ProtectionCheck {
     var title: String {
         switch self {
         case .gatekeeper:
-            return "Gatekeeper"
+            return String(localized: "Gatekeeper")
         case .fileVault:
-            return "FileVault"
+            return String(localized: "FileVault")
         case .firewall:
-            return "Application Firewall"
+            return String(localized: "Application Firewall")
         case .systemIntegrityProtection:
-            return "System Integrity Protection"
+            return String(localized: "System Integrity Protection")
         case .xProtect:
-            return "XProtect"
+            return String(localized: "XProtect")
         }
     }
 
     var actionTitle: String {
         switch self {
         case .gatekeeper:
-            return "Security Settings"
+            return String(localized: "Security Settings")
         case .fileVault:
-            return "FileVault Settings"
+            return String(localized: "FileVault Settings")
         case .firewall:
-            return "Firewall Settings"
+            return String(localized: "Firewall Settings")
         case .systemIntegrityProtection:
-            return "Apple Guide"
+            return String(localized: "Apple Guide")
         case .xProtect:
-            return "Software Update"
+            return String(localized: "Software Update")
         }
     }
 }
@@ -387,13 +387,13 @@ private extension ProtectionStatus {
     func label(for check: ProtectionCheck) -> String {
         switch (self, check) {
         case (.enabled, .xProtect):
-            return "Installed"
+            return String(localized: "Installed")
         case (.enabled, _):
-            return "On"
+            return String(localized: "On")
         case (.disabled, _):
-            return "Off"
+            return String(localized: "Off")
         case (.unknown, _):
-            return "Unknown"
+            return String(localized: "Unknown")
         }
     }
 }

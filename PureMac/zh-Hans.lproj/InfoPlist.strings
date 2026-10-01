@@ -1,0 +1,8 @@
+/* macOS permission prompts */
+"NSAppleEventsUsageDescription" = "PureMac 需要与访达交互，以显示所选文件。";
+"NSDesktopFolderUsageDescription" = "PureMac 需要访问桌面，以查找可清理文件和应用残留。";
+"NSDocumentsFolderUsageDescription" = "PureMac 需要访问文稿文件夹，以查找可清理文件和应用残留。";
+"NSDownloadsFolderUsageDescription" = "PureMac 需要访问下载文件夹，以查找可清理文件和应用残留。";
+"NSRemovableVolumesUsageDescription" = "PureMac 需要访问可移动磁盘，以扫描可清理的文件。";
+"NSSystemAdministrationUsageDescription" = "PureMac 需要管理员权限，以清理受保护的缓存和应用文件。";
+"NSHumanReadableCopyright" = "版权所有 © 2026，采用 MIT 许可证。";

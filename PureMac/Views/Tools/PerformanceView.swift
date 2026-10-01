@@ -68,7 +68,7 @@ struct PerformanceView: View {
                 deletionError = nil
             }
         } message: {
-            Text(deletionError ?? "Unknown error")
+            Text(deletionError ?? String(localized: "Unknown error"))
         }
     }
 
@@ -97,7 +97,7 @@ struct PerformanceView: View {
                 HStack {
                     SectionHeader("Live resources")
                     Spacer()
-                    StatusChip(label: "Live", systemImage: "circle.fill", tint: Tint.green)
+                    StatusChip(label: String(localized: "Live"), systemImage: "circle.fill", tint: Tint.green)
                 }
 
                 HStack(spacing: 26) {
@@ -200,7 +200,7 @@ struct PerformanceView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    StatusChip(label: "\(items.count) found", tint: Tint.accent)
+                    StatusChip(label: String(localized: "\(items.count) found"), tint: Tint.accent)
                     Button("Login Items Settings") {
                         openLoginItemsSettings()
                     }
@@ -247,7 +247,7 @@ struct PerformanceView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    StatusChip(label: "\(snapshots.count) found", tint: Tint.purple)
+                    StatusChip(label: String(localized: "\(snapshots.count) found"), tint: Tint.purple)
                     Button("Time Machine Settings") {
                         openTimeMachineSettings()
                     }
@@ -304,7 +304,7 @@ struct PerformanceView: View {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .memory
         formatter.allowedUnits = [.useGB, .useMB]
-        return "\(formatter.string(fromByteCount: monitor.memoryUsed)) of \(formatter.string(fromByteCount: monitor.memoryTotal))"
+        return String(localized: "\(formatter.string(fromByteCount: monitor.memoryUsed)) of \(formatter.string(fromByteCount: monitor.memoryTotal))")
     }
 
     private var deletionConfirmationPresented: Binding<Bool> {
@@ -316,9 +316,9 @@ struct PerformanceView: View {
 
     private var snapshotDeletionMessage: String {
         guard let snapshot = snapshotPendingDeletion else {
-            return "This permanently removes the selected Time Machine snapshot."
+            return String(localized: "This permanently removes the selected Time Machine snapshot.")
         }
-        return "This permanently removes \(snapshot.identifier). Its size is unknown, and the action cannot be undone."
+        return String(localized: "This permanently removes \(snapshot.identifier). Its size is unknown, and the action cannot be undone.")
     }
 
     private var deletionErrorPresented: Binding<Bool> {
@@ -380,7 +380,7 @@ struct PerformanceView: View {
 }
 
 private struct ResourceMeter: View {
-    let title: String
+    let title: LocalizedStringKey
     let value: Double
     let detail: String
     let tint: Color
@@ -423,7 +423,7 @@ private struct StartupItemRow: View {
                         .font(.system(size: 13, weight: .medium))
                         .lineLimit(1)
                     StatusChip(
-                        label: item.isDisabled ? "Disabled" : item.domain.title,
+                        label: item.isDisabled ? String(localized: "Disabled") : item.domain.title,
                         tint: item.isDisabled ? Color.secondary : Tint.accent
                     )
                     ForEach(item.triggers.prefix(2), id: \.self) { trigger in
@@ -431,7 +431,7 @@ private struct StartupItemRow: View {
                     }
                 }
 
-                Text(item.program ?? "Program not declared in this plist")
+                Text(item.program ?? String(localized: "Program not declared in this plist"))
                     .font(.system(size: 11.5, design: .monospaced))
                     .foregroundStyle(item.program == nil ? Tint.orange : .secondary)
                     .lineLimit(1)
@@ -523,8 +523,8 @@ private struct SnapshotRow: View {
 
 private struct EmptyInspectionRow: View {
     let systemImage: String
-    let title: String
-    let detail: String
+    let title: LocalizedStringKey
+    let detail: LocalizedStringKey
 
     var body: some View {
         HStack(spacing: 12) {

@@ -307,7 +307,7 @@ final class AppState: ObservableObject {
         }
         guard !urls.isEmpty else {
             if !blocked.isEmpty {
-                removalError = "Refused to delete \(blocked.count) protected item(s) (home credential directory or similar)."
+                removalError = String(localized: "Refused to delete \(blocked.count) protected item(s) (home credential directory or similar).")
             }
             return
         }
@@ -462,19 +462,19 @@ final class AppState: ObservableObject {
         adminError: String?
     ) -> String? {
         if needsFullDiskAccess {
-            let prefix = failed.isEmpty ? "Some selected files" : "\(failed.count) file\(failed.count == 1 ? "" : "s")"
-            return "\(prefix) could not be removed because PureMac does not have Full Disk Access. Grant Full Disk Access in System Settings, then try again."
+            let prefix = failed.isEmpty ? String(localized: "Some selected files") : String(localized: "\(failed.count) files")
+            return String(localized: "\(prefix) could not be removed because PureMac does not have Full Disk Access. Grant Full Disk Access in System Settings, then try again.")
         }
 
         if !failed.isEmpty {
             if attemptedAdmin {
-                return "\(failed.count) file\(failed.count == 1 ? "" : "s") could not be removed with administrator privileges. The items may have changed or macOS denied access."
+                return String(localized: "\(failed.count) file(s) could not be removed with administrator privileges. The items may have changed or macOS denied access.")
             }
-            return "\(failed.count) file\(failed.count == 1 ? "" : "s") could not be removed. Check that the items still exist and are not in use."
+            return String(localized: "\(failed.count) file(s) could not be removed. Check that the items still exist and are not in use.")
         }
 
         if let adminError, !adminError.isEmpty {
-            return "Administrator removal failed: \(adminError)"
+            return String(localized: "Administrator removal failed: \(adminError)")
         }
         return nil
     }

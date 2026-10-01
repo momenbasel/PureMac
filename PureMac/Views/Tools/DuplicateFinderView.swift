@@ -298,7 +298,7 @@ struct DuplicateFinderView: View {
         }
     }
 
-    private func summaryMetric(value: String, label: String, icon: String, tint: Color) -> some View {
+    private func summaryMetric(value: String, label: LocalizedStringKey, icon: String, tint: Color) -> some View {
         HStack(spacing: 9) {
             IconTile(systemName: icon, tint: tint, size: 30, corner: 8)
             VStack(alignment: .leading, spacing: 1) {
@@ -327,7 +327,7 @@ struct DuplicateFinderView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    StatusChip(label: "\(format(group.reclaimableSize)) reviewable", systemImage: "arrow.down.circle", tint: Tint.green)
+                    StatusChip(label: String(localized: "\(format(group.reclaimableSize)) reviewable"), systemImage: "arrow.down.circle", tint: Tint.green)
                     Button(groupCandidatesSelected(group) ? "Clear" : "Select copies") {
                         toggleGroupSelection(group)
                     }
@@ -386,7 +386,7 @@ struct DuplicateFinderView: View {
                         .font(.system(size: 13, weight: keeper ? .semibold : .regular))
                         .lineLimit(1)
                     if keeper {
-                        StatusChip(label: "Keep", systemImage: "lock.fill", tint: Tint.green)
+                        StatusChip(label: String(localized: "Keep"), systemImage: "lock.fill", tint: Tint.green)
                     }
                 }
                 Text(file.url.deletingLastPathComponent().path)
@@ -501,15 +501,15 @@ struct DuplicateFinderView: View {
         if state == .scanning, let current = progress.currentURL {
             return current.deletingLastPathComponent().path
         }
-        return selectedFolder?.path ?? "Exact-match cleanup with a protected copy in every group"
+        return selectedFolder?.path ?? String(localized: "Exact-match cleanup with a protected copy in every group")
     }
 
     private var progressSummary: String {
         switch progress.phase {
         case .discovering:
-            return "\(progress.filesInspected.formatted()) files inspected"
+            return String(localized: "\(progress.filesInspected.formatted()) files inspected")
         case .hashing:
-            return "\(progress.filesHashed.formatted()) of \(progress.filesToHash.formatted()) candidates · \(format(progress.bytesHashed)) verified"
+            return String(localized: "\(progress.filesHashed.formatted()) of \(progress.filesToHash.formatted()) candidates · \(format(progress.bytesHashed)) verified")
         }
     }
 
@@ -560,9 +560,9 @@ struct DuplicateFinderView: View {
     private func chooseFolder() {
         guard !isMovingToTrash else { return }
         let panel = NSOpenPanel()
-        panel.title = "Choose a folder to check for duplicate files"
-        panel.prompt = "Scan Folder"
-        panel.message = "PureMac reads the selected folder and does not change anything during a scan."
+        panel.title = String(localized: "Choose a folder to check for duplicate files")
+        panel.prompt = String(localized: "Scan Folder")
+        panel.message = String(localized: "PureMac reads the selected folder and does not change anything during a scan.")
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
@@ -662,12 +662,12 @@ struct DuplicateFinderView: View {
             applyTrashResult(movedFiles)
             if failures.isEmpty {
                 actionMessage = ActionMessage(
-                    title: "Moved to Trash",
-                    detail: "\(movedFiles.count) files totaling \(format(movedFiles.reduce(0) { $0 + $1.size })) were moved. Every protected copy remains in place."
+                    title: String(localized: "Moved to Trash"),
+                    detail: String(localized: "\(movedFiles.count) files totaling \(format(movedFiles.reduce(0) { $0 + $1.size })) were moved. Every protected copy remains in place.")
                 )
             } else {
                 actionMessage = ActionMessage(
-                    title: movedFiles.isEmpty ? "Nothing was moved" : "Some files were not moved",
+                    title: movedFiles.isEmpty ? String(localized: "Nothing was moved") : String(localized: "Some files were not moved"),
                     detail: failures.joined(separator: "\n")
                 )
             }
@@ -695,8 +695,8 @@ struct DuplicateFinderView: View {
 
     private func skippedSummary(_ skippedFiles: [DuplicateSkippedFile]) -> String {
         skippedFiles.isEmpty
-            ? "Every eligible file was checked."
-            : "\(skippedFiles.count) unsafe or unavailable items were skipped."
+            ? String(localized: "Every eligible file was checked.")
+            : String(localized: "\(skippedFiles.count) unsafe or unavailable items were skipped.")
     }
 
     private func format(_ bytes: Int64) -> String {
