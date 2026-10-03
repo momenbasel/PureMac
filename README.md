@@ -143,7 +143,7 @@ Smart Scan checks each category in sequence and reports progress as files are fo
 - **Mail Files** - downloaded mail attachments
 - **Trash Bins** - empties all bins, including external volumes
 - **Large & Old Files** - >100 MB or older than 1 year (never auto-selected)
-- **Xcode Junk** - DerivedData, Archives, simulator caches, and downloaded simulator runtimes (deleted via `simctl runtime delete`; never auto-selected)
+- **Xcode Junk** - DerivedData, Archives, simulator caches, downloaded simulator runtimes (deleted via `simctl runtime delete`; never auto-selected), and XcodeBuildMCP DerivedData (never auto-selected; selected items must be older than 7 days and unlocked for scheduled cleanup; Trash-only)
 - **Brew Cache** - Homebrew download caches within approved cache locations
 - **Node Cache** - npm, yarn classic, pnpm content-addressable store
 - **Docker Cache** - images, containers, build cache

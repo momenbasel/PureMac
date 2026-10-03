@@ -926,10 +926,19 @@ final class AppState: ObservableObject {
 
     // MARK: - Cleaning
 
-    func cleanAll(itemIDs: Set<UUID>? = nil) {
+    func cleanAll(itemIDs: Set<UUID>? = nil, scheduled: Bool = false) {
         guard !scanState.isActive else { return }
 
-        let itemsToClean = allResults.flatMap { $0.items }.filter { isItemSelected($0) && (itemIDs?.contains($0.id) ?? true) }
+        let itemsToClean = allResults.flatMap { $0.items }.filter { item in
+            guard itemIDs?.contains(item.id) ?? true else { return false }
+            guard isItemSelected(item) else { return false }
+            if scheduled && XcodeBuildMCPDerivedDataSupport.isManagedDerivedDataPath(item.path) {
+                // Scheduled XcodeBuildMCP cleanup is intentionally stricter
+                // than ordinary Xcode Junk: only old, unlocked rows qualify.
+                return XcodeBuildMCPDerivedDataSupport.isEligibleForScheduledAutoClean(item)
+            }
+            return true
+        }
         guard !itemsToClean.isEmpty else { return }
         let generation = UUID()
         cleanupGeneration = generation
@@ -1142,7 +1151,7 @@ final class AppState: ObservableObject {
         scanState = .completed
         let found = totalJunkSize
         if scheduler.config.autoClean && totalSelectedSize >= scheduler.config.minimumCleanSize {
-            cleanAll()
+            cleanAll(scheduled: true)
         }
         if scheduler.config.notifyOnCompletion {
             sendNotification(freed: found)

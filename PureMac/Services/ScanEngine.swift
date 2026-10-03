@@ -2,7 +2,11 @@ import Foundation
 
 actor ScanEngine {
     private let fileManager = FileManager.default
-    private let home = FileManager.default.homeDirectoryForCurrentUser.path
+    private let home: String
+
+    init(homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser) {
+        home = XcodeBuildMCPDerivedDataSupport.canonicalHomeDirectory(homeDirectory).path
+    }
 
     /// Live path reporter for the dashboard's scanning ticker. Throttled so
     /// a directory with thousands of entries doesn't flood the main actor.
@@ -476,6 +480,23 @@ actor ScanEngine {
                         lastModified: nil
                     ))
                 }
+            }
+        }
+
+        // XcodeBuildMCP DerivedData requires explicit user selection.
+        // Scheduled cleanup also applies age and lifecycle-lock guards.
+        let homeURL = URL(fileURLWithPath: home, isDirectory: true)
+        for discovered in XcodeBuildMCPDerivedDataSupport.discoverDerivedDataDirectories(
+            homeDirectory: homeURL,
+            fileManager: fileManager
+        ) {
+            if let item = makeCleanupItem(
+                name: discovered.name,
+                path: discovered.url.path,
+                category: .xcodeJunk,
+                isSelected: false
+            ) {
+                items.append(item)
             }
         }
 
