@@ -460,3 +460,32 @@
 
 /* Simulator runtimes */
 "Simulator runtime" = "Среда выполнения симулятора";
+
+/* Additional interface strings. */
+"Build %@" = "Build %@";
+"Check access" = "Check access";
+"Checking for updates…" = "Checking for updates…";
+"Checks the official app releases on GitHub." = "Checks the official app releases on GitHub.";
+"Copy command" = "Copy command";
+"Couldn't check for updates" = "Couldn't check for updates";
+"Download (DMG / ZIP)" = "Download (DMG / ZIP)";
+"Download the new app from the release page, quit PureMac, then replace it in Applications." = "Download the new app from the release page, quit PureMac, then replace it in Applications.";
+"Full access" = "Full access";
+"GitHub is receiving too many requests. Please try again later." = "GitHub is receiving too many requests. Please try again later.";
+"Homebrew" = "Homebrew";
+"Keep PureMac up to date" = "Keep PureMac up to date";
+"Last checked: %@" = "Last checked: %@";
+"Make PureMac work your way." = "Make PureMac work your way.";
+"No stable PureMac app release was found. Try again later." = "No stable PureMac app release was found. Try again later.";
+"Open release page" = "Open release page";
+"PureMac %@ is available" = "PureMac %@ is available";
+"Ready for protected locations" = "Ready for protected locations";
+"Settings" = "Settings";
+"Some locations are unavailable" = "Some locations are unavailable";
+"The release service is unavailable. Please try again later." = "The release service is unavailable. Please try again later.";
+"This build has no readable version. Open the releases page to check manually." = "This build has no readable version. Open the releases page to check manually.";
+"To update with Homebrew, run this command in Terminal. The cask may follow the GitHub release a little later." = "To update with Homebrew, run this command in Terminal. The cask may follow the GitHub release a little later.";
+"Update method" = "Update method";
+
+"View releases" = "View releases";
+"You're using the latest available version of PureMac." = "You're using the latest available version of PureMac.";

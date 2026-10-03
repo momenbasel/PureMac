@@ -17,6 +17,8 @@ import Foundation
 final class PermissionCoordinator: ObservableObject {
     static let shared = PermissionCoordinator()
 
+    enum Presentation { case mainWindow, settingsWindow }
+    @Published private(set) var presentation: Presentation = .mainWindow
     @Published private(set) var isRequesting: Bool = false
     @Published private(set) var hasFullDiskAccess: Bool = false
     @Published private(set) var failedItemPaths: [String] = []
@@ -63,6 +65,7 @@ final class PermissionCoordinator: ObservableObject {
     /// two Timers or leaking the first callback's captured state.
     func requestAccess(
         context: PromptContext = .general,
+        presentation: Presentation = .mainWindow,
         failedPaths: [String] = [],
         onGranted: @escaping () -> Void
     ) {
@@ -75,6 +78,7 @@ final class PermissionCoordinator: ObservableObject {
         pendingGrantWork?.cancel()
         pendingGrantWork = nil
 
+        self.presentation = presentation
         self.context = context
         self.failedItemPaths = failedPaths
         self.onGrantCallback = onGranted
