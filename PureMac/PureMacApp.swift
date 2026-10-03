@@ -120,6 +120,9 @@ struct PureMacApp: App {
             CommandGroup(replacing: .newItem) {}
             CommandMenu("Updates") {
                 Button("Check for Updates") {
+                    appState.showUpdateSettings = true
+                    WindowOpener.shared.showMainWindow()
+                    NSApp.activate(ignoringOtherApps: true)
                     UpdateService.shared.checkForUpdates()
                 }
                 .keyboardShortcut("u", modifiers: [.command, .shift])
@@ -127,8 +130,10 @@ struct PureMacApp: App {
         }
 
         Settings {
-            SettingsView()
+            SettingsView(standalone: true)
                 .environmentObject(appState)
+                .environmentObject(theme)
+                .frame(minWidth: 680, idealWidth: 760, minHeight: 580, idealHeight: 700)
         }
 
         // The opt-in menu-bar system monitor is an AppKit NSStatusItem managed
