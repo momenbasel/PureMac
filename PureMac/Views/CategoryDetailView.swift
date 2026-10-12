@@ -4,6 +4,7 @@ struct CategoryDetailView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let category: CleaningCategory
+    var onBack: (() -> Void)?
 
     @State private var filter = CleanupReviewFilter()
     @State private var showConfirmation = false
@@ -52,6 +53,16 @@ struct CategoryDetailView: View {
             }
         }
         .navigationTitle(Text(LocalizedStringKey(category.rawValue)))
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                if let onBack {
+                    Button(action: onBack) {
+                        Label("Back", systemImage: "chevron.left")
+                    }
+                    .help("Back")
+                }
+            }
+        }
         .confirmationDialog("Remove selected files?", isPresented: $showConfirmation, titleVisibility: .visible) {
             Button("Permanently remove \(pendingItems.count) items", role: .destructive) {
                 appState.cleanCategory(category, itemIDs: Set(pendingItems.map(\.id)))
