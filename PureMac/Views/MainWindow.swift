@@ -411,6 +411,18 @@ struct MainWindow: View {
         .animation(reduceMotion ? nil : MotionTokens.gentle, value: appState.hasFullDiskAccess)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(AmbientBackdrop())
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                if let parentSection {
+                    Button {
+                        selectSection(parentSection)
+                    } label: {
+                        Label("Back", systemImage: "chevron.left")
+                    }
+                    .help("Back")
+                }
+            }
+        }
     }
 
     @ViewBuilder
@@ -438,12 +450,7 @@ struct MainWindow: View {
             if category == .smartScan {
                 DashboardView { navigateFromCurrentSection(to: $0) }
             } else {
-                CategoryDetailView(
-                    category: category,
-                    onBack: parentSection.map { parent in
-                        { selectSection(parent) }
-                    }
-                )
+                CategoryDetailView(category: category)
             }
         case nil:
             EmptyStateView(
