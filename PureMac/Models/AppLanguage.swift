@@ -2,6 +2,7 @@ import Foundation
 
 enum AppLanguage: String, CaseIterable, Identifiable {
     case system = "system"
+    case greek = "el"
     case english = "en"
     case french = "fr"
     case italian = "it"
@@ -23,6 +24,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     var displayName: String {
         switch self {
         case .system: return "System Default"
+        case .greek: return "Ελληνικά"
         case .english: return "English"
         case .french: return "French"
         case .italian: return "Italian"
