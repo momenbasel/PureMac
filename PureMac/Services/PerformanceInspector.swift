@@ -122,7 +122,7 @@ final class PerformanceInspector {
         }
         let executable = URL(fileURLWithPath: "/usr/bin/tmutil")
         guard FileManager.default.isExecutableFile(atPath: executable.path) else {
-            throw PerformanceInspectorError.commandFailed("tmutil deletelocalsnapshots", -1, "tmutil is unavailable")
+            throw PerformanceInspectorError.commandFailed("tmutil deletelocalsnapshots", -1, String(localized: "tmutil is not available on this Mac."))
         }
         let result = try await Self.runCommand(
             executable: executable,

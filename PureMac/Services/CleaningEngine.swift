@@ -43,7 +43,7 @@ actor CleaningEngine {
             let progress = Double(index + 1) / Double(total)
             defer { progressHandler(progress) }
             if CleanupExclusions.excludes(item.path, paths: exclusions) {
-                result.errors.append("Excluded from cleanup: \(item.name)")
+                result.errors.append(String(localized: "Excluded from cleanup: \(item.name)"))
                 continue
             }
 
@@ -126,7 +126,7 @@ actor CleaningEngine {
             do {
                 let itemURL = URL(fileURLWithPath: item.path)
                 guard !hasUnexpectedSymlink(in: item.path) else {
-                    let msg = "Skipped symlink or unsafe path: \(item.path)"
+                    let msg = String(localized: "Skipped symlink or unsafe path: \(item.path)")
                     Logger.shared.log(msg, level: .warning)
                     result.errors.append(msg)
                     continue
@@ -145,7 +145,7 @@ actor CleaningEngine {
                 // the staged re-sign flow, not the delete path.
                 let pathAccepted = isSafeToDelete(item: item, resolvedPath: resolved)
                 guard pathAccepted else {
-                    let msg = "Skipped symlink or unsafe path: \(item.path) -> \(resolved)"
+                    let msg = String(localized: "Skipped symlink or unsafe path: \(item.path) -> \(resolved)")
                     Logger.shared.log(msg, level: .warning)
                     result.errors.append(msg)
                     continue
@@ -156,7 +156,7 @@ actor CleaningEngine {
                 // swap between check and delete aborts the operation.
                 let reResolved = itemURL.resolvingSymlinksInPath().path
                 guard reResolved == resolved, !hasUnexpectedSymlink(in: item.path) else {
-                    let msg = "Aborting delete: path resolution changed between check and unlink for \(item.path)"
+                    let msg = String(localized: "Aborting delete: path resolution changed between check and unlink for \(item.path)")
                     Logger.shared.log(msg, level: .warning)
                     result.errors.append(msg)
                     continue
@@ -183,7 +183,7 @@ actor CleaningEngine {
                             homeDirectory: homeDirectory,
                             fileManager: fileManager
                         ) else {
-                            let detail = "Skipped XcodeBuildMCP DerivedData: lifecycle lock is unavailable: \(item.path)"
+                            let detail = String(localized: "Skipped XcodeBuildMCP DerivedData: lifecycle lock is unavailable: \(item.path)")
                             Logger.shared.log(detail, level: .warning)
                             result.errors.append(detail)
                             continue
@@ -224,7 +224,7 @@ actor CleaningEngine {
                         item.path,
                         homeDirectory: homeDirectory
                     ) {
-                        let detail = "Refusing administrator escalation for XcodeBuildMCP DerivedData: \(item.path)"
+                        let detail = String(localized: "Refusing administrator escalation for XcodeBuildMCP DerivedData: \(item.path)")
                         result.errors.append(detail)
                         Logger.shared.log(detail, level: .warning)
                         continue
@@ -242,7 +242,7 @@ actor CleaningEngine {
                     result.requiresAdmin.append(item)
                     Logger.shared.log("Deferring to admin pass: \(item.path)", level: .info)
                 } else {
-                    let detail = "\(item.name) at \(item.path): \(error.localizedDescription)"
+                    let detail = String(localized: "\(item.name) at \(item.path): \(error.localizedDescription)")
                     result.errors.append(detail)
                     Logger.shared.log("Clean failed: \(detail)", level: .error)
                 }
@@ -389,7 +389,7 @@ actor CleaningEngine {
                 result.freedSpace += item.size
                 Logger.shared.log("Deleted and recreated by its daemon (live log): \(item.path)", level: .info)
             } else {
-                let detail = "\(item.name) at \(item.path) survived admin removal"
+                let detail = String(localized: "\(item.name) at \(item.path) survived admin removal")
                 result.errors.append(detail)
                 Logger.shared.log("Admin pass survivor: \(detail)", level: .error)
             }
@@ -410,7 +410,7 @@ actor CleaningEngine {
     func pruneDockerSystem() async -> (freed: Int64, error: String?) {
         let dockerBinPaths = ["/usr/local/bin/docker", "/opt/homebrew/bin/docker"]
         guard let dockerBin = dockerBinPaths.first(where: { fileManager.isExecutableFile(atPath: $0) }) else {
-            return (0, "Docker CLI not found — install Docker Desktop or OrbStack")
+            return (0, String(localized: "Docker CLI not found — install Docker Desktop or OrbStack"))
         }
 
         let task = Process()
@@ -424,7 +424,7 @@ actor CleaningEngine {
             try task.run()
         } catch {
             Logger.shared.log("docker system prune failed to launch: \(error.localizedDescription)", level: .error)
-            return (0, "Couldn't run docker system prune: \(error.localizedDescription)")
+            return (0, String(localized: "Couldn't run docker system prune: \(error.localizedDescription)"))
         }
         // Drain both pipes BEFORE waiting: prune lists every deleted object
         // and can overflow the 64 KB pipe buffer, deadlocking waitUntilExit.
@@ -436,10 +436,10 @@ actor CleaningEngine {
             let stderrText = String(data: errData, encoding: .utf8) ?? ""
             if stderrText.contains("Cannot connect") || stderrText.contains("dial unix")
                 || stderrText.contains("daemon") {
-                return (0, "Docker isn't running — start Docker Desktop or OrbStack, then clean again")
+                return (0, String(localized: "Docker isn't running — start Docker Desktop or OrbStack, then clean again"))
             }
             Logger.shared.log("docker system prune exited \(task.terminationStatus): \(stderrText)", level: .error)
-            return (0, "docker system prune failed (exit \(task.terminationStatus))")
+            return (0, String(localized: "docker system prune failed (exit \(task.terminationStatus))"))
         }
 
         // Final line reads "Total reclaimed space: 1.234GB" ("0B" when idle).
@@ -473,10 +473,10 @@ actor CleaningEngine {
             }
             if detail.localizedCaseInsensitiveContains("CoreSimulator")
                 || detail.localizedCaseInsensitiveContains("simdiskimaged") {
-                return (0, false, "Simulator services unavailable — open Xcode once, then try again")
+                return (0, false, String(localized: "Simulator services unavailable — open Xcode once, then try again"))
             }
             Logger.shared.log("simctl runtime delete \(identifier) exited \(result.status): \(detail)", level: .error)
-            return (0, false, "Couldn't delete simulator runtime \(identifier)")
+            return (0, false, String(localized: "Couldn't delete simulator runtime \(identifier)"))
         }
 
         Logger.shared.log("Deleted simulator runtime \(identifier) (~\(reportedSize) bytes)", level: .info)
@@ -722,7 +722,7 @@ actor CleaningEngine {
         let resolved = URL(fileURLWithPath: item.path).resolvingSymlinksInPath().path
         guard isAppBundlePath((resolved as NSString).standardizingPath, rootedAt: "/Applications")
             || isAppBundlePath((resolved as NSString).standardizingPath, rootedAt: "\(fileManager.homeDirectoryForCurrentUser.path)/Applications") else {
-            let msg = "Skipped unsafe path for thinning: \(item.path) -> \(resolved)"
+            let msg = String(localized: "Skipped unsafe path for thinning: \(item.path) -> \(resolved)")
             Logger.shared.log(msg, level: .warning)
             return (0, false, msg)
         }
@@ -739,11 +739,11 @@ actor CleaningEngine {
             return (freed, true, nil)
         case .failure(let error):
             if case BinaryThinner.ThinningError.needsAdmin = error {
-                let msg = "\(item.name): needs administrator access to thin; skipped"
+                let msg = String(localized: "\(item.name): needs administrator access to thin; skipped")
                 Logger.shared.log(msg, level: .warning)
                 return (0, false, msg)
             }
-            let msg = "Couldn't thin \(item.name): \(error.localizedDescription)"
+            let msg = String(localized: "Couldn't thin \(item.name): \(error.localizedDescription)")
             Logger.shared.log(msg, level: .error)
             return (0, false, msg)
         }
@@ -758,7 +758,7 @@ actor CleaningEngine {
         let resolved = URL(fileURLWithPath: item.path).resolvingSymlinksInPath().path
         let normalized = (resolved as NSString).standardizingPath
         guard isRemovableLprojPath(normalized) else {
-            let msg = "Skipped symlink or unsafe path: \(item.path) -> \(resolved)"
+            let msg = String(localized: "Skipped symlink or unsafe path: \(item.path) -> \(resolved)")
             Logger.shared.log(msg, level: .warning)
             return (0, false, msg)
         }
@@ -779,11 +779,11 @@ actor CleaningEngine {
             return (item.size, true, nil)
         case .failure(let error):
             if case BinaryThinner.ThinningError.needsAdmin = error {
-                let msg = "\(item.name): needs administrator access to modify the app; skipped"
+                let msg = String(localized: "\(item.name): needs administrator access to modify the app; skipped")
                 Logger.shared.log(msg, level: .warning)
                 return (0, false, msg)
             }
-            let msg = "Couldn't remove localization \(item.name): \(error.localizedDescription)"
+            let msg = String(localized: "Couldn't remove localization \(item.name): \(error.localizedDescription)")
             Logger.shared.log(msg, level: .error)
             return (0, false, msg)
         }

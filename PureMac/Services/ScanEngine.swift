@@ -206,7 +206,7 @@ actor ScanEngine {
                 let resolvedCachePath = URL(fileURLWithPath: cachePath).resolvingSymlinksInPath().path
                 guard normalizePath(resolvedCachePath) == normalizePath(cachePath) else { continue }
                 if let item = makeCleanupItem(
-                    name: "\(container) (sandbox cache)",
+                    name: String(localized: "\(container) (sandbox cache)"),
                     path: cachePath,
                     category: .userCache,
                     minimumSize: 1024 * 1024
@@ -416,7 +416,7 @@ actor ScanEngine {
             // the row shows no misleading filesystem location and the reveal-
             // in-Finder action stays disabled for this entry. (See issue #112.)
             items.append(CleanableItem(
-                name: "APFS Purgeable Space",
+                name: String(localized: "APFS purgeable disk space"),
                 path: "",
                 size: diskInfo.purgeableSpace,
                 category: .purgeableSpace,
@@ -432,7 +432,7 @@ actor ScanEngine {
             let snapshotSize = snapshot.size > 0 ? snapshot.size : 0
             if snapshotSize > 0 {
                 items.append(CleanableItem(
-                    name: "TM Snapshot: \(snapshot.name)",
+                    name: String(localized: "Time Machine snapshot: \(snapshot.name)"),
                     path: snapshot.name,
                     size: snapshotSize,
                     category: .purgeableSpace,
