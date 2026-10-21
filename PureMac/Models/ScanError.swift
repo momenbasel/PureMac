@@ -11,17 +11,17 @@ enum ScanError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .permissionDenied(let path):
-            return "Permission denied when accessing '\(path)'. Grant Full Disk Access in System Settings."
+            return String(localized: "Permission denied when accessing '\(path)'. Grant Full Disk Access in System Settings.")
         case .directoryEnumerationFailed(let path, let underlying):
-            return "Failed to enumerate directory '\(path)': \(underlying.localizedDescription)"
+            return String(localized: "Failed to enumerate directory '\(path)': \(underlying.localizedDescription)")
         case .processExecutionFailed(let tool, let underlying):
-            return "Failed to execute '\(tool)': \(underlying.localizedDescription)"
+            return String(localized: "Failed to execute '\(tool)': \(underlying.localizedDescription)")
         case .invalidData(let context):
-            return "Invalid data encountered: \(context)"
+            return String(localized: "Invalid data encountered: \(context)")
         case .helperToolUnavailable:
-            return "The privileged helper tool is not installed or unavailable."
+            return String(localized: "The privileged helper tool is not installed or unavailable.")
         case .operationCancelled:
-            return "The operation was cancelled."
+            return String(localized: "The operation was cancelled.")
         }
     }
 }
