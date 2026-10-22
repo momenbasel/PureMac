@@ -5,13 +5,14 @@ final class LocalizationFilesTests: XCTestCase {
         let localizationFiles = try localizableStringsFiles()
 
         XCTAssertNotNil(localizationFiles["de"], "Expected de.lproj/Localizable.strings to exist")
+        XCTAssertNotNil(localizationFiles["fa"], "Expected fa.lproj/Localizable.strings to exist")
         XCTAssertNotNil(localizationFiles["it"], "Expected it.lproj/Localizable.strings to exist")
         XCTAssertNotNil(localizationFiles["ru"], "Expected ru.lproj/Localizable.strings to exist")
         XCTAssertNotNil(localizationFiles["uk"], "Expected uk.lproj/Localizable.strings to exist")
     }
 
     func testBuiltAppBundleContainsAddedLocalizations() throws {
-        for language in ["de", "it", "ru", "uk", "zh-Hans"] {
+        for language in ["de", "fa", "it", "ru", "uk", "zh-Hans"] {
             XCTAssertTrue(
                 Bundle.main.localizations.contains(language),
                 "Expected the built app bundle to register the \(language) localization"
