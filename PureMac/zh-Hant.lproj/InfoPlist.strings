@@ -1,0 +1,8 @@
+/* macOS 權限提示與版權資訊（台灣繁體中文） */
+"NSAppleEventsUsageDescription" = "PureMac 會使用 Apple Events 與 Finder 互動，以顯示檔案位置。";
+"NSDesktopFolderUsageDescription" = "PureMac 需要存取「桌面」，以尋找垃圾檔案與殘留檔案。";
+"NSDocumentsFolderUsageDescription" = "PureMac 需要存取「文件」，以尋找垃圾檔案與殘留檔案。";
+"NSDownloadsFolderUsageDescription" = "PureMac 需要存取「下載項目」，以尋找垃圾檔案與殘留檔案。";
+"NSRemovableVolumesUsageDescription" = "PureMac 需要存取卸除式儲存裝置，以掃描垃圾檔案。";
+"NSSystemAdministrationUsageDescription" = "PureMac 需要管理者權限，才能清理快取並完整解除安裝應用程式。";
+"NSHumanReadableCopyright" = "版權所有 © 2026。採用 MIT 授權條款。";
