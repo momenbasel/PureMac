@@ -4,6 +4,7 @@ struct MainWindow: View {
     @EnvironmentObject var appState: AppState
     @ObservedObject private var permission = PermissionCoordinator.shared
     @State private var selectedSection: AppSection? = .cleaning(.smartScan)
+    @State private var parentSection: AppSection?
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var cleanupExpanded = false
     @State private var advancedToolsExpanded = false
@@ -300,6 +301,13 @@ struct MainWindow: View {
     }
 
     private func selectSection(_ section: AppSection) {
+        parentSection = nil
+        selectedSection = section
+        focusedSection = section
+    }
+
+    private func navigateFromCurrentSection(to section: AppSection) {
+        parentSection = selectedSection
         selectedSection = section
         focusedSection = section
     }
@@ -403,6 +411,18 @@ struct MainWindow: View {
         .animation(reduceMotion ? nil : MotionTokens.gentle, value: appState.hasFullDiskAccess)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(AmbientBackdrop())
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                if let parentSection {
+                    Button {
+                        selectSection(parentSection)
+                    } label: {
+                        Label("Back", systemImage: "chevron.left")
+                    }
+                    .help("Back")
+                }
+            }
+        }
     }
 
     @ViewBuilder
@@ -428,7 +448,7 @@ struct MainWindow: View {
             SettingsView()
         case .cleaning(let category):
             if category == .smartScan {
-                DashboardView { selectSection($0) }
+                DashboardView { navigateFromCurrentSection(to: $0) }
             } else {
                 CategoryDetailView(category: category)
             }
