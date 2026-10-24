@@ -1,5 +1,6 @@
 import ArgumentParser
 import Foundation
+import TerminalUI
 
 struct Config: ParsableCommand {
     static let configuration = CommandConfiguration(
@@ -49,18 +50,28 @@ struct Config: ParsableCommand {
             return
         }
 
-        print(Term.bold("PureMac CLI settings"))
-        print(Term.dim("Values used when a command-line option is omitted"))
-        print("")
-        for key in ConfigStore.knownKeys {
-            let isSaved = store.values[key] != nil
-            let value = store.values[key] ?? ConfigStore.defaultValues[key] ?? ""
-            let source = isSaved ? "saved" : "default"
-            print("  \(key.padding(toLength: 26, withPad: " ", startingAt: 0)) \(value) days  " + Term.dim(source))
+        let folders = try ProjectFoldersStore(fileURL: AppPaths.projectsFile).roots
+        for line in Self.sheet(store: store, projectFolders: folders).plainLines() { print(line) }
+    }
+
+    static let sheetTitle = "PureMac CLI settings"
+
+    static func sheet(store: ConfigStore, projectFolders: [String]) -> InfoSheet {
+        let days = store.olderThanDays
+        let note = days == ConfigStore.defaultDays ? Span("default", TextStyle(dim: true)) : Span("saved", TextStyle(color: .cyan))
+        let keys = [InfoRow.metric(label: ConfigStore.daysKey, value: [Span("\(days) days")], note: note)]
+        let files = [("Settings", AppPaths.configFile), ("Protected", AppPaths.ignoreFile), ("Projects", AppPaths.projectsFile)].map { label, url in
+            InfoRow.metric(label: label, value: [Span(Render.shorten(url.path))], note: nil)
         }
-        print("")
-        print(Term.bold("Files"))
-        print("  \("Settings".padding(toLength: 12, withPad: " ", startingAt: 0)) \(Render.shorten(AppPaths.configFile.path))")
-        print("  \("Protected".padding(toLength: 12, withPad: " ", startingAt: 0)) \(Render.shorten(AppPaths.ignoreFile.path))")
+        return InfoSheet(
+            title: sheetTitle,
+            subtitle: "Values used when a command-line option is omitted",
+            sections: [
+                InfoSection(title: nil, labelWidth: 26, rows: keys),
+                InfoSection(title: "Files", labelWidth: 12, rows: files),
+                InfoSection(title: "Project folders", rows: projectFolders.map { .path(Render.shorten($0)) }),
+            ],
+            footnote: nil
+        )
     }
 }

@@ -111,4 +111,13 @@ final class CommandReviewTests: XCTestCase {
         XCTAssertEqual(reviewed.flatMap(\.selectedItems).map(\.path), [recent.path])
         XCTAssertEqual(category.selectedItems.map(\.path), [old.path])
     }
+
+    func testCleanAndPurgeHelpDescribeTheConfirmationDialogAndPlainReview() throws {
+        for discussion in [Clean.configuration.discussion, Purge.configuration.discussion] {
+            XCTAssertTrue(discussion.contains(Render.reviewHelp), discussion)
+            XCTAssertTrue(discussion.contains("Return on the selection screen opens a confirmation with Cancel focused"))
+            XCTAssertTrue(discussion.contains("--plain uses a numbered selector with ranges, all, and none, then prints the exact deletion review and asks (default No)"))
+            XCTAssertFalse(discussion.contains("only opens an exact deletion review"))
+        }
+    }
 }

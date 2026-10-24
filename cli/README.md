@@ -36,7 +36,9 @@ puremac purge ~/Projects
 puremac analyze ~/Projects
 ```
 
-Cleanup opens a selection screen. Nothing is selected when the interactive review begins. Move through the list, choose individual paths, and check the running size total. Press Return to review the selection, then confirm permanent deletion separately.
+`puremac purge` with no path scans the project folders from Preferences, by default ~/Projects, ~/Code, ~/dev, ~/GitHub and ~/Workspace. The first interactive start creates `~/.config/puremac/config.json` (the age setting only), an empty `~/.config/puremac/ignore` and `~/.config/puremac/projects` (one project folder per line, filled with those defaults); existing files are never overwritten. Project folders live in their own file so older puremac releases, which reject unknown keys in `config.json`, keep working.
+
+Cleanup opens a selection screen. Nothing is selected when the interactive review begins. Move through the list, choose individual paths, and check the running size total. Press Return to remove the selection; a confirmation dialog opens first.
 
 | Key | Action |
 |---|---|
@@ -44,12 +46,12 @@ Cleanup opens a selection screen. Nothing is selected when the interactive revie
 | Space | Toggle the focused item |
 | A / N | Select matching results / clear the selection |
 | / | Search the results |
-| Return | Review the selection |
+| Return | Remove the selection after confirmation |
 | Esc / Q | Cancel |
 
-Use Left and Right to scroll a long focused path. The final confirmation prints every selected path in full. Selection is by path, including recent project artifacts that earlier versions only displayed.
+Use Left and Right to scroll a long focused path. The confirmation dialog opens with Cancel selected and shows the total size, plus how many selected items the search hides. Choose Remove or press Y to delete, Esc to go back. Selection is by path, including recent project artifacts that earlier versions only displayed.
 
-Prefer an ordinary scrolling terminal? Use `--plain` for numbered selection and a text review:
+Prefer an ordinary scrolling terminal? Use `--plain` for numbered selection and a text review that prints every selected path in full:
 
 ```bash
 puremac purge ~/Projects --plain
@@ -115,7 +117,7 @@ The CLI has its own scan engine and safety checks. Its coverage is separate from
 
 ## Cleanup boundaries
 
-- Cleanup is permanent. The selection review lists the exact paths before confirmation.
+- Cleanup is permanent. The selection screen marks every selected path, and `--plain` prints them all in full before confirmation.
 - Critical filesystem roots, credential/configuration roots, and recognized cloud-provider state are protected.
 - Symlink checks and ignore-list checks run again before deletion.
 - A path containing an ignored descendant is also protected from removal.

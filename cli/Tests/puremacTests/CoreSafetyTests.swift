@@ -78,6 +78,41 @@ final class CoreSafetyTests: XCTestCase {
         XCTAssertTrue(fileManager.fileExists(atPath: artifact.appendingPathComponent("replacement.bin").path))
     }
 
+    private func makeFolder(files: Int) throws -> URL {
+        let folder = root.appendingPathComponent("folder-\(UUID().uuidString)", isDirectory: true)
+        try fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
+        for index in 0..<files {
+            try Data(repeating: 6, count: 4096).write(to: folder.appendingPathComponent("file-\(index).bin"))
+        }
+        return folder
+    }
+
+    func testMeasureWithoutACancelClosureStaysComplete() throws {
+        let folder = try makeFolder(files: 30)
+
+        let measured = DirSizer.measure(of: folder.path)
+
+        XCTAssertEqual(measured.status, .complete)
+        XCTAssertEqual(measured.skippedEntries, 0)
+        XCTAssertGreaterThanOrEqual(measured.bytes, 30 * 4096)
+        XCTAssertEqual(DirSizer.measure(of: folder.path, isCancelled: { false }).bytes, measured.bytes)
+    }
+
+    func testMeasureStopsInsideTheWalkWhenCancelledAndIsNeverComplete() throws {
+        let folder = try makeFolder(files: 60)
+        var checks = 0
+
+        let measured = DirSizer.measure(of: folder.path, isCancelled: {
+            checks += 1
+            return checks > 5
+        })
+
+        XCTAssertEqual(measured.status, .partial)
+        XCTAssertGreaterThan(measured.skippedEntries, 0)
+        XCTAssertLessThan(measured.bytes, 60 * 4096)
+        XCTAssertLessThan(checks, 20)
+    }
+
     func testCleanerAccountsFreshMeasuredBytes() throws {
         let file = root.appendingPathComponent("cache.bin")
         try Data(repeating: 5, count: 8192).write(to: file)

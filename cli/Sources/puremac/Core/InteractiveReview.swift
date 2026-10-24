@@ -1,4 +1,5 @@
 import Foundation
+import TerminalUI
 
 struct ReviewAddress: Hashable {
     let category: Int
@@ -12,15 +13,25 @@ enum ReviewDisplayRow {
     case item(ReviewAddress)
 }
 
+enum ConfirmationButton: Int, CaseIterable {
+    case cancel, remove
+}
+
+enum ReviewKeyRoute: Equatable {
+    case handled, remove, quit, passthrough
+}
+
 struct InteractiveReviewModel {
     var categories: [CategoryScan]
-    var query = ""
+    private(set) var queryInput = TextInput()
     var isSearching = false
-    var isReviewing = false
     var status = ""
     var pathOffset = 0
     private(set) var focus = 0
-    private(set) var reviewFocus = 0
+    private(set) var confirmation: ConfirmationButton?
+
+    var query: String { queryInput.text }
+    var isConfirming: Bool { confirmation != nil }
 
     init(categories: [CategoryScan]) {
         self.categories = categories.map { category in
@@ -79,44 +90,36 @@ struct InteractiveReviewModel {
         categories.reduce(Int64(0)) { $0 + $1.allBytes }
     }
 
+    var hiddenSelectedCount: Int {
+        let shown = Set(matchingAddresses)
+        return selectedAddresses.filter { !shown.contains($0) }.count
+    }
+
     var focusedAddress: ReviewAddress? {
-        let addresses = isReviewing ? selectedAddresses : matchingAddresses
-        let index = isReviewing ? reviewFocus : focus
-        guard addresses.indices.contains(index) else { return nil }
-        return addresses[index]
+        let addresses = matchingAddresses
+        guard addresses.indices.contains(focus) else { return nil }
+        return addresses[focus]
     }
 
     mutating func move(_ delta: Int) {
-        let count = isReviewing ? selectedAddresses.count : matchingAddresses.count
+        let count = matchingAddresses.count
         guard count > 0 else { return }
-        if isReviewing {
-            reviewFocus = min(count - 1, max(0, reviewFocus + delta))
-        } else {
-            focus = min(count - 1, max(0, focus + delta))
-        }
+        focus = min(count - 1, max(0, focus + delta))
         pathOffset = 0
     }
 
     mutating func moveToStart() {
-        if isReviewing {
-            reviewFocus = 0
-        } else {
-            focus = 0
-        }
+        focus = 0
         pathOffset = 0
     }
 
     mutating func moveToEnd() {
-        if isReviewing {
-            reviewFocus = max(0, selectedAddresses.count - 1)
-        } else {
-            focus = max(0, matchingAddresses.count - 1)
-        }
+        focus = max(0, matchingAddresses.count - 1)
         pathOffset = 0
     }
 
     mutating func toggleFocused() {
-        guard !isReviewing, let address = focusedAddress else { return }
+        guard let address = focusedAddress else { return }
         categories[address.category].groups[address.group].items[address.item].selected.toggle()
     }
 
@@ -131,41 +134,85 @@ struct InteractiveReviewModel {
         for address in allAddresses {
             categories[address.category].groups[address.group].items[address.item].selected = false
         }
-        reviewFocus = 0
         status = "Selection cleared"
     }
 
     mutating func updateQuery(_ value: String) {
-        query = value
+        queryInput = TextInput(value)
         focus = 0
         pathOffset = 0
         status = ""
     }
 
-    mutating func beginReview() -> Bool {
+    mutating func editQuery(_ key: TerminalKey) {
+        var edited = queryInput
+        if edited.handle(key) { updateQuery(edited.text) }
+    }
+
+    mutating func beginConfirmation() -> Bool {
         guard selectedCount > 0 else {
             status = "Select at least one item to continue"
             return false
         }
-        isReviewing = true
-        reviewFocus = 0
-        pathOffset = 0
         status = ""
+        confirmation = .cancel
         return true
     }
 
-    mutating func endReview() {
-        isReviewing = false
-        pathOffset = 0
-        status = ""
+    mutating func cancelConfirmation() {
+        confirmation = nil
     }
 
-    func displayRows(reviewing: Bool) -> [ReviewDisplayRow] {
-        let addresses = reviewing ? selectedAddresses : matchingAddresses
+    mutating func handleConfirmationKey(_ key: TerminalKey) -> ReviewKeyRoute {
+        guard let focused = confirmation else { return .passthrough }
+        var buttons = ButtonFocus(count: ConfirmationButton.allCases.count, index: focused.rawValue)
+        if buttons.navigate(key) {
+            confirmation = ConfirmationButton(rawValue: buttons.index)
+            return .handled
+        }
+        switch key {
+        case .enter:
+            if focused == .remove { return .remove }
+            cancelConfirmation()
+        case .escape:
+            cancelConfirmation()
+        case .character(let character):
+            switch character.lowercasedString {
+            case "y": return .remove
+            case "n": cancelConfirmation()
+            case "q": return .quit
+            default: break
+            }
+        default:
+            break
+        }
+        return .handled
+    }
+
+    mutating func routeKey(_ key: TerminalKey) -> ReviewKeyRoute {
+        if isConfirming { return handleConfirmationKey(key) }
+        if key == .enter, !isSearching {
+            _ = beginConfirmation()
+            return .handled
+        }
+        return .passthrough
+    }
+
+    func acceptsKey(_ key: TerminalKey, tooSmall: Bool) -> Bool {
+        guard tooSmall, let focused = confirmation else { return true }
+        switch key {
+        case .escape: return true
+        case .enter: return focused == .cancel
+        case .character(let character): return ["n", "q"].contains(character.lowercasedString)
+        default: return false
+        }
+    }
+
+    var displayRows: [ReviewDisplayRow] {
         var rows: [ReviewDisplayRow] = []
         var lastCategory: Int?
         var lastGroup: Int?
-        for address in addresses {
+        for address in matchingAddresses {
             if lastCategory != address.category {
                 rows.append(.category(address.category))
                 lastCategory = address.category
@@ -208,14 +255,28 @@ struct InteractiveReviewModel {
 }
 
 enum InteractiveReview {
-    static func select(_ categories: [CategoryScan], title: String) throws -> [CategoryScan]? {
-        let session = try TerminalSession()
-        defer { session.close() }
-
+    static func select(
+        _ categories: [CategoryScan],
+        session: TerminalSession,
+        title: String,
+        noun: String
+    ) -> InteractiveReviewModel? {
         var model = InteractiveReviewModel(categories: categories)
         while true {
-            session.draw(lines: render(model: model, title: title, width: session.width, height: session.height))
+            session.draw(render(model: model, title: title, noun: noun, width: session.width, height: session.height))
             let key = session.readKey()
+
+            guard model.acceptsKey(key, tooSmall: !TooSmallScreen.fits(width: session.width, height: session.height)) else {
+                continue
+            }
+            switch model.routeKey(key) {
+            case .remove:
+                model.cancelConfirmation()
+                return model
+            case .quit: return nil
+            case .handled: continue
+            case .passthrough: break
+            }
 
             if model.isSearching {
                 switch key {
@@ -224,18 +285,8 @@ enum InteractiveReview {
                 case .escape:
                     model.isSearching = false
                     model.updateQuery("")
-                case .backspace, .delete:
-                    if !model.query.isEmpty {
-                        model.updateQuery(String(model.query.dropLast()))
-                    }
-                case .space:
-                    model.updateQuery(model.query + " ")
-                case .character(let character):
-                    if !character.isASCIIControl {
-                        model.updateQuery(model.query + String(character))
-                    }
                 default:
-                    break
+                    model.editQuery(key)
                 }
                 continue
             }
@@ -259,28 +310,17 @@ enum InteractiveReview {
                 model.pathOffset += max(8, session.width / 3)
             case .space:
                 model.toggleFocused()
-            case .enter:
-                if model.isReviewing {
-                    return model.selectedResult()
-                }
-                _ = model.beginReview()
             case .escape:
-                if model.isReviewing {
-                    model.endReview()
-                } else {
-                    return nil
-                }
+                return nil
             case .character(let character):
                 switch character.lowercasedString {
                 case "a":
-                    if !model.isReviewing { model.selectAllMatching() }
+                    model.selectAllMatching()
                 case "n":
-                    if !model.isReviewing { model.selectNone() }
+                    model.selectNone()
                 case "/":
-                    if !model.isReviewing {
-                        model.isSearching = true
-                        model.status = ""
-                    }
+                    model.isSearching = true
+                    model.status = ""
                 case "q":
                     return nil
                 default:
@@ -292,125 +332,166 @@ enum InteractiveReview {
         }
     }
 
+    private static let itemPrefixWidth = 5 + Render.sizeColumnWidth
+    private static let summaryGap = 2
+
     static func render(
         model: InteractiveReviewModel,
         title: String,
+        noun: String,
         width: Int,
         height: Int
-    ) -> [String] {
-        let safeWidth = max(1, width)
-        let safeHeight = max(1, height)
-        if safeWidth < 40 || safeHeight < 12 {
-            return compactScreen(width: safeWidth, height: safeHeight)
+    ) -> Buffer {
+        guard TooSmallScreen.fits(width: width, height: height) else {
+            return TooSmallScreen.render(title: "PureMac", exitHint: "Esc/q cancel", width: width, height: height)
         }
-        let titleText = Term.truncate(title, to: safeWidth - 2)
-        let selection = "\(model.selectedCount) selected · \(ByteCount.human(model.selectedBytes))"
-        let found = "\(model.matchingAddresses.count) shown · \(ByteCount.human(model.allBytes))"
-        var lines = [
-            Term.dim("PUREMAC  /  \(model.isReviewing ? "FINAL REVIEW" : "SELECT ITEMS")"),
-            Term.bold(Term.cyan(titleText)),
-            statusLine(left: found, right: selection, width: safeWidth)
-        ]
+        var buffer = Buffer(width: width, height: height)
+        let window = Window(
+            title: title,
+            info: "\(model.selectedCount) selected · \(ByteCount.human(model.selectedBytes))"
+        )
+        let content = window.render(in: buffer.area, buffer: &buffer)
+        let hints = KeyHints(selectHints)
+        let areas = content.splitRows(
+            [.length(1), .fill, .length(1), .length(1), .length(hints.rows(width: content.width).count)]
+        )
+        let (header, list, divider, path, footer) = (areas[0], areas[1], areas[2], areas[3], areas[4])
 
-        if model.isSearching {
-            let query = Term.truncate(model.query, to: max(1, safeWidth - 10))
-            lines.append(Term.cyan("Search  ") + query + Term.inverse(" "))
-        } else if !model.status.isEmpty {
-            lines.append(Term.yellow(Term.truncate(model.status, to: safeWidth)))
-        } else if model.query.isEmpty {
-            lines.append("")
-        } else {
-            lines.append(Term.dim("Filter  ") + Term.truncate(model.query, to: max(1, safeWidth - 9)))
-        }
+        renderHeader(model: model, in: header, buffer: &buffer)
+        window.renderDivider(atRow: divider.y, in: buffer.area, buffer: &buffer)
+        buffer.write(focusedPathSpans(model: model, width: path.width), x: path.x, y: path.y, maxWidth: path.width)
+        hints.render(in: footer, buffer: &buffer)
 
-        let footerHeight = 5
-        let bodyHeight = max(3, safeHeight - lines.count - footerHeight)
-        let rows = model.displayRows(reviewing: model.isReviewing)
+        let rows = model.displayRows
         let focusedAddress = model.focusedAddress
         let focusedRow = rows.firstIndex { row in
             if case .item(let address) = row { return address == focusedAddress }
             return false
         } ?? 0
-        let start = max(0, min(max(0, rows.count - bodyHeight), focusedRow - bodyHeight / 2))
-        let visibleRows = rows.dropFirst(start).prefix(bodyHeight)
-
-        for row in visibleRows {
-            switch row {
-            case .category(let categoryIndex):
-                let category = model.categories[categoryIndex]
-                let label = Term.truncate(Term.sanitize(category.title).uppercased(), to: safeWidth - 4)
-                lines.append("  " + Term.bold(Term.cyan(label)))
-            case .group(let categoryIndex, let groupIndex):
-                let group = model.categories[categoryIndex].groups[groupIndex]
-                let suffix = "\(group.items.count) \(group.items.count == 1 ? "item" : "items")"
-                let available = max(1, safeWidth - 8 - suffix.count)
-                lines.append("    " + Term.dim(Term.pad(Term.truncate(group.tool, to: available), to: available) + suffix))
-            case .item(let address):
-                let item = model.item(at: address)
-                let focused = address == focusedAddress
-                let mark = item.selected ? Term.cyan("●") : Term.dim("○")
-                let pointer = focused ? Term.cyan("›") : " "
-                let size = Term.pad(ByteCount.human(item.sizeBytes), to: 10)
-                let pathWidth = max(6, safeWidth - 17)
-                let path = Term.truncate(Render.shorten(item.path), to: pathWidth, middle: true)
-                let content = "\(pointer) \(mark) \(size) \(path)"
-                lines.append(focused ? Term.inverse(content) : content)
-            }
+        let start = Scrollbar.centeredOffset(total: rows.count, visible: list.height, focus: focusedRow)
+        for (index, row) in rows.enumerated().dropFirst(start).prefix(list.height) {
+            let rect = Rect(x: list.x, y: list.y + index - start, width: list.width, height: 1)
+            renderRow(row, focused: focusedAddress, model: model, in: rect, buffer: &buffer)
         }
+        Scrollbar(total: rows.count, visible: list.height, offset: start)
+            .render(column: width - 1, rows: list.y..<(list.y + list.height), buffer: &buffer)
+        guard let focus = model.confirmation else { return buffer }
+        let dialog = confirmationDialog(
+            count: model.selectedCount,
+            total: model.selectedBytes,
+            hidden: model.hiddenSelectedCount,
+            noun: noun,
+            focus: focus
+        )
+        return StatusScreen.overlay(dialog, on: buffer)
+    }
 
-        while lines.count < safeHeight - footerHeight {
-            lines.append("")
-        }
+    static func confirmationDialog(
+        count: Int,
+        total: Int64,
+        hidden: Int,
+        noun: String,
+        focus: ConfirmationButton
+    ) -> Dialog {
+        var message = [Span("\(ByteCount.human(total)) will be deleted")]
+        if hidden > 0 { message.append(Span("\(hidden) hidden by search", TextStyle(dim: true))) }
+        return Dialog(
+            title: "Remove \(Render.counted(count, noun))?",
+            titleStyle: StatusScreen.warningTitle,
+            borderStyle: StatusScreen.warningBorder,
+            message: message,
+            buttons: [DialogButton("Cancel"), DialogButton("Remove", role: .destructive)],
+            focusedButton: focus.rawValue,
+            hints: StatusScreen.choiceHints
+        )
+    }
 
-        let divider = String(repeating: "─", count: safeWidth)
-        lines.append(Term.dim(divider))
-        lines.append(focusedPathLine(model: model, width: safeWidth))
-        if model.isReviewing {
-            lines.append(Term.dim("↑↓ scroll  ←→ path"))
-            lines.append(Term.dim("Enter confirm  Esc edit"))
-            lines.append(Term.yellow("q cancel  command confirmation follows"))
+    private static let selectHints = [
+        KeyHint("↑↓", "move"),
+        KeyHint("←→", "path"),
+        KeyHint("Space", "toggle"),
+        KeyHint("A", "all"),
+        KeyHint("N", "none"),
+        KeyHint("/", "search"),
+        KeyHint("Enter", "remove"),
+        KeyHint("Esc/q", "cancel")
+    ]
+
+    private static func renderHeader(model: InteractiveReviewModel, in rect: Rect, buffer: inout Buffer) {
+        let dim = TextStyle(dim: true)
+        let found = "\(model.matchingAddresses.count) shown · \(ByteCount.human(model.allBytes))"
+        let left: [Span]
+        if model.isSearching {
+            left = model.queryInput.fieldSpans(label: "Search  ", width: rect.width)
+        } else if !model.status.isEmpty {
+            left = [Span(Term.truncate(model.status, to: rect.width), TextStyle(color: .yellow))]
+        } else if !model.query.isEmpty {
+            let label = "Filter  "
+            left = [Span(label + Term.truncate(model.query, to: max(1, rect.width - label.count)), dim)]
         } else {
-            lines.append(Term.dim("↑↓ move  ←→ path  Space toggle"))
-            lines.append(Term.dim("A all  N none  / search"))
-            lines.append(Term.dim("Enter review  Esc/q cancel"))
+            buffer.write(Term.truncate(found, to: rect.width), x: rect.x, y: rect.y, style: dim)
+            return
         }
-        return Array(lines.prefix(safeHeight))
-    }
-
-    private static func compactScreen(width: Int, height: Int) -> [String] {
-        let lines = [
-            Term.bold(Term.cyan(Term.truncate("PureMac", to: width))),
-            Term.truncate("Terminal too small", to: width),
-            Term.dim(Term.truncate("Resize to at least 40 x 12", to: width)),
-            "",
-            Term.dim(Term.truncate("Esc/q cancel", to: width))
-        ]
-        return Array(lines.prefix(height))
-    }
-
-    static func statusLine(left: String, right: String, width: Int) -> String {
-        let available = max(1, width - 2)
-        let leftWidth = Term.displayWidth(left)
-        let rightWidth = Term.displayWidth(right)
-        if leftWidth + rightWidth <= available {
-            return Term.pad(left, to: available - rightWidth) + "  " + Term.bold(right)
+        let leftWidth = buffer.write(left, x: rect.x, y: rect.y, maxWidth: rect.width)
+        let foundWidth = Term.displayWidth(found)
+        if leftWidth + summaryGap + foundWidth <= rect.width {
+            buffer.write(found, x: rect.x + rect.width - foundWidth, y: rect.y, style: dim)
         }
-
-        let rightBudget = min(rightWidth, max(1, available / 2))
-        let leftBudget = max(1, available - rightBudget)
-        let clippedLeft = Term.truncate(left, to: leftBudget)
-        let clippedRight = Term.truncate(right, to: rightBudget)
-        return Term.pad(clippedLeft, to: leftBudget) + "  " + Term.bold(clippedRight)
     }
 
-    private static func focusedPathLine(model: InteractiveReviewModel, width: Int) -> String {
+    private static func renderRow(
+        _ row: ReviewDisplayRow,
+        focused focusedAddress: ReviewAddress?,
+        model: InteractiveReviewModel,
+        in rect: Rect,
+        buffer: inout Buffer
+    ) {
+        switch row {
+        case .category(let categoryIndex):
+            let title = Term.truncate(model.categories[categoryIndex].title, to: rect.width)
+            buffer.write(title, x: rect.x, y: rect.y, style: TextStyle(bold: true), maxWidth: rect.width)
+        case .group(let categoryIndex, let groupIndex):
+            let group = model.categories[categoryIndex].groups[groupIndex]
+            let suffix = "\(group.items.count) \(group.items.count == 1 ? "item" : "items")"
+            let label = Term.truncate(group.tool, to: max(1, rect.width - suffix.count - 1))
+            buffer.write(
+                Term.pad(label, to: rect.width - suffix.count) + suffix,
+                x: rect.x,
+                y: rect.y,
+                style: TextStyle(dim: true),
+                maxWidth: rect.width
+            )
+        case .item(let address):
+            let item = model.item(at: address)
+            let focused = address == focusedAddress
+            let rowStyle = TextStyle(inverse: focused)
+            let sizeStyle = SizeLevel.style(bytes: item.sizeBytes, focused: focused)
+            let pathWidth = max(1, rect.width - itemPrefixWidth)
+            let path = Term.truncate(Render.shorten(item.path), to: pathWidth, middle: true)
+            buffer.write(
+                [
+                    FocusPointer.span(focused: focused),
+                    Span(" ", rowStyle),
+                    Span(item.selected ? "●" : "○", TextStyle(color: item.selected ? .cyan : nil, dim: !item.selected, inverse: focused)),
+                    Span(" ", rowStyle),
+                    Span(Render.sizeCol(item.sizeBytes), sizeStyle),
+                    Span(" " + Term.pad(path, to: pathWidth), rowStyle)
+                ],
+                x: rect.x,
+                y: rect.y,
+                maxWidth: rect.width
+            )
+        }
+    }
+
+    private static func focusedPathSpans(model: InteractiveReviewModel, width: Int) -> [Span] {
+        let label = TextStyle(dim: true)
         guard let address = model.focusedAddress else {
-            return Term.dim("Path  No matching item")
+            return [Span("Path  No matching item", label)]
         }
         let path = Render.shorten(model.item(at: address).path)
-        let available = max(1, width - 6)
-        let window = horizontalWindow(path, offset: model.pathOffset, width: available)
-        return Term.dim("Path  ") + window
+        let window = horizontalWindow(path, offset: model.pathOffset, width: max(1, width - 6))
+        return [Span("Path  ", label), Span(window)]
     }
 
     static func horizontalWindow(_ value: String, offset: Int, width: Int) -> String {
@@ -437,10 +518,6 @@ enum InteractiveReview {
 }
 
 private extension Character {
-    var isASCIIControl: Bool {
-        unicodeScalars.allSatisfy { $0.value < 0x20 || $0.value == 0x7F }
-    }
-
     var lowercasedString: String {
         String(self).lowercased()
     }

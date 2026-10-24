@@ -1,5 +1,6 @@
 import ArgumentParser
 import Foundation
+import TerminalUI
 
 struct Ignore: ParsableCommand {
     static let configuration = CommandConfiguration(
@@ -32,14 +33,23 @@ struct Ignore: ParsableCommand {
 
     struct List: ParsableCommand {
         static let configuration = CommandConfiguration(abstract: "Show protected paths.")
+
         func run() throws {
             let store = try IgnoreStore(fileURL: AppPaths.ignoreFile)
-            if store.roots.isEmpty {
-                print(Term.dim("No protected paths. Add one with `puremac ignore add <path>`."))
+            guard !store.roots.isEmpty else {
+                print(Term.styled(Self.emptyHint()))
                 return
             }
             print(Term.bold("Protected paths:"))
             for root in store.roots.sorted() { print("  " + Render.shorten(root)) }
+        }
+
+        static func emptyHint() -> [Span] {
+            [
+                Span("No protected paths. Add one with `", TextStyle(dim: true)),
+                Span("puremac ignore add <path>", TextStyle(color: .cyan)),
+                Span("`.", TextStyle(dim: true)),
+            ]
         }
     }
 }

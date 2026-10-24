@@ -9,10 +9,16 @@ struct CleanOutcome {
 }
 
 enum Cleaner {
-    static func remove(_ items: [ScanItem], ignore: IgnoreStore, dryRun: Bool) -> CleanOutcome {
+    static func remove(
+        _ items: [ScanItem],
+        ignore: IgnoreStore,
+        dryRun: Bool,
+        beforeItem: ((_ index: Int, _ count: Int, _ item: ScanItem) -> Void)? = nil
+    ) -> CleanOutcome {
         var out = CleanOutcome()
         let fm = FileManager.default
-        for item in items {
+        for (index, item) in items.enumerated() {
+            beforeItem?(index, items.count, item)
             if Safety.hasSymlinkComponent(item.path) {
                 out.skipped.append((item.path, "symlink"))
                 continue
