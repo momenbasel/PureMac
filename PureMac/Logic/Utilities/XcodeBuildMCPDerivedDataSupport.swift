@@ -229,7 +229,7 @@ enum XcodeBuildMCPDerivedDataSupport {
             let tool = root.lastPathComponent
             let legacyDerivedData = root.appendingPathComponent("DerivedData", isDirectory: true)
             if isRealDirectory(legacyDerivedData, fileManager: fileManager) {
-                results.append((name: "\(tool): Legacy DerivedData", url: legacyDerivedData))
+                results.append((name: String(localized: "\(tool): Legacy DerivedData"), url: legacyDerivedData))
             }
 
             let workspacesRoot = root.appendingPathComponent("workspaces", isDirectory: true)
