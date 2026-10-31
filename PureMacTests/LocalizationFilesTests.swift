@@ -11,7 +11,7 @@ final class LocalizationFilesTests: XCTestCase {
     }
 
     func testBuiltAppBundleContainsAddedLocalizations() throws {
-        for language in ["de", "it", "ru", "uk", "zh-Hans"] {
+        for language in ["de", "it", "ru", "uk", "zh-Hans", "zh-Hant"] {
             XCTAssertTrue(
                 Bundle.main.localizations.contains(language),
                 "Expected the built app bundle to register the \(language) localization"
@@ -103,6 +103,39 @@ final class LocalizationFilesTests: XCTestCase {
                 duplicates.isEmpty,
                 "\(language).lproj/Localizable.strings has duplicate keys:\n\(duplicates.joined(separator: "\n"))"
             )
+        }
+    }
+
+    // 台灣繁中應完整翻譯介面文字，產品名稱則保留原文。
+    func testTraditionalChineseHasNoUntranslatedInterfaceText() throws {
+        let files = try localizableStringsFiles()
+        let english = try localizedStrings(in: XCTUnwrap(files["en"]))
+        let traditionalChinese = try localizedStrings(in: XCTUnwrap(files["zh-Hant"]))
+        let retainedNames: Set<String> = [
+            "PureMac", "PureMac.app", "CPU", "Finder", "FileVault",
+            "Gatekeeper", "Homebrew", "Time Machine", "XProtect"
+        ]
+        let untranslated = english.keys.filter {
+            !retainedNames.contains($0) && traditionalChinese[$0] == english[$0]
+        }.sorted()
+        XCTAssertTrue(untranslated.isEmpty, "繁中介面仍有未翻譯文字：\(untranslated)")
+    }
+
+    // 權限提示和 Finder 服務選單也必須有完整的繁中資源。
+    func testTraditionalChineseAuxiliaryResourcesHaveEnglishKeyParity() throws {
+        let sourceRoot = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("PureMac")
+        for resource in ["InfoPlist", "ServicesMenu"] {
+            let english = try localizedKeys(in: sourceRoot
+                .appendingPathComponent("en.lproj/\(resource).strings"))
+            let traditionalChinese = try localizedStrings(in: sourceRoot
+                .appendingPathComponent("zh-Hant.lproj/\(resource).strings"))
+            XCTAssertEqual(english, Set(traditionalChinese.keys))
+            for value in traditionalChinese.values {
+                XCTAssertNotNil(value.range(of: "\\p{Han}", options: .regularExpression),
+                                "繁中輔助資源必須包含中文翻譯：\(value)")
+            }
         }
     }
 
