@@ -11,16 +11,26 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0"),
     ],
     targets: [
+        .target(
+            name: "TerminalUI",
+            path: "Sources/TerminalUI"
+        ),
         .executableTarget(
             name: "puremac",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
+                "TerminalUI",
             ],
             path: "Sources/puremac"
         ),
         .testTarget(
+            name: "TerminalUITests",
+            dependencies: ["TerminalUI"],
+            path: "Tests/TerminalUITests"
+        ),
+        .testTarget(
             name: "puremacTests",
-            dependencies: ["puremac"],
+            dependencies: ["puremac", "TerminalUI"],
             path: "Tests/puremacTests"
         ),
     ]

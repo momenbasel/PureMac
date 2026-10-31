@@ -1,7 +1,7 @@
 import Darwin
 import Foundation
 
-enum TerminalKey: Equatable {
+public enum TerminalKey: Equatable {
     case up
     case down
     case left
@@ -13,13 +13,14 @@ enum TerminalKey: Equatable {
     case enter
     case escape
     case space
+    case tab
     case backspace
     case delete
     case character(Character)
     case unknown
 }
 
-enum TerminalSessionError: Error {
+public enum TerminalSessionError: Error {
     case unsupported
     case setupFailed
 }
@@ -75,24 +76,25 @@ private func terminalExitHandler() {
     terminalRestore()
 }
 
-final class TerminalSession {
-    static var isSupported: Bool {
+public final class TerminalSession {
+    public static var isSupported: Bool {
         isatty(STDIN_FILENO) == 1
             && isatty(STDOUT_FILENO) == 1
             && ProcessInfo.processInfo.environment["TERM"] != "dumb"
     }
 
     private var isClosed = false
+    private let input = KeyInput()
 
-    var width: Int {
+    public var width: Int {
         terminalDimensions().width
     }
 
-    var height: Int {
+    public var height: Int {
         terminalDimensions().height
     }
 
-    init() throws {
+    public init() throws {
         guard Self.isSupported else {
             throw TerminalSessionError.unsupported
         }
@@ -138,33 +140,43 @@ final class TerminalSession {
         close()
     }
 
-    func draw(lines: [String]) {
-        guard !isClosed else { return }
+    static func frame(lines: [String], height: Int) -> String {
         let visibleLines = Array(lines.prefix(max(1, height)))
-        let frame = visibleLines.map { "\u{1B}[2K" + $0 }.joined(separator: "\r\n")
-        terminalWrite("\u{1B}[H" + frame + "\u{1B}[J")
+        let body = visibleLines.map { "\u{1B}[2K" + $0 }.joined(separator: "\r\n")
+        return "\u{1B}[H" + body + (visibleLines.count < height ? "\u{1B}[J" : "")
     }
 
-    func readKey() -> TerminalKey {
-        guard !isClosed, let first = readByte() else { return .escape }
+    public func draw(_ buffer: Buffer) {
+        guard !isClosed else { return }
+        terminalWrite(Self.frame(lines: buffer.lines(), height: height))
+    }
 
-        switch first {
-        case 0x0A, 0x0D:
-            return .enter
-        case 0x20:
-            return .space
-        case 0x08, 0x7F:
-            return .backspace
-        case 0x1B:
-            return readEscapeSequence()
-        case 0x01...0x1A:
-            return .unknown
-        default:
-            return decodeCharacter(firstByte: first)
+    public func readKey() -> TerminalKey {
+        guard !isClosed, let first = input.readByte() else { return .escape }
+
+        if let key = Self.key(forSimpleByte: first) { return key }
+        return first == 0x1B ? readEscapeSequence() : decodeCharacter(firstByte: first)
+    }
+
+    public func readKey(timeoutMilliseconds: Int) -> TerminalKey? {
+        guard !isClosed else { return nil }
+        let milliseconds = Int32(clamping: timeoutMilliseconds)
+        guard input.wait(milliseconds: milliseconds) else { return nil }
+        return readKey()
+    }
+
+    static func key(forSimpleByte byte: UInt8) -> TerminalKey? {
+        switch byte {
+        case 0x0A, 0x0D: return .enter
+        case 0x20: return .space
+        case 0x09: return .tab
+        case 0x08, 0x7F: return .backspace
+        case 0x01...0x1A: return .unknown
+        default: return nil
         }
     }
 
-    func close() {
+    public func close() {
         guard !isClosed else { return }
         isClosed = true
         terminalRestore()
@@ -179,13 +191,13 @@ final class TerminalSession {
     }
 
     private func readEscapeSequence() -> TerminalKey {
-        guard inputAvailable(milliseconds: 24), let second = readByte() else {
+        guard input.available(milliseconds: 24), let second = input.readByte() else {
             return .escape
         }
         guard second == 0x5B || second == 0x4F else {
             return .escape
         }
-        guard inputAvailable(milliseconds: 24), let third = readByte() else {
+        guard input.available(milliseconds: 24), let third = input.readByte() else {
             return .escape
         }
 
@@ -197,7 +209,7 @@ final class TerminalSession {
         case 0x48: return .home
         case 0x46: return .end
         case 0x31, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38:
-            guard inputAvailable(milliseconds: 24), let fourth = readByte(), fourth == 0x7E else {
+            guard input.available(milliseconds: 24), let fourth = input.readByte(), fourth == 0x7E else {
                 return .unknown
             }
             switch third {
@@ -225,7 +237,7 @@ final class TerminalSession {
 
         var bytes = [firstByte]
         while bytes.count < expectedCount {
-            guard inputAvailable(milliseconds: 24), let byte = readByte() else {
+            guard input.available(milliseconds: 24), let byte = input.readByte() else {
                 return .unknown
             }
             bytes.append(byte)
@@ -235,21 +247,6 @@ final class TerminalSession {
             return .unknown
         }
         return .character(character)
-    }
-
-    private func readByte() -> UInt8? {
-        var byte: UInt8 = 0
-        while true {
-            let result = Darwin.read(STDIN_FILENO, &byte, 1)
-            if result == 1 { return byte }
-            if result == -1 && errno == EINTR { continue }
-            return nil
-        }
-    }
-
-    private func inputAvailable(milliseconds: Int32) -> Bool {
-        var descriptor = pollfd(fd: STDIN_FILENO, events: Int16(POLLIN), revents: 0)
-        return poll(&descriptor, 1, milliseconds) > 0
     }
 
     private func terminalDimensions() -> (width: Int, height: Int) {

@@ -1,5 +1,6 @@
 import ArgumentParser
 import Foundation
+import TerminalUI
 
 struct Optimize: ParsableCommand {
     static let configuration = CommandConfiguration(
@@ -29,27 +30,127 @@ struct Optimize: ParsableCommand {
     func run() throws {
         switch task ?? "status" {
         case "ram":
-            try showMemory(includeHeading: true)
-            print("")
-            print(Term.dim("No memory was purged. macOS reclaims inactive memory when applications need it."))
+            Self.printPlain(Self.memorySheet(try SystemInfo.memoryStatus(), pressure: SystemInfo.memoryPressure()), withHeader: false)
         case "purgeable":
-            try showStorage(includeHeading: true)
-            print("")
-            print(Term.dim("No storage was changed. APFS managed capacity is an estimate controlled by macOS."))
+            Self.printPlain(Self.storageSheet(try SystemInfo.volumeStatus("/")), withHeader: false)
         case "snapshots":
             try showSnapshots()
         default:
-            print(Term.bold("Mac status"))
-            print(Term.dim("Read-only measurements from macOS"))
-            print("")
-            try showMemory(includeHeading: true)
-            print("")
-            try showStorage(includeHeading: true)
-            print("")
-            print("  " + Term.dim("Uptime") + "  " + Self.formatUptime(ProcessInfo.processInfo.systemUptime))
-            print("")
-            print(Term.dim("No maintenance ran. Use `puremac clean --dry-run` to review removable files."))
+            Self.printPlain(try Self.currentStatusSheet())
         }
+    }
+
+    static let statusTitle = "Mac status"
+    static let statusFootnote = "No maintenance ran. Use `puremac clean --dry-run` to review removable files."
+
+    static func currentStatusSheet() throws -> InfoSheet {
+        let memory = try SystemInfo.memoryStatus()
+        let volume = try SystemInfo.volumeStatus("/")
+        return statusSheet(
+            memory: memory,
+            pressure: SystemInfo.memoryPressure(),
+            volume: volume,
+            machine: SystemInfo.machine()
+        )
+    }
+
+    static func statusSheet(
+        memory: MemoryStatus,
+        pressure: MemoryPressure?,
+        volume: VolumeStatus,
+        machine: MachineInfo
+    ) -> InfoSheet {
+        InfoSheet(
+            title: statusTitle,
+            subtitle: "Read-only measurements from macOS",
+            sections: [
+                thisMacSection(machine),
+                memorySection(memory, pressure: pressure),
+                storageSection(volume),
+            ],
+            footnote: statusFootnote
+        )
+    }
+
+    static func memorySheet(_ status: MemoryStatus, pressure: MemoryPressure?) -> InfoSheet {
+        InfoSheet(
+            title: memoryTitle,
+            sections: [memorySection(status, pressure: pressure)],
+            footnote: "No memory was purged. macOS reclaims inactive memory when applications need it."
+        )
+    }
+
+    static func storageSheet(_ status: VolumeStatus) -> InfoSheet {
+        InfoSheet(
+            title: storageTitle,
+            sections: [storageSection(status)],
+            footnote: "No storage was changed. APFS managed capacity is an estimate controlled by macOS."
+        )
+    }
+
+    static let memoryTitle = "Memory"
+    static let storageTitle = "Storage"
+
+    static func thisMacSection(_ machine: MachineInfo) -> InfoSection {
+        let facts: [(String, String?)] = [
+            ("Chip", machine.chip),
+            ("Cores", machine.cores),
+            ("Memory", machine.memory.map(ByteCount.memory)),
+            ("macOS", machine.macOS),
+            ("Model", machine.model),
+            ("Uptime", formatUptime(machine.uptime)),
+        ]
+        return InfoSection(title: "This Mac", rows: facts.compactMap { label, value in value.map { metric(label, $0) } })
+    }
+
+    static func memorySection(_ status: MemoryStatus, pressure: MemoryPressure?) -> InfoSection {
+        let used = ByteCount.memory(status.total - status.free)
+        var rows: [InfoRow] = [
+            .gauge(
+                fraction: status.usedFraction,
+                color: pressure?.color,
+                text: "\(used) in use of \(ByteCount.memory(status.total))"
+            )
+        ]
+        if let pressure {
+            rows.append(.metric(label: "Pressure", value: [Span(pressure.label, TextStyle(color: pressure.color))], note: nil))
+        }
+        rows += [
+            metric("Installed", ByteCount.memory(status.total)),
+            metric("Free now", ByteCount.memory(status.free)),
+            metric("Active", ByteCount.memory(status.active)),
+            metric("Inactive", ByteCount.memory(status.inactive)),
+            metric("Compressed", ByteCount.memory(status.compressed)),
+            metric("Wired", ByteCount.memory(status.wired)),
+        ]
+        return InfoSection(title: memoryTitle, rows: rows)
+    }
+
+    static func storageSection(_ status: VolumeStatus) -> InfoSection {
+        let color = status.freeColor
+        var rows: [InfoRow] = [
+            .gauge(
+                fraction: status.usedFraction,
+                color: color,
+                text: "\(ByteCount.human(status.availableNow)) free of \(ByteCount.human(status.total))"
+            ),
+            .metric(label: "Free now", value: [Span(ByteCount.human(status.availableNow), TextStyle(color: color))], note: nil),
+            metric("Total", ByteCount.human(status.total)),
+            metric("Managed by macOS", ByteCount.human(status.systemManagedCapacity)),
+        ]
+        if status.systemManagedCapacity > 0 {
+            let note = "Managed capacity may include purgeable files and is not guaranteed free space."
+            rows.append(.message([Span(note, TextStyle(dim: true))]))
+        }
+        return InfoSection(title: storageTitle, rows: rows)
+    }
+
+    private static func metric(_ label: String, _ value: String) -> InfoRow {
+        .metric(label: label, value: [Span(value)], note: nil)
+    }
+
+    private static func printPlain(_ sheet: InfoSheet, withHeader: Bool = true) {
+        for line in sheet.plainLines(withHeader: withHeader) { print(line) }
     }
 
     static func parseLocalSnapshots(_ output: String) -> [String] {
@@ -88,28 +189,6 @@ struct Optimize: ParsableCommand {
         return "\(minutes)m"
     }
 
-    private func showMemory(includeHeading: Bool) throws {
-        let status = try SystemInfo.memoryStatus()
-        if includeHeading { print(Term.bold("Memory")) }
-        printMetric("Installed", ByteCount.human(status.total))
-        printMetric("Free now", ByteCount.human(status.free))
-        printMetric("Active", ByteCount.human(status.active))
-        printMetric("Inactive", ByteCount.human(status.inactive))
-        printMetric("Compressed", ByteCount.human(status.compressed))
-        printMetric("Wired", ByteCount.human(status.wired))
-    }
-
-    private func showStorage(includeHeading: Bool) throws {
-        let status = try SystemInfo.volumeStatus("/")
-        if includeHeading { print(Term.bold("Storage")) }
-        printMetric("Free now", ByteCount.human(status.availableNow))
-        printMetric("Total", ByteCount.human(status.total))
-        printMetric("Managed by macOS", ByteCount.human(status.systemManagedCapacity))
-        if status.systemManagedCapacity > 0 {
-            print(Term.dim("  Managed capacity may include purgeable files and is not guaranteed free space."))
-        }
-    }
-
     private func showSnapshots() throws {
         let result = Shell.run("/usr/bin/tmutil", ["listlocalsnapshots", "/"])
         guard result.status == 0 else {
@@ -127,9 +206,5 @@ struct Optimize: ParsableCommand {
         }
         print("")
         print(Term.dim("Read-only list. Snapshot storage is managed by Time Machine and macOS."))
-    }
-
-    private func printMetric(_ label: String, _ value: String) {
-        print("  \(label.padding(toLength: 17, withPad: " ", startingAt: 0)) \(value)")
     }
 }

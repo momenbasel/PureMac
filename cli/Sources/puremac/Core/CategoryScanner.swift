@@ -1,17 +1,37 @@
 import Foundation
 
+enum ScanProgress: Equatable {
+    case stderr, silent
+
+    static func forMode(_ mode: CleanupCommandMode) -> ScanProgress {
+        mode == .fullscreen ? .silent : .stderr
+    }
+
+    func write(_ text: String) {
+        guard self == .stderr else { return }
+        FileHandle.standardError.write(Data(text.utf8))
+    }
+}
+
 enum CategoryScanner {
     static let minSize: Int64 = 1024
 
-    static func scan(categoryID id: String, title: String, ignore: IgnoreStore) -> CategoryScan {
-        FileHandle.standardError.write(Data("  scanning \(title)…\r".utf8))
-        let groups = id == "trash" ? scanTrash(ignore: ignore) : scanCatalog(id: id, ignore: ignore)
-        FileHandle.standardError.write(Data("                                        \r".utf8))
+    static func scan(
+        categoryID id: String,
+        title: String,
+        ignore: IgnoreStore,
+        progress: ScanProgress = .stderr,
+        isCancelled: () -> Bool = { false }
+    ) -> CategoryScan {
+        progress.write("  scanning \(title)…\r")
+        let groups = id == "trash"
+            ? scanTrash(roots: trashRoots(), ignore: ignore, isCancelled: isCancelled)
+            : scanCatalog(targets: Catalog.targets(for: id), ignore: ignore, isCancelled: isCancelled)
+        progress.write("                                        \r")
         return CategoryScan(id: id, title: title, groups: groups)
     }
 
-    private static func scanCatalog(id: String, ignore: IgnoreStore) -> [ToolGroup] {
-        let targets = Catalog.targets(for: id)
+    static func scanCatalog(targets: [Target], ignore: IgnoreStore, isCancelled: () -> Bool) -> [ToolGroup] {
         var candidates: [(target: Int, path: String)] = []
         for (ti, target) in targets.enumerated() {
             let paths = target.contents
@@ -26,7 +46,8 @@ enum CategoryScanner {
             }
         }
         candidates = uniqueCandidates(candidates)
-        let measurements = concurrentMeasurements(candidates.map { $0.path })
+        if isCancelled() { return [] }
+        let measurements = concurrentMeasurements(candidates.map { $0.path }, isCancelled: isCancelled)
 
         var itemsByTarget = [Int: [ScanItem]](minimumCapacity: targets.count)
         for (i, c) in candidates.enumerated()
@@ -60,7 +81,7 @@ enum CategoryScanner {
         concurrentMeasurements(paths).map(\.bytes)
     }
 
-    static func concurrentMeasurements(_ paths: [String]) -> [DirSizer.Measurement] {
+    static func concurrentMeasurements(_ paths: [String], isCancelled: () -> Bool = { false }) -> [DirSizer.Measurement] {
         guard !paths.isEmpty else { return [] }
         var out = [DirSizer.Measurement](
             repeating: DirSizer.Measurement(bytes: 0, status: .unavailable, skippedEntries: 1),
@@ -68,7 +89,7 @@ enum CategoryScanner {
         )
         out.withUnsafeMutableBufferPointer { buf in
             DispatchQueue.concurrentPerform(iterations: paths.count) { i in
-                buf[i] = DirSizer.measure(of: paths[i])
+                buf[i] = DirSizer.measure(of: paths[i], isCancelled: isCancelled)
             }
         }
         return out
@@ -98,20 +119,24 @@ enum CategoryScanner {
         return accepted.map { ($0.target, $0.path) }
     }
 
-    private static func scanTrash(ignore: IgnoreStore) -> [ToolGroup] {
-        let fm = FileManager.default
+    private static func trashRoots() -> [String] {
         var roots = ["\(Safety.home)/.Trash"]
         let uid = getuid()
-        if let vols = try? fm.contentsOfDirectory(atPath: "/Volumes") {
+        if let vols = try? FileManager.default.contentsOfDirectory(atPath: "/Volumes") {
             for vol in vols { roots.append("/Volumes/\(vol)/.Trashes/\(uid)") }
         }
+        return roots
+    }
 
+    static func scanTrash(roots: [String], ignore: IgnoreStore, isCancelled: () -> Bool) -> [ToolGroup] {
+        let fm = FileManager.default
         var groups: [ToolGroup] = []
         for root in roots where !Safety.hasSymlinkComponent(root) && !Safety.isCloudOrDataless(root) {
+            if isCancelled() { break }
             guard let children = try? fm.contentsOfDirectory(atPath: root), !children.isEmpty else { continue }
             let paths = children.map { "\(root)/\($0)" }.filter { passesPreFilter($0, ignore: ignore) }
             let unique = uniqueCandidates(paths.map { (target: 0, path: $0) })
-            let measurements = concurrentMeasurements(unique.map(\.path))
+            let measurements = concurrentMeasurements(unique.map(\.path), isCancelled: isCancelled)
             let items = zip(unique.map(\.path), measurements).compactMap { (path, measurement) -> ScanItem? in
                 measurement.status == .complete && measurement.bytes >= minSize
                     ? ScanItem(path: path, sizeBytes: measurement.bytes, modified: DirSizer.modified(of: path))

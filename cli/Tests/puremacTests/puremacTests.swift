@@ -4,6 +4,18 @@ import XCTest
 final class PureMacTests: XCTestCase {
     let home = FileManager.default.homeDirectoryForCurrentUser.path
 
+    func testMemoryFormattingUsesBinaryUnits() {
+        XCTAssertEqual(ByteCount.memory(51_539_607_552), "48 GB")
+        XCTAssertEqual(ByteCount.memory(17_179_869_184), "16 GB")
+        XCTAssertEqual(ByteCount.memory(536_870_912), "512 MB")
+        XCTAssertEqual(ByteCount.memory(1_610_612_736), "1.5 GB")
+        XCTAssertEqual(ByteCount.memory(1_000_000), "976.6 KB")
+        XCTAssertEqual(ByteCount.memory(1_024), "1 KB")
+        XCTAssertEqual(ByteCount.memory(1_023), "1023 bytes")
+        XCTAssertEqual(ByteCount.memory(0), "Zero KB")
+        XCTAssertEqual(ByteCount.human(51_539_607_552), "51.5 GB")
+    }
+
     func testByteCountFormatting() {
         XCTAssertEqual(ByteCount.human(0), "Zero KB")
         XCTAssertEqual(ByteCount.human(1_000), "1 KB")
@@ -82,5 +94,11 @@ final class PureMacTests: XCTestCase {
         _ = try ig.add(tmp)
         XCTAssertFalse(Safety.canRemove(tmp, ignore: ig).ok)
         _ = try ig.remove(tmp)
+    }
+
+    func testCountedUsesTheSingularOnlyForOne() {
+        XCTAssertEqual(Render.counted(0, "item"), "0 items")
+        XCTAssertEqual(Render.counted(1, "folder"), "1 folder")
+        XCTAssertEqual(Render.counted(2, "core"), "2 cores")
     }
 }

@@ -89,7 +89,7 @@ enum DirSizer {
         measure(of: path).bytes
     }
 
-    static func measure(of path: String) -> Measurement {
+    static func measure(of path: String, isCancelled: () -> Bool = { false }) -> Measurement {
         let fm = FileManager.default
         if Safety.hasSymlinkComponent(path) {
             return Measurement(bytes: 0, status: .symlink, skippedEntries: 1)
@@ -107,10 +107,10 @@ enum DirSizer {
             }
             return Measurement(bytes: bytes, status: .complete, skippedEntries: 0)
         }
-        return foundationSize(URL(fileURLWithPath: path))
+        return foundationSize(URL(fileURLWithPath: path), isCancelled: isCancelled)
     }
 
-    private static func foundationSize(_ url: URL) -> Measurement {
+    private static func foundationSize(_ url: URL, isCancelled: () -> Bool) -> Measurement {
         var total: Int64 = 0
         var skipped = 0
         let keys: [URLResourceKey] = [
@@ -131,6 +131,9 @@ enum DirSizer {
             return Measurement(bytes: 0, status: .unavailable, skippedEntries: 1)
         }
         for case let item as URL in en {
+            if isCancelled() {
+                return Measurement(bytes: total, status: .partial, skippedEntries: skipped + 1)
+            }
             let values = try? item.resourceValues(forKeys: Set(keys))
             if values?.isSymbolicLink == true {
                 en.skipDescendants()

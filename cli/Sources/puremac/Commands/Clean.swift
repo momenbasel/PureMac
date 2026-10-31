@@ -1,5 +1,6 @@
 import ArgumentParser
 import Foundation
+import TerminalUI
 
 struct Clean: ParsableCommand {
     static let configuration = CommandConfiguration(
@@ -12,7 +13,7 @@ struct Clean: ParsableCommand {
           puremac clean ai          AI-tool caches & logs only
           puremac clean trash       Empty user + mounted-volume Trash
 
-        Interactive review starts with every item unselected. Finishing the selector only opens an exact deletion review; a separate confirmation defaults to No. --plain uses a numbered selector with ranges, all, and none. --force removes the scanner's standard preselection without either prompt. --dry-run and --json never delete or open a selector.
+        Interactive review starts with every item unselected. \(Render.reviewHelp) --force removes the scanner's standard preselection without either prompt. --dry-run and --json never delete or open a selector.
         """
     )
 
@@ -52,12 +53,25 @@ struct Clean: ParsableCommand {
 
         let ids = category.map { [$0] } ?? Clean.validIDs
         let ignore = try IgnoreStore(fileURL: AppPaths.ignoreFile)
-        if !json {
-            Term.err(Term.dim("Scanning " + ids.map(Clean.title).joined(separator: ", ") + " …"))
+        let scanning = "Scanning " + ids.map(Clean.title).joined(separator: ", ")
+        let progress = ScanProgress.forMode(mode)
+        if mode == .fullscreen {
+            let labels = CleanupFlow.Labels(
+                scanning: scanning,
+                empty: Clean.emptyMessage,
+                reviewTitle: "Choose items to clean",
+                noun: "item"
+            )
+            let result = try CleanupFlow.run(labels: labels, ignore: ignore) { status, cancel in
+                Clean.scan(ids: ids, ignore: ignore, progress: progress, status: status, cancel: cancel)
+            }
+            try CleanupFlow.finish(result, labels: labels)
+            return
         }
-        let cats = ids.map { id in
-            CategoryScanner.scan(categoryID: id, title: Clean.title(id), ignore: ignore)
-        }.filter { !$0.groups.isEmpty }
+        if !json {
+            Term.err(Term.dim(scanning + " …"))
+        }
+        let cats = Clean.scan(ids: ids, ignore: ignore, progress: progress)
 
         if json {
             print(try JSONReport.string(cats))
@@ -65,7 +79,7 @@ struct Clean: ParsableCommand {
         }
 
         if cats.isEmpty {
-            print(Term.green("No cleanup candidates found in readable locations."))
+            print(Term.green(Clean.emptyMessage))
             return
         }
 
@@ -84,19 +98,13 @@ struct Clean: ParsableCommand {
             reviewed = cats
             Render.scanResults(cats)
             Render.selectionLine(cats)
-        case .fullscreen:
-            guard let selection = try InteractiveReview.select(cats, title: "Choose items to clean") else {
-                print(Term.dim("Cancelled. Nothing removed."))
-                return
-            }
-            reviewed = selection
         case .plain:
             guard let selection = try PlainSelectionReview.select(cats, title: "Choose items to clean") else {
                 print(Term.dim("Cancelled. Nothing removed."))
                 return
             }
             reviewed = selection
-        case .reportOnly, .unavailable:
+        case .fullscreen, .reportOnly, .unavailable:
             return
         }
 
@@ -118,6 +126,30 @@ struct Clean: ParsableCommand {
         let out = Cleaner.remove(selected, ignore: ignore, dryRun: false)
         Render.cleanupSummary(out, dryRun: false)
         if out.hadFailures { throw ExitCode.failure }
+    }
+
+    static let emptyMessage = "No cleanup candidates found in readable locations."
+
+    typealias CategoryScanFunction = (String, String, IgnoreStore, ScanProgress, () -> Bool) -> CategoryScan
+
+    static func scan(
+        ids: [String],
+        ignore: IgnoreStore,
+        progress: ScanProgress,
+        status: WorkProgress<ScanStatus>? = nil,
+        cancel: CancelFlag? = nil,
+        scanCategory: CategoryScanFunction = CategoryScanner.scan
+    ) -> [CategoryScan] {
+        var scans: [CategoryScan] = []
+        for (index, id) in ids.enumerated() {
+            if cancel?.isCancelled == true { break }
+            let title = Clean.title(id)
+            status?.update { $0.beginCategory(title: title, position: index + 1, count: ids.count) }
+            let scan = scanCategory(id, title, ignore, progress) { cancel?.isCancelled == true }
+            status?.update { $0.addFound(in: scan) }
+            scans.append(scan)
+        }
+        return scans.filter { !$0.groups.isEmpty }
     }
 
     static func title(_ id: String) -> String {

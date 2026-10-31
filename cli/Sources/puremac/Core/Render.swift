@@ -1,34 +1,37 @@
 import Darwin
 import Foundation
+import TerminalUI
 
 enum Render {
     static let rule = String(repeating: "─", count: 60)
+    static let sizeColumnWidth = 10
+    static let reviewHelp = "Return on the selection screen opens a confirmation with Cancel focused. --plain uses a numbered selector with ranges, all, and none, then prints the exact deletion review and asks (default No)."
 
-    static func scanResults(_ categories: [CategoryScan]) {
+    static func scanResults(_ categories: [CategoryScan], colors: Bool = Term.colorEnabled) {
         let total = categories.reduce(Int64(0)) { $0 + $1.allBytes }
         let itemCount = categories.flatMap(\.groups).flatMap(\.items).count
         print("")
-        print(Term.bold("Scan complete"))
+        print(paint("Scan complete", TextStyle(bold: true), colors))
         print(
-            Term.bold(ByteCount.human(total))
-                + Term.dim(" across \(itemCount) item\(itemCount == 1 ? "" : "s")")
+            paint(ByteCount.human(total), TextStyle(bold: true), colors)
+                + paint(" across \(itemCount) item\(itemCount == 1 ? "" : "s")", TextStyle(dim: true), colors)
         )
 
         for category in categories where !category.groups.isEmpty {
             print("")
             print(
-                Term.cyan(Term.bold(Term.sanitize(category.title)))
-                    + Term.dim("  \(ByteCount.human(category.allBytes))")
+                paint(category.title, TextStyle(color: .cyan, bold: true), colors)
+                    + paint("  \(ByteCount.human(category.allBytes))", TextStyle(dim: true), colors)
             )
             for group in category.groups {
                 print(
-                    "  " + Term.bold(Term.sanitize(group.tool))
-                        + Term.dim("  \(group.items.count) item\(group.items.count == 1 ? "" : "s")")
+                    "  " + paint(group.tool, TextStyle(bold: true), colors)
+                        + paint("  \(group.items.count) item\(group.items.count == 1 ? "" : "s")", TextStyle(dim: true), colors)
                 )
                 for item in group.items {
-                    let mark = item.selected ? Term.cyan("●") : Term.dim("○")
+                    let mark = item.selected ? paint("●", TextStyle(color: .cyan), colors) : paint("○", TextStyle(dim: true), colors)
                     let path = displayedPath(item.path, available: max(12, outputWidth - 18))
-                    print("    \(mark) \(sizeCol(item.sizeBytes)) \(path)")
+                    print("    \(mark) \(coloredSizeCol(item.sizeBytes, colors: colors)) \(path)")
                 }
             }
         }
@@ -44,32 +47,33 @@ enum Render {
         )
     }
 
-    static func deletionReview(_ categories: [CategoryScan]) {
+    static func deletionReview(_ categories: [CategoryScan], colors: Bool = Term.colorEnabled) {
         let selected = categories.flatMap { $0.selectedItems }
         let total = selected.reduce(Int64(0)) { $0 + $1.sizeBytes }
+        let rule = paint(String(repeating: "─", count: min(72, outputWidth)), TextStyle(dim: true), colors)
         print("")
-        print(Term.yellow(Term.bold("Permanent deletion review")))
-        print(Term.dim(String(repeating: "─", count: min(72, outputWidth))))
+        print(paint("Permanent deletion review", TextStyle(color: .yellow, bold: true), colors))
+        print(rule)
 
         for category in categories {
             let selectedInCategory = category.selectedItems
             guard !selectedInCategory.isEmpty else { continue }
             print(
-                Term.cyan(Term.sanitize(category.title))
-                    + Term.dim("  \(ByteCount.human(selectedInCategory.reduce(0) { $0 + $1.sizeBytes }))")
+                paint(category.title, TextStyle(color: .cyan), colors)
+                    + paint("  \(ByteCount.human(selectedInCategory.reduce(0) { $0 + $1.sizeBytes }))", TextStyle(dim: true), colors)
             )
             for group in category.groups {
                 for item in group.items where item.selected {
-                    print("  \(sizeCol(item.sizeBytes)) \(Term.sanitize(group.tool))")
+                    print("  \(coloredSizeCol(item.sizeBytes, colors: colors)) \(Term.sanitize(group.tool))")
                     print("    \(Term.sanitize(item.path))")
                 }
             }
         }
 
-        print(Term.dim(String(repeating: "─", count: min(72, outputWidth))))
+        print(rule)
         print(
-            Term.bold(ByteCount.human(total))
-                + Term.dim("  \(selected.count) item\(selected.count == 1 ? "" : "s")")
+            paint(ByteCount.human(total), TextStyle(bold: true), colors)
+                + paint("  \(selected.count) item\(selected.count == 1 ? "" : "s")", TextStyle(dim: true), colors)
         )
     }
 
@@ -79,22 +83,22 @@ enum Render {
             print(Term.bold("Dry run complete"))
             print(
                 Term.cyan(ByteCount.human(outcome.freedBytes))
-                    + Term.dim(" reclaimable across \(outcome.removed) item\(outcome.removed == 1 ? "" : "s")")
+                    + Term.dim(" reclaimable across \(itemCount(outcome.removed))")
             )
             print(Term.dim("Nothing was deleted."))
         } else {
-            print(Term.green(Term.bold("Cleanup complete")))
+            print(Term.green(Term.bold(cleanupCompleteTitle)))
             print(
                 Term.bold(ByteCount.human(outcome.freedBytes))
-                    + Term.dim(" removed across \(outcome.removed) item\(outcome.removed == 1 ? "" : "s")")
+                    + Term.dim(removedDetail(outcome))
             )
         }
 
         if !outcome.skipped.isEmpty {
-            print(Term.yellow("\(outcome.skipped.count) skipped") + Term.dim("  protected or ignored"))
+            print(Term.yellow(skippedLabel(outcome)) + Term.dim(skippedNote))
         }
         if !outcome.failed.isEmpty {
-            print(Term.red("\(outcome.failed.count) failed"))
+            print(Term.red(failedLabel(outcome)))
             for failure in outcome.failed.prefix(10) {
                 Term.err("  ! \(Term.sanitize(failure.path))")
                 Term.err("    \(Term.sanitize(failure.error))")
@@ -103,8 +107,40 @@ enum Render {
         print("")
     }
 
+    static let cleanupCompleteTitle = "Cleanup complete"
+
+    static func counted(_ count: Int, _ noun: String) -> String {
+        "\(count) \(noun)\(count == 1 ? "" : "s")"
+    }
+
+    static func itemCount(_ count: Int) -> String {
+        counted(count, "item")
+    }
+
+    static func removedDetail(_ outcome: CleanOutcome) -> String {
+        " removed across \(itemCount(outcome.removed))"
+    }
+
+    static func skippedLabel(_ outcome: CleanOutcome) -> String {
+        "\(outcome.skipped.count) skipped"
+    }
+
+    static let skippedNote = "  protected or ignored"
+
+    static func failedLabel(_ outcome: CleanOutcome) -> String {
+        "\(outcome.failed.count) failed"
+    }
+
     static func sizeCol(_ bytes: Int64) -> String {
-        pad(ByteCount.human(bytes), 10)
+        pad(ByteCount.human(bytes), sizeColumnWidth)
+    }
+
+    static func paint(_ text: String, _ style: TextStyle, _ colors: Bool) -> String {
+        Term.styled([Span(text, style)], colors: colors)
+    }
+
+    static func coloredSizeCol(_ bytes: Int64, colors: Bool) -> String {
+        paint(sizeCol(bytes), SizeLevel.style(bytes: bytes, focused: false), colors)
     }
 
     static func pad(_ string: String, _ width: Int) -> String {
