@@ -112,6 +112,21 @@ actor CleaningEngine {
                 continue
             }
 
+            if item.category == .rustTargets {
+                // `cargo clean` rather than an unlink, as requested for Rust
+                // projects: cargo knows its own layout and lock files.
+                let cargoOutcome = await cargoClean(item)
+                result.freedSpace += cargoOutcome.freed
+                if cargoOutcome.cleaned {
+                    result.itemsCleaned += 1
+                    result.cleanedPaths.insert(item.path)
+                }
+                if let error = cargoOutcome.error {
+                    result.errors.append(error)
+                }
+                continue
+            }
+
             if let runtimeID = item.simctlRuntimeIdentifier {
                 // Simulator runtimes live in CoreSimulator's secure storage;
                 // deleting the mount path by hand leaves orphaned disk images.
@@ -225,6 +240,14 @@ actor CleaningEngine {
                     (nsError.domain == NSPOSIXErrorDomain &&
                         (nsError.code == Int(EACCES) || nsError.code == Int(EPERM)))
                 if isPermissionDenied {
+                    if item.category == .nodeModules {
+                        // Project folders belong to the user; a root rm -rf
+                        // inside a source tree is never worth an auth prompt.
+                        let detail = "node_modules cleanup requires access as the current user: \(item.path)"
+                        result.errors.append(detail)
+                        Logger.shared.log(detail, level: .warning)
+                        continue
+                    }
                     if item.category == .aiApps {
                         let detail = "AI app cleanup requires access as the current user: \(item.path)"
                         result.errors.append(detail)
@@ -287,6 +310,10 @@ actor CleaningEngine {
         let validated: [(item: CleanableItem, resolved: String)] = items.compactMap { item in
             guard item.category != .aiApps else {
                 result.errors.append("Administrator cleanup is unavailable for AI app data: \(item.name)")
+                return nil
+            }
+            guard item.category != .nodeModules, item.category != .rustTargets else {
+                result.errors.append("Administrator cleanup is unavailable for project folders: \(item.name)")
                 return nil
             }
             guard !CleanupExclusions.excludes(item.path, paths: exclusions) else { return nil }
@@ -468,6 +495,67 @@ actor CleaningEngine {
         return (0, nil)
     }
 
+    // MARK: - Rust
+
+    /// Runs `cargo clean --manifest-path <project>/Cargo.toml` for one Rust
+    /// target item. The path is re-validated first so a stale or replayed
+    /// item list can't point cargo somewhere else. GUI apps don't inherit the
+    /// shell PATH, so cargo is looked up in rustup's and Homebrew's bin dirs.
+    func cargoClean(_ item: CleanableItem) async -> (freed: Int64, cleaned: Bool, error: String?) {
+        let home = homeDirectory.path
+        let target = (item.path as NSString).standardizingPath
+        guard !hasUnexpectedSymlink(in: target) else {
+            return (0, false, "Skipped symlink or unsafe path: \(item.path)")
+        }
+        guard fileManager.fileExists(atPath: target) else {
+            // Already cleaned (by cargo or by hand) since the scan.
+            return (0, true, nil)
+        }
+        guard ScanEngine.isRustTargetDirectory(target, home: home) else {
+            let msg = "Skipped path that is not a Rust target folder: \(item.path)"
+            Logger.shared.log(msg, level: .warning)
+            return (0, false, msg)
+        }
+
+        let cargoPaths = ["\(home)/.cargo/bin/cargo", "/opt/homebrew/bin/cargo", "/usr/local/bin/cargo"]
+        guard let cargo = cargoPaths.first(where: { fileManager.isExecutableFile(atPath: $0) }) else {
+            return (0, false, "cargo not found — install Rust with rustup to clean \(item.name)")
+        }
+
+        let manifest = (target as NSString).deletingLastPathComponent + "/Cargo.toml"
+        var environment = ProcessInfo.processInfo.environment
+        let cargoDir = (cargo as NSString).deletingLastPathComponent
+        environment["PATH"] = [cargoDir, environment["PATH"] ?? "/usr/bin:/bin"].joined(separator: ":")
+
+        do {
+            let output = try await BrewProcessRunner.run(
+                executableURL: URL(fileURLWithPath: cargo),
+                arguments: ["clean", "--manifest-path", manifest],
+                timeout: 600,
+                environment: environment
+            )
+            guard output.status == 0 else {
+                let stderr = String(decoding: output.stderr, as: UTF8.self)
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                Logger.shared.log("cargo clean \(manifest) exited \(output.status): \(stderr)", level: .error)
+                return (0, false, "cargo clean failed for \(item.name) (exit \(output.status))")
+            }
+        } catch is CancellationError {
+            return (0, false, nil)
+        } catch {
+            Logger.shared.log("cargo clean failed to run: \(error.localizedDescription)", level: .error)
+            return (0, false, "Couldn't run cargo clean for \(item.name): \(error.localizedDescription)")
+        }
+
+        // A workspace member's manifest cleans the workspace target dir, and
+        // a custom target-dir cleans elsewhere — only report what actually went.
+        guard !fileManager.fileExists(atPath: target) else {
+            return (0, false, "cargo clean ran but \(item.name)/target is still present")
+        }
+        Logger.shared.log("cargo clean removed \(target) (~\(item.size) bytes)", level: .info)
+        return (item.size, true, nil)
+    }
+
     // MARK: - Simulator Runtimes
 
     /// Deletes one simulator runtime disk image via
@@ -579,6 +667,14 @@ actor CleaningEngine {
     ) -> Bool {
         if item.category == .aiApps {
             return item.path == resolvedPath && isSupportedAIAppPath(resolvedPath)
+        }
+        if item.category == .nodeModules {
+            return item.path == resolvedPath
+                && ScanEngine.isNodeModulesDirectory(resolvedPath, home: homeDirectory.path)
+        }
+        if item.category == .rustTargets {
+            // Rust targets are cleaned by cargo, never by the delete paths.
+            return false
         }
         let originalIsManaged = XcodeBuildMCPDerivedDataSupport.isManagedDerivedDataPath(
             item.path,

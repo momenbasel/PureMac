@@ -276,6 +276,8 @@
 "Brew Cache" = "Brew Cache";
 "Node Cache" = "Node Cache";
 "Docker Cache" = "Docker Cache";
+"Rust Targets" = "Rust Targets";
+"Node Modules" = "Node Modules";
 "Universal Binaries" = "Universal Binaries";
 "Language Files" = "Language Files";
 
@@ -292,6 +294,8 @@
 "Homebrew download cache" = "Homebrew download cache";
 "npm, yarn, and pnpm download caches" = "npm, yarn, and pnpm download caches";
 "Docker images, containers, and build cache" = "Docker images, containers, and build cache";
+"Rust project target folders, cleaned with cargo clean" = "Rust project target folders, cleaned with cargo clean";
+"node_modules folders in your projects" = "node_modules folders in your projects";
 "Unused CPU architecture slices in app binaries" = "Unused CPU architecture slices in app binaries";
 "Unused app localizations" = "Unused app localizations";
 
