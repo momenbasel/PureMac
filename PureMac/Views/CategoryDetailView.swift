@@ -132,10 +132,14 @@ struct CategoryDetailView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Button(visibleItems.allSatisfy(appState.isItemSelected) ? "Deselect visible" : "Select visible") {
-                    appState.setSelection(!visibleItems.allSatisfy(appState.isItemSelected), for: visibleItems)
+                // Rows that must be selected by hand never count toward the bulk toggle.
+                let bulkItems = visibleItems.filter { !$0.selectOnlyByHand }
+                let canSelectMore = bulkItems.contains { !appState.isItemSelected($0) }
+                let canDeselect = visibleItems.contains(where: appState.isItemSelected)
+                Button(canSelectMore ? "Select visible" : "Deselect visible") {
+                    appState.setSelection(canSelectMore, for: visibleItems)
                 }
-                .disabled(visibleItems.isEmpty || appState.scanState.isActive)
+                .disabled((!canSelectMore && !canDeselect) || appState.scanState.isActive)
                 .buttonStyle(.borderless)
             }
         }

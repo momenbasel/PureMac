@@ -927,3 +927,33 @@
 
 "View releases" = "View releases";
 "You're using the latest available version of PureMac." = "You're using the latest available version of PureMac.";
+
+/* Dev Tool Caches */
+"Dev Tool Caches" = "Dev Tool Caches";
+"Package, build, and download caches of developer tools" = "Package, build, and download caches of developer tools";
+"Bun cache" = "Bun cache";
+"uv cache" = "uv cache";
+"pip cache" = "pip cache";
+"Poetry cache" = "Poetry cache";
+"CocoaPods cache" = "CocoaPods cache";
+"Swift Package Manager cache" = "Swift Package Manager cache";
+"Gradle caches" = "Gradle caches";
+"Gradle wrapper distributions" = "Gradle wrapper distributions";
+"Cargo registry cache" = "Cargo registry cache";
+"Cargo registry index" = "Cargo registry index";
+"Cargo git database" = "Cargo git database";
+"Cargo git checkouts" = "Cargo git checkouts";
+"Go build cache" = "Go build cache";
+"Go module cache" = "Go module cache";
+"Deno cache" = "Deno cache";
+"Dart pub packages" = "Dart pub packages";
+"Dart pub git packages" = "Dart pub git packages";
+"Playwright browsers" = "Playwright browsers";
+"Puppeteer browsers" = "Puppeteer browsers";
+"node-gyp headers" = "node-gyp headers";
+"Electron download cache" = "Electron download cache";
+"Electron Builder cache" = "Electron Builder cache";
+"Maven repository (may hold local installs)" = "Maven repository (may hold local installs)";
+"NuGet packages (may hold local packages)" = "NuGet packages (may hold local packages)";
+"NuGet HTTP cache" = "NuGet HTTP cache";
+"%@ (Gradle is running)" = "%@ (Gradle is running)";

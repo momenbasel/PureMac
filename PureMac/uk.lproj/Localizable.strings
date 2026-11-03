@@ -927,3 +927,33 @@
 
 "View releases" = "View releases";
 "You're using the latest available version of PureMac." = "You're using the latest available version of PureMac.";
+
+/* Dev Tool Caches */
+"Dev Tool Caches" = "Кеші інструментів розробника";
+"Package, build, and download caches of developer tools" = "Кеші пакетів, збірок і завантажень інструментів розробника";
+"Bun cache" = "Кеш Bun";
+"uv cache" = "Кеш uv";
+"pip cache" = "Кеш pip";
+"Poetry cache" = "Кеш Poetry";
+"CocoaPods cache" = "Кеш CocoaPods";
+"Swift Package Manager cache" = "Кеш Swift Package Manager";
+"Gradle caches" = "Кеші Gradle";
+"Gradle wrapper distributions" = "Дистрибутиви Gradle wrapper";
+"Cargo registry cache" = "Кеш реєстру Cargo";
+"Cargo registry index" = "Індекс реєстру Cargo";
+"Cargo git database" = "Git-база Cargo";
+"Cargo git checkouts" = "Git-вибірки Cargo";
+"Go build cache" = "Кеш збірки Go";
+"Go module cache" = "Кеш модулів Go";
+"Deno cache" = "Кеш Deno";
+"Dart pub packages" = "Пакети Dart pub";
+"Dart pub git packages" = "Git-пакети Dart pub";
+"Playwright browsers" = "Браузери Playwright";
+"Puppeteer browsers" = "Браузери Puppeteer";
+"node-gyp headers" = "Заголовки node-gyp";
+"Electron download cache" = "Кеш завантажень Electron";
+"Electron Builder cache" = "Кеш Electron Builder";
+"Maven repository (may hold local installs)" = "Репозиторій Maven (може містити локальні встановлення)";
+"NuGet packages (may hold local packages)" = "Пакети NuGet (можуть містити локальні пакети)";
+"NuGet HTTP cache" = "HTTP-кеш NuGet";
+"%@ (Gradle is running)" = "%@ (Gradle запущено)";

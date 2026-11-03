@@ -18,7 +18,7 @@
 - Settings includes appearance, language, Full Disk Access, and user-requested GitHub release checks.
 
 ## Removal behavior
-User-level app uninstalling, orphan removal, and exact-duplicate removal use Trash. Recovery is possible only until Trash is emptied. Dashboard/category cleanup, scheduled auto-clean, Trash emptying, Docker/Xcode runtime cleanup, administrator-authorized removal, local snapshot deletion, and CLI cleanup can permanently delete data. Manual removal requires confirmation. Scheduled auto-clean runs unattended once enabled. Keep backups and review selections. Purgeable space is managed by macOS and is not promised as recoverable cleanup.
+User-level app uninstalling, orphan removal, and exact-duplicate removal use Trash. Recovery is possible only until Trash is emptied. Dashboard/category cleanup, scheduled auto-clean, Trash emptying, Docker/Xcode runtime cleanup, developer tool cache cleanup (uv and Go caches are cleaned with `uv cache clean` and `go clean`; Gradle caches are skipped while Gradle runs), administrator-authorized removal, local snapshot deletion, and CLI cleanup can permanently delete data. Manual removal requires confirmation. Scheduled auto-clean runs unattended once enabled. Keep backups and review selections. Purgeable space is managed by macOS and is not promised as recoverable cleanup.
 
 ## Privacy
 No telemetry, analytics, or crash reporting. Local scans and cleanup work offline. Scanned paths and file contents are not uploaded. GitHub release checks and Homebrew update operations use the network. Homebrew operations run with analytics disabled.
