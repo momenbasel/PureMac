@@ -160,6 +160,8 @@ Local iPhone and iPad backups have a separate manual review. Nothing is preselec
 
 **Space Explorer** measures the allocated space inside a folder you choose. Drill into directories, compare their sizes, and reveal an item in Finder. Packages are measured without exposing their contents as navigable folders. Skipped and inaccessible items are reported.
 
+**Projects & Worktrees** (under Developer Cleanup) scans a folder you choose (for example `~/Developer`) for `node_modules`, `.turbo`, `.next`, build output and linked git worktrees, including `.claude/worktrees`, `.orc` and Supacode. Artifacts older than seven days and clean worktrees whose commits all exist on a remote are preselected; everything else is listed with the reason it is left unchecked. Deletion is permanent after confirmation. Worktrees are removed with `git worktree remove` (never forced), so git refuses anything with uncommitted changes. `puremac purge --worktrees` offers the same in the terminal. This frees disk space, not memory.
+
 **Duplicate Finder** groups files with matching sizes and SHA-256 content hashes. Hard links are not counted as separate recoverable copies. Every group keeps one protected copy; selected extras move to the Trash only after confirmation and a fresh identity/content check. Emptying the Trash is a separate step.
 
 **Similar Photos** compares image thumbnails using perceptual hashes, color, and aspect ratio. Review likely matches side by side and reveal them in Finder. Similarity is an estimate, so this tool does not remove photos. Each scan checks up to 500 images and 10,000 directory entries, with a visible notice when a limit is reached. Photo libraries, app packages, symbolic links, and cloud-only files are skipped.
