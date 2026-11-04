@@ -133,7 +133,7 @@
 "Refresh" = "Odśwież";
 "Installed Apps (%lld)" = "Zainstalowane aplikacje (%lld)";
 "Uninstall (%lld files)" = "Odinstaluj (%lld plików)";
-"Loading installed apps..." = "Ładowanie zainstalowanych aplikacji...";
+"Loading installed apps..." = "Ładowanie zainstalowanych aplikacji…";
 "No Apps Found" = "Nie znaleziono aplikacji";
 "Could not find any installed applications." = "Nie udało się znaleźć żadnych zainstalowanych aplikacji.";
 "Retry" = "Ponów";
@@ -146,8 +146,8 @@
 "%lld files" = "%lld plików";
 "1 folder" = "1 folder";
 "1 file" = "1 plik";
-"Scanning for related files..." = "Skanowanie powiązanych plików...";
-"Checking %lld locations..." = "Sprawdzanie %lld lokalizacji...";
+"Scanning for related files..." = "Skanowanie powiązanych plików…";
+"Checking %lld locations..." = "Sprawdzanie %lld lokalizacji…";
 "No Related Files" = "Brak powiązanych plików";
 "No additional files found for %@." = "Nie znaleziono dodatkowych plików dla %@.";
 "Remove %lld files (%@)" = "Usuń %lld plików (%@)";
@@ -158,7 +158,7 @@
 "This will permanently delete this file. This action cannot be undone." = "To trwale usunie ten plik. Tej operacji nie można cofnąć.";
 
 /* Orphans */
-"Scanning for orphaned files..." = "Skanowanie osieroconych plików...";
+"Scanning for orphaned files..." = "Skanowanie osieroconych plików…";
 "No Orphaned Files" = "Brak osieroconych plików";
 "No leftover files from uninstalled apps were found." = "Nie znaleziono pozostałości po odinstalowanych aplikacjach.";
 "Scan for Orphans" = "Skanuj osierocone";
@@ -173,9 +173,9 @@
 "Next" = "Dalej";
 "Get Started" = "Rozpocznij";
 "Welcome to PureMac" = "Witaj w PureMac";
-"Free, open-source macOS app manager and system cleaner." = "Darmowy, otwartoźródłowy menedżer aplikacji i czyszczenie systemu macOS.";
+"Free, open-source macOS app manager and system cleaner." = "Darmowy menedżer aplikacji i narzędzie do czyszczenia systemu macOS o otwartym kodzie źródłowym.";
 "Find junk files across your system" = "Znajdź śmieci w całym systemie";
-"App Uninstaller" = "Deinstalator aplikacji";
+"App Uninstaller" = "Odinstalator aplikacji";
 "Remove apps and all their files" = "Usuń aplikacje i wszystkie ich pliki";
 "Orphan Finder" = "Wyszukiwarka osieroconych";
 "Find leftovers from deleted apps" = "Znajdź pozostałości po usuniętych aplikacjach";
@@ -257,7 +257,7 @@
 "Notify on completion" = "Powiadamiaj po zakończeniu";
 "Last run" = "Ostatnie uruchomienie";
 "Version %@" = "Wersja %@";
-"Free, open-source macOS app manager." = "Darmowy, otwartoźródłowy menedżer aplikacji macOS.";
+"Free, open-source macOS app manager." = "Darmowy menedżer aplikacji macOS o otwartym kodzie źródłowym.";
 "GitHub Repository" = "Repozytorium GitHub";
 "Report an Issue" = "Zgłoś problem";
 "MIT License" = "Licencja MIT";
@@ -288,7 +288,7 @@
 "Files in your Trash" = "Pliki w koszu";
 "Files over 100 MB or older than 1 year" = "Pliki powyżej 100 MB lub starsze niż 1 rok";
 "APFS purgeable disk space" = "Miejsce na dysku do zwolnienia (APFS)";
-"Derived data, archives, and simulator runtimes" = "Dane pochodne, archiwa i symulatory";
+"Derived data, archives, and simulator runtimes" = "Dane pochodne, archiwa i środowiska uruchomieniowe symulatora";
 "Homebrew download cache" = "Cache pobierania Homebrew";
 "npm, yarn, and pnpm download caches" = "Cache pobierania npm, yarn i pnpm";
 "Docker images, containers, and build cache" = "Obrazy Dockera, kontenery i cache budowania";
@@ -342,7 +342,7 @@
 "What's inside" = "Co jest w środku";
 "Three things, done well." = "Trzy rzeczy, zrobione porządnie.";
 "Find caches, logs, broken installs, and the AI-app history hiding in your library." = "Znajdź pamięci podręczne, logi, uszkodzone instalacje i historię aplikacji AI ukrytą w bibliotece.";
-"Drag an app, see every file it dropped, remove all of it. No leftovers." = "Przeciągnij aplikację, zobacz każdy plik który zostawiła, usuń wszystko. Bez pozostałości.";
+"Drag an app, see every file it dropped, remove all of it. No leftovers." = "Przeciągnij aplikację, zobacz każdy plik, który zostawiła, usuń wszystko. Bez pozostałości.";
 "Surfaces files that outlived the apps that created them." = "Pokazuje pliki, które przeżyły aplikacje, które je utworzyły.";
 "One permission, then we're done" = "Jedno uprawnienie i gotowe";
 "Permission granted" = "Uprawnienia przyznane";
@@ -352,7 +352,7 @@
 "Reveal app again" = "Pokaż aplikację ponownie";
 "Reset permissions" = "Resetuj uprawnienia";
 "You're ready" = "Wszystko gotowe";
-"Ready when you are" = "Gotowe, kiedy Ty jesteś";
+"Ready when you are" = "Gotowe, gdy zechcesz";
 "Hit Start to run your first Smart Scan." = "Kliknij Start, aby uruchomić pierwsze Inteligentne skanowanie.";
 "Skip" = "Pomiń";
 "Start" = "Start";
@@ -360,7 +360,7 @@
 
 /* Drag handle */
 "Drag to the Settings list" = "Przeciągnij na listę Ustawień";
-"Drag this icon into the Full Disk Access list in System Settings." = "Przeciągnij tę ikonę na listę Pełnego dostępu do dysku w Ustawieniach systemowych.";
+"Drag this icon into the Full Disk Access list in System Settings." = "Przeciągnij tę ikonę na listę w sekcji Pełny dostęp do dysku w Ustawieniach systemowych.";
 "Tip: drag the icon on the left straight into the list." = "Wskazówka: przeciągnij ikonę po lewej prosto na listę.";
 "Or drag the icon on the left straight into Settings." = "Lub przeciągnij ikonę po lewej prosto do Ustawień.";
 
@@ -371,7 +371,7 @@
 
 /* UI polish (v2.8.0): leftover groups + sound toggle */
 "Caches" = "Pamięci podręczne";
-"Application Support" = "Wsparcie aplikacji";
+"Application Support" = "Dane aplikacji";
 "Preferences" = "Preferencje";
 "Logs" = "Logi";
 "Containers" = "Kontenery";
@@ -405,7 +405,7 @@
 "Memory" = "Pamięć";
 "Disk" = "Dysk";
 "Open PureMac" = "Otwórz PureMac";
-"Quit PureMac" = "Zamknij PureMac";
+"Quit PureMac" = "Zakończ PureMac";
 
 /* Finder Service */
 "Select an application (.app) to uninstall." = "Wybierz aplikację (.app) do odinstalowania.";
@@ -479,7 +479,7 @@
 "%@ of %@ candidates · %@ verified" = "%@ z %@ kandydatów · %@ zweryfikowano";
 "%@ reviewable" = "%@ do przejrzenia";
 "%@ selected. This permanently removes the selected files or runs the listed cleanup actions. It cannot be undone." = "Zaznaczono %@. Spowoduje to trwałe usunięcie zaznaczonych plików lub uruchomienie wymienionych działań czyszczenia. Nie można tego cofnąć.";
-"%@ will move to Trash" = "%@ zostanie przeniesione do Kosza";
+"%@ will move to Trash" = "%@ zostanie przeniesione do kosza";
 "%lld analyzed" = "%lld przeanalizowano";
 "%lld apps selected" = "Zaznaczono %lld aplikacji";
 "%lld areas" = "%lld obszarów";
@@ -488,7 +488,7 @@
 "%@ could not be removed with administrator privileges. The items may have changed or macOS denied access." = "Nie udało się usunąć %@ z uprawnieniami administratora. Elementy mogły się zmienić lub macOS odmówił dostępu.";
 "%@ could not be removed. Check that the items still exist and are not in use." = "Nie udało się usunąć %@. Sprawdź, czy elementy nadal istnieją i nie są w użyciu.";
 "%lld files totaling %@ were moved. Every protected copy remains in place." = "Przeniesiono %lld plików o łącznym rozmiarze %@. Każda chroniona kopia pozostaje na miejscu.";
-"%lld files totaling %@ will be moved to Trash. The protected copy in every group stays in place." = "%lld plików o łącznym rozmiarze %@ zostanie przeniesionych do Kosza. Chroniona kopia w każdej grupie pozostaje na miejscu.";
+"%lld files totaling %@ will be moved to Trash. The protected copy in every group stays in place." = "%lld plików o łącznym rozmiarze %@ zostanie przeniesionych do kosza. Chroniona kopia w każdej grupie pozostaje na miejscu.";
 "%lld folders" = "%lld folderów";
 /* Additional interface strings. */
 "%lld found" = "%lld znaleziono";
@@ -502,7 +502,7 @@
 "%lld selected items will be permanently deleted. Review the list before continuing." = "%lld zaznaczonych elementów zostanie trwale usuniętych. Przejrzyj listę przed kontynuowaniem.";
 "%lld selected · %@" = "%lld zaznaczonych · %@";
 "%lld skipped" = "%lld pominięto";
-"%lld unsafe or unavailable items were not scanned" = "%lld niebezpiecznych lub niedostępnych elementów nie zostało przeskanowanych";
+"%lld unsafe or unavailable items were not scanned" = "%lld niebezpiecznych lub niedostępnych elementów pominięto podczas skanowania";
 "%lld unsafe or unavailable items were skipped." = "Pominięto %lld niebezpiecznych lub niedostępnych elementów.";
 "%lld updates available" = "%lld dostępnych aktualizacji";
 "%lld%% visual score" = "%lld%% oceny wizualnej";
@@ -541,9 +541,9 @@
 "Check built-in safeguards" = "Sprawdź wbudowane zabezpieczenia";
 "Check installed apps for new versions" = "Sprawdź nowe wersje zainstalowanych aplikacji";
 "Check installed cask apps" = "Sprawdź zainstalowane aplikacje cask";
-"Checked %@. Unknown means the setting could not be confirmed." = "Sprawdź %@. „Nieznane\" oznacza, że nie udało się potwierdzić ustawienia.";
+"Checked %@. Unknown means the setting could not be confirmed." = "Sprawdzono %@. „Nieznane\" oznacza, że nie udało się potwierdzić ustawienia.";
 "Checking" = "Sprawdzanie";
-"Checking Homebrew casks" = "Sprawdzanie casków Homebrew";
+"Checking Homebrew casks" = "Sprawdzanie aplikacji Homebrew Cask";
 "Checking asks Homebrew to refresh its package data as needed and contacts Homebrew's configured sources. PureMac only lists cask apps managed by this Homebrew installation." = "Sprawdzanie prosi Homebrew o odświeżenie danych pakietów i łączy się ze skonfigurowanymi źródłami Homebrew. PureMac pokazuje tylko aplikacje cask zarządzane przez tę instalację Homebrew.";
 "Checking your Mac. Nothing is removed during a scan." = "Sprawdzanie Twojego Maca. Podczas skanowania nic nie jest usuwane.";
 "Choose Another Folder" = "Wybierz inny folder";
@@ -571,7 +571,7 @@
 "Conditional keep alive" = "Warunkowe podtrzymywanie";
 "Copy path" = "Kopiuj ścieżkę";
 "Could not inspect %@" = "Nie udało się sprawdzić %@";
-"Could not list Time Machine snapshots" = "Nie udało się wylistować migawek Time Machine";
+"Could not list Time Machine snapshots" = "Nie udało się pobrać listy migawek Time Machine";
 "Could not read" = "Nie udało się odczytać";
 "Could not read %@" = "Nie udało się odczytać %@";
 "Couldn't check for updates" = "Nie udało się sprawdzić aktualizacji";
@@ -587,14 +587,14 @@
 "Duplicate Finder" = "Wyszukiwanie duplikatów";
 "Duplicate groups" = "Grupy duplikatów";
 "Every %lld seconds" = "Co %lld sekund";
-"Every eligible file was checked." = "Sprawdzono każdy kwalifikujący się plik.";
+"Every eligible file was checked." = "Sprawdzono każdy pasujący plik.";
 "Exact-match cleanup with a protected copy in every group" = "Czyszczenie identycznych kopii z chronioną kopią w każdej grupie";
 "Excluded paths and folders containing them stay out of manual and scheduled cleanup. Right-click a cleanup result to exclude it." = "Wykluczone ścieżki i foldery je zawierające są pomijane w ręcznym i zaplanowanym czyszczeniu. Kliknij wynik czyszczenia prawym przyciskiem, aby go wykluczyć.";
 "Expand duplicate group" = "Rozwiń grupę duplikatów";
 "File" = "Plik";
 "FileVault" = "FileVault";
 "FileVault Settings" = "Ustawienia FileVault";
-"Files will be moved to the Trash. Items requiring administrator authorization may be permanently deleted. App matching is a best-effort estimate; review files you recognize before removing them." = "Pliki zostaną przeniesione do Kosza. Elementy wymagające uprawnień administratora mogą zostać trwale usunięte. Dopasowanie aplikacji jest szacunkowe; przejrzyj rozpoznane pliki przed usunięciem.";
+"Files will be moved to the Trash. Items requiring administrator authorization may be permanently deleted. App matching is a best-effort estimate; review files you recognize before removing them." = "Pliki zostaną przeniesione do kosza. Elementy wymagające uprawnień administratora mogą zostać trwale usunięte. Dopasowanie aplikacji jest szacunkowe; przejrzyj rozpoznane pliki przed usunięciem.";
 "Filter cleanup files" = "Filtruj pliki czyszczenia";
 "Find a file or path" = "Znajdź plik lub ścieżkę";
 "Find copies that are exactly the same" = "Znajdź identyczne kopie";
@@ -610,7 +610,7 @@
 "Gatekeeper" = "Gatekeeper";
 "Group %lld" = "Grupa %lld";
 "Grouping similar shots" = "Grupowanie podobnych ujęć";
-"Hard-linked copy" = "Kopia z dowiązaniem twardym";
+"Hard-linked copy" = "Kopia z twardym dowiązaniem";
 "Homebrew apps are up to date" = "Aplikacje Homebrew są aktualne";
 "Homebrew did not finish before the operation timed out." = "Homebrew nie zakończyło się przed upływem limitu czasu.";
 "Homebrew finished, but %lld selected apps still report updates." = "Homebrew zakończyło się, ale %lld zaznaczonych aplikacji nadal zgłasza aktualizacje.";
@@ -627,13 +627,13 @@
 "Includes %lld selected items hidden by filters." = "Obejmuje %lld zaznaczonych elementów ukrytych przez filtry.";
 "Incoming network connections are filtered." = "Połączenia przychodzące są filtrowane.";
 "Inspect" = "Sprawdź";
-"Inspect a folder by allocated disk space. Your files are never changed." = "Sprawdź folder według zajętego miejsca. Twoje pliki nigdy nie są zmieniane.";
+"Inspect a folder by allocated disk space. Your files are never changed." = "Sprawdź folder pod kątem zajmowanego miejsca. Twoje pliki nigdy nie są zmieniane.";
 "Inspect memory and background activity" = "Sprawdź pamięć i aktywność w tle";
 "Inspect startup items and local snapshots again" = "Sprawdź ponownie elementy startowe i lokalne migawki";
 "Inspected %@ files in %@. %@" = "Sprawdzono %@ plików w %@. %@";
 "Inspecting startup items and local snapshots…" = "Sprawdzanie elementów startowych i lokalnych migawek…";
-"Inspection stopped" = "Kontrola zatrzymana";
-"Install Homebrew to check cask apps here. Apps from the App Store and direct downloads use their own update channels." = "Zainstaluj Homebrew, aby sprawdzać tu aplikacje cask. Aplikacje z App Store i pobrane bezpośrednio aktualizują się własnymi kanałami.";
+"Inspection stopped" = "Sprawdzanie zatrzymane";
+"Install Homebrew to check cask apps here. Apps from the App Store and direct downloads use their own update channels." = "Zainstaluj Homebrew, aby sprawdzać tu aplikacje cask. Aplikacje z App Store i pobrane bezpośrednio aktualizują się przez własne kanały.";
 "Installed" = "Zainstalowane";
 "Installed %@" = "Zainstalowano %@";
 "Keep" = "Zachowaj";
@@ -661,8 +661,8 @@
 "Memory pressure use" = "Zużycie pamięci";
 "Microphone" = "Mikrofon";
 "Modified" = "Zmodyfikowano";
-"Move selected duplicates to Trash?" = "Przenieść zaznaczone duplikaty do Kosza?";
-"Moved to Trash" = "Przeniesiono do Kosza";
+"Move selected duplicates to Trash?" = "Przenieść zaznaczone duplikaty do kosza?";
+"Moved to Trash" = "Przeniesiono do kosza";
 "Name" = "Nazwa";
 "Needs attention" = "Wymaga uwagi";
 "Network state" = "Stan sieci";
@@ -720,7 +720,7 @@
 "Protected system locations and processes are restricted." = "Chronione lokalizacje systemowe i procesy są ograniczone.";
 "Protection" = "Ochrona";
 "PureMac builds small local thumbnails, compares their visual structure and color, then groups likely matches for review." = "PureMac tworzy lokalnie małe miniatury, porównuje ich strukturę wizualną i kolor, a następnie grupuje prawdopodobne dopasowania do przejrzenia.";
-"PureMac checks caches, logs, developer data, downloads, and Trash. You review the result before anything is removed." = "PureMac sprawdza pamięci podręczne, logi, dane deweloperskie, pobrane pliki i Kosz. Wynik przeglądasz, zanim cokolwiek zostanie usunięte.";
+"PureMac checks caches, logs, developer data, downloads, and Trash. You review the result before anything is removed." = "PureMac sprawdza pamięci podręczne, logi, dane deweloperskie, pobrane pliki i kosz. Wynik przeglądasz, zanim cokolwiek zostanie usunięte.";
 "PureMac compares local image thumbnails without changing your photos." = "PureMac porównuje lokalne miniatury zdjęć, nie zmieniając Twoich zdjęć.";
 "PureMac could not confirm the local XProtect installation." = "PureMac nie mógł potwierdzić lokalnej instalacji XProtect.";
 "PureMac could not read this setting." = "PureMac nie mógł odczytać tego ustawienia.";
@@ -728,7 +728,7 @@
 "PureMac measures allocated disk space without changing files." = "PureMac mierzy zajęte miejsce na dysku, nie zmieniając plików.";
 "PureMac reads the selected folder and does not change anything during a scan." = "PureMac odczytuje wybrany folder i niczego nie zmienia podczas skanowania.";
 "PureMac will ask Homebrew for available versions when you start the check." = "PureMac zapyta Homebrew o dostępne wersje, gdy rozpoczniesz sprawdzanie.";
-"PureMac will move the selected app and related files to the Trash. Items requiring administrator authorization may be permanently deleted. Review the selection before continuing." = "PureMac przeniesie wybraną aplikację i powiązane pliki do Kosza. Elementy wymagające uprawnień administratora mogą zostać trwale usunięte. Przejrzyj zaznaczenie przed kontynuowaniem.";
+"PureMac will move the selected app and related files to the Trash. Items requiring administrator authorization may be permanently deleted. Review the selection before continuing." = "PureMac przeniesie wybraną aplikację i powiązane pliki do kosza. Elementy wymagające uprawnień administratora mogą zostać trwale usunięte. Przejrzyj zaznaczenie przed kontynuowaniem.";
 "PureMac.app" = "PureMac.app";
 "Ready for protected locations" = "Gotowe na chronione lokalizacje";
 "Refresh disk information" = "Odśwież informacje o dysku";
@@ -744,7 +744,7 @@
 "Reveal %@ in Finder" = "Pokaż %@ w Finderze";
 "Reveal plist in Finder" = "Pokaż plist w Finderze";
 "Reveal skipped item in Finder" = "Pokaż pominięty element w Finderze";
-"Review and update apps installed as Homebrew casks." = "Przejrzyj i zaktualizuj aplikacje zainstalowane jako caski Homebrew.";
+"Review and update apps installed as Homebrew casks." = "Przejrzyj i zaktualizuj aplikacje zainstalowane przez Homebrew Cask.";
 "Review built-in privacy and safety checks" = "Przejrzyj wbudowane kontrole prywatności i bezpieczeństwa";
 "Review matching files side by side" = "Porównaj pasujące pliki obok siebie";
 "Review only" = "Tylko przegląd";
@@ -815,7 +815,7 @@
 "Symbolic link" = "Dowiązanie symboliczne";
 "Symbolic links and cloud-only items are excluded." = "Dowiązania symboliczne i elementy tylko w chmurze są wykluczone.";
 "Symbolic links cannot be scanned: %@" = "Nie można skanować dowiązań symbolicznych: %@";
-"Symbolic links, app packages, hidden files and cloud-only placeholders are skipped. Photos are never uploaded or deleted." = "Dowiązania symboliczne, pakiety aplikacji, pliki ukryte i zastępniki tylko w chmurze są pomijane. Zdjęcia nigdy nie są wysyłane ani usuwane.";
+"Symbolic links, app packages, hidden files and cloud-only placeholders are skipped. Photos are never uploaded or deleted." = "Dowiązania symboliczne, pakiety aplikacji, pliki ukryte i pliki zastępcze tylko w chmurze są pomijane. Zdjęcia nigdy nie są wysyłane ani usuwane.";
 "System Integrity Protection" = "Ochrona integralności systemu";
 "System Integrity Protection is turned off." = "Ochrona integralności systemu jest wyłączona.";
 "System daemon" = "Demon systemowy";
@@ -828,14 +828,14 @@
 "The inspected user and third-party launch folders are empty." = "Sprawdzone foldery uruchamiania użytkownika i firm trzecich są puste.";
 "The launch item is not a property-list dictionary." = "Element startowy nie jest słownikiem listy właściwości.";
 "The macOS application firewall is turned off." = "Zapora aplikacji macOS jest wyłączona.";
-"The protected copy cannot be moved to Trash: %@" = "Nie można przenieść chronionej kopii do Kosza: %@";
+"The protected copy cannot be moved to Trash: %@" = "Nie można przenieść chronionej kopii do kosza: %@";
 "The scan stopped. Available results are ready to review." = "Skanowanie zatrzymane. Dostępne wyniki są gotowe do przejrzenia.";
 "The selected folder cannot be scanned: %@" = "Nie można przeskanować wybranego folderu: %@";
 "The selected folder could not be read: %@" = "Nie udało się odczytać wybranego folderu: %@";
 "The selected folder is stored in the cloud and has not been downloaded: %@" = "Wybrany folder jest przechowywany w chmurze i nie został pobrany: %@";
 "The selected item is not a folder: %@" = "Wybrany element nie jest folderem: %@";
-"The startup disk is encrypted with FileVault." = "Dysk startowy jest szyfrowany przez FileVault.";
-"The startup disk is not encrypted with FileVault." = "Dysk startowy nie jest szyfrowany przez FileVault.";
+"The startup disk is encrypted with FileVault." = "Dysk startowy jest zaszyfrowany przez FileVault.";
+"The startup disk is not encrypted with FileVault." = "Dysk startowy nie jest zaszyfrowany przez FileVault.";
 "The system returned an unrecognized status." = "System zwrócił nierozpoznany stan.";
 "There are no cleanup items in this category." = "W tej kategorii nie ma elementów do czyszczenia.";
 "This folder is empty or its contents were excluded from the scan." = "Ten folder jest pusty lub jego zawartość została wykluczona ze skanowania.";
@@ -850,7 +850,7 @@
 "Tools" = "Narzędzia";
 "Try Again" = "Spróbuj ponownie";
 "Try another name, size, or date range." = "Spróbuj innej nazwy, rozmiaru lub zakresu dat.";
-"Uninstaller" = "Odinstalowywanie";
+"Uninstaller" = "Odinstalator";
 "Unknown" = "Nieznane";
 "Unknown error" = "Nieznany błąd";
 "Updates from Homebrew" = "Aktualizacje z Homebrew";
@@ -889,7 +889,7 @@
 "Collapsed" = "Zwinięte";
 "Copy command" = "Kopiuj polecenie";
 "Download (DMG / ZIP)" = "Pobierz (DMG / ZIP)";
-"Download the new app from the release page, quit PureMac, then replace it in Applications." = "Pobierz nową aplikację ze strony wydania, zamknij PureMac, a następnie zastąp nią wersję w folderze Aplikacje.";
+"Download the new app from the release page, quit PureMac, then replace it in Applications." = "Pobierz nową aplikację ze strony wydania, zakończ PureMac, a następnie zastąp nią wersję w folderze Aplikacje.";
 "Expanded" = "Rozwinięte";
 "GitHub is receiving too many requests. Please try again later." = "GitHub otrzymuje zbyt wiele żądań. Spróbuj ponownie później.";
 "Homebrew" = "Homebrew";
