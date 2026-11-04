@@ -351,9 +351,10 @@ enum InteractiveReview {
                 let mark = item.selected ? Term.cyan("●") : Term.dim("○")
                 let pointer = focused ? Term.cyan("›") : " "
                 let size = Term.pad(ByteCount.human(item.sizeBytes), to: 10)
-                let pathWidth = max(6, safeWidth - 17)
+                let noteText = item.note.map { "  [\(Term.sanitize($0))]" } ?? ""
+                let pathWidth = max(6, safeWidth - 17 - noteText.count)
                 let path = Term.truncate(Render.shorten(item.path), to: pathWidth, middle: true)
-                let content = "\(pointer) \(mark) \(size) \(path)"
+                let content = "\(pointer) \(mark) \(size) \(path)\(noteText)"
                 lines.append(focused ? Term.inverse(content) : content)
             }
         }
