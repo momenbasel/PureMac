@@ -473,6 +473,11 @@ struct DuplicateFinderView: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
+                if let groups = result?.groups {
+                    Button("Select All Copies") { selectAllCopies(groups) }
+                        .buttonStyle(.borderless)
+                        .disabled(isMovingToTrash)
+                }
                 if !selectedIDs.isEmpty {
                     Button("Clear Selection") { selectedIDs.removeAll() }
                         .buttonStyle(.borderless)
@@ -545,6 +550,11 @@ struct DuplicateFinderView: View {
         } else {
             selectedIDs.formUnion(candidateIDs)
         }
+    }
+
+    /// Selects every non-keeper copy across all groups; keepers never selected.
+    private func selectAllCopies(_ groups: [DuplicateGroup]) {
+        selectedIDs = Set(groups.flatMap { $0.files.dropFirst().map(\.url) })
     }
 
     private func toggleExpanded(_ group: DuplicateGroup) {
