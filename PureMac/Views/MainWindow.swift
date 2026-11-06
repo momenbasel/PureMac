@@ -7,6 +7,9 @@ struct MainWindow: View {
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var cleanupExpanded = false
     @State private var advancedToolsExpanded = false
+    @State private var careExpanded = true
+    @State private var applicationsExpanded = true
+    @State private var toolsExpanded = true
     @FocusState private var focusedSection: AppSection?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorScheme) private var colorScheme
@@ -87,143 +90,143 @@ struct MainWindow: View {
     private var sidebar: some View {
         List {
             Section {
-                navRow(
-                    section: .cleaning(.smartScan),
-                    label: "Overview",
-                    icon: "internaldrive",
-                    tint: Tint.accent,
-                    badge: dashboardBadge,
-                    emphasized: true
-                )
-                navRow(
-                    section: .protection,
-                    label: "Protection",
-                    icon: "shield.checkered",
-                    tint: Tint.green,
-                    badge: nil
-                )
-                navRow(
-                    section: .performance,
-                    label: "Performance",
-                    icon: "gauge.with.dots.needle.67percent",
-                    tint: Tint.cyan,
-                    badge: nil
-                )
-                navRow(
-                    section: .appleFeatures,
-                    label: "Apple Features",
-                    icon: "switch.2",
-                    tint: Tint.accent,
-                    badge: nil
-                )
+                if careExpanded {
+                    navRow(
+                        section: .cleaning(.smartScan),
+                        label: "Overview",
+                        icon: "internaldrive",
+                        tint: Tint.accent,
+                        badge: dashboardBadge,
+                        emphasized: true
+                    )
+                    navRow(
+                        section: .protection,
+                        label: "Protection",
+                        icon: "shield.checkered",
+                        tint: Tint.green,
+                        badge: nil
+                    )
+                    navRow(
+                        section: .performance,
+                        label: "Performance",
+                        icon: "gauge.with.dots.needle.67percent",
+                        tint: Tint.cyan,
+                        badge: nil
+                    )
+                    navRow(
+                        section: .appleFeatures,
+                        label: "Apple Features",
+                        icon: "switch.2",
+                        tint: Tint.accent,
+                        badge: nil
+                    )
+                }
             } header: {
-                sectionLabel("Care")
+                collapsibleSectionHeader("Care", isExpanded: $careExpanded)
             }
 
             Section {
-                navRow(
-                    section: .apps,
-                    label: "Uninstaller",
-                    icon: "app.dashed",
-                    tint: Tint.blue,
-                    badge: appState.installedApps.isEmpty ? nil : "\(appState.installedApps.count)"
-                )
-                navRow(
-                    section: .appUpdates,
-                    label: "App Updates",
-                    icon: "arrow.triangle.2.circlepath",
-                    tint: Tint.accent,
-                    badge: nil
-                )
-                navRow(
-                    section: .orphans,
-                    label: "Leftovers",
-                    icon: "doc.questionmark",
-                    tint: Tint.orange,
-                    badge: appState.orphanedFiles.isEmpty ? nil : "\(appState.orphanedFiles.count)"
-                )
+                if applicationsExpanded {
+                    navRow(
+                        section: .apps,
+                        label: "Uninstaller",
+                        icon: "app.dashed",
+                        tint: Tint.blue,
+                        badge: appState.installedApps.isEmpty ? nil : "\(appState.installedApps.count)"
+                    )
+                    navRow(
+                        section: .appUpdates,
+                        label: "App Updates",
+                        icon: "arrow.triangle.2.circlepath",
+                        tint: Tint.accent,
+                        badge: nil
+                    )
+                    navRow(
+                        section: .orphans,
+                        label: "Leftovers",
+                        icon: "doc.questionmark",
+                        tint: Tint.orange,
+                        badge: appState.orphanedFiles.isEmpty ? nil : "\(appState.orphanedFiles.count)"
+                    )
+                }
             } header: {
-                sectionLabel("Applications")
+                collapsibleSectionHeader("Applications", isExpanded: $applicationsExpanded)
             }
 
             Section {
-                navRow(
-                    section: .spaceExplorer,
-                    label: "Space Explorer",
-                    icon: "square.3.layers.3d.down.right",
-                    tint: Tint.accent,
-                    badge: nil
-                )
-                navRow(
-                    section: .duplicates,
-                    label: "Duplicate Finder",
-                    icon: "doc.on.doc",
-                    tint: Tint.purple,
-                    badge: nil
-                )
-                navRow(
-                    section: .similarPhotos,
-                    label: "Similar Photos",
-                    icon: "photo.stack",
-                    tint: Tint.pink,
-                    badge: nil
-                )
-                DisclosureGroup(isExpanded: $cleanupExpanded) {
-                    ForEach(Self.cleanupCategories) { category in
-                        navRow(
-                            section: .cleaning(category),
-                            label: LocalizedStringKey(category.rawValue),
-                            icon: category.icon,
-                            tint: category.color,
-                            badge: sizeBadge(for: category)
-                        )
+                if toolsExpanded {
+                    navRow(
+                        section: .spaceExplorer,
+                        label: "Space Explorer",
+                        icon: "square.3.layers.3d.down.right",
+                        tint: Tint.accent,
+                        badge: nil
+                    )
+                    navRow(
+                        section: .duplicates,
+                        label: "Duplicate Finder",
+                        icon: "doc.on.doc",
+                        tint: Tint.purple,
+                        badge: nil
+                    )
+                    navRow(
+                        section: .similarPhotos,
+                        label: "Similar Photos",
+                        icon: "photo.stack",
+                        tint: Tint.pink,
+                        badge: nil
+                    )
+                    DisclosureGroup(isExpanded: $cleanupExpanded) {
+                        ForEach(Self.cleanupCategories) { category in
+                            navRow(
+                                section: .cleaning(category),
+                                label: LocalizedStringKey(category.rawValue),
+                                icon: category.icon,
+                                tint: category.color,
+                                badge: sizeBadge(for: category)
+                            )
+                        }
+                    } label: {
+                        SidebarDisclosureHeader(
+                            label: "Cleanup",
+                            icon: "trash.slash"
+                        ) {
+                            withAnimation(reduceMotion ? nil : MotionTokens.gentle) {
+                                cleanupExpanded.toggle()
+                            }
+                        }
                     }
-                } label: {
-                    HStack(spacing: 10) {
-                        Image(systemName: "trash.slash")
-                            .font(.system(size: 16))
-                            .foregroundStyle(.secondary)
-                            .frame(width: 20)
-                        Text("Cleanup")
-                            .font(.system(size: 12.5, weight: .medium))
-                            .foregroundStyle(sidebarLabelColor)
+                    .tint(.secondary)
+                    .listRowInsets(rowInsets)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                    DisclosureGroup(isExpanded: $advancedToolsExpanded) {
+                        ForEach(Self.advancedCategories) { category in
+                            navRow(
+                                section: .cleaning(category),
+                                label: LocalizedStringKey(category.rawValue),
+                                icon: category.icon,
+                                tint: category.color,
+                                badge: sizeBadge(for: category)
+                            )
+                        }
+                    } label: {
+                        SidebarDisclosureHeader(
+                            label: "Developer Cleanup",
+                            icon: "wrench.and.screwdriver"
+                        ) {
+                            withAnimation(reduceMotion ? nil : MotionTokens.gentle) {
+                                advancedToolsExpanded.toggle()
+                            }
+                        }
                     }
-                    .frame(minHeight: 34)
-                    .contentShape(Rectangle())
+                    .tint(.secondary)
+                    .listRowInsets(rowInsets)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
                 }
-                .tint(.secondary)
-                .listRowInsets(rowInsets)
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
-                DisclosureGroup(isExpanded: $advancedToolsExpanded) {
-                    ForEach(Self.advancedCategories) { category in
-                        navRow(
-                            section: .cleaning(category),
-                            label: LocalizedStringKey(category.rawValue),
-                            icon: category.icon,
-                            tint: category.color,
-                            badge: sizeBadge(for: category)
-                        )
-                    }
-                } label: {
-                    HStack(spacing: 10) {
-                        Image(systemName: "wrench.and.screwdriver")
-                            .font(.system(size: 16))
-                            .foregroundStyle(.secondary)
-                            .frame(width: 20)
-                        Text("Developer Cleanup")
-                            .font(.system(size: 12.5, weight: .medium))
-                            .foregroundStyle(sidebarLabelColor)
-                    }
-                    .frame(minHeight: 34)
-                    .contentShape(Rectangle())
-                }
-                .tint(.secondary)
-                .listRowInsets(rowInsets)
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
             } header: {
-                sectionLabel("Tools")
+                collapsibleSectionHeader("Tools", isExpanded: $toolsExpanded)
             }
         }
         .listStyle(.sidebar)
@@ -233,13 +236,25 @@ struct MainWindow: View {
         .navigationTitle("PureMac")
         .onMoveCommand(perform: moveSelection)
         .onChange(of: selectedSection) { section in
-            guard case let .cleaning(category)? = section else { return }
+            guard let section else { return }
             withAnimation(reduceMotion ? nil : MotionTokens.gentle) {
-                if Self.cleanupCategories.contains(category) {
-                    cleanupExpanded = true
-                }
-                if Self.advancedCategories.contains(category) {
-                    advancedToolsExpanded = true
+                switch section {
+                case .cleaning(.smartScan), .protection, .performance, .appleFeatures:
+                    careExpanded = true
+                case .apps, .appUpdates, .orphans:
+                    applicationsExpanded = true
+                case .spaceExplorer, .duplicates, .similarPhotos:
+                    toolsExpanded = true
+                case .cleaning(let category):
+                    toolsExpanded = true
+                    if Self.cleanupCategories.contains(category) {
+                        cleanupExpanded = true
+                    }
+                    if Self.advancedCategories.contains(category) {
+                        advancedToolsExpanded = true
+                    }
+                case .settings:
+                    break
                 }
             }
         }
@@ -252,11 +267,29 @@ struct MainWindow: View {
         EdgeInsets(top: 1, leading: 12, bottom: 1, trailing: 12)
     }
 
-    private func sectionLabel(_ text: LocalizedStringKey) -> some View {
-        Text(text)
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(.secondary)
-            .textCase(nil)
+    private func collapsibleSectionHeader(
+        _ text: LocalizedStringKey,
+        isExpanded: Binding<Bool>
+    ) -> some View {
+        Button {
+            withAnimation(reduceMotion ? nil : MotionTokens.gentle) {
+                isExpanded.wrappedValue.toggle()
+            }
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 7.5, weight: .bold))
+                    .foregroundStyle(.secondary)
+                    .rotationEffect(isExpanded.wrappedValue ? .degrees(90) : .zero)
+                Text(text)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .textCase(nil)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(text))
     }
 
     private func navRow(
@@ -290,23 +323,34 @@ struct MainWindow: View {
     }
 
     private var visibleSections: [AppSection] {
-        var sections: [AppSection] = [
-            .cleaning(.smartScan),
-            .protection,
-            .performance,
-            .appleFeatures,
-            .apps,
-            .appUpdates,
-            .orphans,
-            .spaceExplorer,
-            .duplicates,
-            .similarPhotos
-        ]
-        if cleanupExpanded {
-            sections.append(contentsOf: Self.cleanupCategories.map(AppSection.cleaning))
+        var sections: [AppSection] = []
+        if careExpanded {
+            sections.append(contentsOf: [
+                .cleaning(.smartScan),
+                .protection,
+                .performance,
+                .appleFeatures
+            ])
         }
-        if advancedToolsExpanded {
-            sections.append(contentsOf: Self.advancedCategories.map(AppSection.cleaning))
+        if applicationsExpanded {
+            sections.append(contentsOf: [
+                .apps,
+                .appUpdates,
+                .orphans
+            ])
+        }
+        if toolsExpanded {
+            sections.append(contentsOf: [
+                .spaceExplorer,
+                .duplicates,
+                .similarPhotos
+            ])
+            if cleanupExpanded {
+                sections.append(contentsOf: Self.cleanupCategories.map(AppSection.cleaning))
+            }
+            if advancedToolsExpanded {
+                sections.append(contentsOf: Self.advancedCategories.map(AppSection.cleaning))
+            }
         }
         sections.append(.settings)
         return sections
@@ -561,3 +605,43 @@ private struct SidebarNavRow: View {
     }
 }
 
+private struct SidebarDisclosureHeader: View {
+    let label: LocalizedStringKey
+    let icon: String
+    let onToggle: () -> Void
+
+    @State private var hovering = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 16))
+                .foregroundStyle(.secondary)
+                .frame(width: 20)
+                .accessibilityHidden(true)
+            Text(label)
+                .font(.system(size: 12.5, weight: .medium))
+                .foregroundStyle(labelColor)
+                .lineLimit(1)
+            Spacer(minLength: 5)
+        }
+        .frame(maxWidth: .infinity, minHeight: 34, alignment: .leading)
+        .padding(.horizontal, 8)
+        .background {
+            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .fill(hovering ? Color.primary.opacity(0.035) : .clear)
+        }
+        .contentShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+        .animation(reduceMotion ? nil : MotionTokens.snappy, value: hovering)
+        .onHover { hovering = $0 }
+        .onTapGesture {
+            onToggle()
+        }
+    }
+
+    private var labelColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.91) : Color.black.opacity(0.84)
+    }
+}
