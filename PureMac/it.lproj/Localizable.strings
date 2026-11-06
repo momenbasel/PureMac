@@ -927,3 +927,37 @@
 
 "View releases" = "Visualizza versioni";
 "You're using the latest available version of PureMac." = "Stai usando l'ultima versione disponibile di PureMac.";
+
+/* Developer Projects */
+"Projects & Worktrees" = "Projects & Worktrees";
+"Remove build artifacts and git worktrees from a folder" = "Remove build artifacts and git worktrees from a folder";
+"Reclaim space from developer projects" = "Reclaim space from developer projects";
+"Choose a folder such as ~/Developer. PureMac finds node_modules, .turbo, build output and git worktrees, including .claude/worktrees, .orc and Supacode. Only older artifacts and clean, pushed worktrees are pre-selected. Nothing is deleted until you confirm." = "Choose a folder such as ~/Developer. PureMac finds node_modules, .turbo, build output and git worktrees, including .claude/worktrees, .orc and Supacode. Only older artifacts and clean, pushed worktrees are pre-selected. Nothing is deleted until you confirm.";
+"Looking through projects" = "Looking through projects";
+"Checking artifacts and git worktrees. Large folders can take a few minutes." = "Checking artifacts and git worktrees. Large folders can take a few minutes.";
+"Nothing to clean up" = "Nothing to clean up";
+"No build artifacts or git worktrees were found in %@." = "No build artifacts or git worktrees were found in %@.";
+"Items found" = "Items found";
+"Total size" = "Total size";
+"Always Exclude" = "Always Exclude";
+"Select Recommended" = "Select Recommended";
+"Delete Permanently" = "Delete Permanently";
+"Delete selected items permanently?" = "Delete selected items permanently?";
+"%lld items totaling %@ will be permanently deleted. Worktrees are removed with git, which refuses anything with uncommitted changes. This cannot be undone." = "%lld items totaling %@ will be permanently deleted. Worktrees are removed with git, which refuses anything with uncommitted changes. This cannot be undone.";
+"Artifact" = "Artifact";
+"Worktree" = "Worktree";
+"Orphaned" = "Orphaned";
+"uncommitted changes" = "uncommitted changes";
+"unpushed commits" = "unpushed commits";
+"locked" = "locked";
+"recent" = "recent";
+"orphaned: repository missing" = "orphaned: repository missing";
+"git status failed" = "git status failed";
+"Choose a folder of projects" = "Choose a folder of projects";
+"Choose a project folder" = "Choose a project folder";
+"Your home folder, Library and system locations cannot be scanned. Pick a folder like ~/Developer instead." = "Your home folder, Library and system locations cannot be scanned. Pick a folder like ~/Developer instead.";
+"Cleanup finished" = "Cleanup finished";
+"Removed %lld items, freeing %@." = "Removed %lld items, freeing %@.";
+"%lld could not be removed and were kept:" = "%lld could not be removed and were kept:";
+"Select the items you want to review" = "Select the items you want to review";
+"%@ will be permanently deleted" = "%@ will be permanently deleted";

@@ -11,6 +11,7 @@ enum AppSection: Hashable {
     case spaceExplorer
     case duplicates
     case similarPhotos
+    case devProjects
     case protection
     case performance
     case appleFeatures
