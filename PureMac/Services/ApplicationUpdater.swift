@@ -295,7 +295,7 @@ final class ApplicationUpdater: ObservableObject {
         let stdout = String(decoding: output.stdout, as: UTF8.self)
             .trimmingCharacters(in: .whitespacesAndNewlines)
         let detail = stderr.isEmpty ? stdout : stderr
-        return detail.isEmpty ? "Homebrew exited with status \(output.status)." : detail
+        return detail.isEmpty ? String(localized: "Homebrew exited with status \(output.status).") : detail
     }
 
     nonisolated private static func fetchUpdates(using brewURL: URL) async throws -> [ManagedAppUpdate] {
