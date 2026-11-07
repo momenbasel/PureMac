@@ -235,6 +235,8 @@
 "Brew Cache" = "Brewキャッシュ";
 "Node Cache" = "Nodeキャッシュ";
 "Docker Cache" = "Dockerキャッシュ";
+"Rust Targets" = "Rust ターゲット";
+"Node Modules" = "Node モジュール";
 "Universal Binaries" = "ユニバーサルバイナリ";
 "Language Files" = "言語ファイル";
 
@@ -251,6 +253,8 @@
 "Homebrew download cache" = "Homebrewのダウンロードキャッシュ";
 "npm, yarn, and pnpm download caches" = "npm、yarn、pnpm のダウンロードキャッシュ";
 "Docker images, containers, and build cache" = "Dockerイメージ、コンテナ、ビルドキャッシュ";
+"Rust project target folders, cleaned with cargo clean" = "Rust プロジェクトの target フォルダ（cargo clean で削除）";
+"node_modules folders in your projects" = "プロジェクト内の node_modules フォルダ";
 "Unused CPU architecture slices in app binaries" = "アプリバイナリ内の未使用CPUアーキテクチャコード";
 "Unused app localizations" = "使用されていないアプリのローカライゼーション";
 

@@ -235,6 +235,8 @@
 "Brew Cache" = "ذاكرة Brew المؤقتة";
 "Node Cache" = "ذاكرة Node المؤقتة";
 "Docker Cache" = "ذاكرة Docker المؤقتة";
+"Rust Targets" = "مجلدات Rust Target";
+"Node Modules" = "وحدات Node";
 "Universal Binaries" = "الملفات الثنائية المتعددة البنى";
 "Language Files" = "ملفات اللغات";
 
@@ -251,6 +253,8 @@
 "Homebrew download cache" = "ذاكرة تنزيلات Homebrew المؤقتة";
 "npm, yarn, and pnpm download caches" = "ذاكرات تنزيلات npm وyarn وpnpm المؤقتة";
 "Docker images, containers, and build cache" = "صور Docker والحاويات وذاكرة البناء المؤقتة";
+"Rust project target folders, cleaned with cargo clean" = "مجلدات target لمشاريع Rust، تُنظَّف باستخدام cargo clean";
+"node_modules folders in your projects" = "مجلدات node_modules في مشاريعك";
 "Unused CPU architecture slices in app binaries" = "شرائح بنى معالج غير مستخدمة في الملفات الثنائية للتطبيقات";
 "Unused app localizations" = "ترجمات التطبيقات غير المستخدمة";
 
