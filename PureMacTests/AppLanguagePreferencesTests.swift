@@ -4,11 +4,14 @@ import XCTest
 final class AppLanguagePreferencesTests: XCTestCase {
     func testAddedLanguagesUseExpectedIdentifiers() {
         XCTAssertEqual(AppLanguage.german.rawValue, "de")
+        XCTAssertEqual(AppLanguage.korean.rawValue, "ko")
+        XCTAssertEqual(AppLanguage.korean.displayName, "한국어")
         XCTAssertEqual(AppLanguage.italian.rawValue, "it")
         XCTAssertEqual(AppLanguage.italian.displayName, "Italian")
         XCTAssertEqual(AppLanguage.russian.rawValue, "ru")
         XCTAssertEqual(AppLanguage.ukrainian.rawValue, "uk")
         XCTAssertTrue(AppLanguage.allCases.contains(.german))
+        XCTAssertTrue(AppLanguage.allCases.contains(.korean))
         XCTAssertTrue(AppLanguage.allCases.contains(.italian))
         XCTAssertTrue(AppLanguage.allCases.contains(.russian))
         XCTAssertTrue(AppLanguage.allCases.contains(.ukrainian))
@@ -31,6 +34,9 @@ final class AppLanguagePreferencesTests: XCTestCase {
 
         AppLanguagePreferences.apply(.german, defaults: defaults)
         XCTAssertEqual(defaults.array(forKey: "AppleLanguages") as? [String], ["de"])
+
+        AppLanguagePreferences.apply(.korean, defaults: defaults)
+        XCTAssertEqual(defaults.array(forKey: "AppleLanguages") as? [String], ["ko"])
 
         AppLanguagePreferences.apply(.italian, defaults: defaults)
         XCTAssertEqual(defaults.array(forKey: "AppleLanguages") as? [String], ["it"])
