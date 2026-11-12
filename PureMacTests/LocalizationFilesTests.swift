@@ -11,7 +11,7 @@ final class LocalizationFilesTests: XCTestCase {
     }
 
     func testBuiltAppBundleContainsAddedLocalizations() throws {
-        for language in ["de", "it", "ru", "uk", "zh-Hans"] {
+        for language in ["de", "it", "ja", "ru", "uk", "zh-Hans"] {
             XCTAssertTrue(
                 Bundle.main.localizations.contains(language),
                 "Expected the built app bundle to register the \(language) localization"
