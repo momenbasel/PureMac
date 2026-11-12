@@ -476,7 +476,7 @@
 "%@ found across %lld categories." = "%2$lld カテゴリで %1$@ が見つかりました。";
 "%@ found before the scan stopped. Results may be incomplete." = "スキャン停止までに %@ が見つかりました。結果は不完全な可能性があります。";
 "%@ of %@" = "%1$@ / %2$@";
-"%@ of %@ candidates · %@ verified" = "候補 %2$@ 件中 %1$@ 件 · %3$@ 件確認済み";
+"%@ of %@ candidates · %@ verified" = "候補 %2$@ 件中 %1$@ 件 · %3$@ 照合済み";
 "%@ reviewable" = "%@ 確認可能";
 "%@ selected. This permanently removes the selected files or runs the listed cleanup actions. It cannot be undone." = "%@ を選択中。選択したファイルを完全に削除するか、記載されたクリーンアップ操作を実行します。この操作は取り消せません。";
 "%@ will move to Trash" = "%@ をゴミ箱に移動します";
@@ -630,12 +630,12 @@
 "Inspect a folder by allocated disk space. Your files are never changed." = "割り当てられたディスク容量でフォルダを検査します。ファイルが変更されることはありません。";
 "Inspect memory and background activity" = "メモリとバックグラウンドの動作を検査";
 "Inspect startup items and local snapshots again" = "起動項目とローカルスナップショットを再検査";
-"Inspected %@ files in %@. %@" = "%2$@ で %1$@ 個のファイルを検査しました。%3$@";
+"Inspected %@ files in %@. %@" = "「%2$@」内の %1$@ 個のファイルを検査しました。%3$@";
 "Inspecting startup items and local snapshots…" = "起動項目とローカルスナップショットを検査中…";
 "Inspection stopped" = "検査を停止しました";
 "Install Homebrew to check cask apps here. Apps from the App Store and direct downloads use their own update channels." = "ここでcaskアプリをチェックするにはHomebrewをインストールしてください。App Storeや直接ダウンロードしたアプリは、それぞれ独自の方法でアップデートされます。";
 "Installed" = "インストール済み";
-"Installed %@" = "インストール済み %@";
+"Installed %@" = "インストール済み: %@";
 "Keep" = "保持";
 "Keep PureMac open until this pass finishes." = "この処理が完了するまでPureMacを開いたままにしてください。";
 "Keep alive" = "常駐";
@@ -645,7 +645,7 @@
 "Last checked" = "最終チェック";
 "Launch agents and daemons installed outside macOS system folders" = "macOSのシステムフォルダ以外にインストールされた起動エージェントとデーモン";
 "Leftovers" = "残存ファイル";
-"Live" = "ライブ";
+"Live" = "リアルタイム";
 "Live resources" = "リアルタイムのリソース";
 "Local and private" = "ローカルかつプライベート";
 "Local files" = "ローカルファイル";
@@ -665,7 +665,7 @@
 "Moved to Trash" = "ゴミ箱に移動しました";
 "Name" = "名前";
 "Needs attention" = "要確認";
-"Network state" = "ネットワークの状態";
+"Network state" = "ネットワーク接続時";
 "No exact duplicates found" = "完全一致する重複は見つかりませんでした";
 "No excluded paths" = "除外されたパスはありません";
 "No files found" = "ファイルが見つかりません";
@@ -769,7 +769,7 @@
 "Scan this Mac" = "このMacをスキャン";
 "Scan this category" = "このカテゴリをスキャン";
 "Scanning %@…" = "%@ をスキャン中…";
-"Scheduled" = "スケジュール済み";
+"Scheduled" = "スケジュール実行";
 "Security Settings" = "セキュリティの設定";
 "See current resource use and review what starts in the background." = "現在のリソース使用状況と、バックグラウンドで起動するものを確認します。";
 "See what is taking up space" = "容量を占めているものを確認";
