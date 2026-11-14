@@ -3,9 +3,14 @@ import Foundation
 actor ScanEngine {
     private let fileManager = FileManager.default
     private let home: String
+    private let devTools: DevToolCacheEnvironment
 
-    init(homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser) {
+    init(
+        homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser,
+        devToolEnvironment: DevToolCacheEnvironment = .live
+    ) {
         home = XcodeBuildMCPDerivedDataSupport.canonicalHomeDirectory(homeDirectory).path
+        devTools = devToolEnvironment
     }
 
     /// Live path reporter for the dashboard's scanning ticker. Throttled so
@@ -75,6 +80,8 @@ actor ScanEngine {
             return await scanBrewCache()
         case .nodeCache:
             return await scanNodeCache()
+        case .devToolCaches:
+            return scanDevToolCaches()
         case .dockerCache:
             return await scanDockerCache()
         case .universalBinaries:
@@ -152,7 +159,7 @@ actor ScanEngine {
             "\(home)/Library/Caches/npm",
             "\(home)/Library/Caches/Yarn",
             "\(home)/Library/Caches/dev.kdrag0n.MacVirt",
-        ] + ProviderPaths.deniedRoots(homeDirectory: URL(fileURLWithPath: home, isDirectory: true))).map(normalizePath))
+        ] + DevToolCaches.absolutePaths(home: home) + ProviderPaths.deniedRoots(homeDirectory: URL(fileURLWithPath: home, isDirectory: true))).map(normalizePath))
 
         // Dynamically enumerate ~/Library/Caches/ so every subdirectory is visible
         let cachePath = "\(home)/Library/Caches"
@@ -165,21 +172,8 @@ actor ScanEngine {
         )
         items.append(contentsOf: scanned)
 
-        // Also scan for npm/pip/yarn caches
-        let devCaches = [
-            "\(home)/.cache/pip",
-            "\(home)/Library/Caches/pip",
-        ]
-
-        for path in devCaches {
-            if let item = makeCleanupItem(
-                name: URL(fileURLWithPath: path).lastPathComponent,
-                path: path,
-                category: .userCache
-            ) {
-                items.append(item)
-            }
-        }
+        // pip and the other developer tool caches belong to the Dev Tool
+        // Caches category (excluded above), so they are not listed here.
 
         // Sandboxed apps keep their caches inside per-app containers, not
         // ~/Library/Caches — on modern macOS this is where most of the
@@ -715,6 +709,57 @@ actor ScanEngine {
 
         let totalSize = items.reduce(0) { $0 + $1.size }
         return CategoryResult(category: .nodeCache, items: items, totalSize: totalSize)
+    }
+
+    private func scanDevToolCaches() -> CategoryResult {
+        var items: [CleanableItem] = []
+        var gradleRunning: Bool?
+        var hasGo: Bool?
+
+        for root in DevToolCaches.roots {
+            if Task.isCancelled { break }
+            let path = (root.path(home: home) as NSString).standardizingPath
+            report(path)
+            var isDirectory: ObjCBool = false
+            guard fileManager.fileExists(atPath: path, isDirectory: &isDirectory), isDirectory.boolValue else {
+                continue
+            }
+            guard !DevToolCaches.hasSymlinkBelowHome(path, home: home) else {
+                Logger.shared.log("Dev tool caches: refusing symlinked cache root \(path)", level: .warning)
+                continue
+            }
+            if root.removal == .goCleanModcache {
+                if hasGo == nil { hasGo = devTools.locate("go", home: home) != nil }
+                guard hasGo == true else {
+                    Logger.shared.log("Dev tool caches: go not found; not listing the Go module cache", level: .info)
+                    continue
+                }
+            }
+            let size = directorySize(path: path)
+            guard size > 0 else { continue }
+
+            var name = String(localized: String.LocalizationValue(root.nameKey))
+            var isSelected = root.selectedByDefault
+            if root.removal == .unlinkUnlessGradleRunning {
+                if gradleRunning == nil { gradleRunning = devTools.isGradleRunning() }
+                if gradleRunning == true {
+                    isSelected = false
+                    name = String(format: String(localized: "%@ (Gradle is running)"), name)
+                }
+            }
+            items.append(CleanableItem(
+                name: name,
+                path: path,
+                size: size,
+                category: .devToolCaches,
+                isSelected: isSelected,
+                lastModified: fileModDate(path: path),
+                selectOnlyByHand: !root.selectedByDefault
+            ))
+        }
+
+        let totalSize = items.reduce(0) { $0 + $1.size }
+        return CategoryResult(category: .devToolCaches, items: items, totalSize: totalSize)
     }
 
     nonisolated static func approvedNodeCacheRoots(
