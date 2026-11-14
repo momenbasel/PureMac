@@ -9,7 +9,7 @@
 "Ready to clean" = "可以清理";
 "Limited access" = "访问受限";
 "Full Disk Access granted" = "已授予完全磁盘访问权限";
-"Grant FDA in Settings" = "在系统设置中授予权限";
+"Grant FDA in Settings" = "在系统设置中授予完全磁盘访问权限";
 "Select a category from the sidebar to get started." = "从侧边栏选择一个类别开始使用。";
 
 /* FDA toast + clean error alert (MainWindow) */
@@ -21,21 +21,21 @@
 "Grant Access" = "授予权限";
 
 /* Dashboard */
-"Storage" = "存储";
+"Storage" = "存储空间";
 "Smart Scan" = "智能扫描";
 "free of %@" = "%@ 中的可用空间";
 "%lld%% used" = "已使用 %lld%%";
 "Used" = "已用";
-"Junk" = "垃圾";
+"Junk" = "垃圾文件";
 "Purgeable" = "可清除";
 "USED" = "已用";
 "SCANNING" = "扫描中";
 "Free Space" = "可用空间";
-"Junk Found" = "发现的垃圾";
+"Junk Found" = "发现的垃圾文件";
 "Apps" = "应用";
 "of %@ · %lld%% used" = "总计 %@ · 已使用 %lld%%";
 "Run a scan" = "运行扫描";
-"across %lld categories" = "跨 %lld 个类别";
+"across %lld categories" = "涉及 %lld 个类别";
 "installed" = "已安装";
 "APFS reclaimable" = "APFS 可回收空间";
 "Suggested for you" = "推荐";
@@ -47,14 +47,14 @@
 "Without it, most caches and uninstall flows fail." = "缺少权限时，部分缓存和应用文件可能无法处理。";
 "Action" = "操作";
 "Scanning your Mac" = "正在扫描你的 Mac";
-"Currently in: %@" = "当前：%@";
+"Currently in: %@" = "当前位置：%@";
 "found" = "已发现";
 "Your Mac is clean" = "你的 Mac 很干净";
 "Scan Again" = "重新扫描";
 "Clean %@" = "清理 %@";
-"Clean %@?" = "清理 %@?";
+"Clean %@?" = "清理 %@？";
 "Cleaning…" = "正在清理…";
-"%lld%% complete" = "%lld%% 完成";
+"%lld%% complete" = "已完成 %lld%%";
 "freed" = "已释放";
 "Done" = "完成";
 "%lld items" = "%lld 项";
@@ -70,19 +70,19 @@
 "Not Scanned" = "未扫描";
 "Run a scan to analyze this category." = "运行扫描以分析此类别。";
 "Scan Now" = "立即扫描";
-"Filter files" = "过滤文件";
+"Filter files" = "筛选文件";
 "Scan" = "扫描";
 "Select All" = "全选";
 "Deselect All" = "取消全选";
-"Largest First" = "最大优先";
-"Smallest First" = "最小优先";
-"Sorted: Largest First" = "排序：最大优先";
-"Sorted: Smallest First" = "排序：最小优先";
+"Largest First" = "从大到小";
+"Smallest First" = "从小到大";
+"Sorted: Largest First" = "排序：从大到小";
+"Sorted: Smallest First" = "排序：从小到大";
 "Clean %lld items" = "清理 %lld 项";
 "%lld items · %@" = "%lld 项 · %@";
 "Scanning…" = "扫描中…";
 "Rescan" = "重新扫描";
-"%lld of %lld selected" = "已选 %lld / %lld";
+"%lld of %lld selected" = "已选 %lld / %lld 项";
 "Reveal in Finder" = "在访达中显示";
 "Copy Path" = "复制路径";
 "Move to Trash" = "移到废纸篓";
@@ -90,9 +90,9 @@
 /* Apps (AppListView) */
 "Search apps" = "搜索应用";
 "Refresh" = "刷新";
-"Installed Apps (%lld)" = "已安装应用 (%lld)";
+"Installed Apps (%lld)" = "已安装的应用（%lld）";
 "Uninstall (%lld files)" = "卸载（%lld 个文件）";
-"Loading installed apps..." = "正在加载已安装应用...";
+"Loading installed apps..." = "正在加载已安装的应用…";
 "No Apps Found" = "未找到应用";
 "Could not find any installed applications." = "未能找到任何已安装的应用程序。";
 "Retry" = "重试";
@@ -105,14 +105,14 @@
 "%lld files" = "%lld 个文件";
 "1 folder" = "1 个文件夹";
 "1 file" = "1 个文件";
-"Scanning for related files..." = "正在扫描相关文件...";
-"Checking %lld locations..." = "正在检查 %lld 个位置...";
+"Scanning for related files..." = "正在扫描相关文件…";
+"Checking %lld locations..." = "正在检查 %lld 个位置…";
 "No Related Files" = "没有相关文件";
 "No additional files found for %@." = "未找到 %@ 的额外文件。";
-"Remove %lld files (%@)" = "删除 %lld 个文件 (%@)";
+"Remove %lld files (%@)" = "删除 %lld 个文件（%@）";
 "Removal Failed" = "删除失败";
 "Remove this file" = "删除此文件";
-"Remove %@?" = "删除 %@?";
+"Remove %@?" = "删除 %@？";
 "Remove" = "删除";
 "This will permanently delete this file. This action cannot be undone." = "这将永久删除此文件。此操作无法撤销。";
 
@@ -122,7 +122,7 @@
 "No leftover files from uninstalled apps were found." = "未发现已卸载应用的残留文件。";
 "Scan for Orphans" = "查找应用残留";
 "Orphaned Files (%lld)" = "应用残留（%lld 项）";
-"Remove Selected (%lld)" = "删除所选 (%lld)";
+"Remove Selected (%lld)" = "删除所选项目（%lld）";
 "Some files could not be removed" = "部分文件无法删除";
 "blocked by safety policy" = "已被安全策略阻止";
 "%lld item(s) failed to delete.\n\n%@" = "有 %lld 个项目删除失败。\n\n%@";
@@ -145,7 +145,7 @@
 "Privacy & Security → Full Disk Access" = "隐私与安全性 → 完全磁盘访问权限";
 "Find **PureMac** and turn the toggle on" = "找到 **PureMac** 并打开开关";
 "Authenticate with Touch ID or your password" = "使用触控 ID 或密码进行验证";
-"Reopen Settings" = "重新打开“设置”";
+"Reopen Settings" = "重新打开“系统设置”";
 "PureMac isn't in the list — reveal it" = "列表中没有 PureMac？在访达中显示";
 "Reset permissions and re-prompt" = "重置权限并再次提示";
 "Hide diagnostics" = "隐藏诊断";
@@ -155,8 +155,8 @@
 "Permission granted." = "已授予权限。";
 "PureMac can now manage protected files." = "PureMac 现在可以管理受保护的文件。";
 "You're Ready" = "已准备就绪";
-"%lld/%lld protected locations accessible" = "可访问的受保护位置 %lld/%lld";
-"Some features will be limited without Full Disk Access. You can grant it later in Settings." = "没有完全磁盘访问权限时，部分功能将受限。你可以稍后在设置中授予该权限。";
+"%lld/%lld protected locations accessible" = "可访问 %lld/%lld 个受保护的位置";
+"Some features will be limited without Full Disk Access. You can grant it later in Settings." = "没有完全磁盘访问权限时，部分功能将受限。你可以稍后在系统设置中授予该权限。";
 "Trash" = "废纸篓";
 "Mail Data" = "邮件数据";
 "Safari Data" = "Safari 数据";
@@ -171,7 +171,7 @@
 
 /* Settings */
 "General" = "通用";
-"Cleaning" = "正在清理";
+"Cleaning" = "清理";
 "Schedule" = "计划";
 "About" = "关于";
 "Startup" = "启动";
@@ -181,9 +181,9 @@
 "Strict" = "严格";
 "Enhanced" = "增强";
 "Deep" = "深度";
-"Exact bundle ID and name matches only. Safest option." = "仅精确匹配套件 ID 和名称。最安全。";
-"Includes partial name matching and bundle ID components." = "包含部分名称匹配和套件 ID 组件。";
-"Includes company name, entitlements, and team identifier matching." = "包含公司名称、授权和团队标识符匹配。";
+"Exact bundle ID and name matches only. Safest option." = "仅精确匹配应用标识符（Bundle ID）和名称。这是最安全的选项。";
+"Includes partial name matching and bundle ID components." = "还会匹配部分名称和应用标识符（Bundle ID）的组成部分。";
+"Includes company name, entitlements, and team identifier matching." = "还会匹配公司名称、应用权限声明和开发团队标识符。";
 "Language" = "语言";
 "Restart PureMac to apply the selected language." = "请重新启动 PureMac 以应用所选语言。";
 "Relaunch Now" = "立即重新启动";
@@ -203,23 +203,23 @@
 "Chinese (Traditional)" = "繁体中文";
 "Safety" = "安全";
 "Confirm before deleting files" = "删除文件前确认";
-"File Discovery" = "文件发现";
+"File Discovery" = "文件查找";
 "Skip hidden files during scan" = "扫描时跳过隐藏文件";
 "Large Files" = "大文件";
-"Minimum size: %lld MB" = "最小大小：%lld MB";
-"Files older than: %lld months" = "早于：%lld 个月的文件";
+"Minimum size: %lld MB" = "文件大小下限：%lld MB";
+"Files older than: %lld months" = "距上次修改超过 %lld 个月的文件";
 "Automatic Scanning" = "自动扫描";
 "Enable scheduled scanning" = "启用计划扫描";
 "Scan interval" = "扫描间隔";
 "Auto-clean after scan" = "扫描后自动清理";
-"Auto-purge purgeable space" = "自动清除可清理空间";
+"Auto-purge purgeable space" = "自动释放可清除空间";
 "Notify on completion" = "完成时通知";
 "Last run" = "上次运行";
 "Version %@" = "版本 %@";
 "Free, open-source macOS app manager." = "免费、开源的 macOS 应用管理工具。";
 "GitHub Repository" = "GitHub 仓库";
 "Report an Issue" = "报告问题";
-"MIT License" = "MIT 许可";
+"MIT License" = "MIT 许可证";
 "Updates" = "更新";
 "Check for Updates" = "检查更新";
 
@@ -242,11 +242,11 @@
 "Scan everything at once" = "一次扫描所有内容";
 "System caches, logs, and temporary files" = "系统缓存、日志和临时文件";
 "Application caches and browser data" = "应用程序缓存和浏览器数据";
-"Local AI app logs, caches, and optional history" = "本地 AI 应用的日志、缓存和可选历史";
+"Local AI app logs, caches, and optional history" = "本地 AI 应用的日志、缓存和历史记录（可选）";
 "Downloaded mail attachments" = "已下载的邮件附件";
 "Files in your Trash" = "废纸篓中的文件";
 "Files over 100 MB or older than 1 year" = "大于 100 MB 或超过 1 年的文件";
-"APFS purgeable disk space" = "APFS 可清理磁盘空间";
+"APFS purgeable disk space" = "APFS 可清除磁盘空间";
 "Derived data, archives, and simulator runtimes" = "构建数据、归档和模拟器运行时";
 "Homebrew download cache" = "Homebrew 下载缓存";
 "npm, yarn, and pnpm download caches" = "npm、yarn 和 pnpm 下载缓存";
@@ -266,7 +266,7 @@
 
 /* Node Cache subcategories */
 "npm cache" = "npm 缓存";
-"yarn classic cache" = "yarn 经典缓存";
+"yarn classic cache" = "Yarn Classic 缓存";
 "pnpm content-addressable store" = "pnpm 内容寻址存储";
 
 /* Docker Cache helper */
@@ -283,8 +283,8 @@
 "Monthly" = "每月";
 
 /* Schedule status */
-"Never" = "从不";
-"Not scheduled" = "未计划";
+"Never" = "尚未运行";
+"Not scheduled" = "未设置计划";
 
 /* Appearance modes (AppearanceMode.label) */
 "System" = "系统";
@@ -298,29 +298,29 @@
 "Grant Full Disk Access" = "授予完全磁盘访问权限";
 "%lld item(s) need Full Disk Access" = "%lld 个项目需要完全磁盘访问权限";
 "Uninstalling %@: %lld file(s) need Full Disk Access" = "卸载 %@：%lld 个文件需要完全磁盘访问权限";
-"%lld item(s) need Full Disk Access to remove. Tap Grant Access to fix in one step." = "%lld 个项目需要完全磁盘访问权限才能删除。轻点「授予访问权限」一步解决。";
+"%lld item(s) need Full Disk Access to remove. Tap Grant Access to fix in one step." = "%lld 个项目需要完全磁盘访问权限才能删除。点击“授予权限”前往设置。";
 "Couldn't remove %@%@. They may be in use or protected by macOS." = "无法删除 %@%@。它们可能正在使用或受 macOS 保护。";
-" and %lld more" = " 还有 %lld 个";
-"Access granted. Retrying…" = "已授予访问权限。正在重试…";
+" and %lld more" = "，另有 %lld 项";
+"Access granted. Retrying…" = "已授予权限，正在重试…";
 "1-tap setup. We'll detect the change automatically." = "前往系统设置授权，我们会自动检测权限变化。";
-"Open Settings & reveal PureMac" = "打开“设置”并显示 PureMac";
+"Open Settings & reveal PureMac" = "打开系统设置并在访达中显示 PureMac";
 "We'll open both windows side-by-side." = "将同时打开系统设置和访达。";
-"Turn on PureMac" = "开启 PureMac";
+"Turn on PureMac" = "开启 PureMac 的访问权限";
 "Toggle the row that appears." = "打开 PureMac 对应的开关。";
 "Authenticate" = "验证身份";
-"Touch ID or password." = "Touch ID 或密码。";
+"Touch ID or password." = "使用触控 ID 或密码。";
 "We auto-retry — no need to come back." = "授权后会自动重试，无需手动返回。";
-"Watching for permission change…" = "正在监视权限变更…";
+"Watching for permission change…" = "正在等待权限变更…";
 "PureMac not in the list?" = "PureMac 不在列表中？";
 "Hide help" = "隐藏帮助";
 "Try this if PureMac doesn't appear:" = "如果 PureMac 没有出现，请尝试：";
-"Reveal app" = "显示 App";
+"Reveal app" = "在访达中显示应用";
 "Drag PureMac.app into the list" = "将 PureMac.app 拖入列表";
 "Reset + reprompt" = "重置并重新提示";
 "Clear stale TCC entry" = "清除过时的 TCC 条目";
-"+ %lld more" = "+ 还有 %lld 个";
-"%lld blocked path(s)" = "%lld 个被阻止的路径";
-"Access granted" = "已授予访问权限";
+"+ %lld more" = "+ %lld 项";
+"%lld blocked path(s)" = "%lld 个路径无法访问";
+"Access granted" = "已授予权限";
 "Retrying the operation now." = "正在重试此操作。";
 "Skip for now" = "暂时跳过";
 "I granted it — retry" = "已授权，重试";
@@ -341,7 +341,7 @@
 "Free. Open source. MIT licensed." = "免费开源，采用 MIT 许可证。";
 "What's inside" = "主要功能";
 "Three things, done well." = "专注做好三件事。";
-"Find caches, logs, broken installs, and the AI-app history hiding in your library." = "找出缓存、日志、损坏的安装文件，以及隐藏在资源库中的 AI 应用历史。";
+"Find caches, logs, broken installs, and the AI-app history hiding in your library." = "找出缓存、日志、损坏的安装文件，以及隐藏在资源库中的 AI 应用历史记录。";
 "Drag an app, see every file it dropped, remove all of it. No leftovers." = "拖入应用，查看关联文件，确认后一起清理。";
 "Surfaces files that outlived the apps that created them." = "查找应用卸载后留下的文件。";
 "One permission, then we're done" = "再授予一项权限即可";
@@ -359,10 +359,10 @@
 "Continue" = "继续";
 
 /* Drag handle */
-"Drag to the Settings list" = "拖到设置列表";
+"Drag to the Settings list" = "拖入系统设置列表";
 "Drag this icon into the Full Disk Access list in System Settings." = "将此图标拖入系统设置中的完全磁盘访问权限列表。";
 "Tip: drag the icon on the left straight into the list." = "提示：把左侧图标直接拖入列表。";
-"Or drag the icon on the left straight into Settings." = "或者把左侧图标直接拖入设置。";
+"Or drag the icon on the left straight into Settings." = "或者把左侧图标直接拖入系统设置的权限列表。";
 
 /* Dashboard storage composition (v2.7.0) */
 "Storage composition" = "存储构成";
@@ -392,9 +392,9 @@
 
 /* v2.8.2: orphan ignore list (#114) */
 "Always Ignore" = "始终忽略";
-"Ignore Selected (%lld)" = "忽略所选 (%lld)";
+"Ignore Selected (%lld)" = "忽略所选项目（%lld）";
 "Ignored orphans: %lld" = "已忽略的应用残留：%lld";
-"Forget Ignored" = "清除已忽略";
+"Forget Ignored" = "清空忽略列表";
 "Ignored files won't appear in future orphan scans." = "已忽略的文件不会出现在以后的应用残留扫描中。";
 
 /* v2.8.3: menu-bar system monitor */
@@ -469,14 +469,14 @@
 "\nAnd %lld more." = "\n另有 %lld 项。";
 "%@ %@ to %@" = "%@：%@ → %@";
 "%@ available" = "可用 %@";
-"%@ could not be removed because PureMac does not have Full Disk Access. Grant Full Disk Access in System Settings, then try again." = "由于 PureMac 没有完全磁盘访问权限，无法删除%@。请在系统设置中授予权限后重试。";
+"%@ could not be removed because PureMac does not have Full Disk Access. Grant Full Disk Access in System Settings, then try again." = "由于 PureMac 没有完全磁盘访问权限，无法删除 %@。请在系统设置中授予权限后重试。";
 "%@ did not finish within the allowed time." = "%@ 未能在规定时间内完成。";
 "%@ exited with status %d%@" = "%@ 已退出，状态码为 %d%@";
 "%@ files inspected" = "已检查 %@ 个文件";
 "%@ found across %lld categories." = "在 %2$lld 个类别中发现 %1$@ 可清理内容。";
 "%@ found before the scan stopped. Results may be incomplete." = "扫描停止前发现 %@ 可清理内容，结果可能不完整。";
 "%@ of %@" = "已用 %@，共 %@";
-"%@ of %@ candidates · %@ verified" = "已校验 %@ / %@ 个候选文件，共 %@";
+"%@ of %@ candidates · %@ verified" = "已校验 %@ / %@ 个候选文件 · 已校验数据量 %@";
 "%@ reviewable" = "可供清理 %@";
 "%@ selected. This permanently removes the selected files or runs the listed cleanup actions. It cannot be undone." = "已选择 %@。将永久删除所选文件或执行列出的清理操作，此操作无法撤销。";
 "%@ will move to Trash" = "将把 %@ 移到废纸篓";
@@ -767,7 +767,7 @@
 "Scan stopped" = "扫描已停止";
 "Scan this Mac" = "扫描此 Mac";
 "Scan this category" = "扫描此类别";
-"Scanning %@…" = "正在扫描%@…";
+"Scanning %@…" = "正在扫描 %@…";
 "Scheduled" = "定时运行";
 "Security Settings" = "安全设置";
 "See current resource use and review what starts in the background." = "查看当前资源使用情况和后台启动项目。";
@@ -874,55 +874,100 @@
 /* Additional interface strings. */
 "%lld processes" = "%lld 个进程";
 "1 process" = "1 个进程";
-"A PureMac update is available" = "A PureMac update is available";
-"About these readings" = "About these readings";
-"App memory shows resident memory, including shared pages. App totals can differ from the summary." = "App memory shows resident memory, including shared pages. App totals can differ from the summary.";
-"Apps and processes" = "Apps and processes";
-"Build %@" = "Build %@";
-"CPU - Memory" = "CPU - Memory";
-"CPU uses the Mac’s total capacity. App helpers are grouped with their app." = "CPU uses the Mac’s total capacity. App helpers are grouped with their app.";
-"CPU values appear after the next sample." = "CPU values appear after the next sample.";
-"Check access" = "Check access";
-"Checking for updates…" = "Checking for updates…";
-"Checks the official app releases on GitHub." = "Checks the official app releases on GitHub.";
-"Collapsed" = "Collapsed";
-"Copy command" = "Copy command";
-"Download (DMG / ZIP)" = "Download (DMG / ZIP)";
-"Download the new app from the release page, quit PureMac, then replace it in Applications." = "Download the new app from the release page, quit PureMac, then replace it in Applications.";
-"Expanded" = "Expanded";
-"GitHub is receiving too many requests. Please try again later." = "GitHub is receiving too many requests. Please try again later.";
+"A PureMac update is available" = "PureMac 有可用更新";
+"About these readings" = "数据说明";
+"App memory shows resident memory, including shared pages. App totals can differ from the summary." = "应用内存显示的是常驻内存，包含共享内存页。各应用的内存用量之和可能与总览中的数值不同。";
+"Apps and processes" = "应用与进程";
+"Build %@" = "构建版本 %@";
+"CPU - Memory" = "CPU 与内存";
+"CPU uses the Mac’s total capacity. App helpers are grouped with their app." = "CPU 使用率以此 Mac 的总处理能力为基准。辅助进程会归入所属应用。";
+"CPU values appear after the next sample." = "CPU 使用率将在下一次采样后显示。";
+"Check access" = "检查权限";
+"Checking for updates…" = "正在检查更新…";
+"Checks the official app releases on GitHub." = "检查 GitHub 上的应用官方发布版本。";
+"Collapsed" = "已收起";
+"Copy command" = "复制命令";
+"Download (DMG / ZIP)" = "下载（DMG / ZIP）";
+"Download the new app from the release page, quit PureMac, then replace it in Applications." = "从发布页面下载新版应用，退出 PureMac，然后替换“应用程序”文件夹中的旧版应用。";
+"Expanded" = "已展开";
+"GitHub is receiving too many requests. Please try again later." = "GitHub 请求过于频繁，请稍后重试。";
 "Homebrew" = "Homebrew";
-"Keep PureMac up to date" = "Keep PureMac up to date";
-"Last checked: %@" = "Last checked: %@";
-"Live updates paused" = "Live updates paused";
+"Keep PureMac up to date" = "让 PureMac 保持最新版本";
+"Last checked: %@" = "上次检查：%@";
+"Live updates paused" = "实时刷新已暂停";
 
-"Make PureMac work your way." = "Make PureMac work your way.";
-"Measuring apps and processes…" = "Measuring apps and processes…";
-"Memory estimate includes active, wired and compressed memory." = "Memory estimate includes active, wired and compressed memory.";
-"Memory in use" = "Memory in use";
-"No matching apps or processes" = "No matching apps or processes";
-"No stable PureMac app release was found. Try again later." = "No stable PureMac app release was found. Try again later.";
-"Open release page" = "Open release page";
-"Paused" = "Paused";
-"Process information is unavailable. Try Activity Monitor for more detail." = "Process information is unavailable. Try Activity Monitor for more detail.";
-"PureMac %@ is available" = "PureMac %@ is available";
-"Restart to apply your language" = "Restart to apply your language";
-"Review Full Disk Access" = "Review Full Disk Access";
-"Review launch at login" = "Review launch at login";
-"Search apps and processes" = "Search apps and processes";
-"Settings" = "Settings";
-"Settings need attention" = "Settings need attention";
-"Settings to review" = "Settings to review";
-"Show all apps and processes" = "Show all apps and processes";
-"Show top 8" = "Show top 8";
-"Some of this app's processes have no CPU reading yet, so this total is partial." = "Some of this app's processes have no CPU reading yet, so this total is partial.";
-"Some processes started or stopped since the last sample. Their values appear in the next one." = "Some processes started or stopped since the last sample. Their values appear in the next one.";
-"Sort by" = "Sort by";
-"System processes are not listed. Use Activity Monitor for those." = "System processes are not listed. Use Activity Monitor for those.";
-"The release service is unavailable. Please try again later." = "The release service is unavailable. Please try again later.";
-"This build has no readable version. Open the releases page to check manually." = "This build has no readable version. Open the releases page to check manually.";
-"To update with Homebrew, run this command in Terminal. The cask may follow the GitHub release a little later." = "To update with Homebrew, run this command in Terminal. The cask may follow the GitHub release a little later.";
-"Update method" = "Update method";
+"Make PureMac work your way." = "按你的习惯设置 PureMac。";
+"Measuring apps and processes…" = "正在统计应用与进程的资源用量…";
+"Memory estimate includes active, wired and compressed memory." = "内存估算值包含活跃内存、联动内存和压缩内存。";
+"Memory in use" = "已用内存";
+"No matching apps or processes" = "未找到匹配的应用或进程";
+"No stable PureMac app release was found. Try again later." = "未找到 PureMac 应用的稳定发布版本，请稍后重试。";
+"Open release page" = "打开发布页面";
+"Paused" = "已暂停";
+"Process information is unavailable. Try Activity Monitor for more detail." = "无法获取进程信息，请打开活动监视器查看更多详情。";
+"PureMac %@ is available" = "PureMac %@ 已发布";
+"Restart to apply your language" = "重新启动 PureMac 以应用所选语言";
+"Review Full Disk Access" = "检查完全磁盘访问权限";
+"Review launch at login" = "检查登录时启动设置";
+"Search apps and processes" = "搜索应用与进程";
+"Settings" = "设置";
+"Settings need attention" = "部分设置需要处理";
+"Settings to review" = "待检查的设置";
+"Show all apps and processes" = "显示所有应用与进程";
+"Show top 8" = "仅显示前 8 项";
+"Some of this app's processes have no CPU reading yet, so this total is partial." = "此应用的部分进程尚无 CPU 使用率数据，因此当前总计仅包含部分进程。";
+"Some processes started or stopped since the last sample. Their values appear in the next one." = "部分进程在上次采样后启动或退出，相关数据将在下一次采样后更新。";
+"Sort by" = "排序方式";
+"System processes are not listed. Use Activity Monitor for those." = "此处不列出系统进程，请在活动监视器中查看。";
+"The release service is unavailable. Please try again later." = "版本发布服务暂时不可用，请稍后重试。";
+"This build has no readable version. Open the releases page to check manually." = "无法读取当前构建的版本号，请打开发布页面手动检查。";
+"To update with Homebrew, run this command in Terminal. The cask may follow the GitHub release a little later." = "要通过 Homebrew 更新，请在终端中运行此命令。Homebrew 中的应用版本可能稍晚于 GitHub 发布版本更新。";
+"Update method" = "更新方式";
 
-"View releases" = "View releases";
-"You're using the latest available version of PureMac." = "You're using the latest available version of PureMac.";
+"View releases" = "查看发布版本";
+"You're using the latest available version of PureMac." = "你已在使用 PureMac 的最新版本。";
+
+/* Runtime scan labels and cleanup errors. */
+"%@ (sandbox cache)" = "%@（沙盒缓存）";
+"%@: Legacy DerivedData" = "%@：旧版构建数据";
+"Time Machine snapshot: %@" = "时间机器快照：%@";
+"Unknown file" = "未知文件";
+"Excluded from cleanup: %@" = "已排除此项，不会清理：%@";
+"Skipped symlink or unsafe path: %@" = "已跳过符号链接或不安全的路径：%@";
+"Skipped symlink or unsafe path: %@ -> %@" = "已跳过符号链接或不安全的路径：%@ → %@";
+"Aborting delete: path resolution changed between check and unlink for %@" = "已取消删除：%@ 的实际路径在检查后发生了变化。";
+"Skipped XcodeBuildMCP DerivedData: lifecycle lock is unavailable: %@" = "已跳过 XcodeBuildMCP 构建数据：无法获取生命周期锁：%@";
+"Refusing administrator escalation for XcodeBuildMCP DerivedData: %@" = "为保护构建数据，不会使用管理员权限删除 XcodeBuildMCP 构建数据：%@";
+"%@ at %@: %@" = "%@（%@）：%@";
+"%@ at %@ survived admin removal" = "使用管理员权限后仍未能删除 %@（%@）";
+"Docker CLI not found — install Docker Desktop or OrbStack" = "未找到 Docker 命令行工具，请安装 Docker Desktop 或 OrbStack。";
+"Couldn't run docker system prune: %@" = "无法运行 docker system prune：%@";
+"Docker isn't running — start Docker Desktop or OrbStack, then clean again" = "Docker 未运行，请启动 Docker Desktop 或 OrbStack 后重新清理。";
+"docker system prune failed (exit %d)" = "docker system prune 执行失败（退出状态码：%d）";
+"Simulator services unavailable — open Xcode once, then try again" = "模拟器服务不可用，请先打开一次 Xcode 后重试。";
+"Couldn't delete simulator runtime %@" = "无法删除模拟器运行时 %@";
+"Xcode command-line tools not found — install Xcode or run xcode-select --install" = "未找到 Xcode 命令行工具，请安装 Xcode 或运行 xcode-select --install。";
+"Homebrew exited with status %d." = "Homebrew 已退出，状态码为 %d。";
+"Skipped unsafe path for thinning: %@ -> %@" = "已跳过不安全的应用瘦身路径：%@ → %@";
+"%@: needs administrator access to thin; skipped" = "%@：应用瘦身需要管理员权限，已跳过。";
+"Couldn't thin %@: %@" = "无法为 %@ 瘦身：%@";
+"%@: needs administrator access to modify the app; skipped" = "%@：修改应用需要管理员权限，已跳过。";
+"Couldn't remove localization %@: %@" = "无法删除本地化文件 %@：%@";
+"Permission denied when accessing '%@'. Grant Full Disk Access in System Settings." = "无权访问“%@”。请在系统设置中授予完全磁盘访问权限。";
+"Failed to enumerate directory '%@': %@" = "无法读取文件夹“%@”中的内容：%@";
+"Failed to execute '%@': %@" = "无法执行“%@”：%@";
+"Invalid data encountered: %@" = "遇到无效数据：%@";
+"The privileged helper tool is not installed or unavailable." = "特权辅助工具未安装或不可用。";
+"The operation was cancelled." = "操作已取消。";
+"Not writable by current user: %@" = "当前用户没有写入权限：%@";
+"Cannot modify %@: its entitlements require the original developer signature" = "无法修改 %@：其权限声明要求保留原开发者签名。";
+"Cannot thin %@: it is signed and notarized, and stripping a slice would break its signature" = "无法为 %@ 瘦身：该应用已签名并通过公证，移除架构代码会破坏其签名。";
+"lipo failed for %@: %@" = "lipo 处理 %@ 时失败：%@";
+"Could not swap modified bundle into place at %@: %@" = "无法将修改后的应用程序包替换到 %@：%@";
+"Re-signing failed for %@: %@" = "为 %@ 重新签名失败：%@";
+"Signature verification failed for %@: %@" = "%@ 的签名验证失败：%@";
+"No removable slices in %@" = "%@ 中没有可移除的架构代码";
+"localization is outside the app bundle" = "本地化文件不在应用程序包内";
+"could not stage a working copy: %@" = "无法创建用于修改的临时副本：%@";
+"original bundle left at %@" = "原应用程序包保留在 %@";
+"binary is outside the app bundle" = "二进制文件不在应用程序包内";
