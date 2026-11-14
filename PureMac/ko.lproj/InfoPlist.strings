@@ -1,0 +1,7 @@
+"NSAppleEventsUsageDescription" = "PureMac은 Finder에서 파일 위치를 표시하기 위해 Apple 이벤트를 사용합니다.";
+"NSDesktopFolderUsageDescription" = "PureMac은 불필요한 파일과 잔여 파일을 찾기 위해 데스크탑 접근 권한이 필요합니다.";
+"NSDocumentsFolderUsageDescription" = "PureMac은 불필요한 파일과 잔여 파일을 찾기 위해 문서 폴더 접근 권한이 필요합니다.";
+"NSDownloadsFolderUsageDescription" = "PureMac은 불필요한 파일과 잔여 파일을 찾기 위해 다운로드 폴더 접근 권한이 필요합니다.";
+"NSHumanReadableCopyright" = "Copyright 2026. MIT License.";
+"NSRemovableVolumesUsageDescription" = "PureMac은 불필요한 파일을 검사하기 위해 이동식 볼륨 접근 권한이 필요합니다.";
+"NSSystemAdministrationUsageDescription" = "PureMac은 캐시를 정리하고 앱을 완전히 제거하기 위해 시스템 관리 권한이 필요합니다.";

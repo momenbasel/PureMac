@@ -121,6 +121,7 @@
 /* Begin PBXFileReference section */
 		01B2C5F66B6D812572BD4F05 /* CLI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLI.swift; sourceTree = "<group>"; };
 		022D0EAEE2B6E54069FC2CBE /* UpdateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateService.swift; sourceTree = "<group>"; };
+		02C3851DF14834ABBBCE2282 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/ServicesMenu.strings; sourceTree = "<group>"; };
 		02E502E2B5C6AECC76E5CFEF /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		043F28E28FB7B2D9E39E5F70 /* PerformanceInspectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerformanceInspectorTests.swift; sourceTree = "<group>"; };
 		04F5D30AEC87F2213C8D59AD /* XcodeBuildMCPDerivedDataSupportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XcodeBuildMCPDerivedDataSupportTests.swift; sourceTree = "<group>"; };
@@ -149,6 +150,7 @@
 		3006DF98485FFC3C40308A22 /* AppleStorageServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleStorageServiceTests.swift; sourceTree = "<group>"; };
 		311078221878708524283765 /* PureMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PureMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		312E528C94C7302138EFA9DE /* AppUpdateSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateSettingsView.swift; sourceTree = "<group>"; };
+		3150FAC89393E2BC933510B5 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/Localizable.strings; sourceTree = "<group>"; };
 		340D303C60FF878B019056B6 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		3667D46D8E2004EB4D73835A /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		374A3BE46E71E54B6927E9EF /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = uk.lproj/ServicesMenu.strings; sourceTree = "<group>"; };
@@ -207,6 +209,7 @@
 		98831CC736A3839B67CA47D1 /* AppleFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleFeature.swift; sourceTree = "<group>"; };
 		994C41A99AC1061D79486AEE /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/ServicesMenu.strings; sourceTree = "<group>"; };
 		9D7ABF3991A1C11BC5728FC6 /* DeviceBackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceBackupService.swift; sourceTree = "<group>"; };
+		9EF133047D269DD8F8333F14 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		9F04B811BB0012F6D2F07F91 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		9F510F232341EE18F11DC934 /* MainWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindow.swift; sourceTree = "<group>"; };
 		A27DB5A70FA829B6C3ED0AC3 /* MenuBarMonitorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarMonitorView.swift; sourceTree = "<group>"; };
@@ -564,6 +567,7 @@
 				fr,
 				it,
 				ja,
+				ko,
 				pl,
 				"pt-BR",
 				ru,
@@ -729,6 +733,7 @@
 				8F97E4CB93302BFE911DB1FF /* fr */,
 				CEAB8C4EEC46264C55BE4642 /* it */,
 				5A5C80929EE4A430272674BC /* ja */,
+				3150FAC89393E2BC933510B5 /* ko */,
 				C5963EBBEE5BA6E147700821 /* pl */,
 				8D5E63D733D1A3BDEDF4DCA5 /* pt-BR */,
 				C4332033E243C3571C49A5E9 /* ru */,
@@ -746,6 +751,7 @@
 				44392E486177839BA978685E /* en */,
 				25D1CF5248C1D471BCBD212F /* fr */,
 				97BF6BD57F76AECB9F92A421 /* it */,
+				02C3851DF14834ABBBCE2282 /* ko */,
 				6ED5C9C10C69C3143B1F5CA6 /* ru */,
 				374A3BE46E71E54B6927E9EF /* uk */,
 				1B8BE07AD70610A91E735E78 /* zh-Hans */,
@@ -760,6 +766,7 @@
 				40CD4855FB5FA866CAA52C10 /* en */,
 				0A544093C897FBCBA8E256F9 /* fr */,
 				53CEAEA91A097FE8FF2FFDA0 /* it */,
+				9EF133047D269DD8F8333F14 /* ko */,
 				ED0C4D8912DA94F81B2AEF8F /* ru */,
 				DFC4A1FD7DB92C82725B4314 /* uk */,
 				AD97E55BA95BE2AEA858A80B /* zh-Hans */,
