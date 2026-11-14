@@ -77,7 +77,7 @@ puremac analyze ~/Projects --json
 | `puremac clean junk` | Review user logs and generated Xcode files |
 | `puremac clean ai` | Review AI-tool caches and logs |
 | `puremac clean trash` | Review user and mounted-volume Trash |
-| `puremac purge [path]` | Find generated artifacts inside project folders |
+| `puremac purge [path]` | Find generated artifacts inside project folders; `--worktrees` adds git worktrees |
 | `puremac analyze [path]` | Browse disk usage without modifying files |
 | `puremac optimize` | Show factual memory and disk status |
 | `puremac ignore add <path>` | Protect a path from cleanup |
@@ -110,6 +110,15 @@ Without `--force`, a noninteractive cleanup does not delete anything.
 Developer cleanup covers precise cache locations for Homebrew, npm, Yarn, pnpm, pip, Cargo, Go, CocoaPods, Maven, Gradle, Poetry, uv, Bun, Deno, mise, Flutter/Dart, NuGet, Swift Package Manager, Puppeteer and Playwright browser downloads, node-gyp headers, Electron download caches, editor caches, and supported Docker/OrbStack cache paths. It does not invoke a broad Docker prune operation.
 
 Project cleanup finds artifacts such as `node_modules`, `.next`, `.nuxt`, `.turbo`, `.svelte-kit`, `target`, `.build`, `DerivedData`, `Pods`, `.venv`, `__pycache__`, and test/tool caches. Source directories are not artifact targets. Review virtual environments and dependencies before removing them; recreating them may require downloads.
+
+### Git worktrees
+
+`puremac purge ~/Developer --worktrees` also lists linked git worktrees, including those under `.claude/worktrees`, `.orc`, `.supacode` and `~/.supacode`, plus orphaned worktree folders whose repository is gone.
+
+- Preselected: clean worktrees whose commits all exist on a remote and that are older than the age threshold.
+- Listed but unchecked, with the reason shown: uncommitted changes, unpushed commits, locked, recent, orphaned.
+- Removal runs `git worktree remove` without `--force`, then `git worktree prune`, so git refuses anything with uncommitted changes and repository metadata stays consistent. Branches are never deleted. Detached worktrees with commits on no branch or remote are skipped.
+- Artifacts nested inside a worktree are listed separately and the worktree size excludes them, so nothing is counted twice.
 
 The CLI has its own scan engine and safety checks. Its coverage is separate from the Mac app.
 

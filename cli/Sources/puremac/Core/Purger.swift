@@ -11,7 +11,7 @@ enum Purger {
 
     static let artifactPrefixes = ["cmake-build"]
 
-    static let defaultRoots = ["Projects", "Code", "dev", "GitHub", "Workspace"]
+    static let defaultRoots = ["Developer", "Developers", "Projects", "Code", "dev", "GitHub", "Workspace"]
         .map { "\(Safety.home)/\($0)" }
 
     static func isArtifact(_ name: String) -> Bool {

@@ -205,6 +205,13 @@ struct MainWindow: View {
                             badge: sizeBadge(for: category)
                         )
                     }
+                    navRow(
+                        section: .devProjects,
+                        label: "Projects & Worktrees",
+                        icon: "hammer",
+                        tint: Tint.blue,
+                        badge: nil
+                    )
                 } label: {
                     HStack(spacing: 10) {
                         Image(systemName: "wrench.and.screwdriver")
@@ -233,6 +240,10 @@ struct MainWindow: View {
         .navigationTitle("PureMac")
         .onMoveCommand(perform: moveSelection)
         .onChange(of: selectedSection) { section in
+            if section == .devProjects {
+                withAnimation(reduceMotion ? nil : MotionTokens.gentle) { advancedToolsExpanded = true }
+                return
+            }
             guard case let .cleaning(category)? = section else { return }
             withAnimation(reduceMotion ? nil : MotionTokens.gentle) {
                 if Self.cleanupCategories.contains(category) {
@@ -307,6 +318,7 @@ struct MainWindow: View {
         }
         if advancedToolsExpanded {
             sections.append(contentsOf: Self.advancedCategories.map(AppSection.cleaning))
+            sections.append(.devProjects)
         }
         sections.append(.settings)
         return sections
@@ -324,6 +336,7 @@ struct MainWindow: View {
         case .spaceExplorer: return "sidebar.spaceExplorer"
         case .duplicates: return "sidebar.duplicates"
         case .similarPhotos: return "sidebar.similarPhotos"
+        case .devProjects: return "sidebar.devProjects"
         case .protection: return "sidebar.protection"
         case .performance: return "sidebar.performance"
         case .appleFeatures: return "sidebar.appleFeatures"
@@ -432,6 +445,8 @@ struct MainWindow: View {
             DuplicateFinderView()
         case .similarPhotos:
             SimilarPhotosView()
+        case .devProjects:
+            DevProjectsView()
         case .protection:
             ProtectionView()
         case .performance:
