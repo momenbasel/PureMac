@@ -350,6 +350,13 @@ jobs:
                 echo "- XcodeBuildMCP and MobileBuildMCP DerivedData in Xcode Junk, opt-in and Trash-only (#162)."
                 echo "- The Protection check recognizes the firewall's block-all mode (#183), and the Homebrew cask no longer warns about postflight (#182)."
                 echo ""
+              elif [[ "${VERSION}" == "3.2.0" ]]; then
+                echo "- Added Apple Features with shortcuts and instructions for Siri, Apple Intelligence, image generation, Writing Tools, ChatGPT, summaries, and privacy settings. Changes are completed manually in macOS."
+                echo "- Inspect Apple model, screen saver, music content, and device backup storage. Protected models and system apps are not removed."
+                echo "- Review individual iPhone and iPad backups and move selected completed backups to Trash after confirmation and fresh checks."
+                echo "- Fixed Ollama and LM Studio cleanup with strict path checks and user-level removal; downloaded models remain excluded."
+                echo "- Simplified Overview and navigation, reduced decoration, and added full paths and removal methods to category cleanup confirmation."
+                echo ""
               elif [[ "${VERSION}" == "2.9.8" ]]; then
                 echo "### What changed"
                 echo ""

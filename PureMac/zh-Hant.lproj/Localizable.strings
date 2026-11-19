@@ -201,6 +201,8 @@
 "Ukrainian" = "烏克蘭文";
 "Chinese (Simplified)" = "簡體中文";
 "Chinese (Traditional)" = "繁體中文";
+"Greek" = "希臘文";
+"Persian" = "波斯文";
 "Safety" = "安全";
 "Confirm before deleting files" = "刪除檔案前確認";
 "File Discovery" = "檔案探索";

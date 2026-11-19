@@ -89,8 +89,8 @@ struct MainWindow: View {
             Section {
                 navRow(
                     section: .cleaning(.smartScan),
-                    label: "Smart Care",
-                    icon: "sparkles",
+                    label: "Overview",
+                    icon: "internaldrive",
                     tint: Tint.accent,
                     badge: dashboardBadge,
                     emphasized: true
@@ -107,6 +107,13 @@ struct MainWindow: View {
                     label: "Performance",
                     icon: "gauge.with.dots.needle.67percent",
                     tint: Tint.cyan,
+                    badge: nil
+                )
+                navRow(
+                    section: .appleFeatures,
+                    label: "Apple Features",
+                    icon: "switch.2",
+                    tint: Tint.accent,
                     badge: nil
                 )
             } header: {
@@ -173,7 +180,10 @@ struct MainWindow: View {
                     }
                 } label: {
                     HStack(spacing: 10) {
-                        IconTile(systemName: "trash.slash", tint: Tint.accent, size: 24)
+                        Image(systemName: "trash.slash")
+                            .font(.system(size: 16))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 20)
                         Text("Cleanup")
                             .font(.system(size: 12.5, weight: .medium))
                             .foregroundStyle(sidebarLabelColor)
@@ -197,7 +207,10 @@ struct MainWindow: View {
                     }
                 } label: {
                     HStack(spacing: 10) {
-                        IconTile(systemName: "wrench.and.screwdriver", tint: .secondary, size: 24)
+                        Image(systemName: "wrench.and.screwdriver")
+                            .font(.system(size: 16))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 20)
                         Text("Developer Cleanup")
                             .font(.system(size: 12.5, weight: .medium))
                             .foregroundStyle(sidebarLabelColor)
@@ -241,10 +254,9 @@ struct MainWindow: View {
 
     private func sectionLabel(_ text: LocalizedStringKey) -> some View {
         Text(text)
-            .font(.system(size: 10, weight: .semibold))
-            .tracking(0.7)
-            .foregroundStyle(.tertiary)
-            .textCase(.uppercase)
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(.secondary)
+            .textCase(nil)
     }
 
     private func navRow(
@@ -282,6 +294,7 @@ struct MainWindow: View {
             .cleaning(.smartScan),
             .protection,
             .performance,
+            .appleFeatures,
             .apps,
             .appUpdates,
             .orphans,
@@ -313,6 +326,7 @@ struct MainWindow: View {
         case .similarPhotos: return "sidebar.similarPhotos"
         case .protection: return "sidebar.protection"
         case .performance: return "sidebar.performance"
+        case .appleFeatures: return "sidebar.appleFeatures"
         case .settings: return "sidebar.settings"
         case .appUpdates: return "sidebar.appUpdates"
         case .cleaning(let category): return "sidebar.cleaning.\(category.id)"
@@ -422,6 +436,8 @@ struct MainWindow: View {
             ProtectionView()
         case .performance:
             PerformanceView()
+        case .appleFeatures:
+            AppleFeaturesView()
         case .appUpdates:
             AppUpdatesView()
         case .settings:
@@ -435,7 +451,7 @@ struct MainWindow: View {
         case nil:
             EmptyStateView(
                 "PureMac",
-                systemImage: "sparkles",
+                systemImage: "internaldrive",
                 description: "Select a tool from the sidebar."
             )
         }
@@ -498,16 +514,13 @@ private struct SidebarNavRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            IconTile(
-                systemName: icon,
-                tint: tint,
-                size: 24,
-                corner: 7,
-                glow: isSelected,
-                vivid: emphasized && isSelected
-            )
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: isSelected ? .medium : .regular))
+                .foregroundStyle(isSelected ? Tint.accent : .secondary)
+                .frame(width: 20)
+                .accessibilityHidden(true)
             Text(label)
-                .font(.system(size: 12.5, weight: isSelected ? .semibold : .medium))
+                .font(.system(size: 12.5, weight: isSelected || emphasized ? .semibold : .regular))
                 .foregroundStyle(labelColor)
                 .lineLimit(1)
             Spacer(minLength: 5)
@@ -527,14 +540,6 @@ private struct SidebarNavRow: View {
             RoundedRectangle(cornerRadius: 9, style: .continuous)
                 .fill(rowFill)
         }
-        .overlay(alignment: .leading) {
-            if isSelected {
-                Capsule()
-                    .fill(tint)
-                    .frame(width: 2.5, height: 18)
-                    .padding(.leading, 2)
-            }
-        }
         .contentShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
         .animation(reduceMotion ? nil : MotionTokens.snappy, value: hovering)
         .animation(reduceMotion ? nil : MotionTokens.snappy, value: isSelected)
@@ -543,7 +548,7 @@ private struct SidebarNavRow: View {
 
     private var rowFill: Color {
         if isSelected {
-            return tint.opacity(colorScheme == .dark ? 0.13 : 0.10)
+            return Tint.accent.opacity(colorScheme == .dark ? 0.16 : 0.10)
         }
         if hovering {
             return Color.primary.opacity(0.035)

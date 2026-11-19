@@ -219,27 +219,20 @@ struct SimilarPhotosView: View {
     }
 
     private var idleState: some View {
-        CardSurface(padding: 32, elevation: .standard, tint: Tint.pink) {
-            VStack(spacing: 15) {
-                IconTile(systemName: "photo.on.rectangle.angled", tint: Tint.pink, size: 62, corner: 17)
+        CardSurface(padding: 20, elevation: .flat) {
+            VStack(alignment: .leading, spacing: 10) {
                 Text("Choose a folder of photos")
-                    .font(.system(size: 19, weight: .semibold))
-                Text("PureMac builds small local thumbnails, compares their visual structure and color, then groups likely matches for review.")
+                    .font(.system(size: 16, weight: .semibold))
+                Text("Compare local photos by appearance and review likely matches side by side. Photos are never uploaded or deleted.")
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 520)
-                HStack(spacing: 8) {
-                    StatusChip(label: String(localized: "Review only"), systemImage: "eye", tint: Tint.green)
-                    StatusChip(label: String(localized: "500 photo limit"), systemImage: "photo.stack", tint: Tint.pink)
-                    StatusChip(label: String(localized: "Local files"), systemImage: "lock.shield", tint: Tint.blue)
-                }
-                Text("Symbolic links, app packages, hidden files and cloud-only placeholders are skipped. Photos are never uploaded or deleted.")
-                    .font(.system(size: 11.5))
-                    .foregroundStyle(.tertiary)
-                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("Up to 500 photos and 10,000 directory entries per scan. Symbolic links, packages, hidden files, and cloud-only items are skipped.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .frame(maxWidth: .infinity, minHeight: 300)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
@@ -343,41 +336,34 @@ struct SimilarPhotosView: View {
     }
 
     private func summaryCard(_ result: SimilarPhotoScanResult) -> some View {
-        CardSurface(padding: 18, elevation: .standard, tint: Tint.pink) {
+        CardSurface(padding: 16, elevation: .flat) {
             HStack(spacing: 20) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("\(result.groups.count)")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .font(.system(size: 21, weight: .semibold))
                         .monospacedDigit()
-                        .foregroundStyle(Tint.pink)
                     Text(result.groups.count == 1 ? "similar group" : "similar groups")
                         .font(.system(size: 12.5))
                         .foregroundStyle(.secondary)
                 }
 
                 Divider()
-                    .frame(height: 50)
+                    .frame(height: 38)
 
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 8) {
-                        StatusChip(label: String(localized: "\(result.photosAnalyzed) analyzed"), systemImage: "viewfinder", tint: Tint.pink)
-                        StatusChip(label: String(localized: "\(result.matchedPhotoCount) matched"), systemImage: "photo.stack", tint: Tint.blue)
-                    }
-                    HStack(spacing: 8) {
-                        StatusChip(label: Self.format(result.matchedPhotoSize), systemImage: "internaldrive", tint: Tint.purple)
-                        if result.skippedItems > 0 {
-                            StatusChip(label: String(localized: "\(result.skippedItems) skipped"), systemImage: "forward", tint: Tint.orange)
-                        }
-                    }
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("\(result.photosAnalyzed) analyzed · \(result.matchedPhotoCount) matched")
+                        .font(.system(size: 13, weight: .medium))
+                    Text("\(Self.format(result.matchedPhotoSize)) in matched photos · \(result.skippedItems) skipped")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
+                .monospacedDigit()
 
                 Spacer()
 
-                StatusChip(
-                    label: result.isPartial ? String(localized: "Sample limit reached") : String(localized: "Scan complete"),
-                    systemImage: result.isPartial ? "exclamationmark.triangle" : "checkmark.circle",
-                    tint: result.isPartial ? Tint.orange : Tint.green
-                )
+                if result.isPartial {
+                    StatusChip(label: String(localized: "Sample limit reached"), systemImage: "exclamationmark.triangle", tint: Tint.orange)
+                }
             }
         }
     }

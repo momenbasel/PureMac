@@ -124,16 +124,9 @@ struct IconTile: View {
 }
 
 struct AmbientBackdrop: View {
-    @Environment(\.colorScheme) private var colorScheme
-
     var body: some View {
-        ZStack(alignment: .top) {
-            Color(nsColor: .windowBackgroundColor)
-            Rectangle()
-                .fill(colorScheme == .dark ? Color.white.opacity(0.018) : Color.black.opacity(0.014))
-                .frame(height: 96)
-        }
-        .ignoresSafeArea()
+        Color(nsColor: .windowBackgroundColor)
+            .ignoresSafeArea()
     }
 }
 
@@ -145,7 +138,7 @@ struct CardSurface<Content: View>: View {
     var tint: Color? = nil
     @ViewBuilder var content: Content
 
-    private let cornerRadius: CGFloat = 14
+    private let cornerRadius: CGFloat = 10
 
     var body: some View {
         content
@@ -191,7 +184,7 @@ enum CardElevation {
     var ambient: Double {
         switch self {
         case .flat: return 0
-        case .standard: return 0.035
+        case .standard: return 0
         case .raised: return 0.07
         }
     }
@@ -231,8 +224,7 @@ struct StatusChip: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .foregroundStyle(tint)
-        .background(Capsule().fill(tint.opacity(0.11)))
-        .overlay(Capsule().strokeBorder(tint.opacity(0.15), lineWidth: 0.5))
+        .background(RoundedRectangle(cornerRadius: 5).fill(tint.opacity(0.09)))
     }
 }
 

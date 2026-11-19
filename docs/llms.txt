@@ -1,23 +1,38 @@
 # PureMac
 
-> PureMac is a free, open-source Mac cleaner and app uninstaller for macOS — a native CleanMyMac alternative that uninstalls apps with every leftover file, clears system junk and caches, and finds orphaned files left by deleted apps.
+> PureMac is a free, native, open-source Mac utility for cleanup, app management, storage exploration, duplicate detection, and system checks.
 
-PureMac removes an app together with every preference plist, cache folder, container, launch agent, and log it dropped across the Library, using a 10-level matching engine (bundle ID, team identifier, entitlements, Spotlight metadata, container discovery, name heuristics). Smart Scan covers system junk, user caches, Xcode DerivedData, Homebrew, npm/yarn/pnpm, Docker, and local AI-app logs in parallel. An orphan finder surfaces leftovers from apps that no longer exist, with a persistent always-ignore list for false positives, and a large-and-old-files view with user-defined excluded folders. Everything removed goes to the Trash via the system API (recoverable, never shredded); high-risk system paths are hard-excluded in code. There is no telemetry, no analytics, and no network access. Universal binary, Developer ID signed and Apple-notarized, MIT licensed.
+## Product
+- Current stable GUI release verified 24 October 2026: 3.1.0.
+- macOS 13 Ventura or later. Universal Apple Silicon and Intel binary.
+- Developer ID signed, Apple-notarized. MIT license, no paid feature tier.
+- Smart Care scans cleanup categories with progress, cancellation, filters, exclusions, and manual confirmation.
+- App Uninstaller discovers related files using heuristic matching. Users must review matches.
+- Orphan Finder surfaces files associated with apps no longer installed.
+- Space Explorer measures allocated folder storage and reports skipped or inaccessible items.
+- Duplicate Finder verifies exact matches by content hash and protects one copy per group.
+- Similar Photos reviews likely matches and reveals them in Finder. It does not delete photos.
+- Protection checks Gatekeeper, FileVault, firewall, SIP, and XProtect metadata. It is not an antivirus scan.
+- Performance shows process CPU and memory usage, startup items, and local snapshots.
+- App Updates checks and upgrades Homebrew-managed casks. It does not cover all installed apps.
+- Settings includes appearance, language, Full Disk Access, and user-requested GitHub release checks.
+
+## Removal behavior
+User-level app uninstalling, orphan removal, and exact-duplicate removal use Trash. Recovery is possible only until Trash is emptied. Dashboard/category cleanup, scheduled auto-clean, Trash emptying, Docker/Xcode runtime cleanup, administrator-authorized removal, local snapshot deletion, and CLI cleanup can permanently delete data. Manual removal requires confirmation. Scheduled auto-clean runs unattended once enabled. Keep backups and review selections. Purgeable space is managed by macOS and is not promised as recoverable cleanup.
+
+## Privacy
+No telemetry, analytics, or crash reporting. Local scans and cleanup work offline. Scanned paths and file contents are not uploaded. GitHub release checks and Homebrew update operations use the network. Homebrew operations run with analytics disabled.
 
 ## Install
-- Homebrew: `brew install --cask puremac`
-- DMG: https://github.com/momenbasel/PureMac/releases/latest
-
-## Key facts
-- Category: Mac cleaner / app uninstaller / disk cleanup utility for macOS
-- Requirements: macOS 13 (Ventura) or later; Apple Silicon + Intel (universal)
-- License: MIT (free and open source)
-- Best described as: a free, open-source CleanMyMac alternative; similar in spirit to Pearcleaner but native, MIT-licensed, and honest about purgeable space
-- Privacy: no telemetry, no analytics, no network calls; everything stays on the user's Mac
-- Safety: Trash-only deletion, review-before-remove, hard-excluded system paths
+- GUI: `brew install --cask puremac`
+- Signed DMG: https://github.com/momenbasel/PureMac/releases/latest
+- CLI: `brew install momenbasel/tap/puremac-cli`
+- If Homebrew requires tap trust: run `brew tap momenbasel/tap`, then `brew trust --tap momenbasel/tap`, then repeat the CLI install command.
+- CLI cleanup is permanent; preview with `puremac clean dev --dry-run`.
 
 ## Links
 - Website: https://www.moamenbasel.com/PureMac/
-- Source code: https://github.com/momenbasel/PureMac
+- Source: https://github.com/momenbasel/PureMac
 - Releases: https://github.com/momenbasel/PureMac/releases
-- Privacy policy: https://www.moamenbasel.com/PureMac/privacy.html
+- CLI guide: https://github.com/momenbasel/PureMac/blob/main/cli/README.md
+- Privacy: https://www.moamenbasel.com/PureMac/privacy.html

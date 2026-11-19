@@ -1,41 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>PureMac — Privacy Policy</title>
-<style>
-  body { font-family: -apple-system, system-ui, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 20px; color: #1d1d1f; line-height: 1.6; }
-  h1 { font-size: 28px; } h2 { font-size: 20px; margin-top: 32px; }
-  code { background: #f5f5f7; padding: 2px 5px; border-radius: 4px; }
-  footer { margin-top: 48px; color: #6e6e73; font-size: 14px; }
-</style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PureMac | Privacy policy</title>
+<meta name="description" content="How PureMac handles local scan data, permissions, update requests, and file removal. No telemetry, analytics, or crash reporting.">
+<meta name="theme-color" content="#f5f8f7">
+<link rel="canonical" href="https://www.moamenbasel.com/PureMac/privacy.html">
+<link rel="icon" href="assets/icon.png" type="image/png">
+<link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
-<h1>PureMac Privacy Policy</h1>
-<p><em>Last updated: 28 June 2026</em></p>
-
-<p>PureMac is a Mac cleaner and app uninstaller for macOS. Your privacy is the default, not a feature.</p>
-
-<h2>What PureMac collects</h2>
-<p>Nothing. PureMac has <strong>no servers, no analytics, no telemetry, no crash reporting, no accounts, and no ads</strong>. It makes <strong>no network connections</strong> and does not require an internet connection to operate. The app does not know you exist.</p>
-
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><nav class="wrap nav" aria-label="Main navigation"><a class="brand" href="./"><img src="assets/icon.png" width="36" height="36" alt=""><span>PureMac</span></a><a href="./">Back to PureMac</a></nav></header>
+<main id="main" class="wrap policy" tabindex="-1">
+<h1>Privacy policy</h1>
+<p>Updated 24 October 2026</p>
+<p>PureMac is a free, open-source utility for local Mac cleanup, app management, storage exploration, and system checks.</p>
+<h2>Data collection</h2>
+<p>PureMac does not collect telemetry, usage analytics, or crash reports. It has no accounts or advertising. The app does not upload your scanned file paths, scan results, or file contents to the developer.</p>
 <h2>What stays on your Mac</h2>
-<p>Everything PureMac does happens locally. Scan results, your settings, your excluded folders, and your ignored-orphan list are stored only on your Mac in the app's preferences. None of it is ever transmitted anywhere.</p>
-
-<h2>What PureMac removes</h2>
+<p>Scans and cleanup run locally. Preferences, exclusions, ignored items, and local app state remain on your Mac. Full Disk Access allows PureMac to read protected locations such as Mail downloads and app containers; without it, some scans may be incomplete.</p>
+<h2>Network access</h2>
+<p>Local scanning and cleanup work offline. When you request a PureMac update check in Settings, the app contacts GitHub for release information. Opening release links or downloading an update also contacts GitHub.</p>
+<p>Checking or installing updates for Homebrew-managed apps invokes Homebrew and its package sources. PureMac runs these Homebrew operations with Homebrew analytics disabled. Those services receive the network information needed to handle requests, such as your IP address. Their own privacy policies apply.</p>
+<h2>File removal</h2>
+<p>Not all removal is recoverable. Read the relevant confirmation before proceeding and keep backups of important files.</p>
 <ul>
-  <li>Everything PureMac deletes is moved to the <strong>Trash</strong> via the system API — nothing is shredded or force-unlinked, so anything removed by mistake can be dragged back.</li>
-  <li>You review every item, with its real filesystem path, before anything is removed.</li>
-  <li>High-risk system paths are hard-excluded in the source code and cannot be selected for deletion.</li>
+<li>User-level app uninstalling, orphan removal, and exact-duplicate removal move selected files to Trash. They can be recovered from Trash until it is emptied.</li>
+<li>Dashboard and category cleanup, scheduled auto-clean, Trash emptying, Docker and Xcode runtime cleanup, administrator-authorized removal, local snapshot deletion, and CLI cleanup can permanently delete data.</li>
+<li>Manual removal requires confirmation. Scheduled auto-clean operates unattended once enabled. Exclusions apply to cleanup and scheduled runs.</li>
+<li>Similar Photos is a review tool and does not delete photos. Protection reviews system configuration; it is not an antivirus scanner.</li>
 </ul>
-
-<h2>Permissions</h2>
-<p>PureMac asks for <strong>Full Disk Access</strong> only so it can read and clean the locations macOS hides from apps by default (Mail downloads, Safari data, protected app containers). This permission is used only for scanning and cleaning on your machine and never to move data anywhere.</p>
-
-<h2>Contact</h2>
-<p>Questions? Open an issue at <a href="https://github.com/momenbasel/PureMac/issues">github.com/momenbasel/PureMac</a>.</p>
-
-<footer>PureMac is free and open source under the MIT License.</footer>
+<h2>This website</h2>
+<p>This site is hosted on GitHub Pages. The refreshed pages do not embed analytics, advertising, or third-party fonts. GitHub may process request information to operate its hosting service. See the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub privacy statement</a>.</p>
+<h2>Support and source</h2>
+<p><a href="https://github.com/momenbasel/PureMac/issues">Open a GitHub issue</a> for questions. Issues are public, so remove personal file paths or other sensitive information before attaching logs or screenshots. You can inspect the implementation in the <a href="https://github.com/momenbasel/PureMac">source repository</a>.</p>
+</main>
+<footer class="wrap footer"><p>PureMac is free and open source under the MIT License.</p><a href="./">Back to PureMac</a></footer>
 </body>
 </html>
