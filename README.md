@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="screenshots/smart-care.png" alt="PureMac Smart Care - storage overview and cleanup review" width="820">
+  <img src="screenshots/smart-care.png" alt="PureMac Overview - storage and cleanup review" width="820">
 </p>
 
 <p align="center">
-  <img src="screenshots/smart-care-dark.png" alt="PureMac Smart Care in dark appearance" width="820">
+  <img src="screenshots/smart-care-dark.png" alt="PureMac Overview in dark appearance" width="820">
 </p>
 
 <p align="center">
@@ -152,6 +152,12 @@ Smart Scan checks each category in sequence and reports progress as files are fo
 
 ### Storage and file review
 
+**Apple Features** brings together the supported controls for Siri, Apple Intelligence, Image Playground, Genmoji, writing assistance, summaries, inline predictions, analytics, and personalized ads. Instructions follow the installed macOS version and open the relevant Settings pane or app. PureMac cannot reliably read or change these protected switches itself; opening Settings never marks a feature disabled.
+
+The **Storage** tab in Apple Features measures known model assets, downloaded screen savers, GarageBand support files, Apple Loops, and local device backups. Missing, inaccessible, and partial results are distinguished. System-managed content is shown for review and is excluded from cleanup totals. Model storage is not promised as recoverable space. See the [Apple controls and storage research](docs/APPLE-FEATURES.md) for sources and version limits.
+
+Local iPhone and iPad backups have a separate manual review. Nothing is preselected or scheduled. Selected backups move to the Trash after confirmation and fresh checks for changes, symbolic links, and exclusions. Keep any backup you may need to restore a device; space is not reclaimed until the Trash is emptied.
+
 **Space Explorer** measures the allocated space inside a folder you choose. Drill into directories, compare their sizes, and reveal an item in Finder. Packages are measured without exposing their contents as navigable folders. Skipped and inaccessible items are reported.
 
 **Duplicate Finder** groups files with matching sizes and SHA-256 content hashes. Hard links are not counted as separate recoverable copies. Every group keeps one protected copy; selected extras move to the Trash only after confirmation and a fresh identity/content check. Emptying the Trash is a separate step.
@@ -206,9 +212,13 @@ Give it a minute to re-seed, then open PureMac once. If it still sticks, a resta
 
 ## Screenshots
 
-| Smart Care | Dark appearance |
+| Overview | Dark appearance |
 |---|---|
-| ![Smart Care](screenshots/smart-care.png) | ![Dark appearance](screenshots/smart-care-dark.png) |
+| ![Overview](screenshots/smart-care.png) | ![Dark appearance](screenshots/smart-care-dark.png) |
+
+| Apple Features | Apple Storage |
+|---|---|
+| ![Apple Features](screenshots/apple-features.png) | ![Apple Storage](screenshots/apple-storage.png) |
 
 | Space Explorer | Duplicate Finder |
 |---|---|

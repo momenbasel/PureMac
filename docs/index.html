@@ -1,179 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>PureMac — Free Open-Source Mac Cleaner &amp; App Uninstaller (CleanMyMac Alternative)</title>
-<meta name="description" content="PureMac is a free, open-source Mac cleaner and app uninstaller for macOS. Remove apps with every leftover file, clear caches and junk, find orphaned files. No subscription, no telemetry, no scare tactics. Signed, notarized, Homebrew." />
-<meta name="keywords" content="mac cleaner, free mac cleaner, CleanMyMac alternative, CleanMyMac alternative free, app uninstaller mac, mac app uninstaller, open source mac cleaner, remove app leftovers mac, orphaned files mac, disk cleanup mac, clear cache mac, macOS cleaner, uninstall apps macOS, Pearcleaner alternative, mac junk cleaner" />
-<meta name="author" content="Moamen Basel" />
-<meta name="theme-color" content="#0A84FF" />
-<link rel="canonical" href="https://www.moamenbasel.com/PureMac/" />
-<link rel="icon" type="image/png" href="assets/icon.png" />
-
-<meta property="og:type" content="website" />
-<meta property="og:site_name" content="PureMac" />
-<meta property="og:title" content="PureMac — Free Open-Source Mac Cleaner &amp; App Uninstaller" />
-<meta property="og:description" content="A free, open-source CleanMyMac alternative: uninstall apps with every leftover, clear junk and caches, find orphaned files. No subscription, no telemetry, no FUD." />
-<meta property="og:url" content="https://www.moamenbasel.com/PureMac/" />
-<meta property="og:image" content="https://www.moamenbasel.com/PureMac/assets/og-image.png" />
-<meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="630" />
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="PureMac — Free Open-Source Mac Cleaner &amp; App Uninstaller" />
-<meta name="twitter:description" content="A free, native, open-source CleanMyMac alternative for macOS. Uninstall cleanly, clear junk, find orphans. No telemetry, no subscription." />
-<meta name="twitter:image" content="https://www.moamenbasel.com/PureMac/assets/og-image.png" />
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PureMac | Free, open-source Mac cleaner and app uninstaller</title>
+<meta name="description" content="Reclaim storage with PureMac. A free, native Mac cleaner with app uninstalling, duplicate detection, storage exploration, and system checks. macOS 13 or later.">
+<meta name="theme-color" content="#f5f8f7">
+<link rel="canonical" href="https://www.moamenbasel.com/PureMac/">
+<link rel="icon" href="assets/icon.png" type="image/png">
+<link rel="stylesheet" href="assets/site.css">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PureMac">
+<meta property="og:title" content="PureMac | A clearer view of your Mac">
+<meta property="og:description" content="Free, native Mac care. Review cleanup, manage apps, find duplicates, and see where your storage goes.">
+<meta property="og:url" content="https://www.moamenbasel.com/PureMac/">
+<meta property="og:image" content="https://www.moamenbasel.com/PureMac/assets/smart-care.png">
+<meta property="og:image:alt" content="PureMac Smart Care with storage overview and app management tools">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PureMac | A clearer view of your Mac">
+<meta name="twitter:description" content="Free, open-source Mac cleanup, app management, storage exploration, and system checks.">
+<meta name="twitter:image" content="https://www.moamenbasel.com/PureMac/assets/smart-care.png">
 <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "name": "PureMac",
-  "alternateName": "PureMac Cleaner",
-  "description": "PureMac is a free, open-source Mac cleaner and app uninstaller for macOS — uninstall apps with every leftover file, clear caches and system junk, and find orphaned files left by deleted apps. No subscription, no telemetry, no fear-based scans.",
-  "applicationCategory": "UtilitiesApplication",
-  "operatingSystem": "macOS 13.0 or later",
-  "downloadUrl": "https://github.com/momenbasel/PureMac/releases/latest",
-  "url": "https://www.moamenbasel.com/PureMac/",
-  "image": "https://www.moamenbasel.com/PureMac/assets/og-image.png",
-  "screenshot": "https://www.moamenbasel.com/PureMac/assets/dashboard.png",
-  "license": "https://opensource.org/licenses/MIT",
-  "author": { "@type": "Person", "name": "Moamen Basel" },
-  "offers": {
-    "@type": "Offer",
-    "price": "0",
-    "priceCurrency": "USD"
-  }
-}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"PureMac","applicationCategory":"UtilitiesApplication","operatingSystem":"macOS 13.0 or later","softwareVersion":"3.1.0","description":"Free, open-source Mac cleanup, app management, storage exploration, duplicate detection, and system checks.","url":"https://www.moamenbasel.com/PureMac/","downloadUrl":"https://github.com/momenbasel/PureMac/releases/latest","screenshot":"https://www.moamenbasel.com/PureMac/assets/smart-care.png","license":"https://opensource.org/licenses/MIT","author":{"@type":"Person","name":"Moamen Basel"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
 </script>
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    {"@type":"Question","name":"Is PureMac free?","acceptedAnswer":{"@type":"Answer","text":"Yes. PureMac is completely free and open source under the MIT license on GitHub, and installable with Homebrew. There is no subscription, no trial, and no paywalled features."}},
-    {"@type":"Question","name":"Is PureMac a good CleanMyMac alternative?","acceptedAnswer":{"@type":"Answer","text":"Yes. PureMac does the things people actually use CleanMyMac for — a real app uninstaller that removes every leftover file, junk and cache cleanup, and orphaned-file detection — as a free, open-source, native app with no subscription, no telemetry, and no fear-based scans."}},
-    {"@type":"Question","name":"Does PureMac delete files safely?","acceptedAnswer":{"@type":"Answer","text":"Everything PureMac removes goes to the Trash via the system API, so anything removed by mistake can be dragged back. Nothing is shredded or force-unlinked, you review every item with its real path before removal, and high-risk system paths are hard-excluded in code."}},
-    {"@type":"Question","name":"Does PureMac collect any data?","acceptedAnswer":{"@type":"Answer","text":"No. PureMac has no telemetry, no analytics, no crash reporting, and makes no network calls. It does not require a network connection to work."}},
-    {"@type":"Question","name":"How do I install PureMac?","acceptedAnswer":{"@type":"Answer","text":"Run: brew install --cask puremac — or download the signed, Apple-notarized DMG from the GitHub releases page. Requires macOS 13 (Ventura) or later. Universal binary for Apple Silicon and Intel."}}
-  ]
-}
-</script>
-<style>
-  :root { --bg:#0e0e14; --card:#16161f; --fg:#f2f2f7; --muted:#a0a0b4; --accent:#0a84ff; --good:#30d158; }
-  * { box-sizing:border-box; }
-  body { margin:0; font-family:-apple-system,system-ui,"Segoe UI",sans-serif; background:var(--bg); color:var(--fg); line-height:1.6; }
-  a { color:var(--accent); text-decoration:none; }
-  .wrap { max-width:960px; margin:0 auto; padding:0 22px; }
-  header { text-align:center; padding:72px 0 36px; }
-  header img.logo { width:108px; height:108px; border-radius:22px; }
-  h1 { font-size:44px; margin:18px 0 6px; }
-  .tag { color:var(--muted); font-size:20px; margin:0 0 28px; }
-  .cta { display:inline-flex; gap:12px; flex-wrap:wrap; justify-content:center; }
-  .btn { background:var(--accent); color:#fff; padding:12px 22px; border-radius:10px; font-weight:600; }
-  .btn.alt { background:var(--card); color:var(--fg); border:1px solid #2a2a3a; }
-  .shot { width:100%; border-radius:14px; margin:18px 0 8px; border:1px solid #23232f; }
-  code { background:var(--card); padding:3px 8px; border-radius:6px; font-size:15px; }
-  pre { background:var(--card); padding:14px 16px; border-radius:10px; overflow:auto; }
-  h2 { font-size:28px; margin-top:48px; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-top:18px; }
-  .feat { background:var(--card); border:1px solid #20202c; border-radius:12px; padding:16px 18px; }
-  .feat h3 { margin:0 0 6px; font-size:17px; }
-  .feat p { margin:0; color:var(--muted); font-size:15px; }
-  table { width:100%; border-collapse:collapse; margin-top:16px; font-size:15px; }
-  th,td { text-align:left; padding:10px 12px; border-bottom:1px solid #23232f; }
-  th { color:var(--muted); font-weight:600; }
-  .yes { color:var(--good); font-weight:600; }
-  details { background:var(--card); border:1px solid #20202c; border-radius:10px; padding:12px 16px; margin:10px 0; }
-  summary { cursor:pointer; font-weight:600; }
-  .promise { background:var(--card); border:1px solid #20202c; border-radius:12px; padding:18px 20px; margin-top:18px; }
-  .promise li { margin:6px 0; color:var(--muted); }
-  .promise b { color:var(--fg); }
-  footer { color:var(--muted); text-align:center; padding:48px 0; font-size:14px; }
-</style>
+<script src="assets/site.js" defer></script>
 </head>
 <body>
-<div class="wrap">
-<header>
-  <img class="logo" src="assets/icon.png" alt="PureMac Mac cleaner app icon" />
-  <h1>PureMac</h1>
-  <p class="tag">A free, open-source Mac cleaner and app uninstaller.</p>
-  <div class="cta">
-    <a class="btn" href="https://github.com/momenbasel/PureMac/releases/latest">Download for macOS</a>
-    <a class="btn alt" href="https://github.com/momenbasel/PureMac">View on GitHub</a>
-  </div>
-  <p style="margin-top:14px;color:var(--muted);font-size:15px;">or <code>brew install --cask puremac</code></p>
-</header>
-
-<img class="shot" src="assets/dashboard.png" alt="PureMac dashboard — storage health ring, disk composition donut, and one-click Smart Scan on macOS" />
-
-<section>
-  <h2>Reclaim your Mac — without the subscription</h2>
-  <p>Apple solders down 256&nbsp;GB drives and charges a fortune for the next tier, so every gigabyte you already paid for matters. Most Mac cleaners answer that with subscriptions, telemetry, and dramatized "47&nbsp;GB of junk detected!" badges. PureMac is the opposite: a free, open-source, native macOS app that removes apps cleanly, clears genuine junk, and tells you the truth about what it can and can't free.</p>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><nav class="wrap nav" aria-label="Main navigation">
+<a class="brand" href="./"><img src="assets/icon.png" width="36" height="36" alt=""><span>PureMac</span></a>
+<div class="nav-links"><a href="#features">Features</a><a href="#safety">Cleanup &amp; privacy</a><a href="#faq">FAQ</a></div>
+<a class="button small" href="#install">Get PureMac</a>
+</nav></header>
+<main id="main" tabindex="-1">
+<section class="hero wrap" aria-labelledby="hero-title">
+<div class="hero-copy"><p class="eyebrow">Free. Native. Open source.</p><h1 id="hero-title">A clearer view<br>of your Mac.</h1>
+<p class="intro">Reclaim storage, remove unwanted apps, and understand what’s taking up space. You choose what goes.</p>
+<div class="actions"><a class="button" href="#install">Get PureMac</a><a class="text-link" href="https://github.com/momenbasel/PureMac">View source <span aria-hidden="true">↗</span></a></div></div>
+<a class="hero-shot" href="assets/smart-care.png" aria-label="View full-size PureMac Smart Care screenshot"><img src="assets/smart-care.png" width="2240" height="1480" fetchpriority="high" alt="PureMac Smart Care: storage breakdown, scan controls, and tools for apps, duplicates, and system checks"></a>
 </section>
+<div class="requirements wrap" role="group" aria-label="Compatibility and license"><span>macOS 13 Ventura or later</span><span>Apple Silicon &amp; Intel</span><span>Signed &amp; notarized</span><a href="https://github.com/momenbasel/PureMac/blob/main/LICENSE">Free under MIT</a></div>
 
-<section>
-  <h2>Features</h2>
-  <div class="grid">
-    <div class="feat"><h3>App uninstaller</h3><p>Drag an app and PureMac finds every preference, cache, container, launch agent, and log it left behind — then trashes all of it at once.</p></div>
-    <div class="feat"><h3>Orphan finder</h3><p>Surfaces files left over by apps you deleted long ago, with an always-ignore list for the false positives you want to keep.</p></div>
-    <div class="feat"><h3>Smart Scan</h3><p>System junk, user caches, Xcode DerivedData, Homebrew, npm/yarn/pnpm, Docker, and AI-app logs — scanned in parallel.</p></div>
-    <div class="feat"><h3>Large &amp; old files</h3><p>Find the multi-gigabyte files aging in Downloads, Documents, and Desktop — with folders you can exclude from the scan.</p></div>
-    <div class="feat"><h3>Trash, never <code>rm</code></h3><p>Everything goes to the Trash via the system API. Wrong call? Drag it back. Nothing is shredded.</p></div>
-    <div class="feat"><h3>Private by default</h3><p>No telemetry, no analytics, no accounts, no network calls. The app doesn't know you exist.</p></div>
-  </div>
-</section>
+<section class="section wrap" id="features" aria-labelledby="features-title">
+<div class="section-heading"><h2 id="features-title">More room. Fewer loose ends.</h2><p>From everyday cleanup to the files you forgot about, one native app brings the work into view.</p></div>
+<div class="feature-grid">
+<article class="feature feature-primary"><span class="feature-label">Smart Care</span><h3>Find what you can clear.</h3><p>Scan caches, logs, downloads, and developer data. Filter by name, size, or age, inspect the paths, then confirm your selection.</p><ul class="compact-list"><li>Exclude files and folders you want to keep</li><li>Stop a scan and review completed categories</li><li>See purgeable space separately from cleanup</li></ul><a class="text-link" href="#safety">Understand removal behavior <span aria-hidden="true">↗</span></a></article>
+<article class="feature"><span class="feature-label">Apps &amp; leftovers</span><h3>Go beyond the app bundle.</h3><p>Find related preferences, caches, containers, and logs. Review suggested matches before removing an app or old leftovers.</p><p class="note">Matching is heuristic. You decide which related files to remove.</p></article>
+<article class="feature"><span class="feature-label">Developer cleanup</span><h3>Clear yesterday’s build files.</h3><p>Review Xcode data, Homebrew downloads, Node package caches, Docker data, and local AI-app caches.</p><p class="note">Check each selection. Build artifacts, Docker resources, and histories can contain data you still need.</p></article>
+</div></section>
 
-<img class="shot" src="assets/uninstaller.png" alt="PureMac app uninstaller — leftover files grouped into caches, preferences, containers, and logs" />
-
-<section>
-  <h2>How PureMac compares</h2>
-  <table>
-    <tr><th>&nbsp;</th><th>PureMac</th><th>CleanMyMac</th><th>Pearcleaner</th><th>OnyX</th></tr>
-    <tr><td>Price</td><td class="yes">Free</td><td>$40+/yr</td><td>Free</td><td>Free</td></tr>
-    <tr><td>Open source</td><td class="yes">Yes (MIT)</td><td>No</td><td>Source-available</td><td>No</td></tr>
-    <tr><td>App uninstaller + orphans</td><td class="yes">Yes</td><td>Yes</td><td>Yes</td><td>No</td></tr>
-    <tr><td>No telemetry</td><td class="yes">Yes</td><td>No</td><td>Yes</td><td>Yes</td></tr>
-    <tr><td>No subscription</td><td class="yes">Yes</td><td>No</td><td>Yes</td><td>Yes</td></tr>
-    <tr><td>Trash-only (recoverable)</td><td class="yes">Yes</td><td>Partial</td><td>Yes</td><td>No</td></tr>
-    <tr><td>Honest about purgeable space</td><td class="yes">Yes</td><td>No</td><td>n/a</td><td>n/a</td></tr>
-  </table>
-  <p style="color:var(--muted);font-size:13px;">Comparison reflects publicly documented features as of 2026; corrections welcome via PR.</p>
-</section>
-
-<section>
-  <h2>Our promise</h2>
-  <div class="promise">
-    <ul>
-      <li><b>Trash, never <code>rm</code>.</b> Everything removed goes to the Trash. If it was wrong, drag it back.</li>
-      <li><b>No telemetry, ever.</b> No analytics, no crash reporting, no network calls to us.</li>
-      <li><b>No fake urgency.</b> No dramatized "junk detected!" badges or red alarm counters — neutral facts, your decision.</li>
-      <li><b>No overpromising.</b> We don't claim to "reclaim purgeable space," "boost RAM," or "speed up your Mac" — things no app can reliably do.</li>
-      <li><b>You review before anything is removed.</b> Every item shows its real path, and high-risk system paths are hard-excluded in code.</li>
-      <li><b>Auditable.</b> It's MIT. Read the exact code that decides what gets removed, fork it, ship your own.</li>
-    </ul>
-  </div>
-</section>
-
-<section>
-  <h2>Install</h2>
-  <pre>brew install --cask puremac</pre>
-  <p>Or download the signed, Apple-notarized <a href="https://github.com/momenbasel/PureMac/releases/latest">DMG from GitHub</a>. Requires macOS 13 (Ventura) or later. Universal — Apple Silicon and Intel. No Gatekeeper warnings, no quarantine workaround.</p>
-</section>
-
-<section>
-  <h2>FAQ</h2>
-  <details><summary>Is PureMac really free?</summary><p>Yes — completely free and open source under the MIT license on GitHub, and installable with Homebrew. No subscription, no trial, no paywalled features.</p></details>
-  <details><summary>Is it a good CleanMyMac alternative?</summary><p>PureMac does what people actually use CleanMyMac for — a real app uninstaller that catches every leftover, junk and cache cleanup, and orphaned-file detection — as a free, native, open-source app with no subscription and no fear-based scans.</p></details>
-  <details><summary>Is it safe?</summary><p>Everything removed goes to the Trash via the system API, so mistakes are recoverable. You review every item with its real path before removal, and high-risk system paths are hard-excluded in code.</p></details>
-  <details><summary>Does it collect any data?</summary><p>No. No telemetry, no analytics, no crash reporting, and no network calls. PureMac doesn't even need a network connection to run.</p></details>
-</section>
-
-<footer>
-  PureMac is free and open source under the MIT License · <a href="https://github.com/momenbasel/PureMac">GitHub</a> · <a href="privacy.html">Privacy</a>
-  · <a href="https://www.moamenbasel.com/pesty/">Pesty</a> (clipboard manager)
-  · Not affiliated with CleanMyMac (MacPaw).
-</footer>
+<section class="section product-section" aria-labelledby="tools-title"><div class="wrap">
+<div class="section-heading"><h2 id="tools-title">See the detail before you decide.</h2><p>Explore storage, compare exact duplicates, or review Homebrew app updates. These are screenshots of the app.</p></div>
+<div class="gallery-controls" role="group" aria-label="Choose an app screenshot" hidden>
+<button type="button" aria-pressed="true" aria-controls="gallery" data-view="space">Space Explorer</button>
+<button type="button" aria-pressed="false" aria-controls="gallery" data-view="duplicates">Duplicate Finder</button>
+<button type="button" aria-pressed="false" aria-controls="gallery" data-view="updates">App Updates</button>
+<button type="button" aria-pressed="false" aria-controls="gallery" data-view="dark">Dark appearance</button>
 </div>
+<div id="gallery" class="gallery">
+<figure data-panel="space"><a href="assets/space-explorer.png"><img src="assets/space-explorer.png" width="2240" height="1480" loading="lazy" alt="Space Explorer showing folder sizes and the largest items"></a><figcaption><strong>Find the folders taking up space.</strong> Drill into a folder’s allocated storage and reveal files in Finder. Skipped or inaccessible items are reported.</figcaption></figure>
+<figure data-panel="duplicates"><a href="assets/duplicate-finder.png"><img src="assets/duplicate-finder.png" width="2240" height="1480" loading="lazy" alt="Duplicate Finder with matching file groups and a protected copy in each group"></a><figcaption><strong>Keep one. Review the extras.</strong> Exact duplicates are verified by content hash. One copy stays protected; selected extras move to Trash after confirmation.</figcaption></figure>
+<figure data-panel="updates"><a href="assets/app-updates.png"><img src="assets/app-updates.png" width="2240" height="1480" loading="lazy" alt="App Updates listing Homebrew-managed applications and available versions"></a><figcaption><strong>Choose the apps to update.</strong> Check and upgrade Homebrew-managed casks. Apps installed outside Homebrew are not covered.</figcaption></figure>
+<figure data-panel="dark"><a href="assets/smart-care-dark.png"><img src="assets/smart-care-dark.png" width="2240" height="1480" loading="lazy" alt="PureMac Smart Care in dark appearance with teal controls and a charcoal sidebar"></a><figcaption><strong>At home on your Mac.</strong> Choose System, Light, or Dark appearance from Settings.</figcaption></figure>
+</div><p class="gallery-status sr-only" role="status"></p>
+</div></section>
+
+<section class="section wrap additional-tools" aria-labelledby="more-title">
+<div><h2 id="more-title">Useful checks.<br>Clear boundaries.</h2><p>Understand your Mac without exaggerated health scores or promises to boost RAM.</p></div>
+<dl class="tool-list"><div><dt>Protection</dt><dd>Check Gatekeeper, FileVault, the firewall, SIP, and XProtect metadata. A configuration review, not an antivirus scan.</dd></div><div><dt>Performance</dt><dd>Inspect CPU and memory use, startup items, and local Time Machine snapshots. Open Activity Monitor for a deeper look.</dd></div><div><dt>Similar Photos</dt><dd>Compare likely matches side by side and reveal them in Finder. This review tool does not delete photos.</dd></div></dl>
+</section>
+
+<section class="section wrap" id="safety" aria-labelledby="safety-title"><div class="safety-panel">
+<div class="section-heading"><p class="eyebrow">Know what happens to your files</p><h2 id="safety-title">Review first. Remove with care.</h2><p>Deletion behavior depends on the tool. Read the confirmation and keep backups of files you need.</p></div>
+<div class="safety-grid">
+<div><h3>Some removals use Trash</h3><p>User-level app uninstalling, orphan removal, and exact-duplicate removal move selected files to Trash. Recovery is possible until you empty it.</p></div>
+<div><h3>Some cleanup is permanent</h3><p>Dashboard and category cleanup, scheduled auto-clean, Trash emptying, Docker and simulator cleanup, administrator-authorized removal, local snapshot deletion, and CLI cleanup can permanently delete data.</p></div>
+<div><h3>Local scans. No telemetry.</h3><p>Scan results and file paths stay on your Mac. PureMac does not collect analytics or crash reports. GitHub release checks and Homebrew updates use the network.</p></div>
+<div><h3>You control the scope</h3><p>Review manual selections and excluded paths. Scheduled auto-clean runs unattended once enabled. Full Disk Access lets scans reach protected locations.</p></div>
+</div><a class="text-link" href="privacy.html">Read the privacy policy <span aria-hidden="true">↗</span></a>
+</div></section>
+
+<section class="section wrap install-section" id="install" aria-labelledby="install-title">
+<div class="install-copy"><p class="eyebrow">Ready when you are</p><h2 id="install-title">Make space for what matters.</h2><p>Free, with no account or subscription. Requires macOS 13 or later on Apple Silicon or Intel.</p><a class="button" href="https://github.com/momenbasel/PureMac/releases/latest">Download for macOS <span aria-hidden="true">↗</span></a><p class="note">Open the DMG and drag PureMac into Applications. Use the app’s setup guide for Full Disk Access.</p></div>
+<div class="install-options"><h3>Prefer Homebrew?</h3><div class="command"><code id="brew-command">brew install --cask puremac</code><button type="button" data-copy="brew-command" aria-label="Copy app install command" hidden>Copy</button></div><p class="copy-status" role="status"></p><div class="release-note"><h3>In PureMac 3.1</h3><p>Settings in the sidebar, on-demand release checks, process CPU and memory views, and expanded translations.</p><a href="https://github.com/momenbasel/PureMac/releases/tag/v3.1.0">Read the 3.1.0 release notes <span aria-hidden="true">↗</span></a></div></div>
+</section>
+
+<section class="section wrap cli-section" aria-labelledby="cli-title"><div><h2 id="cli-title">Prefer the keyboard?</h2><p>PureMac also has a command-line app with individual selection, path review, storage browsing, and dry runs.</p><div class="command"><code id="cli-command">brew install momenbasel/tap/puremac-cli</code><button type="button" data-copy="cli-command" aria-label="Copy CLI install command" hidden>Copy</button></div><p class="copy-status" role="status"></p><details class="tap-help"><summary>Homebrew asks to trust the tap?</summary><p>For Homebrew versions that require tap trust, run <code>brew tap momenbasel/tap</code>, then <code>brew trust --tap momenbasel/tap</code>, and repeat the install command.</p></details><p class="note">CLI cleanup permanently deletes selected files after confirmation. Preview first with <code>puremac clean dev --dry-run</code>.</p><a class="text-link" href="https://github.com/momenbasel/PureMac/blob/main/cli/README.md">Read the CLI guide <span aria-hidden="true">↗</span></a></div><a href="assets/cli-clean.png"><img src="assets/cli-clean.png" width="1808" height="1024" loading="lazy" alt="PureMac command-line workspace with individual cleanup paths and a selection total"></a></section>
+
+<section class="section wrap faq-section" id="faq" aria-labelledby="faq-title"><h2 id="faq-title">A few things to know.</h2><div>
+<details><summary>Is PureMac completely free?</summary><p>Yes. The app and CLI are open source under the MIT license, with no trial, subscription, or paid feature tier. <a href="https://github.com/momenbasel/PureMac">Browse the source on GitHub</a>.</p></details>
+<details><summary>Can I undo a cleanup?</summary><p>Only files moved to Trash can be restored from it, and only before it is emptied. Several cleanup tools permanently delete data. Review the <a href="#safety">removal behavior</a> and the app’s confirmation before continuing.</p></details>
+<details><summary>Why does it ask for Full Disk Access?</summary><p>macOS protects locations such as Mail downloads and app containers. Full Disk Access lets PureMac scan those locations. Without it, some results will be incomplete. You can manage access in System Settings.</p></details>
+<details><summary>Does PureMac work offline?</summary><p>Local scanning and cleanup work offline. Checking GitHub for a PureMac release and checking or installing Homebrew app updates require a network connection. PureMac does not upload your scanned paths or file contents.</p></details>
+<details><summary>Will it free all purgeable space?</summary><p>No. macOS manages purgeable storage. PureMac shows it separately rather than counting it as junk that it can reliably remove.</p></details>
+<details><summary>Where can I get help or report a problem?</summary><p>Read the <a href="https://github.com/momenbasel/PureMac#troubleshooting">troubleshooting guide</a> or <a href="https://github.com/momenbasel/PureMac/issues">open an issue</a>. Review logs and screenshots for personal file paths before posting them publicly.</p></details>
+</div></section>
+</main>
+<footer class="wrap footer"><div><a class="brand" href="./"><img src="assets/icon.png" width="32" height="32" alt=""><span>PureMac</span></a><p>Mac care, open source.</p></div><nav aria-label="Project links"><a href="https://github.com/momenbasel/PureMac">Source</a><a href="https://github.com/momenbasel/PureMac/releases">Releases</a><a href="privacy.html">Privacy</a></nav><nav aria-label="More Mac apps"><span>More Mac apps</span><a href="https://www.moamenbasel.com/puresnitch/">PureSnitch</a><a href="https://www.moamenbasel.com/pesty/">Pesty</a><a href="https://www.moamenbasel.com/Phosphor/">Phosphor</a></nav></footer>
 </body>
 </html>

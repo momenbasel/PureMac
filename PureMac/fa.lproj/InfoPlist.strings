@@ -1,0 +1,8 @@
+/* macOS permission prompts */
+"NSAppleEventsUsageDescription" = "برنامهٔ PureMac برای تعامل با Finder هنگام نمایش فایل‌ها، از Apple Events استفاده می‌کند.";
+"NSDesktopFolderUsageDescription" = "برنامهٔ PureMac برای یافتن فایل‌های اضافی و رهاشده، به دسترسی به Desktop شما نیاز دارد.";
+"NSDocumentsFolderUsageDescription" = "برنامهٔ PureMac برای یافتن فایل‌های اضافی و رهاشده، به دسترسی به Documents شما نیاز دارد.";
+"NSDownloadsFolderUsageDescription" = "برنامهٔ PureMac برای یافتن فایل‌های اضافی و رهاشده، به دسترسی به Downloads شما نیاز دارد.";
+"NSRemovableVolumesUsageDescription" = "برنامهٔ PureMac برای اسکن فایل‌های اضافی، به دسترسی به درایوهای جداشدنی نیاز دارد.";
+"NSSystemAdministrationUsageDescription" = "برنامهٔ PureMac برای پاک‌سازی حافظه‌های نهان و حذف کامل برنامه‌ها، به دسترسی سرپرست سیستم نیاز دارد.";
+"NSHumanReadableCopyright" = "Copyright 2026. MIT License.";

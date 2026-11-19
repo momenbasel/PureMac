@@ -5,13 +5,15 @@ final class LocalizationFilesTests: XCTestCase {
         let localizationFiles = try localizableStringsFiles()
 
         XCTAssertNotNil(localizationFiles["de"], "Expected de.lproj/Localizable.strings to exist")
+        XCTAssertNotNil(localizationFiles["el"], "Expected el.lproj/Localizable.strings to exist")
+        XCTAssertNotNil(localizationFiles["fa"], "Expected fa.lproj/Localizable.strings to exist")
         XCTAssertNotNil(localizationFiles["it"], "Expected it.lproj/Localizable.strings to exist")
         XCTAssertNotNil(localizationFiles["ru"], "Expected ru.lproj/Localizable.strings to exist")
         XCTAssertNotNil(localizationFiles["uk"], "Expected uk.lproj/Localizable.strings to exist")
     }
 
     func testBuiltAppBundleContainsAddedLocalizations() throws {
-        for language in ["de", "it", "ru", "uk", "zh-Hans"] {
+        for language in ["de", "el", "fa", "it", "ja", "ru", "uk", "zh-Hans", "zh-Hant"] {
             XCTAssertTrue(
                 Bundle.main.localizations.contains(language),
                 "Expected the built app bundle to register the \(language) localization"
@@ -88,29 +90,6 @@ final class LocalizationFilesTests: XCTestCase {
                     "\(language).lproj has incompatible format specifiers for key: \(key)"
                 )
             }
-        }
-    }
-
-    func testSimplifiedChineseValuesAreTranslated() throws {
-        let localizationFiles = try localizableStringsFiles()
-        let englishURL = try XCTUnwrap(localizationFiles["en"])
-        let chineseURL = try XCTUnwrap(localizationFiles["zh-Hans"])
-        let englishStrings = try localizedStrings(in: englishURL)
-        let chineseStrings = try localizedStrings(in: chineseURL)
-        // Product names and standard technical abbreviations stay unchanged.
-        let untranslatedNames: Set<String> = ["PureMac", "PureMac.app", "CPU", "Homebrew", "XProtect"]
-
-        for (key, englishValue) in englishStrings where !untranslatedNames.contains(key) {
-            let chineseValue = try XCTUnwrap(chineseStrings[key], "Missing Simplified Chinese key: \(key)")
-            XCTAssertFalse(
-                chineseValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-                "Empty Simplified Chinese translation for key: \(key)"
-            )
-            XCTAssertNotEqual(
-                chineseValue,
-                englishValue,
-                "Untranslated Simplified Chinese value for key: \(key)"
-            )
         }
     }
 

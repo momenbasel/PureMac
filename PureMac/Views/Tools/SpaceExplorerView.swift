@@ -340,47 +340,37 @@ struct SpaceExplorerView: View {
     }
 
     private func summaryCard(_ result: StorageScanResult) -> some View {
-        CardSurface(padding: 18, elevation: .standard, tint: Tint.accent) {
-            HStack(alignment: .center, spacing: 18) {
+        CardSurface(padding: 16, elevation: .flat) {
+            HStack(alignment: .center, spacing: 20) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(Self.format(result.totalAllocatedSize))
-                        .font(.system(size: 30, weight: .bold, design: .rounded))
+                        .font(.system(size: 21, weight: .semibold))
                         .monospacedDigit()
-                        .foregroundStyle(Tint.accent)
                     Text("allocated in this folder")
                         .font(.system(size: 12.5))
                         .foregroundStyle(.secondary)
                 }
 
                 Divider()
-                    .frame(height: 48)
+                    .frame(height: 38)
 
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 8) {
-                        StatusChip(label: StorageEntryRow.fileCountLabel(result.fileCount), systemImage: "doc", tint: Tint.accent)
-                        StatusChip(label: StorageEntryRow.folderCountLabel(result.directoryCount), systemImage: "folder", tint: Tint.accent)
+                VStack(alignment: .leading, spacing: 5) {
+                    HStack(spacing: 12) {
+                        Text(StorageEntryRow.fileCountLabel(result.fileCount))
+                        Text(StorageEntryRow.folderCountLabel(result.directoryCount))
                     }
-                    HStack(spacing: 8) {
-                        StatusChip(
-                            label: String(localized: "\(result.skippedCount) skipped"),
-                            systemImage: "forward",
-                            tint: result.skippedCount == 0 ? Tint.green : Tint.orange
-                        )
-                        StatusChip(
-                            label: String(localized: "\(result.inaccessibleCount) inaccessible"),
-                            systemImage: "lock",
-                            tint: result.inaccessibleCount == 0 ? Tint.green : Tint.orange
-                        )
-                    }
+                    .font(.system(size: 13, weight: .medium))
+                    Text("\(result.skippedCount) skipped · \(result.inaccessibleCount) inaccessible")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
+                .monospacedDigit()
 
                 Spacer()
 
-                StatusChip(
-                    label: result.isPartial ? String(localized: "Partial result") : String(localized: "Complete"),
-                    systemImage: result.isPartial ? "exclamationmark.triangle" : "checkmark.circle",
-                    tint: result.isPartial ? Tint.orange : Tint.green
-                )
+                if result.isPartial {
+                    StatusChip(label: String(localized: "Partial result"), systemImage: "exclamationmark.triangle", tint: Tint.orange)
+                }
             }
         }
     }

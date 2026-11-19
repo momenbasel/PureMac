@@ -47,6 +47,11 @@ actor CleaningEngine {
                 continue
             }
 
+            if item.category == .aiApps, !isSupportedAIAppPath(item.path) {
+                result.errors.append("Unsupported AI app cleanup path: \(item.path)")
+                continue
+            }
+
             if item.category == .purgeableSpace {
                 let purged = await purgePurgeableSpace()
                 result.freedSpace += purged
@@ -220,6 +225,12 @@ actor CleaningEngine {
                     (nsError.domain == NSPOSIXErrorDomain &&
                         (nsError.code == Int(EACCES) || nsError.code == Int(EPERM)))
                 if isPermissionDenied {
+                    if item.category == .aiApps {
+                        let detail = "AI app cleanup requires access as the current user: \(item.path)"
+                        result.errors.append(detail)
+                        Logger.shared.log(detail, level: .warning)
+                        continue
+                    }
                     if XcodeBuildMCPDerivedDataSupport.isManagedDerivedDataPath(
                         item.path,
                         homeDirectory: homeDirectory
@@ -274,6 +285,10 @@ actor CleaningEngine {
         // refuses to escalate.
         let exclusions = CleanupExclusions.paths()
         let validated: [(item: CleanableItem, resolved: String)] = items.compactMap { item in
+            guard item.category != .aiApps else {
+                result.errors.append("Administrator cleanup is unavailable for AI app data: \(item.name)")
+                return nil
+            }
             guard !CleanupExclusions.excludes(item.path, paths: exclusions) else { return nil }
             guard !hasUnexpectedSymlink(in: item.path) else {
                 Logger.shared.log("Refusing admin escalation for symlinked path: \(item.path)", level: .warning)
@@ -562,6 +577,9 @@ actor CleaningEngine {
         resolvedPath: String,
         includeUninstallPaths: Bool = false
     ) -> Bool {
+        if item.category == .aiApps {
+            return item.path == resolvedPath && isSupportedAIAppPath(resolvedPath)
+        }
         let originalIsManaged = XcodeBuildMCPDerivedDataSupport.isManagedDerivedDataPath(
             item.path,
             homeDirectory: homeDirectory
@@ -584,6 +602,21 @@ actor CleaningEngine {
         }
         return isSafeToDelete(resolvedPath: resolvedPath)
             || (includeUninstallPaths && isSafeUninstallEscalationPath(resolvedPath))
+    }
+
+    private func isSupportedAIAppPath(_ path: String) -> Bool {
+        guard !path.utf8.contains(0), path == (path as NSString).standardizingPath else { return false }
+        let home = homeDirectory.path
+        return [
+            "\(home)/.ollama/logs",
+            "\(home)/.ollama/history",
+            "\(home)/.lmstudio/server-logs",
+            "\(home)/.lmstudio/conversations",
+            "\(home)/Library/Caches/ollama",
+            "\(home)/Library/Caches/com.electron.ollama",
+            "\(home)/Library/WebKit/com.electron.ollama",
+            "\(home)/Library/Saved Application State/com.electron.ollama.savedState",
+        ].contains(path)
     }
 
     /// Validates that a resolved path is safe to delete.

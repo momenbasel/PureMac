@@ -13,6 +13,7 @@ enum AppSection: Hashable {
     case similarPhotos
     case protection
     case performance
+    case appleFeatures
     case appUpdates
     case settings
     case cleaning(CleaningCategory)
@@ -51,6 +52,11 @@ final class AppState: ObservableObject {
     let languageAtLaunch = AppLanguage.current
     @Published var settingsNeedLanguageRestart = false
     @Published var showUpdateSettings = false
+    @Published var deviceBackupRemovalInProgress = false
+    @Published var deviceBackupRemovalResult: DeviceBackupRemovalResult?
+    var canRemoveDeviceBackups: Bool {
+        !scanState.isActive && !deviceBackupRemovalInProgress
+    }
     typealias AppFileScanner = @MainActor (
         _ app: InstalledApp,
         _ locations: Locations,
@@ -808,7 +814,7 @@ final class AppState: ObservableObject {
     }
 
     private func retryCleanItems(_ items: [CleanableItem]) async {
-        guard !scanState.isActive else { return }
+        guard !scanState.isActive, !deviceBackupRemovalInProgress else { return }
         let generation = UUID()
         cleanupGeneration = generation
         scanState = .cleaning(progress: 0)
@@ -874,12 +880,13 @@ final class AppState: ObservableObject {
     // MARK: - Scanning
 
     func startSmartScan() {
-        guard !scanState.isActive else { return }
+        guard !scanState.isActive, !deviceBackupRemovalInProgress else { return }
         beginScan(categories: CleaningCategory.scannable, replacingResults: true)
     }
 
     func scanSingleCategory(_ category: CleaningCategory) {
-        guard !scanState.isActive, CleaningCategory.scannable.contains(category) else { return }
+        guard !scanState.isActive, !deviceBackupRemovalInProgress,
+              CleaningCategory.scannable.contains(category) else { return }
         beginScan(categories: [category], replacingResults: false)
     }
 
@@ -935,7 +942,7 @@ final class AppState: ObservableObject {
     // MARK: - Cleaning
 
     func cleanAll(itemIDs: Set<UUID>? = nil, scheduled: Bool = false) {
-        guard !scanState.isActive else { return }
+        guard !scanState.isActive, !deviceBackupRemovalInProgress else { return }
 
         let itemsToClean = allResults.flatMap { $0.items }.filter { item in
             guard itemIDs?.contains(item.id) ?? true else { return false }
@@ -1007,7 +1014,8 @@ final class AppState: ObservableObject {
     }
 
     func cleanCategory(_ category: CleaningCategory, itemIDs: Set<UUID>? = nil) {
-        guard let result = categoryResults[category], !scanState.isActive else { return }
+        guard let result = categoryResults[category], !scanState.isActive,
+              !deviceBackupRemovalInProgress else { return }
 
         let selectedItems = result.items.filter { isItemSelected($0) && (itemIDs?.contains($0.id) ?? true) }
         guard !selectedItems.isEmpty else { return }
@@ -1131,7 +1139,8 @@ final class AppState: ObservableObject {
     func canRunScheduledScan(isAppActive: Bool) -> Bool {
         !scanState.isActive && !(scanState == .completed && isAppActive)
             && !showCleanConfirmation && !isScanningAppFiles && !isRemovingAppFiles
-            && !isSearchingOrphans && !PermissionCoordinator.shared.isRequesting
+            && !isSearchingOrphans && !deviceBackupRemovalInProgress
+            && !PermissionCoordinator.shared.isRequesting
     }
 
     func runScheduledScan() async {
