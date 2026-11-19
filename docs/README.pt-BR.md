@@ -237,7 +237,7 @@ Pull requests são bem-vindos. Veja o [CONTRIBUTING.md](../CONTRIBUTING.md).
 Especialmente bem-vindos:
 - Presets de filtro por tamanho e data em cada categoria
 - Cobertura mais ampla de XCTest para o `AppState` e o motor de escaneamento
-- Traduções além do conjunto atual (en, ar, es, ja, pl, pt-BR, ru, uk, zh-Hans, zh-Hant)
+- Traduções além do conjunto atual (en, ar, de, el, es, fa, fr, it, ja, pl, pt-BR, ru, uk, zh-Hans, zh-Hant)
 - Design do ícone do app
 
 ## Agradecimentos

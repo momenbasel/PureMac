@@ -5,13 +5,15 @@ final class LocalizationFilesTests: XCTestCase {
         let localizationFiles = try localizableStringsFiles()
 
         XCTAssertNotNil(localizationFiles["de"], "Expected de.lproj/Localizable.strings to exist")
+        XCTAssertNotNil(localizationFiles["el"], "Expected el.lproj/Localizable.strings to exist")
+        XCTAssertNotNil(localizationFiles["fa"], "Expected fa.lproj/Localizable.strings to exist")
         XCTAssertNotNil(localizationFiles["it"], "Expected it.lproj/Localizable.strings to exist")
         XCTAssertNotNil(localizationFiles["ru"], "Expected ru.lproj/Localizable.strings to exist")
         XCTAssertNotNil(localizationFiles["uk"], "Expected uk.lproj/Localizable.strings to exist")
     }
 
     func testBuiltAppBundleContainsAddedLocalizations() throws {
-        for language in ["de", "it", "ru", "uk", "zh-Hans"] {
+        for language in ["de", "el", "fa", "it", "ja", "ru", "uk", "zh-Hans", "zh-Hant"] {
             XCTAssertTrue(
                 Bundle.main.localizations.contains(language),
                 "Expected the built app bundle to register the \(language) localization"
@@ -103,6 +105,44 @@ final class LocalizationFilesTests: XCTestCase {
                 duplicates.isEmpty,
                 "\(language).lproj/Localizable.strings has duplicate keys:\n\(duplicates.joined(separator: "\n"))"
             )
+        }
+    }
+
+    func testSimplifiedChineseRuntimeMessagesResolveInterpolatedKeys() throws {
+        let localizationFiles = try localizableStringsFiles()
+        let chineseURL = try XCTUnwrap(localizationFiles["zh-Hans"])
+        let chineseStrings = try localizedStrings(in: chineseURL)
+        let bundle = try XCTUnwrap(Bundle(path: chineseURL.deletingLastPathComponent().path))
+        let path = "/tmp/PureMac Test/example.bin"
+        let tool = "XcodeBuildMCP"
+        let status: Int32 = 7
+        let cases: [(key: String, value: String, arguments: [CVarArg])] = [
+            (
+                "Skipped symlink or unsafe path: %@",
+                String(localized: "Skipped symlink or unsafe path: \(path)", bundle: bundle),
+                [path]
+            ),
+            (
+                "%@: Legacy DerivedData",
+                String(localized: "\(tool): Legacy DerivedData", bundle: bundle),
+                [tool]
+            ),
+            (
+                "docker system prune failed (exit %d)",
+                String(localized: "docker system prune failed (exit \(status))", bundle: bundle),
+                [status]
+            ),
+            (
+                "Homebrew exited with status %d.",
+                String(localized: "Homebrew exited with status \(status).", bundle: bundle),
+                [status]
+            )
+        ]
+
+        for sample in cases {
+            let format = try XCTUnwrap(chineseStrings[sample.key])
+            XCTAssertNotEqual(format, sample.key)
+            XCTAssertEqual(sample.value, String(format: format, arguments: sample.arguments))
         }
     }
 

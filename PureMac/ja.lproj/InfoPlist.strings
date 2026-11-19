@@ -1,0 +1,8 @@
+/* macOS permission prompts */
+"NSAppleEventsUsageDescription" = "PureMacは、ファイルを表示する際にFinderと連携するためにApple Eventsを使用します。";
+"NSDesktopFolderUsageDescription" = "PureMacは、ジャンクファイルや孤立ファイルを見つけるためにデスクトップへのアクセスを必要とします。";
+"NSDocumentsFolderUsageDescription" = "PureMacは、ジャンクファイルや孤立ファイルを見つけるために書類フォルダへのアクセスを必要とします。";
+"NSDownloadsFolderUsageDescription" = "PureMacは、ジャンクファイルや孤立ファイルを見つけるためにダウンロードフォルダへのアクセスを必要とします。";
+"NSRemovableVolumesUsageDescription" = "PureMacは、ジャンクファイルをスキャンするためにリムーバブルボリュームへのアクセスを必要とします。";
+"NSSystemAdministrationUsageDescription" = "PureMacは、キャッシュをクリーンアップしアプリを完全にアンインストールするためにシステム管理へのアクセスを必要とします。";
+"NSHumanReadableCopyright" = "Copyright 2026. MIT License.";

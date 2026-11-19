@@ -7,7 +7,7 @@ enum SimulatorRuntimeSupport {
     static let xcrunPath = "/usr/bin/xcrun"
     static let xcodeSelectPath = "/usr/bin/xcode-select"
     static let missingXcrunMessage =
-        "Xcode command-line tools not found — install Xcode or run xcode-select --install"
+        String(localized: "Xcode command-line tools not found — install Xcode or run xcode-select --install")
 
     struct RuntimeInfo: Equatable {
         let identifier: String
@@ -57,7 +57,7 @@ enum SimulatorRuntimeSupport {
                 var parts: [String] = []
                 if let platform { parts.append(platform) }
                 if let version { parts.append(version) }
-                let base = parts.isEmpty ? "Simulator Runtime" : parts.joined(separator: " ")
+                let base = parts.isEmpty ? String(localized: "Simulator runtime") : parts.joined(separator: " ")
                 if let build { return "\(base) (\(build))" }
                 return base
             }()

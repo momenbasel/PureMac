@@ -68,21 +68,21 @@ actor BinaryThinner {
         var errorDescription: String? {
             switch self {
             case .needsAdmin(let path):
-                return "Not writable by current user: \(path)"
+                return String(localized: "Not writable by current user: \(path)")
             case .restrictedEntitlements(let app):
-                return "Cannot modify \(app): its entitlements require the original developer signature"
+                return String(localized: "Cannot modify \(app): its entitlements require the original developer signature")
             case .signatureProtected(let app):
-                return "Cannot thin \(app): it is signed and notarized, and stripping a slice would break its signature"
+                return String(localized: "Cannot thin \(app): it is signed and notarized, and stripping a slice would break its signature")
             case .lipoFailed(let path, let detail):
-                return "lipo failed for \(path): \(detail)"
+                return String(localized: "lipo failed for \(path): \(detail)")
             case .swapFailed(let path, let detail):
-                return "Could not swap modified bundle into place at \(path): \(detail)"
+                return String(localized: "Could not swap modified bundle into place at \(path): \(detail)")
             case .codesignFailed(let app, let detail):
-                return "Re-signing failed for \(app): \(detail)"
+                return String(localized: "Re-signing failed for \(app): \(detail)")
             case .verificationFailed(let app, let detail):
-                return "Signature verification failed for \(app): \(detail)"
+                return String(localized: "Signature verification failed for \(app): \(detail)")
             case .nothingToThin(let app):
-                return "No removable slices in \(app)"
+                return String(localized: "No removable slices in \(app)")
             }
         }
     }
@@ -125,7 +125,7 @@ actor BinaryThinner {
         let app = (appPath as NSString).standardizingPath
         let lproj = (lprojPath as NSString).standardizingPath
         guard lproj.hasPrefix(app + "/") else {
-            return .failure(ThinningError.swapFailed(lprojPath, "localization is outside the app bundle"))
+            return .failure(ThinningError.swapFailed(lprojPath, String(localized: "localization is outside the app bundle")))
         }
 
         let appName = ((app as NSString).lastPathComponent as NSString).deletingPathExtension
@@ -199,7 +199,7 @@ actor BinaryThinner {
             try fileManager.copyItem(atPath: appPath, toPath: stagingPath)
         } catch {
             try? fileManager.removeItem(atPath: stagingPath)
-            return .failure(ThinningError.swapFailed(appPath, "could not stage a working copy: \(error.localizedDescription)"))
+            return .failure(ThinningError.swapFailed(appPath, String(localized: "could not stage a working copy: \(error.localizedDescription)")))
         }
 
         let freedBytes: Int64
@@ -275,7 +275,7 @@ actor BinaryThinner {
                 try fileManager.moveItem(atPath: oldPath, toPath: appPath)
             } catch {
                 Logger.shared.log("Could not undo bundle swap for \(appPath); original remains at \(oldPath): \(error.localizedDescription)", level: .error)
-                return .failure(ThinningError.swapFailed(appPath, "original bundle left at \(oldPath)"))
+                return .failure(ThinningError.swapFailed(appPath, String(localized: "original bundle left at \(oldPath)")))
             }
             return .failure(ThinningError.needsAdmin(appPath))
         }
@@ -288,7 +288,7 @@ actor BinaryThinner {
     private func thinBinary(_ binary: FatBinary, appPath: String, stagedPath: String) throws -> Int64 {
         let binaryPath = (binary.path as NSString).standardizingPath
         guard binaryPath.hasPrefix(appPath + "/") else {
-            throw ThinningError.lipoFailed(binary.path, "binary is outside the app bundle")
+            throw ThinningError.lipoFailed(binary.path, String(localized: "binary is outside the app bundle"))
         }
         let stagedBinary = stagedPath + String(binaryPath.dropFirst(appPath.count))
 

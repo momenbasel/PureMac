@@ -132,7 +132,7 @@ final class XcodeBuildMCPDerivedDataSupportTests: XCTestCase {
             URL(fileURLWithPath: $0.path).resolvingSymlinksInPath().path == expectedPath
         })
 
-        XCTAssertEqual(item.name, "XcodeBuildMCP: Legacy DerivedData")
+        XCTAssertEqual(item.name, String(format: String(localized: "%@: Legacy DerivedData"), "XcodeBuildMCP"))
         XCTAssertFalse(item.isSelected)
     }
 
@@ -150,7 +150,8 @@ final class XcodeBuildMCPDerivedDataSupportTests: XCTestCase {
             .write(to: legacyDerivedData.appendingPathComponent("legacy-build-product"))
 
         let scan = await ScanEngine(homeDirectory: temporaryHome).scanCategory(.xcodeJunk)
-        let item = try XCTUnwrap(scan.items.first { $0.name == "XcodeBuildMCP: Legacy DerivedData" })
+        let expectedPath = legacyDerivedData.resolvingSymlinksInPath().path
+        let item = try XCTUnwrap(scan.items.first { $0.path == expectedPath })
         let result = await CleaningEngine(homeDirectory: temporaryHome).cleanItems([item]) { _ in }
 
         XCTAssertEqual(result.itemsCleaned, 1)
