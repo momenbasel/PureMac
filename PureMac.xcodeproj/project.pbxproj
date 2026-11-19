@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		003A90E388877ECFE1D77245 /* DevToolCachesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE78E0476F240C0AA3061DC9 /* DevToolCachesTests.swift */; };
 		013EF7B96BF046D4DB38FBC5 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 241E0895B09C71AB423B2F9E /* Localizable.strings */; };
 		0BB6BC2EAFB02407FBC6CDA6 /* ApplicationUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59873E44B520DE069F80CCD6 /* ApplicationUpdater.swift */; };
 		0CC9A41781D1B1883279693E /* ProtectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F270D47D1DD94D4577482B90 /* ProtectionView.swift */; };
@@ -53,6 +54,7 @@
 		826A750D2D7EC14C2AE306A3 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3667D46D8E2004EB4D73835A /* Models.swift */; };
 		8947F0CE448791BD50EECF46 /* Conditions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB94E06E145558123BB5BFB3 /* Conditions.swift */; };
 		89D5B9A5B4F25EA729B5B08B /* DeviceBackupCoordinationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BA1FC37E3821117365707CD /* DeviceBackupCoordinationTests.swift */; };
+		8B1437BFEBA81234563A186C /* DevToolCaches.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CF7D5C710181AD0A2C537FF /* DevToolCaches.swift */; };
 		8B541441926847072DC5B75B /* DashboardCharts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08C60E04A0CA3F227816DB63 /* DashboardCharts.swift */; };
 		91751CF033E1541BFD39B12C /* MenuBarMonitorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A27DB5A70FA829B6C3ED0AC3 /* MenuBarMonitorView.swift */; };
 		93743B036059418560D876E6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A8D39C3C250F26302EC45AB /* SettingsView.swift */; };
@@ -136,6 +138,7 @@
 		1AB003A7751F05727DBFD1A5 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		1B8BE07AD70610A91E735E78 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/ServicesMenu.strings"; sourceTree = "<group>"; };
 		1C0D9A6F75D0B8ADDB32FC2A /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = uk.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1CF7D5C710181AD0A2C537FF /* DevToolCaches.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevToolCaches.swift; sourceTree = "<group>"; };
 		1D3AC5F17D7CA94FAB1E8D7A /* StringNormalization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringNormalization.swift; sourceTree = "<group>"; };
 		1FC5F44AB9CA4CD2DE774973 /* XcodeBuildMCPDerivedDataSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XcodeBuildMCPDerivedDataSupport.swift; sourceTree = "<group>"; };
 		22B679C0120F1E3DDCB27FE2 /* CleaningEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleaningEngineTests.swift; sourceTree = "<group>"; };
@@ -246,6 +249,7 @@
 		F77B9D7D5353CD42BD03ADBB /* ApplicationUpdaterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationUpdaterTests.swift; sourceTree = "<group>"; };
 		F9DCBD97CC88D77AE8DB01A4 /* PermissionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionCoordinator.swift; sourceTree = "<group>"; };
 		FE52AA3D827BF3A574DC5822 /* ProcessResourceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessResourceMonitor.swift; sourceTree = "<group>"; };
+		FE78E0476F240C0AA3061DC9 /* DevToolCachesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevToolCachesTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -272,6 +276,7 @@
 				6116C5E9B68F439F6B2E42E5 /* CleanupReviewTests.swift */,
 				6BA1FC37E3821117365707CD /* DeviceBackupCoordinationTests.swift */,
 				4D0D0E67A3C5B3740B858AD8 /* DeviceBackupServiceTests.swift */,
+				FE78E0476F240C0AA3061DC9 /* DevToolCachesTests.swift */,
 				D379BB1C513985CF9AB783D5 /* DuplicateFinderTests.swift */,
 				155CE1B8CDCCCA6F9FD028C1 /* LocalizationFilesTests.swift */,
 				0621A14395DCA19EC2995842 /* MonitoringLifecycleTests.swift */,
@@ -439,6 +444,7 @@
 			isa = PBXGroup;
 			children = (
 				01B2C5F66B6D812572BD4F05 /* CLI.swift */,
+				1CF7D5C710181AD0A2C537FF /* DevToolCaches.swift */,
 				7953B398E47A4C603DE287F1 /* FileProtection.swift */,
 				8CE522B406791BCE905BC55B /* FileSize.swift */,
 				5785762276FB5E3209C6DE4D /* Logger.swift */,
@@ -629,6 +635,7 @@
 				ABDDD4F35102A39CC1A2C325 /* ConfettiView.swift in Sources */,
 				8B541441926847072DC5B75B /* DashboardCharts.swift in Sources */,
 				A2AE68CC75CB72D6B10CBDF5 /* DashboardView.swift in Sources */,
+				8B1437BFEBA81234563A186C /* DevToolCaches.swift in Sources */,
 				2C3AD1E4511D0F07C8C7C9D1 /* DeviceBackupService.swift in Sources */,
 				D0E6B0AFF83228F121B4DDD3 /* DuplicateFinder.swift in Sources */,
 				74175B10C464D245E99BA6DB /* DuplicateFinderView.swift in Sources */,
@@ -690,6 +697,7 @@
 				2BCDC53C5E3AB58442C8E4B0 /* CleaningEngineTests.swift in Sources */,
 				B69BD60D8AB7EBB9F80C9965 /* CleanupExclusionsTests.swift in Sources */,
 				6BCC5E3773DF2E9189F75A6B /* CleanupReviewTests.swift in Sources */,
+				003A90E388877ECFE1D77245 /* DevToolCachesTests.swift in Sources */,
 				89D5B9A5B4F25EA729B5B08B /* DeviceBackupCoordinationTests.swift in Sources */,
 				5FF5942BC279628276CF6543 /* DeviceBackupServiceTests.swift in Sources */,
 				4FAAA6E9887181C4C0AA9F87 /* DuplicateFinderTests.swift in Sources */,

@@ -28,6 +28,7 @@ struct MainWindow: View {
         .xcodeJunk,
         .brewCache,
         .nodeCache,
+        .devToolCaches,
         .dockerCache,
         .rustTargets,
         .nodeModules
