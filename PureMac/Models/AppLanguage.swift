@@ -2,11 +2,11 @@ import Foundation
 
 enum AppLanguage: String, CaseIterable, Identifiable {
     case system = "system"
-    case greek = "el"
     case english = "en"
     case french = "fr"
     case italian = "it"
     case german = "de"
+    case greek = "el"
     case spanish = "es"
     case japanese = "ja"
     case arabic = "ar"
@@ -24,11 +24,11 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     var displayName: String {
         switch self {
         case .system: return "System Default"
-        case .greek: return "Ελληνικά"
         case .english: return "English"
         case .french: return "French"
         case .italian: return "Italian"
         case .german: return "German"
+        case .greek: return "Greek"
         case .spanish: return "Spanish"
         case .japanese: return "Japanese"
         case .arabic: return "Arabic"
