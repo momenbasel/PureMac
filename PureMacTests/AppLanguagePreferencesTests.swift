@@ -8,11 +8,14 @@ final class AppLanguagePreferencesTests: XCTestCase {
         XCTAssertEqual(AppLanguage.greek.displayName, "Greek")
         XCTAssertEqual(AppLanguage.italian.rawValue, "it")
         XCTAssertEqual(AppLanguage.italian.displayName, "Italian")
+        XCTAssertEqual(AppLanguage.persian.rawValue, "fa")
+        XCTAssertEqual(AppLanguage.persian.displayName, "Persian")
         XCTAssertEqual(AppLanguage.russian.rawValue, "ru")
         XCTAssertEqual(AppLanguage.ukrainian.rawValue, "uk")
         XCTAssertTrue(AppLanguage.allCases.contains(.german))
         XCTAssertTrue(AppLanguage.allCases.contains(.greek))
         XCTAssertTrue(AppLanguage.allCases.contains(.italian))
+        XCTAssertTrue(AppLanguage.allCases.contains(.persian))
         XCTAssertTrue(AppLanguage.allCases.contains(.russian))
         XCTAssertTrue(AppLanguage.allCases.contains(.ukrainian))
     }
@@ -40,6 +43,9 @@ final class AppLanguagePreferencesTests: XCTestCase {
 
         AppLanguagePreferences.apply(.italian, defaults: defaults)
         XCTAssertEqual(defaults.array(forKey: "AppleLanguages") as? [String], ["it"])
+
+        AppLanguagePreferences.apply(.persian, defaults: defaults)
+        XCTAssertEqual(defaults.array(forKey: "AppleLanguages") as? [String], ["fa"])
 
         AppLanguagePreferences.apply(.russian, defaults: defaults)
         XCTAssertEqual(defaults.array(forKey: "AppleLanguages") as? [String], ["ru"])

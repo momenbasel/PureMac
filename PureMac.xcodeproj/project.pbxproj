@@ -146,6 +146,7 @@
 		2641C6376DD6F5889F35510E /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		28181F034530331A550C6A3D /* SchedulerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchedulerService.swift; sourceTree = "<group>"; };
 		2A8DE5D45BA19E2670B57DC5 /* CleaningEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleaningEngine.swift; sourceTree = "<group>"; };
+		2B09D09CDDDA7AF6AFA0E854 /* fa */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fa; path = fa.lproj/Localizable.strings; sourceTree = "<group>"; };
 		2D3F9FEDC493A8E49E910F67 /* AppBundleDragHandle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBundleDragHandle.swift; sourceTree = "<group>"; };
 		2E9D22A95EDF095732F5E9BD /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/ServicesMenu.strings; sourceTree = "<group>"; };
 		3006DF98485FFC3C40308A22 /* AppleStorageServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleStorageServiceTests.swift; sourceTree = "<group>"; };
@@ -183,6 +184,7 @@
 		6116C5E9B68F439F6B2E42E5 /* CleanupReviewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupReviewTests.swift; sourceTree = "<group>"; };
 		62BA83A253E17A3C61060556 /* AppleFeatureCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleFeatureCatalogTests.swift; sourceTree = "<group>"; };
 		63581B70F9B10231964E3602 /* PureMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PureMacApp.swift; sourceTree = "<group>"; };
+		66499E25399ABCFD561622BD /* fa */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fa; path = fa.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		69B24B648B82186FC3B6EF2B /* BinaryThinner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryThinner.swift; sourceTree = "<group>"; };
 		6BA1FC37E3821117365707CD /* DeviceBackupCoordinationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceBackupCoordinationTests.swift; sourceTree = "<group>"; };
 		6ED5C9C10C69C3143B1F5CA6 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ServicesMenu.strings; sourceTree = "<group>"; };
@@ -228,6 +230,7 @@
 		C5963EBBEE5BA6E147700821 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C5ADDC35F31E40780FB5D017 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		C7D81BE7EA5DB17F4A0300AD /* SimulatorRuntimeSupportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulatorRuntimeSupportTests.swift; sourceTree = "<group>"; };
+		C7DCE43B22DA6DF0B7071F4C /* fa */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fa; path = fa.lproj/ServicesMenu.strings; sourceTree = "<group>"; };
 		CB94E06E145558123BB5BFB3 /* Conditions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conditions.swift; sourceTree = "<group>"; };
 		CEAB8C4EEC46264C55BE4642 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
 		CED1B71D5F9510582E869CFD /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
@@ -567,6 +570,7 @@
 				el,
 				en,
 				es,
+				fa,
 				fr,
 				it,
 				ja,
@@ -733,6 +737,7 @@
 				A509371B4F2C65232C9FA7D5 /* el */,
 				9F04B811BB0012F6D2F07F91 /* en */,
 				340D303C60FF878B019056B6 /* es */,
+				2B09D09CDDDA7AF6AFA0E854 /* fa */,
 				8F97E4CB93302BFE911DB1FF /* fr */,
 				CEAB8C4EEC46264C55BE4642 /* it */,
 				5A5C80929EE4A430272674BC /* ja */,
@@ -752,6 +757,7 @@
 				994C41A99AC1061D79486AEE /* de */,
 				AD3883B7C23C50F27C467B58 /* el */,
 				44392E486177839BA978685E /* en */,
+				C7DCE43B22DA6DF0B7071F4C /* fa */,
 				25D1CF5248C1D471BCBD212F /* fr */,
 				97BF6BD57F76AECB9F92A421 /* it */,
 				2E9D22A95EDF095732F5E9BD /* ja */,
@@ -768,6 +774,7 @@
 				0FA0BFA3417A176F9FAA4A8D /* de */,
 				1A34F7C20AFAA80081C9EB6A /* el */,
 				40CD4855FB5FA866CAA52C10 /* en */,
+				66499E25399ABCFD561622BD /* fa */,
 				0A544093C897FBCBA8E256F9 /* fr */,
 				53CEAEA91A097FE8FF2FFDA0 /* it */,
 				DE1D48A0E9CD0687FDCA20BA /* ja */,
