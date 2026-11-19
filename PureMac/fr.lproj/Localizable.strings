@@ -262,6 +262,8 @@
 "Brew Cache" = "Cache Brew";
 "Node Cache" = "Cache Node";
 "Docker Cache" = "Cache Docker";
+"Rust Targets" = "Cibles Rust";
+"Node Modules" = "Modules Node";
 
 /* Cleaning category descriptions */
 "Scan everything at once" = "Tout analyser d'un coup";
@@ -276,6 +278,8 @@
 "Homebrew download cache" = "Cache de téléchargement Homebrew";
 "npm, yarn, and pnpm download caches" = "Caches de téléchargement npm, yarn et pnpm";
 "Docker images, containers, and build cache" = "Images, conteneurs et cache de build Docker";
+"Rust project target folders, cleaned with cargo clean" = "Dossiers target des projets Rust, nettoyés avec cargo clean";
+"node_modules folders in your projects" = "Dossiers node_modules de vos projets";
 
 /* Node Cache subcategories */
 "npm cache" = "Cache npm";

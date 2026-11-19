@@ -235,6 +235,8 @@
 "Brew Cache" = "Brew 缓存";
 "Node Cache" = "Node 缓存";
 "Docker Cache" = "Docker 缓存";
+"Rust Targets" = "Rust 构建目录";
+"Node Modules" = "Node 模块";
 "Universal Binaries" = "通用二进制文件";
 "Language Files" = "语言文件";
 
@@ -251,6 +253,8 @@
 "Homebrew download cache" = "Homebrew 下载缓存";
 "npm, yarn, and pnpm download caches" = "npm、yarn 和 pnpm 下载缓存";
 "Docker images, containers, and build cache" = "Docker 镜像、容器和构建缓存";
+"Rust project target folders, cleaned with cargo clean" = "Rust 项目的 target 文件夹，使用 cargo clean 清理";
+"node_modules folders in your projects" = "项目中的 node_modules 文件夹";
 "Unused CPU architecture slices in app binaries" = "应用二进制文件中未使用的 CPU 架构代码";
 "Unused app localizations" = "未使用的应用本地化文件";
 

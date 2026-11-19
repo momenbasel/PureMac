@@ -235,6 +235,8 @@
 "Brew Cache" = "Cache do Brew";
 "Node Cache" = "Cache do Node";
 "Docker Cache" = "Cache do Docker";
+"Rust Targets" = "Targets do Rust";
+"Node Modules" = "Módulos do Node";
 "Universal Binaries" = "Binários universais";
 "Language Files" = "Arquivos de idioma";
 
@@ -251,6 +253,8 @@
 "Homebrew download cache" = "Cache de downloads do Homebrew";
 "npm, yarn, and pnpm download caches" = "Caches de download do npm, yarn e pnpm";
 "Docker images, containers, and build cache" = "Imagens, containers e cache de build do Docker";
+"Rust project target folders, cleaned with cargo clean" = "Pastas target de projetos Rust, limpas com cargo clean";
+"node_modules folders in your projects" = "Pastas node_modules nos seus projetos";
 "Unused CPU architecture slices in app binaries" = "Arquiteturas de CPU não usadas nos binários dos apps";
 "Unused app localizations" = "Localizações de apps não usadas";
 
