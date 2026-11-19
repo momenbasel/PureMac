@@ -208,6 +208,36 @@ final class NodeCachePathTests: XCTestCase {
         XCTAssertGreaterThan(result.totalSize, 1024, "Hidden .pnpm payload must count toward the size")
     }
 
+    func testRustTargetsAndNodeModulesShareOneWalkPerScan() async throws {
+        let home = try makeHome()
+        let crate = "\(home)/code/crate"
+        try makeDir("\(crate)/target/debug")
+        try touch("\(crate)/Cargo.toml")
+        try touch("\(crate)/target/CACHEDIR.TAG")
+        XCTAssertTrue(FileManager.default.createFile(
+            atPath: "\(crate)/target/debug/lib.rlib",
+            contents: Data(repeating: 0x61, count: 64 * 1024)
+        ))
+        let web = "\(home)/code/web"
+        try makeDir("\(web)/node_modules/dep")
+        try touch("\(web)/package.json")
+        XCTAssertTrue(FileManager.default.createFile(
+            atPath: "\(web)/node_modules/dep/index.js",
+            contents: Data(repeating: 0x61, count: 64 * 1024)
+        ))
+
+        let engine = ScanEngine(homeDirectory: URL(fileURLWithPath: home))
+        let rust = await engine.scanCategory(.rustTargets)
+        try FileManager.default.removeItem(atPath: "\(web)/package.json")
+        let node = await engine.scanCategory(.nodeModules)
+
+        XCTAssertEqual(rust.items.map(\.path), ["\(crate)/target"])
+        XCTAssertEqual(node.items.map(\.path), ["\(web)/node_modules"])
+
+        let rescan = await engine.scanCategory(.nodeModules)
+        XCTAssertTrue(rescan.items.isEmpty)
+    }
+
     func testCleaningRemovesValidatedNodeModules() async throws {
         let home = try makeHome()
         let project = "\(home)/code/web"

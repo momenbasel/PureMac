@@ -906,9 +906,7 @@ actor ScanEngine {
     /// Smart Scan and scheduled auto-clean never select them. Cleaning runs
     /// `cargo clean` for the owning manifest (see CleaningEngine.cargoClean).
     private func scanRustTargets() -> CategoryResult {
-        let items = projectArtifactItems(named: "target", category: .rustTargets) {
-            Self.isRustTargetDirectory($0, home: home)
-        }
+        let items = projectArtifactItems(for: .rustTargets)
         let totalSize = items.reduce(0) { $0 + $1.size }
         return CategoryResult(category: .rustTargets, items: items, totalSize: totalSize)
     }
@@ -916,9 +914,7 @@ actor ScanEngine {
     /// `node_modules` folders that sit next to a `package.json`. Opt-in like
     /// Rust targets — `npm install` restores them, but only on demand.
     private func scanNodeModules() -> CategoryResult {
-        let items = projectArtifactItems(named: "node_modules", category: .nodeModules) {
-            Self.isNodeModulesDirectory($0, home: home)
-        }
+        let items = projectArtifactItems(for: .nodeModules)
         let totalSize = items.reduce(0) { $0 + $1.size }
         return CategoryResult(category: .nodeModules, items: items, totalSize: totalSize)
     }
@@ -933,15 +929,26 @@ actor ScanEngine {
     /// Deep enough for ~/Developer/org/repo/packages/app/node_modules.
     private static let projectSearchMaxDepth = 8
 
-    /// Walks the home folder for directories called `artifactName` that the
-    /// validator accepts. Never descends into a directory with that name, so
-    /// nested `node_modules/foo/node_modules` trees are counted once, via the
-    /// outermost folder.
-    private func projectArtifactItems(
-        named artifactName: String,
-        category: CleaningCategory,
-        isArtifact: (String) -> Bool
-    ) -> [CleanableItem] {
+    private static let projectArtifactReuseWindow: TimeInterval = 120
+
+    private var pendingProjectArtifacts: (collectedAt: Date, items: [CleaningCategory: [CleanableItem]])?
+
+    private func projectArtifactItems(for category: CleaningCategory) -> [CleanableItem] {
+        if let pending = pendingProjectArtifacts,
+           Date().timeIntervalSince(pending.collectedAt) < Self.projectArtifactReuseWindow,
+           let items = pending.items[category] {
+            pendingProjectArtifacts?.items[category] = nil
+            return items
+        }
+        pendingProjectArtifacts = nil
+        guard let found = walkProjectArtifacts() else { return [] }
+        var remaining = found
+        remaining[category] = nil
+        pendingProjectArtifacts = (Date(), remaining)
+        return found[category] ?? []
+    }
+
+    private func walkProjectArtifacts() -> [CleaningCategory: [CleanableItem]]? {
         let homeURL = URL(fileURLWithPath: home, isDirectory: true)
         let keys: [URLResourceKey] = [.isDirectoryKey, .isSymbolicLinkKey]
         guard let enumerator = fileManager.enumerator(
@@ -949,11 +956,11 @@ actor ScanEngine {
             includingPropertiesForKeys: keys,
             options: [.skipsHiddenFiles, .skipsPackageDescendants],
             errorHandler: { _, _ in true }
-        ) else { return [] }
+        ) else { return [:] }
 
-        var items: [CleanableItem] = []
+        var found: [CleaningCategory: [CleanableItem]] = [.rustTargets: [], .nodeModules: []]
         for case let url as URL in enumerator {
-            if Task.isCancelled { break }
+            if Task.isCancelled { return nil }
             guard let values = try? url.resourceValues(forKeys: Set(keys)),
                   values.isDirectory == true, values.isSymbolicLink != true else { continue }
             let name = url.lastPathComponent
@@ -966,28 +973,34 @@ actor ScanEngine {
             // fail the home-prefix checks shared with CleaningEngine.
             let path = ([home] + url.pathComponents.suffix(enumerator.level)).joined(separator: "/")
             report(path)
-            if name == artifactName {
-                enumerator.skipDescendants()
-                guard isArtifact(path) else { continue }
-                // Hidden entries matter here: pnpm keeps the whole payload in
-                // node_modules/.pnpm and cargo writes .fingerprint dirs.
-                let size = directorySize(path: path, includeHidden: true)
-                guard size > 1024 else { continue }
-                items.append(CleanableItem(
-                    name: Self.projectDisplayName(forArtifactAt: path, home: home),
-                    path: path,
-                    size: size,
-                    category: category,
-                    isSelected: false,
-                    lastModified: fileModDate(path: path)
-                ))
-            } else if name == "node_modules" || name == "target"
-                        || enumerator.level >= Self.projectSearchMaxDepth {
-                // Dependency and build trees never contain projects of their own.
-                enumerator.skipDescendants()
+            let category: CleaningCategory?
+            switch name {
+            case "node_modules":
+                category = Self.isNodeModulesDirectory(path, home: home) ? .nodeModules : nil
+            case "target":
+                category = Self.isRustTargetDirectory(path, home: home) ? .rustTargets : nil
+            default:
+                if enumerator.level >= Self.projectSearchMaxDepth {
+                    enumerator.skipDescendants()
+                }
+                continue
             }
+            enumerator.skipDescendants()
+            guard let category else { continue }
+            // Hidden entries matter here: pnpm keeps the whole payload in
+            // node_modules/.pnpm and cargo writes .fingerprint dirs.
+            let size = directorySize(path: path, includeHidden: true)
+            guard size > 1024 else { continue }
+            found[category, default: []].append(CleanableItem(
+                name: Self.projectDisplayName(forArtifactAt: path, home: home),
+                path: path,
+                size: size,
+                category: category,
+                isSelected: false,
+                lastModified: fileModDate(path: path)
+            ))
         }
-        return items.sorted { $0.size > $1.size }
+        return found.mapValues { items in items.sorted { $0.size > $1.size } }
     }
 
     /// "~/code/app" for /Users/me/code/app/node_modules, so two projects that
