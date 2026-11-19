@@ -6,9 +6,14 @@ actor CleaningEngine {
     /// XcodeBuildMCPDerivedDataSupport path checks on symlinked homes.
     private let homeDirectory: URL
     private let binaryThinner = BinaryThinner()
+    private let devTools: DevToolCacheEnvironment
 
-    init(homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser) {
+    init(
+        homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser,
+        devToolEnvironment: DevToolCacheEnvironment = .live
+    ) {
         self.homeDirectory = XcodeBuildMCPDerivedDataSupport.canonicalHomeDirectory(homeDirectory)
+        self.devTools = devToolEnvironment
     }
 
     struct CleaningResult {
@@ -30,6 +35,11 @@ actor CleaningEngine {
         // "Couldn't clean everything" alert.
         var protectedPaths: Set<String> = []
         var skippedProtected: Int { protectedPaths.count }
+        // Paths deliberately left alone because the owning tool is busy (uv
+        // cache locked, Gradle running). The reason is in `errors`; unlike a
+        // survivor, Full Disk Access cannot fix these, so they must not raise
+        // the Grant Access prompt.
+        var skippedPaths: Set<String> = []
     }
 
     // MARK: - Public API
@@ -98,6 +108,19 @@ actor CleaningEngine {
                 continue
             }
 
+            if item.category == .devToolCaches {
+                // Developer tool caches never take the generic unlink path:
+                // each root is validated by exact match, and tools that manage
+                // their own cache (uv, go) are cleaned through their CLI.
+                let outcome = await cleanDevToolCache(item)
+                result.freedSpace += outcome.freed
+                if outcome.removed { result.itemsCleaned += 1 }
+                if outcome.handled { result.cleanedPaths.insert(item.path) }
+                if outcome.skipped { result.skippedPaths.insert(item.path) }
+                if let error = outcome.error { result.errors.append(error) }
+                continue
+            }
+
             if item.category == .dockerCache && item.path.isEmpty {
                 // The virtual "Docker prune" entry (empty path, like
                 // purgeableSpace) reclaims space inside the Docker/OrbStack VM
@@ -107,6 +130,21 @@ actor CleaningEngine {
                 if pruneOutcome.freed > 0 { result.itemsCleaned += 1 }
                 result.cleanedPaths.insert(item.path)
                 if let error = pruneOutcome.error {
+                    result.errors.append(error)
+                }
+                continue
+            }
+
+            if item.category == .rustTargets {
+                // `cargo clean` rather than an unlink, as requested for Rust
+                // projects: cargo knows its own layout and lock files.
+                let cargoOutcome = await cargoClean(item)
+                result.freedSpace += cargoOutcome.freed
+                if cargoOutcome.cleaned {
+                    result.itemsCleaned += 1
+                    result.cleanedPaths.insert(item.path)
+                }
+                if let error = cargoOutcome.error {
                     result.errors.append(error)
                 }
                 continue
@@ -225,6 +263,14 @@ actor CleaningEngine {
                     (nsError.domain == NSPOSIXErrorDomain &&
                         (nsError.code == Int(EACCES) || nsError.code == Int(EPERM)))
                 if isPermissionDenied {
+                    if item.category == .nodeModules {
+                        // Project folders belong to the user; a root rm -rf
+                        // inside a source tree is never worth an auth prompt.
+                        let detail = "node_modules cleanup requires access as the current user: \(item.path)"
+                        result.errors.append(detail)
+                        Logger.shared.log(detail, level: .warning)
+                        continue
+                    }
                     if item.category == .aiApps {
                         let detail = "AI app cleanup requires access as the current user: \(item.path)"
                         result.errors.append(detail)
@@ -287,6 +333,14 @@ actor CleaningEngine {
         let validated: [(item: CleanableItem, resolved: String)] = items.compactMap { item in
             guard item.category != .aiApps else {
                 result.errors.append("Administrator cleanup is unavailable for AI app data: \(item.name)")
+                return nil
+            }
+            guard item.category != .nodeModules, item.category != .rustTargets else {
+                result.errors.append("Administrator cleanup is unavailable for project folders: \(item.name)")
+                return nil
+            }
+            guard item.category != .devToolCaches else {
+                result.errors.append("Administrator cleanup is unavailable for developer tool caches: \(item.name)")
                 return nil
             }
             guard !CleanupExclusions.excludes(item.path, paths: exclusions) else { return nil }
@@ -468,6 +522,259 @@ actor CleaningEngine {
         return (0, nil)
     }
 
+    // MARK: - Rust
+
+    /// Runs `cargo clean --manifest-path <project>/Cargo.toml` for one Rust
+    /// target item. The path is re-validated first so a stale or replayed
+    /// item list can't point cargo somewhere else. GUI apps don't inherit the
+    /// shell PATH, so cargo is looked up in rustup's and Homebrew's bin dirs.
+    func cargoClean(_ item: CleanableItem) async -> (freed: Int64, cleaned: Bool, error: String?) {
+        let home = homeDirectory.path
+        let target = (item.path as NSString).standardizingPath
+        guard !hasUnexpectedSymlink(in: target) else {
+            return (0, false, "Skipped symlink or unsafe path: \(item.path)")
+        }
+        guard fileManager.fileExists(atPath: target) else {
+            // Already cleaned (by cargo or by hand) since the scan.
+            return (0, true, nil)
+        }
+        guard ScanEngine.isRustTargetDirectory(target, home: home) else {
+            let msg = "Skipped path that is not a Rust target folder: \(item.path)"
+            Logger.shared.log(msg, level: .warning)
+            return (0, false, msg)
+        }
+
+        let cargoPaths = ["\(home)/.cargo/bin/cargo", "/opt/homebrew/bin/cargo", "/usr/local/bin/cargo"]
+        guard let cargo = cargoPaths.first(where: { fileManager.isExecutableFile(atPath: $0) }) else {
+            return (0, false, "cargo not found — install Rust with rustup to clean \(item.name)")
+        }
+
+        let manifest = (target as NSString).deletingLastPathComponent + "/Cargo.toml"
+        var environment = ProcessInfo.processInfo.environment
+        let cargoDir = (cargo as NSString).deletingLastPathComponent
+        environment["PATH"] = [cargoDir, environment["PATH"] ?? "/usr/bin:/bin"].joined(separator: ":")
+
+        do {
+            let output = try await BrewProcessRunner.run(
+                executableURL: URL(fileURLWithPath: cargo),
+                arguments: ["clean", "--manifest-path", manifest],
+                timeout: 600,
+                environment: environment
+            )
+            guard output.status == 0 else {
+                let stderr = String(decoding: output.stderr, as: UTF8.self)
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                Logger.shared.log("cargo clean \(manifest) exited \(output.status): \(stderr)", level: .error)
+                return (0, false, "cargo clean failed for \(item.name) (exit \(output.status))")
+            }
+        } catch is CancellationError {
+            return (0, false, nil)
+        } catch {
+            Logger.shared.log("cargo clean failed to run: \(error.localizedDescription)", level: .error)
+            return (0, false, "Couldn't run cargo clean for \(item.name): \(error.localizedDescription)")
+        }
+
+        // A workspace member's manifest cleans the workspace target dir, and
+        // a custom target-dir cleans elsewhere — only report what actually went.
+        guard !fileManager.fileExists(atPath: target) else {
+            return (0, false, "cargo clean ran but \(item.name)/target is still present")
+        }
+        Logger.shared.log("cargo clean removed \(target) (~\(item.size) bytes)", level: .info)
+        return (item.size, true, nil)
+    }
+
+    // MARK: - Developer Tool Caches
+
+    private struct DevToolOutcome {
+        /// Bytes removed (the scan-time size) when `removed`.
+        var freed: Int64 = 0
+        /// The cache was emptied by this call.
+        var removed = false
+        /// Nothing is left to do for this row (removed, or already gone).
+        var handled = false
+        /// Left alone on purpose because the tool is busy; not a failure.
+        var skipped = false
+        var error: String?
+    }
+
+    /// Cleans one `.devToolCaches` row. The path must equal a root in
+    /// `DevToolCaches.roots`; symlinked roots are refused; tools that manage
+    /// their cache (uv, go) are cleaned through their own CLI; nothing here
+    /// escalates to administrator rights.
+    private func cleanDevToolCache(_ item: CleanableItem) async -> DevToolOutcome {
+        let home = homeDirectory.path
+        guard let root = DevToolCaches.root(forPath: item.path, home: home) else {
+            let msg = "Unsupported developer tool cache path: \(item.path)"
+            Logger.shared.log(msg, level: .warning)
+            return DevToolOutcome(error: msg)
+        }
+        guard !DevToolCaches.hasSymlinkBelowHome(item.path, home: home),
+              URL(fileURLWithPath: item.path).resolvingSymlinksInPath().path == item.path,
+              isSafeToDelete(resolvedPath: item.path) else {
+            let msg = "Skipped symlink or unsafe path: \(item.path)"
+            Logger.shared.log(msg, level: .warning)
+            return DevToolOutcome(error: msg)
+        }
+        var isDirectory: ObjCBool = false
+        guard fileManager.fileExists(atPath: item.path, isDirectory: &isDirectory) else {
+            return DevToolOutcome(handled: true)
+        }
+        guard isDirectory.boolValue else {
+            let msg = "Skipped \(item.name): \(item.path) is not a directory"
+            Logger.shared.log(msg, level: .warning)
+            return DevToolOutcome(error: msg)
+        }
+
+        switch root.removal {
+        case .unlink:
+            return unlinkDevToolCache(item)
+        case .unlinkUnlessGradleRunning:
+            if devTools.isGradleRunning() {
+                let msg = "Skipped \(item.name): a Gradle daemon or build is running. Run `gradle --stop`, then clean again."
+                Logger.shared.log(msg, level: .info)
+                return DevToolOutcome(skipped: true, error: msg)
+            }
+            return unlinkDevToolCache(item)
+        case .uvCacheClean:
+            guard let uv = devTools.locate("uv", home: home, fileManager: fileManager) else {
+                return unlinkDevToolCache(item)
+            }
+            return await runUVCacheClean(uv: uv, item: item)
+        case .goCleanCache:
+            guard let go = devTools.locate("go", home: home, fileManager: fileManager) else {
+                return unlinkDevToolCache(item)
+            }
+            return await runGoClean(go: go, flag: "-cache", envName: "GOCACHE", item: item)
+        case .goCleanModcache:
+            guard let go = devTools.locate("go", home: home, fileManager: fileManager) else {
+                // Module files are read-only; a plain removal would fail midway.
+                let msg = "Skipped \(item.name): `go` was not found, so the module cache was left untouched"
+                Logger.shared.log(msg, level: .info)
+                return DevToolOutcome(skipped: true, error: msg)
+            }
+            return await runGoClean(go: go, flag: "-modcache", envName: "GOMODCACHE", item: item)
+        }
+    }
+
+    private func unlinkDevToolCache(_ item: CleanableItem) -> DevToolOutcome {
+        // Narrow the TOCTOU window: the root must still be a real directory
+        // right before the unlink. A same-user process can still swap a link
+        // in between this check and removeItem (see docs/DEV-TOOL-CACHES.md).
+        devTools.beforeUnlinkRecheck(item.path)
+        guard isUnchangedDevToolRoot(item.path) else {
+            let msg = "Aborting delete: path resolution changed between check and unlink for \(item.path)"
+            Logger.shared.log(msg, level: .warning)
+            return DevToolOutcome(error: msg)
+        }
+        do {
+            try fileManager.removeItem(atPath: item.path)
+            return DevToolOutcome(freed: item.size, removed: true, handled: true)
+        } catch {
+            let msg = "\(item.name) at \(item.path): \(error.localizedDescription)"
+            Logger.shared.log("Clean failed: \(msg)", level: .error)
+            return DevToolOutcome(error: msg)
+        }
+    }
+
+    /// True while `path` is still a real directory chain below the home
+    /// directory: no symlink on the way and the resolved path equals the path.
+    private func isUnchangedDevToolRoot(_ path: String) -> Bool {
+        !DevToolCaches.hasSymlinkBelowHome(path, home: homeDirectory.path)
+            && URL(fileURLWithPath: path).resolvingSymlinksInPath().path == path
+    }
+
+    /// `uv cache clean --cache-dir <root>`. Never `--force`. uv waits for a
+    /// lock another uv process holds instead of failing, so only a run that
+    /// outlives the timeout counts as busy. Any non-zero exit is a real error
+    /// and its stderr is shown in the local error dialog.
+    private func runUVCacheClean(uv: String, item: CleanableItem) async -> DevToolOutcome {
+        let busy = "Skipped \(item.name): uv did not finish in time; the cache may be locked by another uv process. Close it, then clean again."
+        guard isUnchangedDevToolRoot(item.path) else {
+            let msg = "Aborting uv cache clean: path resolution changed for \(item.path)"
+            Logger.shared.log(msg, level: .warning)
+            return DevToolOutcome(error: msg)
+        }
+        do {
+            let output = try await BrewProcessRunner.run(
+                executableURL: URL(fileURLWithPath: uv),
+                arguments: ["cache", "clean", "--cache-dir", item.path],
+                timeout: devTools.commandTimeout
+            )
+            if output.status == 0 {
+                Logger.shared.log("uv cache clean removed \(item.path)", level: .info)
+                return DevToolOutcome(freed: item.size, removed: true, handled: true)
+            }
+            let stderr = String(decoding: output.stderr, as: UTF8.self)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            Logger.shared.log("uv cache clean exited \(output.status)", level: .error)
+            let detail = stderr.isEmpty ? "" : ": \(String(stderr.prefix(300)))"
+            return DevToolOutcome(error: "Couldn't clean \(item.name): uv cache clean failed (exit \(output.status))\(detail)")
+        } catch ApplicationUpdaterError.timedOut {
+            Logger.shared.log("uv cache clean timed out; treating the cache as busy (\(item.path))", level: .info)
+            return DevToolOutcome(skipped: true, error: busy)
+        } catch {
+            Logger.shared.log("uv cache clean failed to run: \(error.localizedDescription)", level: .error)
+            return DevToolOutcome(error: "Couldn't run uv: \(error.localizedDescription)")
+        }
+    }
+
+    /// `go clean -cache` / `go clean -modcache`. `go` cleans whatever
+    /// GOCACHE / GOMODCACHE currently point at, which can differ from the row
+    /// the user reviewed (an exported variable, `go env -w`). The variable is
+    /// read first and the clean runs only when it names exactly this row.
+    private func runGoClean(go: String, flag: String, envName: String, item: CleanableItem) async -> DevToolOutcome {
+        var environment = ProcessInfo.processInfo.environment
+        environment["GOTOOLCHAIN"] = "local"
+        do {
+            let probe = try await BrewProcessRunner.run(
+                executableURL: URL(fileURLWithPath: go),
+                arguments: ["env", envName],
+                timeout: 60,
+                environment: environment
+            )
+            let reported = String(decoding: probe.stdout, as: UTF8.self)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            guard probe.status == 0, !reported.isEmpty else {
+                let msg = "Couldn't clean \(item.name): `go env \(envName)` failed"
+                Logger.shared.log(msg, level: .error)
+                return DevToolOutcome(error: msg)
+            }
+            // `go env` may have taken a while: compare go's directory in
+            // canonical form and re-check the root right before `go clean`.
+            let canonicalReported = URL(fileURLWithPath: (reported as NSString).standardizingPath)
+                .resolvingSymlinksInPath().path
+            guard reported.hasPrefix("/"), canonicalReported == item.path else {
+                let msg = "Skipped \(item.name): go uses \(reported), not \(item.path)"
+                Logger.shared.log(msg, level: .warning)
+                return DevToolOutcome(skipped: true, error: msg)
+            }
+            guard isUnchangedDevToolRoot(item.path) else {
+                let msg = "Aborting go clean: path resolution changed for \(item.path)"
+                Logger.shared.log(msg, level: .warning)
+                return DevToolOutcome(error: msg)
+            }
+            let output = try await BrewProcessRunner.run(
+                executableURL: URL(fileURLWithPath: go),
+                arguments: ["clean", flag],
+                timeout: devTools.commandTimeout,
+                environment: environment
+            )
+            guard output.status == 0 else {
+                Logger.shared.log("go clean \(flag) exited \(output.status)", level: .error)
+                return DevToolOutcome(error: "Couldn't clean \(item.name): go clean \(flag) failed (exit \(output.status))")
+            }
+            Logger.shared.log("go clean \(flag) removed \(item.path)", level: .info)
+            return DevToolOutcome(freed: item.size, removed: true, handled: true)
+        } catch ApplicationUpdaterError.timedOut {
+            let msg = "Couldn't clean \(item.name): go did not finish in time"
+            Logger.shared.log(msg, level: .warning)
+            return DevToolOutcome(error: msg)
+        } catch {
+            Logger.shared.log("go failed to run: \(error.localizedDescription)", level: .error)
+            return DevToolOutcome(error: "Couldn't run go: \(error.localizedDescription)")
+        }
+    }
+
     // MARK: - Simulator Runtimes
 
     /// Deletes one simulator runtime disk image via
@@ -577,8 +884,21 @@ actor CleaningEngine {
         resolvedPath: String,
         includeUninstallPaths: Bool = false
     ) -> Bool {
+        // Keep these roots on the dedicated route even under broader roots
+        // such as ~/Library/Caches or if the caller labels the row differently.
+        let home = homeDirectory.path
+        guard !DevToolCaches.contains(item.path, home: home),
+              !DevToolCaches.contains(resolvedPath, home: home) else { return false }
         if item.category == .aiApps {
             return item.path == resolvedPath && isSupportedAIAppPath(resolvedPath)
+        }
+        if item.category == .nodeModules {
+            return item.path == resolvedPath
+                && ScanEngine.isNodeModulesDirectory(resolvedPath, home: homeDirectory.path)
+        }
+        if item.category == .rustTargets {
+            // Rust targets are cleaned by cargo, never by the delete paths.
+            return false
         }
         let originalIsManaged = XcodeBuildMCPDerivedDataSupport.isManagedDerivedDataPath(
             item.path,
@@ -639,7 +959,22 @@ actor CleaningEngine {
             return false
         }
 
-        let allowedRoots = [
+        let allowedRoots = Self.allowedDeletionRoots(home: home)
+        // Either the path equals an allow-listed root (whole-subtree wipe by
+        // the scanner that emits the root itself, e.g. DerivedData) or it
+        // sits strictly inside one. The trailing "/" on the prefix match
+        // prevents siblings like "/tmpfoo" from sneaking past "/tmp".
+        let normalized = (resolvedPath as NSString).standardizingPath
+        return allowedRoots.contains { root in
+            if normalized == root { return true }
+            let rootWithSeparator = root.hasSuffix("/") ? root : root + "/"
+            return normalized.hasPrefix(rootWithSeparator)
+        }
+    }
+
+    /// Roots under which the generic delete path may remove items.
+    nonisolated static func allowedDeletionRoots(home: String) -> [String] {
+        [
             "\(home)/Library/Caches",
             "\(home)/Library/Logs",
             "\(home)/Library/Saved Application State",
@@ -688,17 +1023,12 @@ actor CleaningEngine {
             "/var/log",
             "/var/tmp",
             "/tmp",
-        ]
-        // Either the path equals an allow-listed root (whole-subtree wipe by
-        // the scanner that emits the root itself, e.g. DerivedData) or it
-        // sits strictly inside one. The trailing "/" on the prefix match
-        // prevents siblings like "/tmpfoo" from sneaking past "/tmp".
-        let normalized = (resolvedPath as NSString).standardizingPath
-        return allowedRoots.contains { root in
-            if normalized == root { return true }
-            let rootWithSeparator = root.hasSuffix("/") ? root : root + "/"
-            return normalized.hasPrefix(rootWithSeparator)
-        }
+            // Developer tool cache roots surfaced by scanDevToolCaches: exact
+            // directories only (see DevToolCaches.roots). Without them roots
+            // outside ~/Library/Caches and ~/.cache, such as ~/.bun and
+            // ~/.cargo/registry/cache, would be refused as unsafe. Parents
+            // (~/.cargo, ~/.gradle, ~/.m2, ~/go) are never allow-listed.
+        ] + DevToolCaches.absolutePaths(home: home)
     }
 
     /// A removable localization folder inside an installed app bundle:

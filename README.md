@@ -146,6 +146,7 @@ Smart Scan checks each category in sequence and reports progress as files are fo
 - **Xcode Junk** - DerivedData, Archives, simulator caches, downloaded simulator runtimes (deleted via `simctl runtime delete`; never auto-selected), and XcodeBuildMCP or MobileBuildMCP DerivedData (never auto-selected, so scheduled cleanup leaves it alone; manual cleanup moves it to the Trash while holding the tool's storage lock, which does not detect a running build)
 - **Brew Cache** - Homebrew download caches within approved cache locations
 - **Node Cache** - npm, yarn classic, pnpm content-addressable store
+- **Dev Tool Caches** - Bun, uv, pip, Poetry, CocoaPods, Swift Package Manager, Gradle, Cargo, Go, Deno, Dart pub, Playwright, Puppeteer, node-gyp, and Electron download or build caches, one row per cache location; Maven and NuGet are listed but never auto-selected. uv and Go are cleaned with their own commands, and Gradle is skipped while it is running. See [Dev Tool Caches](docs/DEV-TOOL-CACHES.md)
 - **Docker Cache** - images, containers, build cache
 
 > **On "purgeable space":** PureMac shows your APFS purgeable space in the storage breakdown for transparency, but it deliberately does **not** list it as junk to delete. Purgeable space is reserved and reclaimed by macOS itself - no third-party app can reliably free it, and even the Finder's purgeable figure is known to be inaccurate. Cleaners that claim to "reclaim purgeable space" are overpromising. We'd rather be honest than impressive.

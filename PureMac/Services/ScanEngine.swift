@@ -3,9 +3,14 @@ import Foundation
 actor ScanEngine {
     private let fileManager = FileManager.default
     private let home: String
+    private let devTools: DevToolCacheEnvironment
 
-    init(homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser) {
+    init(
+        homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser,
+        devToolEnvironment: DevToolCacheEnvironment = .live
+    ) {
         home = XcodeBuildMCPDerivedDataSupport.canonicalHomeDirectory(homeDirectory).path
+        devTools = devToolEnvironment
     }
 
     /// Live path reporter for the dashboard's scanning ticker. Throttled so
@@ -75,8 +80,14 @@ actor ScanEngine {
             return await scanBrewCache()
         case .nodeCache:
             return await scanNodeCache()
+        case .devToolCaches:
+            return scanDevToolCaches()
         case .dockerCache:
             return await scanDockerCache()
+        case .rustTargets:
+            return scanRustTargets()
+        case .nodeModules:
+            return scanNodeModules()
         case .universalBinaries:
             return scanUniversalBinaries()
         case .languageFiles:
@@ -152,7 +163,7 @@ actor ScanEngine {
             "\(home)/Library/Caches/npm",
             "\(home)/Library/Caches/Yarn",
             "\(home)/Library/Caches/dev.kdrag0n.MacVirt",
-        ] + ProviderPaths.deniedRoots(homeDirectory: URL(fileURLWithPath: home, isDirectory: true))).map(normalizePath))
+        ] + DevToolCaches.absolutePaths(home: home) + ProviderPaths.deniedRoots(homeDirectory: URL(fileURLWithPath: home, isDirectory: true))).map(normalizePath))
 
         // Dynamically enumerate ~/Library/Caches/ so every subdirectory is visible
         let cachePath = "\(home)/Library/Caches"
@@ -165,21 +176,8 @@ actor ScanEngine {
         )
         items.append(contentsOf: scanned)
 
-        // Also scan for npm/pip/yarn caches
-        let devCaches = [
-            "\(home)/.cache/pip",
-            "\(home)/Library/Caches/pip",
-        ]
-
-        for path in devCaches {
-            if let item = makeCleanupItem(
-                name: URL(fileURLWithPath: path).lastPathComponent,
-                path: path,
-                category: .userCache
-            ) {
-                items.append(item)
-            }
-        }
+        // pip and the other developer tool caches belong to the Dev Tool
+        // Caches category (excluded above), so they are not listed here.
 
         // Sandboxed apps keep their caches inside per-app containers, not
         // ~/Library/Caches — on modern macOS this is where most of the
@@ -717,6 +715,57 @@ actor ScanEngine {
         return CategoryResult(category: .nodeCache, items: items, totalSize: totalSize)
     }
 
+    private func scanDevToolCaches() -> CategoryResult {
+        var items: [CleanableItem] = []
+        var gradleRunning: Bool?
+        var hasGo: Bool?
+
+        for root in DevToolCaches.roots {
+            if Task.isCancelled { break }
+            let path = (root.path(home: home) as NSString).standardizingPath
+            report(path)
+            var isDirectory: ObjCBool = false
+            guard fileManager.fileExists(atPath: path, isDirectory: &isDirectory), isDirectory.boolValue else {
+                continue
+            }
+            guard !DevToolCaches.hasSymlinkBelowHome(path, home: home) else {
+                Logger.shared.log("Dev tool caches: refusing symlinked cache root \(path)", level: .warning)
+                continue
+            }
+            if root.removal == .goCleanModcache {
+                if hasGo == nil { hasGo = devTools.locate("go", home: home) != nil }
+                guard hasGo == true else {
+                    Logger.shared.log("Dev tool caches: go not found; not listing the Go module cache", level: .info)
+                    continue
+                }
+            }
+            let size = directorySize(path: path)
+            guard size > 0 else { continue }
+
+            var name = String(localized: String.LocalizationValue(root.nameKey))
+            var isSelected = root.selectedByDefault
+            if root.removal == .unlinkUnlessGradleRunning {
+                if gradleRunning == nil { gradleRunning = devTools.isGradleRunning() }
+                if gradleRunning == true {
+                    isSelected = false
+                    name = String(format: String(localized: "%@ (Gradle is running)"), name)
+                }
+            }
+            items.append(CleanableItem(
+                name: name,
+                path: path,
+                size: size,
+                category: .devToolCaches,
+                isSelected: isSelected,
+                lastModified: fileModDate(path: path),
+                selectOnlyByHand: !root.selectedByDefault
+            ))
+        }
+
+        let totalSize = items.reduce(0) { $0 + $1.size }
+        return CategoryResult(category: .devToolCaches, items: items, totalSize: totalSize)
+    }
+
     nonisolated static func approvedNodeCacheRoots(
         for manager: NodeCacheManager,
         home: String
@@ -893,6 +942,166 @@ actor ScanEngine {
 
         let totalSize = items.reduce(0) { $0 + $1.size }
         return CategoryResult(category: .dockerCache, items: items, totalSize: totalSize)
+    }
+
+    // MARK: - Project Build Artifacts
+
+    /// Rust `target/` build folders found in projects under the home folder.
+    /// Rows are opt-in: rebuilding a large workspace can take a long time, so
+    /// Smart Scan and scheduled auto-clean never select them. Cleaning runs
+    /// `cargo clean` for the owning manifest (see CleaningEngine.cargoClean).
+    private func scanRustTargets() -> CategoryResult {
+        let items = projectArtifactItems(for: .rustTargets)
+        let totalSize = items.reduce(0) { $0 + $1.size }
+        return CategoryResult(category: .rustTargets, items: items, totalSize: totalSize)
+    }
+
+    /// `node_modules` folders that sit next to a `package.json`. Opt-in like
+    /// Rust targets — `npm install` restores them, but only on demand.
+    private func scanNodeModules() -> CategoryResult {
+        let items = projectArtifactItems(for: .nodeModules)
+        let totalSize = items.reduce(0) { $0 + $1.size }
+        return CategoryResult(category: .nodeModules, items: items, totalSize: totalSize)
+    }
+
+    /// Top-level home folders that never hold source projects. ~/Library is
+    /// the big one: app containers and caches there are other categories'
+    /// business, and iCloud Drive lives under it.
+    nonisolated static let projectSearchExcludedTopLevel: Set<String> = [
+        "Library", "Applications", "Movies", "Music", "Pictures", "Public",
+    ]
+
+    /// Deep enough for ~/Developer/org/repo/packages/app/node_modules.
+    private static let projectSearchMaxDepth = 8
+
+    private static let projectArtifactReuseWindow: TimeInterval = 120
+
+    private var pendingProjectArtifacts: (collectedAt: Date, items: [CleaningCategory: [CleanableItem]])?
+
+    private func projectArtifactItems(for category: CleaningCategory) -> [CleanableItem] {
+        if let pending = pendingProjectArtifacts,
+           Date().timeIntervalSince(pending.collectedAt) < Self.projectArtifactReuseWindow,
+           let items = pending.items[category] {
+            pendingProjectArtifacts?.items[category] = nil
+            return items
+        }
+        pendingProjectArtifacts = nil
+        guard let found = walkProjectArtifacts() else { return [] }
+        var remaining = found
+        remaining[category] = nil
+        pendingProjectArtifacts = (Date(), remaining)
+        return found[category] ?? []
+    }
+
+    private func walkProjectArtifacts() -> [CleaningCategory: [CleanableItem]]? {
+        let homeURL = URL(fileURLWithPath: home, isDirectory: true)
+        let keys: [URLResourceKey] = [.isDirectoryKey, .isSymbolicLinkKey]
+        guard let enumerator = fileManager.enumerator(
+            at: homeURL,
+            includingPropertiesForKeys: keys,
+            options: [.skipsHiddenFiles, .skipsPackageDescendants],
+            errorHandler: { _, _ in true }
+        ) else { return [:] }
+
+        var found: [CleaningCategory: [CleanableItem]] = [.rustTargets: [], .nodeModules: []]
+        for case let url as URL in enumerator {
+            if Task.isCancelled { return nil }
+            guard let values = try? url.resourceValues(forKeys: Set(keys)),
+                  values.isDirectory == true, values.isSymbolicLink != true else { continue }
+            let name = url.lastPathComponent
+            if enumerator.level == 1, Self.projectSearchExcludedTopLevel.contains(name) {
+                enumerator.skipDescendants()
+                continue
+            }
+            // Rebuild the path on the canonical home: the enumerator may hand
+            // back a different spelling (/private/var vs /var), which would
+            // fail the home-prefix checks shared with CleaningEngine.
+            let path = ([home] + url.pathComponents.suffix(enumerator.level)).joined(separator: "/")
+            report(path)
+            let category: CleaningCategory?
+            switch name {
+            case "node_modules":
+                category = Self.isNodeModulesDirectory(path, home: home) ? .nodeModules : nil
+            case "target":
+                category = Self.isRustTargetDirectory(path, home: home) ? .rustTargets : nil
+            default:
+                if enumerator.level >= Self.projectSearchMaxDepth {
+                    enumerator.skipDescendants()
+                }
+                continue
+            }
+            enumerator.skipDescendants()
+            guard let category else { continue }
+            // Hidden entries matter here: pnpm keeps the whole payload in
+            // node_modules/.pnpm and cargo writes .fingerprint dirs.
+            let size = directorySize(path: path, includeHidden: true)
+            guard size > 1024 else { continue }
+            found[category, default: []].append(CleanableItem(
+                name: Self.projectDisplayName(forArtifactAt: path, home: home),
+                path: path,
+                size: size,
+                category: category,
+                isSelected: false,
+                lastModified: fileModDate(path: path)
+            ))
+        }
+        return found.mapValues { items in items.sorted { $0.size > $1.size } }
+    }
+
+    /// "~/code/app" for /Users/me/code/app/node_modules, so two projects that
+    /// share a folder name stay distinguishable in the list.
+    nonisolated static func projectDisplayName(forArtifactAt path: String, home: String) -> String {
+        let project = (path as NSString).deletingLastPathComponent
+        let normalizedHome = (home as NSString).standardizingPath
+        guard project.hasPrefix(normalizedHome + "/") else { return project }
+        return "~" + project.dropFirst(normalizedHome.count)
+    }
+
+    /// True when `path` is a cargo build folder: named `target`, beside a
+    /// Cargo.toml, carrying one of the marker files cargo writes into every
+    /// target dir, and inside the home folder but outside ~/Library. Shared
+    /// with CleaningEngine so a stale or replayed item list is re-checked.
+    nonisolated static func isRustTargetDirectory(_ path: String, home: String) -> Bool {
+        guard isProjectArtifactPath(path, named: "target", home: home) else { return false }
+        let fm = FileManager.default
+        let project = (path as NSString).deletingLastPathComponent
+        guard isRegularFile(project + "/Cargo.toml") else { return false }
+        return fm.fileExists(atPath: path + "/CACHEDIR.TAG")
+            || fm.fileExists(atPath: path + "/.rustc_info.json")
+    }
+
+    /// True when `path` is a top-level `node_modules` beside a package.json,
+    /// inside the home folder but outside ~/Library, and not nested inside
+    /// another `node_modules`.
+    nonisolated static func isNodeModulesDirectory(_ path: String, home: String) -> Bool {
+        guard isProjectArtifactPath(path, named: "node_modules", home: home) else { return false }
+        let project = (path as NSString).deletingLastPathComponent
+        guard !project.split(separator: "/").contains("node_modules") else { return false }
+        return isRegularFile(project + "/package.json")
+    }
+
+    nonisolated private static func isProjectArtifactPath(_ path: String, named name: String, home: String) -> Bool {
+        guard path.hasPrefix("/"),
+              !path.unicodeScalars.contains(where: CharacterSet.controlCharacters.contains),
+              path == (path as NSString).standardizingPath,
+              (path as NSString).lastPathComponent == name else { return false }
+        let normalizedHome = (home as NSString).standardizingPath
+        let project = (path as NSString).deletingLastPathComponent
+        guard project.hasPrefix(normalizedHome + "/") else { return false }
+        let topLevel = project.dropFirst(normalizedHome.count + 1).split(separator: "/").first.map(String.init)
+        if let topLevel, projectSearchExcludedTopLevel.contains(topLevel) || topLevel.hasPrefix(".") {
+            return false
+        }
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory),
+              isDirectory.boolValue else { return false }
+        let type = (try? FileManager.default.attributesOfItem(atPath: path)[.type]) as? FileAttributeType
+        return type != .typeSymbolicLink
+    }
+
+    nonisolated private static func isRegularFile(_ path: String) -> Bool {
+        let type = (try? FileManager.default.attributesOfItem(atPath: path)[.type]) as? FileAttributeType
+        return type == .typeRegular
     }
 
     private func scanUniversalBinaries() -> CategoryResult {
@@ -1130,7 +1339,7 @@ actor ScanEngine {
         (path as NSString).standardizingPath
     }
 
-    private func directorySize(path: String) -> Int64 {
+    private func directorySize(path: String, includeHidden: Bool = false) -> Int64 {
         var totalSize: Int64 = 0
 
         // errorHandler returns true so unreadable entries are skipped
@@ -1138,7 +1347,7 @@ actor ScanEngine {
         guard let enumerator = fileManager.enumerator(
             at: URL(fileURLWithPath: path),
             includingPropertiesForKeys: [.totalFileAllocatedSizeKey, .fileSizeKey, .isRegularFileKey],
-            options: [.skipsHiddenFiles],
+            options: includeHidden ? [] : [.skipsHiddenFiles],
             errorHandler: { _, _ in true }
         ) else { return 0 }
 

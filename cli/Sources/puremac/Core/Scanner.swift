@@ -12,6 +12,8 @@ struct ScanItem: Codable {
     let identity: FileIdentity?
 
     var selected: Bool = true
+    /// Short reason shown beside the path (e.g. why a worktree is not preselected).
+    var note: String?
     var human: String { ByteCount.human(sizeBytes) }
 
     init(
@@ -19,8 +21,10 @@ struct ScanItem: Codable {
         sizeBytes: Int64,
         modified: Date?,
         identity: FileIdentity? = nil,
-        selected: Bool = true
+        selected: Bool = true,
+        note: String? = nil
     ) {
+        self.note = note
         self.path = path
         self.sizeBytes = sizeBytes
         self.modified = modified
@@ -33,6 +37,7 @@ struct ScanItem: Codable {
         case sizeBytes
         case modified
         case selected
+        case note
     }
 
     init(from decoder: Decoder) throws {
@@ -41,6 +46,7 @@ struct ScanItem: Codable {
         sizeBytes = try values.decode(Int64.self, forKey: .sizeBytes)
         modified = try values.decodeIfPresent(Date.self, forKey: .modified)
         selected = try values.decodeIfPresent(Bool.self, forKey: .selected) ?? true
+        note = try values.decodeIfPresent(String.self, forKey: .note)
         identity = nil
     }
 
@@ -50,6 +56,7 @@ struct ScanItem: Codable {
         try values.encode(sizeBytes, forKey: .sizeBytes)
         try values.encodeIfPresent(modified, forKey: .modified)
         try values.encode(selected, forKey: .selected)
+        try values.encodeIfPresent(note, forKey: .note)
     }
 }
 

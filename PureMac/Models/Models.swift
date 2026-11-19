@@ -14,7 +14,10 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
     case xcodeJunk = "Xcode Junk"
     case brewCache = "Brew Cache"
     case nodeCache = "Node Cache"
+    case devToolCaches = "Dev Tool Caches"
     case dockerCache = "Docker Cache"
+    case rustTargets = "Rust Targets"
+    case nodeModules = "Node Modules"
     case universalBinaries = "Universal Binaries"
     case languageFiles = "Language Files"
 
@@ -33,7 +36,10 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .xcodeJunk: return "hammer.fill"
         case .brewCache: return "mug.fill"
         case .nodeCache: return "leaf.fill"
+        case .devToolCaches: return "wrench.and.screwdriver.fill"
         case .dockerCache: return "shippingbox.fill"
+        case .rustTargets: return "gearshape.2.fill"
+        case .nodeModules: return "square.stack.3d.up.fill"
         case .universalBinaries: return "cpu"
         case .languageFiles: return "globe"
         }
@@ -52,7 +58,10 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .xcodeJunk: return "Derived data, archives, and simulator runtimes"
         case .brewCache: return "Homebrew download cache"
         case .nodeCache: return "npm, yarn, and pnpm download caches"
+        case .devToolCaches: return "Package, build, and download caches of developer tools"
         case .dockerCache: return "Docker images, containers, and build cache"
+        case .rustTargets: return "Rust project target folders, cleaned with cargo clean"
+        case .nodeModules: return "node_modules folders in your projects"
         case .universalBinaries: return "Unused CPU architecture slices in app binaries"
         case .languageFiles: return "Unused app localizations"
         }
@@ -71,7 +80,10 @@ enum CleaningCategory: String, CaseIterable, Identifiable, Codable {
         case .xcodeJunk: return .cyan
         case .brewCache: return .mint
         case .nodeCache: return .pink
+        case .devToolCaches: return .green
         case .dockerCache: return .indigo
+        case .rustTargets: return .orange
+        case .nodeModules: return .green
         case .universalBinaries: return .brown
         case .languageFiles: return .gray
         }
@@ -150,6 +162,11 @@ struct CleanableItem: Identifiable, Hashable {
     let category: CleaningCategory
     var isSelected: Bool
     let lastModified: Date?
+    /// Rows that can hold data the user cannot re-download (Maven's `~/.m2`,
+    /// NuGet packages). They start unselected and only a per-row toggle
+    /// selects them: "Select all", the category checkbox and "Select visible"
+    /// skip them.
+    var selectOnlyByHand: Bool = false
 
     var formattedSize: String {
         ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
