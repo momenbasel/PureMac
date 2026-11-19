@@ -110,7 +110,7 @@ final class WorktreeTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(without.sizeBytes - withArtifacts.sizeBytes, 512 * 1024)
     }
 
-    func testOrphanedWorktreeDirectoryIsListedUnselected() throws {
+    func testOrphanedWorktreeDirectoryIsNeverListed() throws {
         let repo = try makeRepoWithRemote(named: "app")
         let orphan = repo.appendingPathComponent(".claude/worktrees/ghost", isDirectory: true)
         try fm.createDirectory(at: orphan, withIntermediateDirectories: true)
@@ -118,11 +118,9 @@ final class WorktreeTests: XCTestCase {
             to: orphan.appendingPathComponent(".git"), atomically: true, encoding: .utf8)
         try Data(repeating: 1, count: 4096).write(to: orphan.appendingPathComponent("file.bin"))
 
-        let item = try XCTUnwrap(scanRoots([root.path]).groups.flatMap(\.items).first)
+        let paths = scanRoots([root.path]).groups.flatMap(\.items).map(\.path)
 
-        XCTAssertEqual(item.path, orphan.path)
-        XCTAssertFalse(item.selected)
-        XCTAssertEqual(item.note, "orphaned: repository missing")
+        XCTAssertFalse(paths.contains(orphan.path))
     }
 
     // MARK: - Removal
@@ -187,21 +185,20 @@ final class WorktreeTests: XCTestCase {
         XCTAssertTrue(fm.fileExists(atPath: wt.path))
     }
 
-    func testRemoveOrphanDeletesDirectoryWhenGitFileIsAFile() throws {
+    func testRemoveLeavesOrphanedWorktreeInPlace() throws {
         let repo = try makeRepoWithRemote(named: "app")
         let orphan = repo.appendingPathComponent(".claude/worktrees/ghost", isDirectory: true)
         try fm.createDirectory(at: orphan, withIntermediateDirectories: true)
         try "gitdir: /nonexistent/.git/worktrees/ghost\n".write(
             to: orphan.appendingPathComponent(".git"), atomically: true, encoding: .utf8)
         try Data(repeating: 1, count: 4096).write(to: orphan.appendingPathComponent("file.bin"))
-        var item = try XCTUnwrap(scanRoots([root.path]).groups.flatMap(\.items).first)
-        item.selected = true
+        let item = ScanItem(path: orphan.path, sizeBytes: 4096, modified: nil, selected: true)
 
         let out = WorktreeRemover.remove([item], ignore: try makeIgnore(), dryRun: false)
 
-        XCTAssertEqual(out.removed, 1)
-        XCTAssertFalse(fm.fileExists(atPath: orphan.path))
-        XCTAssertTrue(fm.fileExists(atPath: repo.appendingPathComponent(".git").path))
+        XCTAssertEqual(out.removed, 0)
+        XCTAssertEqual(out.skipped.first?.reason, "orphaned worktree, git no longer tracks it")
+        XCTAssertTrue(fm.fileExists(atPath: orphan.appendingPathComponent("file.bin").path))
     }
 
     func testRemoveRefusesAMainCheckout() throws {

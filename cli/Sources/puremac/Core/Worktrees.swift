@@ -111,8 +111,6 @@ enum WorktreeScanner {
         let allRoots = userRoots + extras
 
         var commonDirs: [String: String] = [:]   // commonDir -> repo display name
-        var orphans: [String] = []
-        func normalized(_ p: String) -> String { URL(fileURLWithPath: p).resolvingSymlinksInPath().path }
         var allowedPrefixes = allRoots.map(\.path)
 
         func register(commonDir: String, name: String? = nil) {
@@ -129,13 +127,12 @@ enum WorktreeScanner {
                 let common = URL(fileURLWithPath: dir + "/.git").resolvingSymlinksInPath().path
                 register(commonDir: common)
                 for conv in conventionalDirs { allowedPrefixes.append(dir + "/" + conv) }
-                findConventional(in: dir, ignore: ignore, register: register, orphan: { orphans.append(normalized($0)) })
+                findConventional(in: dir, ignore: ignore, register: register)
                 return true
             case .linked(let common):
                 register(commonDir: common)
                 return true
             case .orphaned:
-                orphans.append(normalized(dir))
                 return true
             case .none:
                 return false
@@ -186,15 +183,6 @@ enum WorktreeScanner {
             let item = makeItem(entry, cutoff: cutoff, ignore: ignore, artifacts: artifacts)
             byRepo[commonDirs[common] ?? "repository", default: []].append(item)
         }
-        for orphan in Set(orphans).sorted() where !seen.contains(orphan) {
-            if Safety.isPathIgnored(orphan, ignore: ignore) { continue }
-            let m = DirSizer.measure(of: orphan)
-            let size = max(0, m.bytes - nestedBytes(under: orphan, artifacts: artifacts))
-            byRepo["orphaned worktrees", default: []].append(
-                ScanItem(path: orphan, sizeBytes: size, modified: DirSizer.modified(of: orphan),
-                         selected: false, note: "orphaned: repository missing")
-            )
-        }
 
         let groups = byRepo.map { repo, items in
             ToolGroup(tool: repo, items: items.sorted { $0.sizeBytes > $1.sizeBytes })
@@ -205,8 +193,7 @@ enum WorktreeScanner {
     private static func findConventional(
         in repo: String,
         ignore: IgnoreStore,
-        register: (String, String?) -> Void,
-        orphan: (String) -> Void
+        register: (String, String?) -> Void
     ) {
         let fm = FileManager.default
         for conv in conventionalDirs {
@@ -221,7 +208,7 @@ enum WorktreeScanner {
                 if en.level > 2 || Purger.isArtifact(url.lastPathComponent) { en.skipDescendants(); continue }
                 switch WorktreeLink.classify(url.path) {
                 case .linked(let common): register(common, nil); en.skipDescendants()
-                case .orphaned: orphan(url.path); en.skipDescendants()
+                case .orphaned: en.skipDescendants()
                 case .mainCheckout: en.skipDescendants()
                 case .none: continue
                 }
@@ -301,15 +288,7 @@ enum WorktreeRemover {
             case .mainCheckout:
                 out.skipped.append((item.path, "main checkout, not a linked worktree"))
             case .orphaned:
-                let m = DirSizer.measure(of: item.path)
-                guard m.status == .complete else { out.skipped.append((item.path, "could not measure safely")); continue }
-                if dryRun { count(&out, m.bytes); continue }
-                do {
-                    try fm.removeItem(atPath: item.path)
-                    count(&out, m.bytes)
-                } catch {
-                    out.failed.append((item.path, error.localizedDescription))
-                }
+                out.skipped.append((item.path, "orphaned worktree, git no longer tracks it"))
             case .linked(let common):
                 let list = Git.run(["--git-dir=\(common)", "worktree", "list", "--porcelain"])
                 let entries = list.status == 0 ? WorktreeEntry.parse(list.out) : []

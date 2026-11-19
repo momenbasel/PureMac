@@ -113,10 +113,10 @@ Project cleanup finds artifacts such as `node_modules`, `.next`, `.nuxt`, `.turb
 
 ### Git worktrees
 
-`puremac purge ~/Developer --worktrees` also lists linked git worktrees, including those under `.claude/worktrees`, `.orc`, `.supacode` and `~/.supacode`, plus orphaned worktree folders whose repository is gone.
+`puremac purge ~/Developer --worktrees` also lists linked git worktrees, including those under `.claude/worktrees`, `.orc`, `.supacode` and `~/.supacode`. Folders whose repository metadata is gone are never listed or removed; `git worktree repair` reconnects a moved repository.
 
 - Preselected: clean worktrees whose commits all exist on a remote and that are older than the age threshold.
-- Listed but unchecked, with the reason shown: uncommitted changes, unpushed commits, locked, recent, orphaned.
+- Listed but unchecked, with the reason shown: uncommitted changes, unpushed commits, locked, recent.
 - Removal runs `git worktree remove` without `--force`, then `git worktree prune`, so git refuses anything with uncommitted changes and repository metadata stays consistent. Branches are never deleted. Detached worktrees with commits on no branch or remote are skipped.
 - Artifacts nested inside a worktree are listed separately and the worktree size excludes them, so nothing is counted twice.
 
