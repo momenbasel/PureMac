@@ -69,7 +69,7 @@ final class CleaningEngineTests: XCTestCase {
             .typeSymbolicLink
         )
         XCTAssertFalse(result.cleanedPaths.contains(link.path))
-        XCTAssertTrue(result.errors.contains { $0.localizedCaseInsensitiveContains("symlink") })
+        XCTAssertEqual(result.errors, [String(localized: "Skipped symlink or unsafe path: \(link.path)")])
     }
 
     func testSymlinkedParentIsRefusedWithoutDeletingItsTarget() async throws {
@@ -85,7 +85,7 @@ final class CleaningEngineTests: XCTestCase {
 
         XCTAssertTrue(fileManager.fileExists(atPath: target.path))
         XCTAssertFalse(result.cleanedPaths.contains(linkedTarget.path))
-        XCTAssertTrue(result.errors.contains { $0.localizedCaseInsensitiveContains("symlink") })
+        XCTAssertEqual(result.errors, [String(localized: "Skipped symlink or unsafe path: \(linkedTarget.path)")])
     }
 
     func testDanglingSymlinkIsRefusedInsteadOfReportedAsCleaned() async throws {
@@ -100,7 +100,7 @@ final class CleaningEngineTests: XCTestCase {
             .typeSymbolicLink
         )
         XCTAssertFalse(result.cleanedPaths.contains(link.path))
-        XCTAssertTrue(result.errors.contains { $0.localizedCaseInsensitiveContains("symlink") })
+        XCTAssertEqual(result.errors, [String(localized: "Skipped symlink or unsafe path: \(link.path)")])
     }
 
     func testExcludedFileIsNeverDeleted() async throws {
@@ -112,7 +112,7 @@ final class CleaningEngineTests: XCTestCase {
 
         XCTAssertTrue(fileManager.fileExists(atPath: file.path))
         XCTAssertFalse(result.cleanedPaths.contains(file.path))
-        XCTAssertEqual(result.errors, ["Excluded from cleanup: excluded.bin"])
+        XCTAssertEqual(result.errors, [String(localized: "Excluded from cleanup: \(file.lastPathComponent)")])
     }
 
     func testAppModifyingCategoriesNeverFallThroughToFileDeletion() async throws {

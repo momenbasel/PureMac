@@ -108,6 +108,44 @@ final class LocalizationFilesTests: XCTestCase {
         }
     }
 
+    func testSimplifiedChineseRuntimeMessagesResolveInterpolatedKeys() throws {
+        let localizationFiles = try localizableStringsFiles()
+        let chineseURL = try XCTUnwrap(localizationFiles["zh-Hans"])
+        let chineseStrings = try localizedStrings(in: chineseURL)
+        let bundle = try XCTUnwrap(Bundle(path: chineseURL.deletingLastPathComponent().path))
+        let path = "/tmp/PureMac Test/example.bin"
+        let tool = "XcodeBuildMCP"
+        let status: Int32 = 7
+        let cases: [(key: String, value: String, arguments: [CVarArg])] = [
+            (
+                "Skipped symlink or unsafe path: %@",
+                String(localized: "Skipped symlink or unsafe path: \(path)", bundle: bundle),
+                [path]
+            ),
+            (
+                "%@: Legacy DerivedData",
+                String(localized: "\(tool): Legacy DerivedData", bundle: bundle),
+                [tool]
+            ),
+            (
+                "docker system prune failed (exit %d)",
+                String(localized: "docker system prune failed (exit \(status))", bundle: bundle),
+                [status]
+            ),
+            (
+                "Homebrew exited with status %d.",
+                String(localized: "Homebrew exited with status \(status).", bundle: bundle),
+                [status]
+            )
+        ]
+
+        for sample in cases {
+            let format = try XCTUnwrap(chineseStrings[sample.key])
+            XCTAssertNotEqual(format, sample.key)
+            XCTAssertEqual(sample.value, String(format: format, arguments: sample.arguments))
+        }
+    }
+
     private func localizableStringsFiles() throws -> [String: URL] {
         let sourceRoot = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()

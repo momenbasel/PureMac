@@ -357,7 +357,7 @@ actor DuplicateFinder {
         }
         let selectedFiles = group.files.filter { selectedIDs.contains($0.url) }
         guard selectedFiles.count == selectedIDs.count else {
-            let unknownPath = selectedIDs.first { !group.contains($0) }?.path ?? "Unknown file"
+            let unknownPath = selectedIDs.first { !group.contains($0) }?.path ?? String(localized: "Unknown file")
             throw DuplicateFinderError.invalidSelection(unknownPath)
         }
         guard !selectedFiles.isEmpty else {
