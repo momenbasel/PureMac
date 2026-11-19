@@ -1069,7 +1069,7 @@
 "Node Modules" = "Модулі Node";
 "Rust project target folders, cleaned with cargo clean" = "Теки target проєктів Rust, очищуються через cargo clean";
 "node_modules folders in your projects" = "Теки node_modules у ваших проєктах";
-"Select All Copies" = "Select All Copies";
+"Select All Copies" = "Вибрати всі копії";
 "Dev Tool Caches" = "Кеші інструментів розробника";
 "Package, build, and download caches of developer tools" = "Кеші пакетів, збірок і завантажень інструментів розробника";
 "Bun cache" = "Кеш Bun";
