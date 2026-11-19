@@ -115,7 +115,7 @@ xcodebuild test -project PureMac.xcodeproj -scheme PureMac -destination 'platfor
   -only-testing:PureMacTests/DevToolCachesTests
 ```
 
-Tests build a temporary home under `FileManager.default.temporaryDirectory`, create each cache with a payload file, and inject `DevToolCacheEnvironment(searchDirectories:processCommandLines:commandTimeout:)`. `uv` and `go` are fake shell scripts in a temp `bin` directory that log their arguments; the process list is a closure. No real tool, process list or user directory is read. `LocalizationFilesTests` checks the strings in all 13 `Localizable.strings` files.
+Tests build a temporary home under `FileManager.default.temporaryDirectory`, create each cache with a payload file, and inject `DevToolCacheEnvironment(searchDirectories:processCommandLines:commandTimeout:)`. `uv` and `go` are fake shell scripts in a temp `bin` directory that log their arguments; the process list is a closure. No real tool, process list or user directory is read. `LocalizationFilesTests` checks the strings in every `Localizable.strings` file.
 
 Manual run against a fake home (create the cache directories first, for example `mkdir -p <home>/.bun/install/cache && head -c 1000000 /dev/zero > <home>/.bun/install/cache/x`):
 
