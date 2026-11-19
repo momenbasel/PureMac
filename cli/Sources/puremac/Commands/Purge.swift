@@ -5,10 +5,13 @@ struct Purge: ParsableCommand {
     static let configuration = CommandConfiguration(
         abstract: "Find removable build artifacts inside project folders (node_modules, target, .venv, …).",
         discussion: """
-        With no path, scans ~/Projects, ~/Code, ~/dev, ~/GitHub, ~/Workspace.
+        With no path, scans ~/Developer, ~/Developers, ~/Projects, ~/Code, ~/dev, ~/GitHub, ~/Workspace.
         Interactive review starts empty so recent and older artifacts are both selectable.
           puremac purge                 Scan the default project folders
           puremac purge ~/Work/app      Scan a specific folder
+          puremac purge ~/Developer --worktrees   Also review git worktrees
+
+        --worktrees adds linked git worktrees (including .claude/worktrees, .orc and Supacode). Only clean worktrees whose commits all exist on a remote are preselected; dirty, locked, unpushed and recent ones are listed but left unchecked. Removal uses `git worktree remove` without --force, so git refuses anything with uncommitted changes.
 
         Finishing the selector only opens an exact deletion review; a separate confirmation defaults to No. --plain uses a numbered selector with ranges, all, and none. --force removes only artifacts older than the configured threshold without either prompt. --dry-run and --json never delete or open a selector.
         """
@@ -19,6 +22,9 @@ struct Purge: ParsableCommand {
 
     @Option(name: .customLong("older-than"), help: "Age threshold used by --force and read-only reports (default 7, or config).")
     var olderThanDays: Int = -1
+
+    @Flag(name: .long, help: "Also find linked git worktrees (clean, pushed, older than the threshold are preselected).")
+    var worktrees = false
 
     @Flag(name: .long, help: "Remove age-selected artifacts without review or confirmation.")
     var force = false
@@ -61,18 +67,30 @@ struct Purge: ParsableCommand {
 
         if !json { Term.err(Term.dim("Scanning " + roots.map { Render.shorten($0) }.joined(separator: ", ") + " …")) }
         let cat = Purger.scan(roots: roots, olderThanDays: days, ignore: ignore)
+        var cats = [cat]
+        if worktrees {
+            cats.append(WorktreeScanner.scan(
+                roots: roots,
+                extraRoots: paths.isEmpty ? WorktreeScanner.globalExtraRoots : [],
+                olderThanDays: days,
+                ignore: ignore,
+                artifacts: cat.groups.flatMap(\.items)
+            ))
+        }
 
-        if json { print(try JSONReport.string([cat])); return }
+        if json { print(try JSONReport.string(cats)); return }
 
-        if cat.groups.isEmpty {
-            print(Term.green("No project artifacts found in readable locations."))
+        if cats.allSatisfy({ $0.groups.isEmpty }) {
+            print(Term.green(worktrees
+                ? "No project artifacts or git worktrees found in readable locations."
+                : "No project artifacts found in readable locations."))
             return
         }
 
         if dryRun {
             renderScan(cat, days: days)
-            let selected = cat.selectedItems
-            let out = Cleaner.remove(selected, ignore: ignore, dryRun: true)
+            if cats.count > 1 { renderWorktrees(cats[1]) }
+            let out = Self.remove(cats, ignore: ignore, dryRun: true)
             Render.cleanupSummary(out, dryRun: true)
             return
         }
@@ -80,16 +98,17 @@ struct Purge: ParsableCommand {
         let reviewed: [CategoryScan]
         switch mode {
         case .forced:
-            reviewed = [cat]
+            reviewed = cats
             renderScan(cat, days: days)
+            if cats.count > 1 { renderWorktrees(cats[1]) }
         case .fullscreen:
-            guard let selection = try InteractiveReview.select([cat], title: "Choose project artifacts") else {
+            guard let selection = try InteractiveReview.select(cats, title: "Choose project artifacts") else {
                 print(Term.dim("Cancelled. Nothing removed."))
                 return
             }
             reviewed = selection
         case .plain:
-            guard let selection = try PlainSelectionReview.select([cat], title: "Choose project artifacts") else {
+            guard let selection = try PlainSelectionReview.select(cats, title: "Choose project artifacts") else {
                 print(Term.dim("Cancelled. Nothing removed."))
                 return
             }
@@ -109,9 +128,46 @@ struct Purge: ParsableCommand {
                 return
             }
         }
-        let out = Cleaner.remove(selected, ignore: ignore, dryRun: false)
+        let out = Self.remove(reviewed, ignore: ignore, dryRun: false)
         Render.cleanupSummary(out, dryRun: false)
         if out.hadFailures { throw ExitCode.failure }
+    }
+
+    /// Artifacts go first (plain delete), then worktrees (via git), so artifacts
+    /// nested inside a worktree are not counted twice.
+    static func remove(_ categories: [CategoryScan], ignore: IgnoreStore, dryRun: Bool) -> CleanOutcome {
+        var total = CleanOutcome()
+        func merge(_ o: CleanOutcome) {
+            total.removed += o.removed
+            let (sum, overflow) = total.freedBytes.addingReportingOverflow(o.freedBytes)
+            total.freedBytes = overflow ? .max : sum
+            total.skipped += o.skipped
+            total.failed += o.failed
+        }
+        for category in categories where category.id != "worktrees" {
+            merge(Cleaner.remove(category.selectedItems, ignore: ignore, dryRun: dryRun))
+        }
+        for category in categories where category.id == "worktrees" {
+            merge(WorktreeRemover.remove(category.selectedItems, ignore: ignore, dryRun: dryRun))
+        }
+        return total
+    }
+
+    private func renderWorktrees(_ cat: CategoryScan) {
+        guard !cat.groups.isEmpty else { return }
+        print("")
+        print(Term.bold("Git worktrees  \(ByteCount.human(cat.allBytes))"))
+        for group in cat.groups {
+            print("")
+            print("  \(Term.cyan(group.tool))  \(Term.dim(ByteCount.human(group.allBytes)))")
+            for item in group.items {
+                let mark = item.selected ? Term.green("✓") : Term.dim("·")
+                let note = item.note.map { Term.dim("  \($0)") } ?? ""
+                print("    \(mark) \(Render.sizeCol(item.sizeBytes)) \(Render.shorten(item.path))\(note)")
+            }
+        }
+        print("")
+        print(Term.dim("Worktrees are removed with git; anything git refuses to remove is reported and kept."))
     }
 
     private func resolvedDays() throws -> Int {
