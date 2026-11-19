@@ -357,6 +357,13 @@ jobs:
                 echo "- Fixed Ollama and LM Studio cleanup with strict path checks and user-level removal; downloaded models remain excluded."
                 echo "- Simplified Overview and navigation, reduced decoration, and added full paths and removal methods to category cleanup confirmation."
                 echo ""
+              elif [[ "${VERSION}" == "3.3.0" ]]; then
+                echo "- Developer cleanup finds Rust target folders and node_modules inside detected Cargo and npm projects; these rows are opt-in and never selected by default (#197)."
+                echo "- New Dev Tool Caches category for Bun, uv, pip, Poetry, CocoaPods, Swift Package Manager, Gradle, Cargo, Go, Deno, Electron and NuGet caches. uv and Go are cleaned through their own CLIs, and Gradle is skipped while it runs (#201)."
+                echo "- Duplicate Finder can select every copy in a group except the original (#199)."
+                echo "- Nested screens have a back button (#186), and sidebar sections and cleanup groups collapse from their labels (#196)."
+                echo "- Greek (#188) and Persian (#194) added; Russian (#198), Polish (#200), Japanese (#206), Traditional Chinese (#193), French (#208) and Simplified Chinese (#187) completed."
+                echo ""
               elif [[ "${VERSION}" == "2.9.8" ]]; then
                 echo "### What changed"
                 echo ""
