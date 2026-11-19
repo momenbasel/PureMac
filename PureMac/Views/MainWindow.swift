@@ -449,10 +449,6 @@ struct MainWindow: View {
         .overlay(alignment: .top) { Divider() }
     }
 
-    private var sidebarLabelColor: Color {
-        colorScheme == .dark ? Color.white.opacity(0.90) : Color.black.opacity(0.84)
-    }
-
     @ViewBuilder
     private var detailContainer: some View {
         VStack(spacing: 0) {
