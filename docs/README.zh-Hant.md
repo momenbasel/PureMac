@@ -16,7 +16,7 @@
 
 <p align="center">
   <b>免費、開源的 macOS 應用程式管理與系統清理工具。</b><br>
-  徹底解除安裝應用程式。尋找孤立檔案。清理系統垃圾。<br>
+  徹底解除安裝應用程式。尋找殘留檔案。清理系統垃圾。<br>
   無訂閱。無遙測。無資料收集。
 </p>
 
@@ -65,6 +65,12 @@ xcodebuild -project PureMac.xcodeproj -scheme PureMac -configuration Release -de
 open build/Build/Products/Release/PureMac.app
 ```
 
+## 介面語言
+
+開啟 PureMac 的「設定 → 一般 → 語言」，選擇「繁體中文」，再按一下「立即重新啟動」套用。
+
+繁體中文介面採用台灣慣用詞彙，涵蓋主畫面、工具頁、設定、權限提示與 Finder 服務選單。PureMac、Finder、Homebrew 等產品名稱保留原文。
+
 ## 功能
 
 ### 應用程式解除安裝
@@ -75,16 +81,16 @@ open build/Build/Products/Release/PureMac.app
 - 系統應用程式保護 — 排除 27 個 Apple 應用程式,避免誤刪
 - 主從檢視:左側為應用程式列表,右側為發現的檔案
 
-### 孤立檔案搜尋
+### 殘留檔案搜尋
 - 偵測 `~/Library` 中已解除安裝應用程式留下的殘餘檔案
 - 將 Library 內容與所有已安裝應用程式的識別碼比對
-- 一鍵清除孤立檔案
+- 一鍵清除殘留檔案
 
 ### 系統清理
 - **智慧掃描** — 一鍵掃描所有分類
 - **系統垃圾** — 系統快取、記錄與暫存檔案
 - **使用者快取** — 動態發現所有應用程式快取(不需寫死清單)
-- **AI 應用程式** — Ollama 與 LM Studio 日誌、快取，以及可選的本機歷史記錄清理
+- **AI 應用程式** — Ollama 與 LM Studio 記錄檔、快取，以及可選的本機歷史記錄清理
 - **郵件附件** — 已下載的郵件附件
 - **垃圾桶** — 清空所有垃圾桶
 - **大型與舊檔案** — 超過 100 MB 或超過 1 年的檔案
@@ -134,7 +140,7 @@ PureMac/
   Views/              - 原生 SwiftUI 視圖
     Apps/             - 應用程式解除安裝視圖
     Cleaning/         - 智慧掃描與分類視圖
-    Orphans/          - 孤立檔案搜尋
+    Orphans/          - 殘留檔案搜尋
     Settings/         - 以原生 Form 為基礎的設定
     Components/       - 共用元件
 ```

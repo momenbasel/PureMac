@@ -1,0 +1,8 @@
+/* macOS permission prompts */
+"NSAppleEventsUsageDescription" = "Το PureMac χρησιμοποιεί Apple Events για να επικοινωνεί με το Finder κατά την εμφάνιση αρχείων.";
+"NSDesktopFolderUsageDescription" = "Το PureMac χρειάζεται πρόσβαση στο Γραφείο εργασίας για να εντοπίζει περιττά και ορφανά αρχεία.";
+"NSDocumentsFolderUsageDescription" = "Το PureMac χρειάζεται πρόσβαση στα Έγγραφα για να εντοπίζει περιττά και ορφανά αρχεία.";
+"NSDownloadsFolderUsageDescription" = "Το PureMac χρειάζεται πρόσβαση στις Λήψεις για να εντοπίζει περιττά και ορφανά αρχεία.";
+"NSRemovableVolumesUsageDescription" = "Το PureMac χρειάζεται πρόσβαση σε αφαιρούμενους τόμους για να αναζητά περιττά αρχεία.";
+"NSSystemAdministrationUsageDescription" = "Το PureMac χρειάζεται δικαιώματα διαχείρισης συστήματος για πλήρη εκκαθάριση κρυφών μνημών και απεγκατάσταση εφαρμογών.";
+"NSHumanReadableCopyright" = "Πνευματικά δικαιώματα 2026. Άδεια MIT.";
