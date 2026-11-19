@@ -294,6 +294,8 @@ struct MainWindow: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(Text(text))
+        .accessibilityValue(Text(LocalizedStringKey(isExpanded.wrappedValue ? "Expanded" : "Collapsed")))
+        .accessibilityAddTraits(.isHeader)
     }
 
     private func navRow(
