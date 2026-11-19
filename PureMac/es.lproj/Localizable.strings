@@ -888,11 +888,11 @@
 "Check access" = "Check access";
 "Checking for updates…" = "Checking for updates…";
 "Checks the official app releases on GitHub." = "Checks the official app releases on GitHub.";
-"Collapsed" = "Collapsed";
+"Collapsed" = "Contraído";
 "Copy command" = "Copy command";
 "Download (DMG / ZIP)" = "Download (DMG / ZIP)";
 "Download the new app from the release page, quit PureMac, then replace it in Applications." = "Download the new app from the release page, quit PureMac, then replace it in Applications.";
-"Expanded" = "Expanded";
+"Expanded" = "Expandido";
 "GitHub is receiving too many requests. Please try again later." = "GitHub is receiving too many requests. Please try again later.";
 "Homebrew" = "Homebrew";
 "Keep PureMac up to date" = "Keep PureMac up to date";

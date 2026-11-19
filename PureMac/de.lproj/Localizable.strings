@@ -913,8 +913,8 @@
 "CPU - Memory" = "CPU - Memory";
 "CPU uses the Mac’s total capacity. App helpers are grouped with their app." = "CPU uses the Mac’s total capacity. App helpers are grouped with their app.";
 "CPU values appear after the next sample." = "CPU values appear after the next sample.";
-"Collapsed" = "Collapsed";
-"Expanded" = "Expanded";
+"Collapsed" = "Eingeklappt";
+"Expanded" = "Ausgeklappt";
 "Live updates paused" = "Live updates paused";
 "Measuring apps and processes…" = "Measuring apps and processes…";
 "Memory estimate includes active, wired and compressed memory." = "Memory estimate includes active, wired and compressed memory.";
