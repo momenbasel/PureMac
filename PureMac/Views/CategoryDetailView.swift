@@ -1,13 +1,17 @@
 import SwiftUI
 
 struct CategoryDetailView: View {
+    private struct CleanupSelection: Identifiable {
+        let id = UUID()
+        let items: [CleanableItem]
+    }
+
     @EnvironmentObject var appState: AppState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let category: CleaningCategory
 
     @State private var filter = CleanupReviewFilter()
-    @State private var showConfirmation = false
-    @State private var pendingItems: [CleanableItem] = []
+    @State private var pendingReview: CleanupSelection?
 
     private var result: CategoryResult? { appState.categoryResults[category] }
     private var visibleItems: [CleanableItem] { filter.apply(to: result?.items ?? []) }
@@ -52,19 +56,12 @@ struct CategoryDetailView: View {
             }
         }
         .navigationTitle(Text(LocalizedStringKey(category.rawValue)))
-        .confirmationDialog("Remove selected files?", isPresented: $showConfirmation, titleVisibility: .visible) {
-            Button("Permanently remove \(pendingItems.count) items", role: .destructive) {
-                appState.cleanCategory(category, itemIDs: Set(pendingItems.map(\.id)))
-                pendingItems = []
-            }
-            Button("Cancel", role: .cancel) { pendingItems = [] }
-        } message: {
-            Text(confirmationMessage)
+        .sheet(item: $pendingReview) { selection in
+            removalReview(items: selection.items)
         }
         .onChange(of: category) { _ in
             filter = CleanupReviewFilter()
-            pendingItems = []
-            showConfirmation = false
+            pendingReview = nil
         }
     }
 
@@ -154,9 +151,14 @@ struct CategoryDetailView: View {
                 Text("\(selectedItems.count) selected · \(ByteCountFormatter.string(fromByteCount: selectedSize, countStyle: .file))")
                     .font(.system(size: 13, weight: .semibold))
                     .monospacedDigit()
-                Text(hiddenCount > 0 ? "Includes \(hiddenCount) selected items hidden by filters." : "Selected cleanup items are permanently removed.")
+                Text("Cleanup permanently removes files unless marked Move to Trash.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                if hiddenCount > 0 {
+                    Text("Includes \(hiddenCount) selected items hidden by filters.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             Spacer(minLength: 8)
             if !selectedItems.isEmpty {
@@ -165,8 +167,7 @@ struct CategoryDetailView: View {
                     .disabled(appState.scanState.isActive)
             }
             Button {
-                pendingItems = selectedItems
-                showConfirmation = true
+                pendingReview = CleanupSelection(items: selectedItems)
             } label: {
                 Label("Review removal", systemImage: "trash")
                     .font(.system(size: 13, weight: .semibold))
@@ -182,11 +183,80 @@ struct CategoryDetailView: View {
         .overlay(alignment: .top) { Divider() }
     }
 
-    private var confirmationMessage: String {
-        let size = ByteCountFormatter.string(fromByteCount: pendingItems.reduce(0) { $0 + $1.size }, countStyle: .file)
-        let names = pendingItems.prefix(5).map(\.name).joined(separator: "\n")
-        let more = pendingItems.count > 5 ? String(localized: "\nAnd \(pendingItems.count - 5) more.") : ""
-        return String(localized: "\(size) selected. This permanently removes the selected files or runs the listed cleanup actions. It cannot be undone.") + "\n\n" + names + more
+    private func removalReview(items: [CleanableItem]) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Review removal")
+                    .font(.title2.weight(.semibold))
+                Text("\(items.count) items · \(ByteCountFormatter.string(fromByteCount: items.reduce(0) { $0 + $1.size }, countStyle: .file))")
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                Text("Files and cleanup actions marked Permanent cannot be undone. Items marked Move to Trash can be recovered until the Trash is emptied.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Divider()
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(items) { item in
+                        VStack(alignment: .leading, spacing: 5) {
+                            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                                Text(item.name)
+                                    .font(.body.weight(.medium))
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Spacer(minLength: 0)
+                                Text(item.formattedSize)
+                                    .monospacedDigit()
+                                    .foregroundStyle(.secondary)
+                            }
+                            if !item.path.isEmpty {
+                                Text(item.path)
+                                    .font(.system(.caption, design: .monospaced))
+                                    .foregroundStyle(.secondary)
+                                    .textSelection(.enabled)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            Text(removalMethod(item))
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 12)
+                        Divider()
+                    }
+                }
+                .padding(.trailing, 8)
+            }
+            .frame(minHeight: 160, maxHeight: 300)
+            HStack {
+                Spacer()
+                Button("Cancel", role: .cancel) { pendingReview = nil }
+                    .keyboardShortcut(.cancelAction)
+                Button("Remove \(items.count) items", role: .destructive) {
+                    let itemIDs = Set(items.map(\.id))
+                    pendingReview = nil
+                    appState.cleanCategory(category, itemIDs: itemIDs)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Tint.red)
+                .disabled(items.isEmpty || appState.scanState.isActive)
+            }
+        }
+        .padding(24)
+        .frame(width: 580)
+    }
+
+    private func removalMethod(_ item: CleanableItem) -> String {
+        if item.simctlRuntimeIdentifier != nil {
+            return String(localized: "Permanent · Remove simulator runtime")
+        }
+        if item.isActionItem {
+            return String(localized: "Permanent · Run cleanup action")
+        }
+        if XcodeBuildMCPDerivedDataSupport.isManagedDerivedDataPath(item.path) {
+            return String(localized: "Move to Trash")
+        }
+        return String(localized: "Permanent · Delete files")
     }
 }
 
