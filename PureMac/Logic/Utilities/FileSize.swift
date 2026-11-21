@@ -37,23 +37,30 @@ enum FileSizeCalculator {
         return size
     }
 
-    private static func directorySize(of url: URL) -> Int64 {
+    /// Sum of regular-file allocations under `url`. Symlinks are never
+    /// followed; hard links and full APFS clone groups count once.
+    /// Unreadable entries are skipped instead of aborting the walk, and
+    /// task cancellation stops it early. `onEntry` sees every visited URL.
+    static func directorySize(
+        of url: URL,
+        includeHidden: Bool = false,
+        onEntry: (URL) -> Void = { _ in }
+    ) -> Int64 {
         guard let enumerator = fileManager.enumerator(
             at: url,
-            includingPropertiesForKeys: [.totalFileAllocatedSizeKey, .fileAllocatedSizeKey, .isRegularFileKey, .isSymbolicLinkKey],
-            options: [.skipsHiddenFiles]
+            includingPropertiesForKeys: [],
+            options: includeHidden ? [] : [.skipsHiddenFiles],
+            errorHandler: { _, _ in true }
         ) else { return 0 }
 
         var total: Int64 = 0
         var seenFiles: Set<FileAllocation.Identity> = []
         for case let fileURL as URL in enumerator {
             if Task.isCancelled { break }
-            guard let values = try? fileURL.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey]) else { continue }
-            // Skip symlinks so we don't double-count or follow links that
-            // escape the directory. Only sum regular-file payload.
-            if values.isSymbolicLink == true { continue }
-            guard values.isRegularFile == true else { continue }
+            onEntry(fileURL)
+            // lstat-based type check: symlinks and special files are skipped.
             guard let metadata = FileAllocation.metadata(at: fileURL),
+                  metadata.isRegularFile,
                   seenFiles.insert(metadata.identity).inserted else { continue }
             total += metadata.allocatedBytes
         }

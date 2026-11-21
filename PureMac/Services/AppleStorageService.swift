@@ -154,15 +154,12 @@ enum AppleStorageService {
                 break
             }
             count += 1
-            var metadata = stat()
-            guard lstat(url.path, &metadata) == 0 else {
+            guard let allocation = FileAllocation.metadata(at: url) else {
                 inaccessible += 1
                 enumerator.skipDescendants()
                 continue
             }
-            let type = metadata.st_mode & S_IFMT
-            guard type == S_IFREG || type == S_IFDIR,
-                  let allocation = FileAllocation.metadata(at: url),
+            guard allocation.isRegularFile || allocation.isDirectory,
                   !allocation.isDataless else {
                 skipped += 1
                 enumerator.skipDescendants()
@@ -183,8 +180,8 @@ enum AppleStorageService {
                 enumerator.skipDescendants()
                 continue
             }
-            if type == S_IFDIR {
-                bytes += max(0, Int64(metadata.st_blocks)) * 512
+            if allocation.isDirectory {
+                bytes += allocation.allocatedBytes
             } else if seen.insert(allocation.identity).inserted {
                 bytes += allocation.allocatedBytes
             }

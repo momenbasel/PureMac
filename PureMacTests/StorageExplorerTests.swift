@@ -37,6 +37,31 @@ final class StorageExplorerTests: XCTestCase {
         XCTAssertFalse(result.isPartial)
     }
 
+    func testDirectorySizeCountsFullAPFSClonesOnceAndModifiedClonesSeparately() throws {
+        let original = temporaryRoot.appendingPathComponent("original.bin")
+        try Data((0..<1_000_000).map { UInt8(truncatingIfNeeded: $0 &* 31) }).write(to: original)
+        let clone = temporaryRoot.appendingPathComponent("clone.bin")
+        let modified = temporaryRoot.appendingPathComponent("modified.bin")
+        for target in [clone, modified] {
+            guard clonefile(original.path, target.path, 0) == 0 else {
+                throw XCTSkip("Temporary directory does not support APFS clones (errno \(errno))")
+            }
+        }
+        let handle = try FileHandle(forWritingTo: modified)
+        try handle.seek(toOffset: 100)
+        try handle.write(contentsOf: Data([0xFF]))
+        try handle.close()
+
+        let originalMetadata = try XCTUnwrap(FileAllocation.metadata(at: original))
+        let modifiedMetadata = try XCTUnwrap(FileAllocation.metadata(at: modified))
+        XCTAssertTrue(originalMetadata.isFullClone)
+        XCTAssertFalse(modifiedMetadata.isFullClone)
+        XCTAssertEqual(
+            FileSizeCalculator.directorySize(of: temporaryRoot),
+            originalMetadata.allocatedBytes + modifiedMetadata.allocatedBytes
+        )
+    }
+
     func testScanMeasuresPackagesAndSkipsSymbolicLinksAndDuplicateHardLinks() async throws {
         let source = temporaryRoot.appendingPathComponent("source.bin")
         let hardLink = temporaryRoot.appendingPathComponent("source-hardlink.bin")

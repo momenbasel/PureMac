@@ -18,6 +18,10 @@ enum FileAllocation {
         let allocatedBytes: Int64
         let isDataless: Bool
         let isFullClone: Bool
+        let fileType: mode_t
+
+        var isRegularFile: Bool { fileType == S_IFREG }
+        var isDirectory: Bool { fileType == S_IFDIR }
     }
 
     static func metadata(at url: URL) -> Metadata? {
@@ -33,7 +37,8 @@ enum FileAllocation {
 
         let device = UInt64(info.st_dev)
         let inode = UInt64(info.st_ino)
-        let cloneID = info.st_mode & S_IFMT == S_IFREG ? fullCloneID(atPath: path) : nil
+        let fileType = info.st_mode & S_IFMT
+        let cloneID = fileType == S_IFREG ? fullCloneID(atPath: path) : nil
         let identity: Identity
         if let cloneID {
             identity = .apfsClone(device: device, cloneID: cloneID)
@@ -45,7 +50,8 @@ enum FileAllocation {
             identity: identity,
             allocatedBytes: max(0, Int64(info.st_blocks)) * 512,
             isDataless: info.st_flags & UInt32(SF_DATALESS) != 0,
-            isFullClone: cloneID != nil
+            isFullClone: cloneID != nil,
+            fileType: fileType
         )
     }
 

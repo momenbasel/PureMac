@@ -177,7 +177,7 @@ struct LanguageFilesScanner: Sendable {
             if let type = (try? fileManager.attributesOfItem(atPath: lprojPath))?[.type] as? FileAttributeType,
                type == .typeSymbolicLink { continue }
 
-            lprojs.append(.init(path: lprojPath, size: directorySize(path: lprojPath, fileManager: fileManager)))
+            lprojs.append(.init(path: lprojPath, size: FileSizeCalculator.directorySize(of: URL(fileURLWithPath: lprojPath), includeHidden: true)))
         }
 
         guard !lprojs.isEmpty else { return nil }
@@ -185,29 +185,6 @@ struct LanguageFilesScanner: Sendable {
         let appStore = fileManager.fileExists(atPath: appPath + "/Contents/_MASReceipt")
         let appName = ((appPath as NSString).lastPathComponent as NSString).deletingPathExtension
         return LanguageFileFinding(appName: appName, appPath: appPath, lprojs: lprojs, appStore: appStore)
-    }
-
-    /// Recursive size of one .lproj. Localization folders stay small, so no
-    /// entry cap is applied; unreadable entries are skipped, not fatal.
-    private func directorySize(path: String, fileManager: FileManager) -> Int64 {
-        guard let enumerator = fileManager.enumerator(
-            at: URL(fileURLWithPath: path),
-            includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey],
-            options: [],
-            errorHandler: { _, _ in true }
-        ) else { return 0 }
-
-        var totalSize: Int64 = 0
-        var seenFiles: Set<FileAllocation.Identity> = []
-        for case let fileURL as URL in enumerator {
-            guard let values = try? fileURL.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey]),
-                  values.isSymbolicLink != true,
-                  values.isRegularFile == true,
-                  let metadata = FileAllocation.metadata(at: fileURL),
-                  seenFiles.insert(metadata.identity).inserted else { continue }
-            totalSize += metadata.allocatedBytes
-        }
-        return totalSize
     }
 
     private func isDirectory(_ path: String, fileManager: FileManager) -> Bool {

@@ -1340,35 +1340,11 @@ actor ScanEngine {
     }
 
     private func directorySize(path: String, includeHidden: Bool = false) -> Int64 {
-        var totalSize: Int64 = 0
-        var seenFiles: Set<FileAllocation.Identity> = []
-
-        // errorHandler returns true so unreadable entries are skipped
-        // instead of aborting the walk partway through the tree.
-        guard let enumerator = fileManager.enumerator(
-            at: URL(fileURLWithPath: path),
-            includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey],
-            options: includeHidden ? [] : [.skipsHiddenFiles],
-            errorHandler: { _, _ in true }
-        ) else { return 0 }
-
-        // No entry cap. A 10k cap was here previously and made huge trees
-        // like Xcode DerivedData (millions of files) report a fraction of
-        // their real size. report() is throttled, so display stays cheap.
-        // A DerivedData/DeviceSupport walk can hold this loop for minutes,
-        // so honor task cancellation to let an aborted scan stop promptly.
-        for case let fileURL as URL in enumerator {
-            if Task.isCancelled { break }
-            report(fileURL.path)
-            guard let values = try? fileURL.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey]),
-                  values.isSymbolicLink != true,
-                  values.isRegularFile == true,
-                  let metadata = FileAllocation.metadata(at: fileURL),
-                  seenFiles.insert(metadata.identity).inserted else { continue }
-            totalSize += metadata.allocatedBytes
+        // No entry cap: huge trees like DerivedData must report their real
+        // size. report() is throttled, so per-entry progress stays cheap.
+        FileSizeCalculator.directorySize(of: URL(fileURLWithPath: path), includeHidden: includeHidden) {
+            report($0.path)
         }
-
-        return totalSize
     }
 
     private func fileModDate(path: String) -> Date? {
