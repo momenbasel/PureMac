@@ -192,17 +192,20 @@ struct LanguageFilesScanner: Sendable {
     private func directorySize(path: String, fileManager: FileManager) -> Int64 {
         guard let enumerator = fileManager.enumerator(
             at: URL(fileURLWithPath: path),
-            includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey],
+            includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey],
             options: [],
             errorHandler: { _, _ in true }
         ) else { return 0 }
 
         var totalSize: Int64 = 0
+        var seenFiles: Set<FileAllocation.Identity> = []
         for case let fileURL as URL in enumerator {
-            guard let values = try? fileURL.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey]),
-                  let isFile = values.isRegularFile, isFile,
-                  let size = values.fileSize else { continue }
-            totalSize += Int64(size)
+            guard let values = try? fileURL.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey]),
+                  values.isSymbolicLink != true,
+                  values.isRegularFile == true,
+                  let metadata = FileAllocation.metadata(at: fileURL),
+                  seenFiles.insert(metadata.identity).inserted else { continue }
+            totalSize += metadata.allocatedBytes
         }
         return totalSize
     }

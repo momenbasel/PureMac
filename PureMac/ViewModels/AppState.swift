@@ -450,11 +450,9 @@ final class AppState: ObservableObject {
 
     private func cleanableUninstallItem(for url: URL) -> CleanableItem {
         let values = try? url.resourceValues(forKeys: [
-            .totalFileAllocatedSizeKey,
-            .fileAllocatedSizeKey,
             .contentModificationDateKey,
         ])
-        let size = Int64(values?.totalFileAllocatedSize ?? values?.fileAllocatedSize ?? 0)
+        let size = FileSizeCalculator.size(of: url) ?? 0
         return CleanableItem(
             name: url.lastPathComponent,
             path: url.path,

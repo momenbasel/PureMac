@@ -1341,12 +1341,13 @@ actor ScanEngine {
 
     private func directorySize(path: String, includeHidden: Bool = false) -> Int64 {
         var totalSize: Int64 = 0
+        var seenFiles: Set<FileAllocation.Identity> = []
 
         // errorHandler returns true so unreadable entries are skipped
         // instead of aborting the walk partway through the tree.
         guard let enumerator = fileManager.enumerator(
             at: URL(fileURLWithPath: path),
-            includingPropertiesForKeys: [.totalFileAllocatedSizeKey, .fileSizeKey, .isRegularFileKey],
+            includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey],
             options: includeHidden ? [] : [.skipsHiddenFiles],
             errorHandler: { _, _ in true }
         ) else { return 0 }
@@ -1359,14 +1360,12 @@ actor ScanEngine {
         for case let fileURL as URL in enumerator {
             if Task.isCancelled { break }
             report(fileURL.path)
-            guard let values = try? fileURL.resourceValues(forKeys: [.totalFileAllocatedSizeKey, .fileSizeKey, .isRegularFileKey]),
-                  let isFile = values.isRegularFile, isFile else { continue }
-            // Allocated size counts actual on-disk blocks (accurate for
-            // sparse/cloned files); fall back to logical size when the
-            // volume doesn't report it.
-            if let size = values.totalFileAllocatedSize ?? values.fileSize {
-                totalSize += Int64(size)
-            }
+            guard let values = try? fileURL.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey]),
+                  values.isSymbolicLink != true,
+                  values.isRegularFile == true,
+                  let metadata = FileAllocation.metadata(at: fileURL),
+                  seenFiles.insert(metadata.identity).inserted else { continue }
+            totalSize += metadata.allocatedBytes
         }
 
         return totalSize

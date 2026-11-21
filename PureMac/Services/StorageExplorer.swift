@@ -72,24 +72,13 @@ enum StorageExplorerError: LocalizedError, Equatable {
 actor StorageExplorer {
     typealias ProgressHandler = @Sendable (StorageScanProgress) -> Void
 
-    private struct FileIdentity: Hashable {
-        let device: UInt64
-        let inode: UInt64
-    }
-
-    private struct FileMetadata {
-        let identity: FileIdentity
-        let allocatedSize: Int64
-        let isDataless: Bool
-    }
-
     private struct ScanContext {
         var allocatedSize: Int64 = 0
         var fileCount = 0
         var directoryCount = 0
         var inaccessibleCount = 0
         var skippedCount = 0
-        var seenFiles: Set<FileIdentity> = []
+        var seenFiles: Set<FileAllocation.Identity> = []
     }
 
     private struct EntryMeasure {
@@ -135,7 +124,7 @@ actor StorageExplorer {
         guard !Self.isUnavailableCloudItem(rootValues) else {
             throw StorageExplorerError.cloudOnly(rootURL.path)
         }
-        guard let rootMetadata = Self.metadata(for: rootURL) else {
+        guard let rootMetadata = FileAllocation.metadata(at: rootURL) else {
             throw StorageExplorerError.unavailable(rootURL.path)
         }
         guard !rootMetadata.isDataless else {
@@ -228,7 +217,7 @@ actor StorageExplorer {
                 continue
             }
 
-            guard let metadata = Self.metadata(for: url) else {
+            guard let metadata = FileAllocation.metadata(at: url) else {
                 context.inaccessibleCount += 1
                 entryMeasure.inaccessibleCount += 1
                 continue
@@ -243,9 +232,9 @@ actor StorageExplorer {
                 if url == topURL {
                     topKind = values.isPackage == true ? .package : .directory
                 }
-                context.allocatedSize += metadata.allocatedSize
+                context.allocatedSize += metadata.allocatedBytes
                 context.directoryCount += 1
-                entryMeasure.allocatedSize += metadata.allocatedSize
+                entryMeasure.allocatedSize += metadata.allocatedBytes
                 entryMeasure.directoryCount += 1
 
                 do {
@@ -264,11 +253,11 @@ actor StorageExplorer {
                     topKind = .file
                 }
                 if context.seenFiles.insert(metadata.identity).inserted {
-                    context.allocatedSize += metadata.allocatedSize
+                    context.allocatedSize += metadata.allocatedBytes
                     context.fileCount += 1
-                    entryMeasure.allocatedSize += metadata.allocatedSize
+                    entryMeasure.allocatedSize += metadata.allocatedBytes
                     entryMeasure.fileCount += 1
-                } else {
+                } else if !metadata.isFullClone {
                     context.skippedCount += 1
                     entryMeasure.skippedCount += 1
                 }
@@ -310,19 +299,4 @@ actor StorageExplorer {
         return status != .current && status != .downloaded
     }
 
-    private static func metadata(for url: URL) -> FileMetadata? {
-        var fileStat = stat()
-        let status: Int32 = url.withUnsafeFileSystemRepresentation { path in
-            guard let path else { return Int32(-1) }
-            return lstat(path, &fileStat)
-        }
-        guard status == 0 else { return nil }
-
-        let blocks = max(Int64(0), Int64(fileStat.st_blocks))
-        return FileMetadata(
-            identity: FileIdentity(device: UInt64(fileStat.st_dev), inode: UInt64(fileStat.st_ino)),
-            allocatedSize: blocks * 512,
-            isDataless: fileStat.st_flags & UInt32(SF_DATALESS) != 0
-        )
-    }
 }
