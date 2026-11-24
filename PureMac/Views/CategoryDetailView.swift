@@ -33,6 +33,17 @@ struct CategoryDetailView: View {
                 .padding(.horizontal, 28)
                 .padding(.bottom, 16)
             }
+            if case .cleaning(let progress) = appState.scanState {
+                HStack(spacing: 12) {
+                    ProgressView(value: progress).frame(width: 140)
+                    Text("Removing the items you selected.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                .padding(.horizontal, 28)
+                .padding(.bottom, 16)
+            }
             if let result, !result.items.isEmpty {
                 filters
                 Divider()

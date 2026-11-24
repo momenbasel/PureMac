@@ -1070,7 +1070,11 @@ final class AppState: ObservableObject {
             let survivors = survivingItems(from: selectedItems, result: cleanResult)
             handleCleanOutcome(errors: cleanResult.errors, survivors: survivors)
 
-            scanState = cleanResult.itemsCleaned > 0 ? .cleaned : .completed
+            // A clean started from a category leaves the user inside that
+            // category. While other results remain and nothing failed, return
+            // to the results list instead of the completion summary.
+            let showSummary = cleanResult.itemsCleaned > 0 && (categoryResults.isEmpty || lastCleanupHadFailures)
+            scanState = showSummary ? .cleaned : .completed
             loadDiskInfo()
         }
     }
