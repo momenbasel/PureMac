@@ -557,7 +557,7 @@ struct DashboardView: View {
                 }
                 ProgressView(value: appState.cleanProgress)
                     .tint(Tint.accent)
-                Text("Keep PureMac open until cleanup finishes.")
+                Text(appState.adminPassInProgress ? "Authenticate with Touch ID or your password" : "Keep PureMac open until cleanup finishes.")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
             }

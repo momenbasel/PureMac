@@ -35,10 +35,17 @@ struct CategoryDetailView: View {
             }
             if case .cleaning(let progress) = appState.scanState {
                 HStack(spacing: 12) {
-                    ProgressView(value: progress).frame(width: 140)
-                    Text("Removing the items you selected.")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+                    if appState.adminPassInProgress {
+                        ProgressView().controlSize(.small)
+                        Text("Authenticate with Touch ID or your password")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ProgressView(value: progress).frame(width: 140)
+                        Text("Removing the items you selected.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
                     Spacer()
                 }
                 .padding(.horizontal, 28)
@@ -60,6 +67,8 @@ struct CategoryDetailView: View {
                 selectionBar
             } else if result != nil {
                 EmptyStateView("No files found", systemImage: "checkmark.circle", description: appState.hasFullDiskAccess ? "There are no cleanup items in this category." : "Some protected locations are unavailable. Full Disk Access allows a more complete scan.", tint: Tint.teal)
+            } else if !appState.scanState.isActive, appState.lastCleanedCategory == category {
+                EmptyStateView("Cleanup complete", systemImage: "checkmark.circle", description: "\(ByteCountFormatter.string(fromByteCount: appState.totalFreedSpace, countStyle: .file)) removed", tint: Tint.teal)
             } else if !appState.scanState.isActive {
                 EmptyStateView("See what is taking up space", systemImage: category.icon, description: "Scan first, then review the exact files before removing anything.", action: { appState.scanSingleCategory(category) }, actionLabel: "Scan this category", tint: Tint.teal)
             } else {
