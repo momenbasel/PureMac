@@ -339,7 +339,10 @@ final class AppState: ObservableObject {
                     return
                 }
 
-                let items = needsAdmin.map { self.cleanableUninstallItem(for: $0) }
+                // Sizing walks whole bundles; keep it off the main actor.
+                let items = await Task.detached(priority: .userInitiated) {
+                    needsAdmin.map { Self.cleanableUninstallItem(for: $0) }
+                }.value
                 let adminResult = await self.cleaningEngine.cleanWithAdminPrivileges(items: items)
                 let adminRemoved = needsAdmin.filter { adminResult.cleanedPaths.contains($0.path) }
                 let adminFailed = needsAdmin.filter { !adminResult.cleanedPaths.contains($0.path) }
@@ -444,17 +447,16 @@ final class AppState: ObservableObject {
 
     /// Public bridge so views (e.g. AppFilesView) can build CleanableItem rows
     /// from raw URLs when retrying via the PermissionCoordinator.
-    func makeUninstallCleanableItem(for url: URL) -> CleanableItem {
-        cleanableUninstallItem(for: url)
+    /// Pass a known `size` from the main actor; computing one walks the tree.
+    func makeUninstallCleanableItem(for url: URL, size: Int64? = nil) -> CleanableItem {
+        Self.cleanableUninstallItem(for: url, size: size)
     }
 
-    private func cleanableUninstallItem(for url: URL) -> CleanableItem {
+    private nonisolated static func cleanableUninstallItem(for url: URL, size: Int64? = nil) -> CleanableItem {
         let values = try? url.resourceValues(forKeys: [
-            .totalFileAllocatedSizeKey,
-            .fileAllocatedSizeKey,
             .contentModificationDateKey,
         ])
-        let size = Int64(values?.totalFileAllocatedSize ?? values?.fileAllocatedSize ?? 0)
+        let size = size ?? FileSizeCalculator.size(of: url) ?? 0
         return CleanableItem(
             name: url.lastPathComponent,
             path: url.path,

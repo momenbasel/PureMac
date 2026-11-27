@@ -140,7 +140,7 @@ struct AppFilesView: View {
             // re-trash the wrong files.
             guard needs else { return }
             let toRetry = appState.lastFailedRemovalURLs
-            let items = toRetry.map { appState.makeUninstallCleanableItem(for: $0) }
+            let items = toRetry.map { appState.makeUninstallCleanableItem(for: $0, size: sizeCache[$0] ?? 0) }
             appState.removalError = nil
             appState.removalNeedsFullDiskAccess = false
             appState.lastFailedRemovalURLs = []
