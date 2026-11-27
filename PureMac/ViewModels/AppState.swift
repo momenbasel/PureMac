@@ -96,6 +96,12 @@ final class AppState: ObservableObject {
     @Published var fdaBannerDismissed: Bool = false
     @Published var cleanError: String?
     @Published private(set) var lastCleanupHadFailures = false
+    /// Category whose own clean removed items most recently. Lets the category
+    /// view confirm the result after its list has been emptied.
+    @Published private(set) var lastCleanedCategory: CleaningCategory?
+    /// True while the administrator pass runs, including the time macOS waits
+    /// for the user to authenticate.
+    @Published private(set) var adminPassInProgress = false
     /// True when the most recent clean error is rooted in a TCC/FDA refusal
     /// (i.e. items survived even the admin pass). MainWindow uses this to
     /// route the user into the PermissionSheet instead of the generic alert.
@@ -815,11 +821,18 @@ final class AppState: ObservableObject {
         }
     }
 
+    private func runAdminPass(_ items: [CleanableItem]) async -> CleaningEngine.CleaningResult {
+        adminPassInProgress = true
+        defer { adminPassInProgress = false }
+        return await cleaningEngine.cleanWithAdminPrivileges(items: items)
+    }
+
     private func retryCleanItems(_ items: [CleanableItem]) async {
         guard !scanState.isActive, !deviceBackupRemovalInProgress else { return }
         let generation = UUID()
         cleanupGeneration = generation
         scanState = .cleaning(progress: 0)
+        lastCleanedCategory = nil
         cleanProgress = 0
 
         var result = await cleaningEngine.cleanItems(items) { [weak self] progress in
@@ -830,7 +843,7 @@ final class AppState: ObservableObject {
             }
         }
         if !result.requiresAdmin.isEmpty {
-            let admin = await cleaningEngine.cleanWithAdminPrivileges(items: result.requiresAdmin)
+            let admin = await runAdminPass(result.requiresAdmin)
             result.cleanedPaths.formUnion(admin.cleanedPaths)
             result.itemsCleaned += admin.itemsCleaned
             result.freedSpace += admin.freedSpace
@@ -906,6 +919,7 @@ final class AppState: ObservableObject {
         let generation = UUID()
         scanGeneration = generation
         scanWasCancelled = false
+        lastCleanedCategory = nil
         totalFreedSpace = 0
         scanProgress = 0
         scanState = .scanning(progress: 0, currentCategory: "Preparing...")
@@ -961,6 +975,7 @@ final class AppState: ObservableObject {
         cleanupGeneration = generation
 
         scanState = .cleaning(progress: 0)
+        lastCleanedCategory = nil
         cleanProgress = 0
 
         Task {
@@ -975,7 +990,7 @@ final class AppState: ObservableObject {
             // Escalate root-owned items via "with administrator privileges".
             // One auth prompt covers the entire batch.
             if !result.requiresAdmin.isEmpty {
-                let admin = await cleaningEngine.cleanWithAdminPrivileges(items: result.requiresAdmin)
+                let admin = await runAdminPass(result.requiresAdmin)
                 result.cleanedPaths.formUnion(admin.cleanedPaths)
                 result.itemsCleaned += admin.itemsCleaned
                 result.freedSpace += admin.freedSpace
@@ -1025,6 +1040,7 @@ final class AppState: ObservableObject {
         cleanupGeneration = generation
 
         scanState = .cleaning(progress: 0)
+        lastCleanedCategory = nil
         cleanProgress = 0
 
         Task {
@@ -1037,7 +1053,7 @@ final class AppState: ObservableObject {
             }
 
             if !cleanResult.requiresAdmin.isEmpty {
-                let admin = await cleaningEngine.cleanWithAdminPrivileges(items: cleanResult.requiresAdmin)
+                let admin = await runAdminPass(cleanResult.requiresAdmin)
                 cleanResult.cleanedPaths.formUnion(admin.cleanedPaths)
                 cleanResult.itemsCleaned += admin.itemsCleaned
                 cleanResult.freedSpace += admin.freedSpace
@@ -1046,6 +1062,7 @@ final class AppState: ObservableObject {
             }
 
             totalFreedSpace = cleanResult.freedSpace
+            if cleanResult.itemsCleaned > 0 { lastCleanedCategory = category }
             if cleanResult.itemsCleaned > 0 { lastCleanedDate = Date() }
 
             if let existing = categoryResults[category] {
@@ -1070,7 +1087,11 @@ final class AppState: ObservableObject {
             let survivors = survivingItems(from: selectedItems, result: cleanResult)
             handleCleanOutcome(errors: cleanResult.errors, survivors: survivors)
 
-            scanState = cleanResult.itemsCleaned > 0 ? .cleaned : .completed
+            // A clean started from a category leaves the user inside that
+            // category. While other results remain and nothing failed, return
+            // to the results list instead of the completion summary.
+            let showSummary = cleanResult.itemsCleaned > 0 && (categoryResults.isEmpty || lastCleanupHadFailures)
+            scanState = showSummary ? .cleaned : .completed
             loadDiskInfo()
         }
     }
@@ -1153,6 +1174,7 @@ final class AppState: ObservableObject {
         let generation = UUID()
         scanGeneration = generation
         scanWasCancelled = false
+        lastCleanedCategory = nil
         clearSelectionState()
         categoryResults = [:]
         totalJunkSize = 0

@@ -168,6 +168,127 @@ final class AppStateTests: XCTestCase {
         XCTAssertEqual(state.scanState, .cleaning(progress: 0.5))
     }
 
+    func testCategoryCleanReturnsToResultsWhileOtherCategoriesRemain() async throws {
+        let state = try await stateAfterCleaningUserCache(otherCategoryRemains: true)
+        XCTAssertEqual(state.scanState, .completed)
+        XCTAssertNil(state.categoryResults[.userCache])
+        XCTAssertNotNil(state.categoryResults[.trashBins])
+        XCTAssertEqual(state.lastCleanedCategory, .userCache)
+        XCTAssertEqual(state.totalFreedSpace, 4096)
+        XCTAssertFalse(state.adminPassInProgress)
+    }
+
+    func testCategoryCleanShowsCompletionWhenNothingRemains() async throws {
+        let state = try await stateAfterCleaningUserCache(otherCategoryRemains: false)
+        XCTAssertEqual(state.scanState, .cleaned)
+        XCTAssertTrue(state.categoryResults.isEmpty)
+    }
+
+    private func stateAfterCleaningUserCache(otherCategoryRemains: Bool) async throws -> AppState {
+        let savedExclusions = UserDefaults.standard.stringArray(forKey: CleanupExclusions.defaultsKey)
+        UserDefaults.standard.set([], forKey: CleanupExclusions.defaultsKey)
+        let root = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Caches/PureMacTests-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer {
+            try? FileManager.default.removeItem(at: root)
+            if let savedExclusions {
+                UserDefaults.standard.set(savedExclusions, forKey: CleanupExclusions.defaultsKey)
+            } else {
+                UserDefaults.standard.removeObject(forKey: CleanupExclusions.defaultsKey)
+            }
+        }
+        let file = root.appendingPathComponent("cache.bin")
+        try Data(repeating: 1, count: 4096).write(to: file)
+
+        let state = AppState(performStartupTasks: false)
+        let item = CleanableItem(name: "Fixture", path: file.path, size: 4096, category: .userCache, isSelected: true, lastModified: nil)
+        state.categoryResults[.userCache] = CategoryResult(category: .userCache, items: [item], totalSize: 4096)
+        if otherCategoryRemains {
+            let other = CleanableItem(name: "Other", path: "/fixtures/\(UUID().uuidString)", size: 100, category: .trashBins, isSelected: false, lastModified: nil)
+            state.categoryResults[.trashBins] = CategoryResult(category: .trashBins, items: [other], totalSize: 100)
+        }
+        state.scanState = .completed
+
+        state.cleanCategory(.userCache)
+        for _ in 0..<200 where state.scanState.isActive {
+            try await Task.sleep(nanoseconds: 25_000_000)
+        }
+        XCTAssertFalse(FileManager.default.fileExists(atPath: file.path))
+        return state
+    }
+
+    func testCategoryCleanKeepsUnselectedItemsInTheSameCategory() async throws {
+        try await withCacheFixture { root in
+            let cleanedFile = root.appendingPathComponent("clean.bin")
+            let keptFile = root.appendingPathComponent("keep.bin")
+            try Data(repeating: 1, count: 4096).write(to: cleanedFile)
+            try Data(repeating: 1, count: 4096).write(to: keptFile)
+            let cleaned = CleanableItem(name: "Clean", path: cleanedFile.path, size: 4096, category: .userCache, isSelected: true, lastModified: nil)
+            let kept = CleanableItem(name: "Keep", path: keptFile.path, size: 4096, category: .userCache, isSelected: true, lastModified: nil)
+            let state = AppState(performStartupTasks: false)
+            state.categoryResults[.userCache] = CategoryResult(category: .userCache, items: [cleaned, kept], totalSize: 8192)
+            state.scanState = .completed
+
+            state.cleanCategory(.userCache, itemIDs: [cleaned.id])
+            try await self.waitForCleanToFinish(state)
+
+            XCTAssertEqual(state.scanState, .completed)
+            XCTAssertEqual(state.categoryResults[.userCache]?.items.map(\.id), [kept.id])
+            XCTAssertEqual(state.totalJunkSize, 4096)
+            XCTAssertFalse(FileManager.default.fileExists(atPath: cleanedFile.path))
+            XCTAssertTrue(FileManager.default.fileExists(atPath: keptFile.path))
+        }
+    }
+
+    func testCategoryCleanShowsSummaryWhenAnItemFails() async throws {
+        try await withCacheFixture { root in
+            let file = root.appendingPathComponent("clean.bin")
+            let target = root.appendingPathComponent("target.bin")
+            let link = root.appendingPathComponent("link.bin")
+            try Data(repeating: 1, count: 4096).write(to: file)
+            try Data(repeating: 1, count: 4096).write(to: target)
+            try FileManager.default.createSymbolicLink(at: link, withDestinationURL: target)
+            let cleaned = CleanableItem(name: "Clean", path: file.path, size: 4096, category: .userCache, isSelected: true, lastModified: nil)
+            let refused = CleanableItem(name: "Link", path: link.path, size: 4096, category: .userCache, isSelected: true, lastModified: nil)
+            let state = AppState(performStartupTasks: false)
+            state.categoryResults[.userCache] = CategoryResult(category: .userCache, items: [cleaned, refused], totalSize: 8192)
+            state.scanState = .completed
+
+            state.cleanCategory(.userCache)
+            try await self.waitForCleanToFinish(state)
+
+            XCTAssertEqual(state.scanState, .cleaned)
+            XCTAssertTrue(state.lastCleanupHadFailures)
+            XCTAssertEqual(state.categoryResults[.userCache]?.items.map(\.id), [refused.id])
+            XCTAssertTrue(FileManager.default.fileExists(atPath: target.path))
+        }
+    }
+
+    private func waitForCleanToFinish(_ state: AppState) async throws {
+        for _ in 0..<200 where state.scanState.isActive {
+            try await Task.sleep(nanoseconds: 25_000_000)
+        }
+        XCTAssertFalse(state.scanState.isActive, "Clean did not finish within 5 seconds")
+    }
+
+    private func withCacheFixture(_ body: (URL) async throws -> Void) async throws {
+        let savedExclusions = UserDefaults.standard.stringArray(forKey: CleanupExclusions.defaultsKey)
+        UserDefaults.standard.set([], forKey: CleanupExclusions.defaultsKey)
+        let root = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Caches/PureMacTests-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer {
+            try? FileManager.default.removeItem(at: root)
+            if let savedExclusions {
+                UserDefaults.standard.set(savedExclusions, forKey: CleanupExclusions.defaultsKey)
+            } else {
+                UserDefaults.standard.removeObject(forKey: CleanupExclusions.defaultsKey)
+            }
+        }
+        try await body(root)
+    }
+
     private func cleanupItem(selected: Bool) -> CleanableItem {
         CleanableItem(name: "Fixture", path: "/fixtures/\(UUID().uuidString)", size: 100, category: .userCache, isSelected: selected, lastModified: nil)
     }

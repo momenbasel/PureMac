@@ -557,7 +557,7 @@ struct DashboardView: View {
                 }
                 ProgressView(value: appState.cleanProgress)
                     .tint(Tint.accent)
-                Text("Keep PureMac open until cleanup finishes.")
+                Text(appState.adminPassInProgress ? "Authenticate with Touch ID or your password" : "Keep PureMac open until cleanup finishes.")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
             }
@@ -585,11 +585,25 @@ struct DashboardView: View {
                             .foregroundStyle(.secondary)
                             .lineLimit(3)
                     }
-                    Button("Done") {
-                        appState.scanState = .idle
+                    HStack(spacing: 10) {
+                        if appState.categoryResults.isEmpty {
+                            Button("Done") {
+                                appState.scanState = .idle
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(Tint.accent)
+                        } else {
+                            Button("Review scan results") {
+                                appState.scanState = .completed
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(Tint.accent)
+                            Button("Done") {
+                                appState.scanState = .idle
+                            }
+                            .buttonStyle(.bordered)
+                        }
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Tint.accent)
                     .padding(.top, 5)
                 }
                 Spacer()
