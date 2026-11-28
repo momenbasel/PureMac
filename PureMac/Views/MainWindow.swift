@@ -131,6 +131,7 @@ struct MainWindow: View {
             } header: {
                 collapsibleSectionHeader("Care", isExpanded: $careExpanded)
             }
+            .collapsible(false)
 
             Section {
                 if applicationsExpanded {
@@ -141,6 +142,7 @@ struct MainWindow: View {
             } header: {
                 collapsibleSectionHeader("Applications", isExpanded: $applicationsExpanded)
             }
+            .collapsible(false)
 
             Section {
                 if toolsExpanded {
@@ -153,6 +155,7 @@ struct MainWindow: View {
             } header: {
                 collapsibleSectionHeader("Tools", isExpanded: $toolsExpanded)
             }
+            .collapsible(false)
         }
         .listStyle(.sidebar)
         .navigationTitle("PureMac")

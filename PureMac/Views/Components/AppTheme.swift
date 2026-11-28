@@ -140,6 +140,81 @@ struct ToolSection<Content: View>: View {
     }
 }
 
+/// Full-strip disclosure control whose entire header row toggles expansion.
+struct InlineDisclosure<Label: View, Content: View>: View {
+    @Binding var isExpanded: Bool
+    var spacing: CGFloat = 6
+    var headerPadding: EdgeInsets = EdgeInsets()
+    var contentPadding: EdgeInsets = EdgeInsets()
+    var accessibilityLabel: Text? = nil
+    var accessibilityHint: Text? = nil
+    var accessibilityIdentifier: String? = nil
+    @ViewBuilder var label: () -> Label
+    @ViewBuilder var content: () -> Content
+    @Environment(\.interfaceMotionEnabled) private var motionEnabled
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                withAnimation(motionEnabled ? .easeInOut(duration: 0.18) : nil) {
+                    isExpanded.toggle()
+                }
+            } label: {
+                HStack(alignment: .center, spacing: spacing) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 10, weight: .semibold))
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 12, height: 12)
+                        .accessibilityHidden(true)
+                    label()
+                }
+                .padding(headerPadding)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .modifier(DisclosureAccessibilityModifier(
+                isExpanded: isExpanded,
+                label: accessibilityLabel,
+                hint: accessibilityHint,
+                identifier: accessibilityIdentifier
+            ))
+
+            if isExpanded {
+                content()
+                    .padding(contentPadding)
+            }
+        }
+    }
+}
+
+private struct DisclosureAccessibilityModifier: ViewModifier {
+    let isExpanded: Bool
+    let label: Text?
+    let hint: Text?
+    let identifier: String?
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        let base = content
+            .accessibilityValue(Text(LocalizedStringKey(isExpanded ? "Expanded" : "Collapsed")))
+        if let label, let hint, let identifier {
+            base.accessibilityLabel(label).accessibilityHint(hint).accessibilityIdentifier(identifier)
+        } else if let label, let identifier {
+            base.accessibilityLabel(label).accessibilityIdentifier(identifier)
+        } else if let label, let hint {
+            base.accessibilityLabel(label).accessibilityHint(hint)
+        } else if let label {
+            base.accessibilityLabel(label)
+        } else if let identifier {
+            base.accessibilityIdentifier(identifier)
+        } else {
+            base
+        }
+    }
+}
+
 struct StatusChip: View {
     let label: String
     var systemImage: String? = nil

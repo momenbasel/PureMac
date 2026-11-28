@@ -182,7 +182,19 @@ struct PerformanceView: View {
     }
 
     private func startupSection(_ items: [PerformanceStartupItem]) -> some View {
-        DisclosureGroup(isExpanded: $startupExpanded) {
+        InlineDisclosure(
+            isExpanded: $startupExpanded,
+            contentPadding: EdgeInsets(top: 8, leading: 18, bottom: 0, trailing: 0),
+            accessibilityLabel: Text("Startup and background items"),
+            accessibilityIdentifier: "performance.startupDisclosure"
+        ) {
+            HStack {
+                Text("Startup and background items").font(.headline)
+                Spacer()
+                Text(String(format: String(localized: "%lld found"), Int64(items.count)))
+                    .font(.callout.monospacedDigit()).foregroundStyle(.secondary)
+            }
+        } content: {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("Launch agents and daemons installed outside macOS system folders")
@@ -201,16 +213,7 @@ struct PerformanceView: View {
                     }
                 }
             }
-            .padding(.top, 8)
-        } label: {
-            HStack {
-                Text("Startup and background items").font(.headline)
-                Spacer()
-                Text(String(format: String(localized: "%lld found"), Int64(items.count)))
-                    .font(.callout.monospacedDigit()).foregroundStyle(.secondary)
-            }
         }
-        .accessibilityIdentifier("performance.startupDisclosure")
     }
 
     private func snapshotsSection(_ snapshots: [PerformanceSnapshot]) -> some View {
@@ -342,14 +345,16 @@ private struct PerformanceResources: View {
             }
 
             Divider().padding(.vertical, 4)
-            DisclosureGroup(isExpanded: $expanded.animation(motionEnabled ? .easeInOut(duration: 0.18) : nil)) {
-                if expanded {
-                    ProcessResourcesView(isActive: isActive)
-                }
-            } label: {
+            InlineDisclosure(
+                isExpanded: $expanded,
+                contentPadding: EdgeInsets(top: 6, leading: 0, bottom: 0, trailing: 0),
+                accessibilityLabel: Text("Apps and processes"),
+                accessibilityIdentifier: "performance.resourcesDisclosure"
+            ) {
                 Text("Apps and processes").font(.headline)
+            } content: {
+                ProcessResourcesView(isActive: isActive)
             }
-            .accessibilityIdentifier("performance.resourcesDisclosure")
         }
         .onReceive(monitor.$latestReading.compactMap { $0 }) { reading in
             guard isActive else { return }

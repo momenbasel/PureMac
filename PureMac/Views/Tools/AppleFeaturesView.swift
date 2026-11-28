@@ -463,7 +463,35 @@ private struct AppleFeatureRow: View {
     private var available: Bool { feature.isAvailable(on: version) }
 
     var body: some View {
-        DisclosureGroup(isExpanded: $expanded) {
+        InlineDisclosure(
+            isExpanded: $expanded,
+            spacing: 10,
+            headerPadding: EdgeInsets(top: 16, leading: 16, bottom: expanded ? 10 : 16, trailing: 16),
+            contentPadding: EdgeInsets(top: 0, leading: 38, bottom: 16, trailing: 16),
+            accessibilityLabel: Text(feature.title),
+            accessibilityHint: Text(feature.summary),
+            accessibilityIdentifier: "appleFeatures.feature.\(feature.id)"
+        ) {
+            VStack(alignment: .leading, spacing: 5) {
+                HStack {
+                    Text(feature.title)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.primary)
+                    Spacer(minLength: 8)
+                    if !available {
+                        Text("Requires macOS \(feature.minimumVersion.majorVersion).\(feature.minimumVersion.minorVersion)")
+                            .font(.system(size: 10.5))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                Text(feature.summary)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .multilineTextAlignment(.leading)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        } content: {
             VStack(alignment: .leading, spacing: 12) {
                 Text(feature.steps)
                     .font(.system(size: 12))
@@ -481,29 +509,7 @@ private struct AppleFeatureRow: View {
                 }
                 .font(.system(size: 12))
             }
-            .padding(.top, 10)
-            .padding(.leading, 2)
-        } label: {
-            VStack(alignment: .leading, spacing: 5) {
-                HStack {
-                    Text(feature.title)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    if !available {
-                        Text("Requires macOS \(feature.minimumVersion.majorVersion).\(feature.minimumVersion.minorVersion)")
-                            .font(.system(size: 10.5))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                Text(feature.summary)
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
         }
-        .padding(16)
-        .accessibilityIdentifier("appleFeatures.feature.\(feature.id)")
     }
 }
 
