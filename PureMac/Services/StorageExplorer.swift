@@ -72,24 +72,13 @@ enum StorageExplorerError: LocalizedError, Equatable {
 actor StorageExplorer {
     typealias ProgressHandler = @Sendable (StorageScanProgress) -> Void
 
-    private struct FileIdentity: Hashable {
-        let device: UInt64
-        let inode: UInt64
-    }
-
-    private struct FileMetadata {
-        let identity: FileIdentity
-        let allocatedSize: Int64
-        let isDataless: Bool
-    }
-
     private struct ScanContext {
         var allocatedSize: Int64 = 0
         var fileCount = 0
         var directoryCount = 0
         var inaccessibleCount = 0
         var skippedCount = 0
-        var seenFiles: Set<FileIdentity> = []
+        var ledger = FileAllocation.Ledger()
     }
 
     private struct EntryMeasure {
@@ -102,7 +91,6 @@ actor StorageExplorer {
 
     private static let resourceKeys: Set<URLResourceKey> = [
         .isDirectoryKey,
-        .isRegularFileKey,
         .isSymbolicLinkKey,
         .isPackageKey,
         .isUbiquitousItemKey,
@@ -135,7 +123,7 @@ actor StorageExplorer {
         guard !Self.isUnavailableCloudItem(rootValues) else {
             throw StorageExplorerError.cloudOnly(rootURL.path)
         }
-        guard let rootMetadata = Self.metadata(for: rootURL) else {
+        guard let rootMetadata = FileAllocation(at: rootURL) else {
             throw StorageExplorerError.unavailable(rootURL.path)
         }
         guard !rootMetadata.isDataless else {
@@ -228,7 +216,7 @@ actor StorageExplorer {
                 continue
             }
 
-            guard let metadata = Self.metadata(for: url) else {
+            guard let metadata = FileAllocation(at: url) else {
                 context.inaccessibleCount += 1
                 entryMeasure.inaccessibleCount += 1
                 continue
@@ -239,13 +227,13 @@ actor StorageExplorer {
                 continue
             }
 
-            if values.isDirectory == true {
+            if metadata.isDirectory {
                 if url == topURL {
                     topKind = values.isPackage == true ? .package : .directory
                 }
-                context.allocatedSize += metadata.allocatedSize
+                context.allocatedSize += metadata.bytes
                 context.directoryCount += 1
-                entryMeasure.allocatedSize += metadata.allocatedSize
+                entryMeasure.allocatedSize += metadata.bytes
                 entryMeasure.directoryCount += 1
 
                 do {
@@ -259,14 +247,14 @@ actor StorageExplorer {
                     context.inaccessibleCount += 1
                     entryMeasure.inaccessibleCount += 1
                 }
-            } else if values.isRegularFile == true {
+            } else if metadata.isRegularFile {
                 if url == topURL {
                     topKind = .file
                 }
-                if context.seenFiles.insert(metadata.identity).inserted {
-                    context.allocatedSize += metadata.allocatedSize
+                if let bytes = context.ledger.additionalBytes(for: metadata) {
+                    context.allocatedSize += bytes
+                    entryMeasure.allocatedSize += bytes
                     context.fileCount += 1
-                    entryMeasure.allocatedSize += metadata.allocatedSize
                     entryMeasure.fileCount += 1
                 } else {
                     context.skippedCount += 1
@@ -308,21 +296,5 @@ actor StorageExplorer {
         guard values.isUbiquitousItem == true else { return false }
         let status = values.ubiquitousItemDownloadingStatus
         return status != .current && status != .downloaded
-    }
-
-    private static func metadata(for url: URL) -> FileMetadata? {
-        var fileStat = stat()
-        let status: Int32 = url.withUnsafeFileSystemRepresentation { path in
-            guard let path else { return Int32(-1) }
-            return lstat(path, &fileStat)
-        }
-        guard status == 0 else { return nil }
-
-        let blocks = max(Int64(0), Int64(fileStat.st_blocks))
-        return FileMetadata(
-            identity: FileIdentity(device: UInt64(fileStat.st_dev), inode: UInt64(fileStat.st_ino)),
-            allocatedSize: blocks * 512,
-            isDataless: fileStat.st_flags & UInt32(SF_DATALESS) != 0
-        )
     }
 }

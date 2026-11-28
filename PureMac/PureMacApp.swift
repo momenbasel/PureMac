@@ -15,6 +15,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSWindow.allowsAutomaticWindowTabbing = false
+#if DEBUG
+        if CleanupUITestFixture.home != nil { return }
+#endif
 
         // Install the menu-bar monitor if the user has it enabled. Never under
         // XCTest — the status-item machinery would stall the test-host run loop.
@@ -81,9 +84,25 @@ extension Notification.Name {
 @main
 struct PureMacApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @StateObject private var appState = AppState(performStartupTasks: NSClassFromString("XCTestCase") == nil)
+    @StateObject private var appState = PureMacApp.makeAppState()
     @StateObject private var theme = ThemeManager.shared
-    @AppStorage("PureMac.OnboardingComplete") private var onboardingComplete = false
+    @State private var showingSetupGuide = false
+
+    private static let interfaceDirection: LayoutDirection = {
+        if UserDefaults.standard.bool(forKey: "NSForceRightToLeftWritingDirection") { return .rightToLeft }
+        let language = Locale.Language(identifier: Bundle.main.preferredLocalizations.first ?? "en")
+        return language.characterDirection == .rightToLeft ? .rightToLeft : .leftToRight
+    }()
+
+    @MainActor
+    private static func makeAppState() -> AppState {
+#if DEBUG
+        if let home = CleanupUITestFixture.home {
+            return CleanupUITestFixture.makeState(home: home)
+        }
+#endif
+        return AppState(performStartupTasks: NSClassFromString("XCTestCase") == nil)
+    }
 
     init() {
         // Enter CLI mode only when the first arg is a known command. Xcode and
@@ -97,20 +116,18 @@ struct PureMacApp: App {
 
     var body: some Scene {
         WindowGroup(id: "main") {
-            Group {
-                if onboardingComplete {
-                    MainWindow()
-                        .environmentObject(appState)
-                        .frame(minWidth: 960, minHeight: 640)
-                } else {
-                    OnboardingView(isComplete: $onboardingComplete)
+            MainWindow()
+                .environmentObject(appState)
+                .sheet(isPresented: $showingSetupGuide) {
+                    OnboardingView { showingSetupGuide = false }
                 }
-            }
-            .environmentObject(theme)
-            // Record the openWindow action so the menu-bar popover can reopen
-            // this window after it's been closed (the popover lives outside the
-            // scene graph and can't use openWindow itself).
-            .background(WindowOpenerCapture())
+                .environmentObject(theme)
+                // Record the openWindow action so the menu-bar popover can reopen
+                // this window after it's been closed (the popover lives outside the
+                // scene graph and can't use openWindow itself).
+                .background(WindowOpenerCapture())
+                .modifier(InterfaceMotion())
+                .environment(\.layoutDirection, Self.interfaceDirection)
         }
         .windowStyle(.automatic)
         .windowToolbarStyle(.unified)
@@ -118,6 +135,12 @@ struct PureMacApp: App {
         .defaultSize(width: 1120, height: 740)
         .commands {
             CommandGroup(replacing: .newItem) {}
+            CommandGroup(after: .help) {
+                Button("Setup guide…") {
+                    WindowOpener.shared.showMainWindow()
+                    showingSetupGuide = true
+                }
+            }
             CommandMenu("Updates") {
                 Button("Check for Updates") {
                     appState.showUpdateSettings = true
@@ -131,8 +154,10 @@ struct PureMacApp: App {
 
         Settings {
             SettingsView(standalone: true)
+                .modifier(InterfaceMotion())
                 .environmentObject(appState)
                 .environmentObject(theme)
+                .environment(\.layoutDirection, Self.interfaceDirection)
                 .frame(minWidth: 680, idealWidth: 760, minHeight: 580, idealHeight: 700)
         }
 

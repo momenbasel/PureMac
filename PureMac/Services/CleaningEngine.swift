@@ -40,269 +40,359 @@ actor CleaningEngine {
         // survivor, Full Disk Access cannot fix these, so they must not raise
         // the Grant Access prompt.
         var skippedPaths: Set<String> = []
+        var receiptRows: [CleanupReceipt.Row] = []
+        var permissionDenied: Set<UUID> = []
+
+        mutating func merge(_ other: Self) {
+            freedSpace += other.freedSpace
+            itemsCleaned += other.itemsCleaned
+            errors.append(contentsOf: other.errors)
+            cleanedPaths.formUnion(other.cleanedPaths)
+            trashedPaths.formUnion(other.trashedPaths)
+            protectedPaths.formUnion(other.protectedPaths)
+            skippedPaths.formUnion(other.skippedPaths)
+            permissionDenied.formUnion(other.permissionDenied)
+            requiresAdmin.append(contentsOf: other.requiresAdmin)
+            receiptRows.append(contentsOf: other.receiptRows)
+        }
     }
 
     // MARK: - Public API
 
     func cleanItems(_ items: [CleanableItem], progressHandler: @Sendable (Double) -> Void) async -> CleaningResult {
         var result = CleaningResult()
-        let total = items.count
         let exclusions = CleanupExclusions.paths()
-
         for (index, item) in items.enumerated() {
-            let progress = Double(index + 1) / Double(total)
-            defer { progressHandler(progress) }
-            if CleanupExclusions.excludes(item.path, paths: exclusions) {
-                result.errors.append(String(localized: "Excluded from cleanup: \(item.name)"))
-                continue
-            }
-
-            if item.category == .aiApps, !isSupportedAIAppPath(item.path) {
-                result.errors.append("Unsupported AI app cleanup path: \(item.path)")
-                continue
-            }
-
-            if item.category == .purgeableSpace {
-                let purged = await purgePurgeableSpace()
-                result.freedSpace += purged
-                if purged > 0 { result.itemsCleaned += 1 }
-                // Purgeable space is a one-shot reclaim action, not a file
-                // unlink. Mark it handled so it isn't later mistaken for an
-                // item that "couldn't be removed" (the purge ran regardless of
-                // how much APFS chose to release). See issue #112.
-                result.cleanedPaths.insert(item.path)
-                continue
-            }
-
-            if item.category == .universalBinaries {
-                // Thinning is a lipo rewrite plus re-sign, not a file unlink,
-                // so it bypasses the delete path entirely. The item path is
-                // the app bundle; the per-binary work list is re-derived here
-                // so a stale scan can't strip slices that no longer exist.
-                let thinOutcome = await thinUniversalBinaryItem(item)
-                result.freedSpace += thinOutcome.freed
-                if thinOutcome.cleaned {
-                    result.itemsCleaned += 1
-                    result.cleanedPaths.insert(item.path)
-                }
-                if let error = thinOutcome.error {
-                    result.errors.append(error)
-                }
-                continue
-            }
-
-            if item.category == .languageFiles {
-                // Localizations are sealed into the bundle's CodeResources; a
-                // plain unlink would break the app's code signature, so the
-                // folder is removed through BinaryThinner's staged re-sign
-                // flow instead of the delete path.
-                let lprojOutcome = await removeLanguageFileItem(item)
-                result.freedSpace += lprojOutcome.freed
-                if lprojOutcome.cleaned {
-                    result.itemsCleaned += 1
-                    result.cleanedPaths.insert(item.path)
-                }
-                if let error = lprojOutcome.error {
-                    result.errors.append(error)
-                }
-                continue
-            }
-
-            if item.category == .devToolCaches {
-                // Developer tool caches never take the generic unlink path:
-                // each root is validated by exact match, and tools that manage
-                // their own cache (uv, go) are cleaned through their CLI.
-                let outcome = await cleanDevToolCache(item)
-                result.freedSpace += outcome.freed
-                if outcome.removed { result.itemsCleaned += 1 }
-                if outcome.handled { result.cleanedPaths.insert(item.path) }
-                if outcome.skipped { result.skippedPaths.insert(item.path) }
-                if let error = outcome.error { result.errors.append(error) }
-                continue
-            }
-
-            if item.category == .dockerCache && item.path.isEmpty {
-                // The virtual "Docker prune" entry (empty path, like
-                // purgeableSpace) reclaims space inside the Docker/OrbStack VM
-                // via `docker system prune -f` — there is no file to unlink.
-                let pruneOutcome = await pruneDockerSystem()
-                result.freedSpace += pruneOutcome.freed
-                if pruneOutcome.freed > 0 { result.itemsCleaned += 1 }
-                result.cleanedPaths.insert(item.path)
-                if let error = pruneOutcome.error {
-                    result.errors.append(error)
-                }
-                continue
-            }
-
-            if item.category == .rustTargets {
-                // `cargo clean` rather than an unlink, as requested for Rust
-                // projects: cargo knows its own layout and lock files.
-                let cargoOutcome = await cargoClean(item)
-                result.freedSpace += cargoOutcome.freed
-                if cargoOutcome.cleaned {
-                    result.itemsCleaned += 1
-                    result.cleanedPaths.insert(item.path)
-                }
-                if let error = cargoOutcome.error {
-                    result.errors.append(error)
-                }
-                continue
-            }
-
-            if let runtimeID = item.simctlRuntimeIdentifier {
-                // Simulator runtimes live in CoreSimulator's secure storage;
-                // deleting the mount path by hand leaves orphaned disk images.
-                // Always go through `xcrun simctl runtime delete`.
-                let deleteOutcome = await deleteSimulatorRuntime(identifier: runtimeID, reportedSize: item.size)
-                result.freedSpace += deleteOutcome.freed
-                if deleteOutcome.cleaned {
-                    result.itemsCleaned += 1
-                    result.cleanedPaths.insert(item.path)
-                }
-                if let error = deleteOutcome.error {
-                    result.errors.append(error)
-                }
-                continue
-            }
-
-            do {
-                let itemURL = URL(fileURLWithPath: item.path)
-                guard !hasUnexpectedSymlink(in: item.path) else {
-                    let msg = String(localized: "Skipped symlink or unsafe path: \(item.path)")
-                    Logger.shared.log(msg, level: .warning)
-                    result.errors.append(msg)
-                    continue
-                }
-                guard fileManager.fileExists(atPath: item.path) else {
-                    result.cleanedPaths.insert(item.path)
-                    continue
-                }
-                let resolvedURL = itemURL.resolvingSymlinksInPath()
-                let resolved = resolvedURL.path
-
-                // Large files surfaced by scanLargeFiles are per-file items
-                // under Downloads/Documents/Desktop; those get a narrower check
-                // instead of the whole-subtree allow-list.
-                // languageFiles never reaches here — it is handled above via
-                // the staged re-sign flow, not the delete path.
-                let pathAccepted = isSafeToDelete(item: item, resolvedPath: resolved)
-                guard pathAccepted else {
-                    let msg = String(localized: "Skipped symlink or unsafe path: \(item.path) -> \(resolved)")
-                    Logger.shared.log(msg, level: .warning)
-                    result.errors.append(msg)
-                    continue
-                }
-
-                // Narrow the TOCTOU window: re-resolve right before the delete
-                // and require the resolved path to still match. Any concurrent
-                // swap between check and delete aborts the operation.
-                let reResolved = itemURL.resolvingSymlinksInPath().path
-                guard reResolved == resolved, !hasUnexpectedSymlink(in: item.path) else {
-                    let msg = String(localized: "Aborting delete: path resolution changed between check and unlink for \(item.path)")
-                    Logger.shared.log(msg, level: .warning)
-                    result.errors.append(msg)
-                    continue
-                }
-
-                let isManagedDerivedData = XcodeBuildMCPDerivedDataSupport.isManagedDerivedDataPath(
-                    item.path,
-                    homeDirectory: homeDirectory
-                ) || XcodeBuildMCPDerivedDataSupport.isManagedDerivedDataPath(
-                    resolved,
-                    homeDirectory: homeDirectory
-                )
-                if isManagedDerivedData {
-                    // The legacy shared root predates XcodeBuildMCP's
-                    // per-workspace lock, so only workspace DerivedData waits
-                    // for the lock before moving to the Trash.
-                    var lifecycleLock: XcodeBuildMCPDerivedDataSupport.LifecycleLock?
-                    if XcodeBuildMCPDerivedDataSupport.workspaceKey(
-                        forManagedDerivedDataPath: resolved,
-                        homeDirectory: homeDirectory
-                    ) != nil {
-                        guard let acquired = XcodeBuildMCPDerivedDataSupport.acquireLifecycleLock(
-                            forManagedDerivedDataPath: resolved,
-                            homeDirectory: homeDirectory,
-                            fileManager: fileManager
-                        ) else {
-                            let detail = String(localized: "Skipped XcodeBuildMCP DerivedData: lifecycle lock is unavailable: \(item.path)")
-                            Logger.shared.log(detail, level: .warning)
-                            result.errors.append(detail)
-                            continue
+            var single = checkedIdentityResult(for: item) ?? CleaningResult()
+            if single.receiptRows.isEmpty {
+                single = await cleanItem(item, exclusions: exclusions)
+                if single.requiresAdmin.isEmpty && single.receiptRows.isEmpty {
+                    let disposition: CleanupDisposition
+                    if single.protectedPaths.contains(item.path) {
+                        disposition = .protected
+                    } else if single.skippedPaths.contains(item.path) || CleanupExclusions.excludes(item.path, paths: exclusions) {
+                        disposition = .skipped
+                    } else if !single.errors.isEmpty {
+                        disposition = .failed
+                    } else if single.cleanedPaths.contains(item.path) {
+                        let operation = CleanupOperation(item, homeDirectory: homeDirectory)
+                        if operation == .trash && single.itemsCleaned > 0 {
+                            disposition = .trashed
+                        } else if single.itemsCleaned > 0 || item.isActionItem {
+                            disposition = operation == .delete ? .removed : .completed
+                        } else {
+                            disposition = .missing
                         }
-                        lifecycleLock = acquired
+                    } else {
+                        disposition = .skipped
                     }
-                    defer {
-                        if let lifecycleLock {
-                            XcodeBuildMCPDerivedDataSupport.releaseLifecycleLock(
-                                lifecycleLock,
-                                fileManager: fileManager
-                            )
-                        }
-                    }
-                    // PureMac's safety contract is Trash-only for recoverable
-                    // cleanup. XcodeBuildMCP DerivedData must not be unlinked.
-                    var resulting: NSURL?
-                    try fileManager.trashItem(at: resolvedURL, resultingItemURL: &resulting)
-                    if let trashedPath = resulting?.path {
-                        result.trashedPaths.insert(trashedPath)
-                    }
-                } else {
-                    try fileManager.removeItem(at: itemURL)
+                    single.receiptRows.append(.init(
+                        item: item, disposition: disposition,
+                        bytes: disposition == .trashed ? item.size : single.freedSpace,
+                        detail: single.errors.first, trashPath: single.trashedPaths.first
+                    ))
                 }
-                result.freedSpace += item.size
+            }
+            result.merge(single)
+            progressHandler(Double(index + 1) / Double(items.count))
+        }
+        return result
+    }
+
+    func putBack(_ recovery: TrackedTrashMove) throws {
+        let path = recovery.originalURL.path
+        guard XcodeBuildMCPDerivedDataSupport.isManagedDerivedDataPath(path, homeDirectory: homeDirectory) else {
+            throw TrackedTrashMove.Failure.unavailable
+        }
+        if XcodeBuildMCPDerivedDataSupport.workspaceKey(forManagedDerivedDataPath: path, homeDirectory: homeDirectory) != nil {
+            guard let lock = XcodeBuildMCPDerivedDataSupport.acquireLifecycleLock(
+                forManagedDerivedDataPath: path, homeDirectory: homeDirectory, createParentIfMissing: false
+            ) else { throw TrackedTrashMove.Failure.workspaceBusy }
+            defer { XcodeBuildMCPDerivedDataSupport.releaseLifecycleLock(lock) }
+            try recovery.putBack()
+        } else {
+            try recovery.putBack()
+        }
+    }
+
+    private func checkedIdentityResult(for item: CleanableItem) -> CleaningResult? {
+        guard let expected = item.reviewedIdentity else { return nil }
+        let current = CleanupFileIdentity.read(item)
+        var result = CleaningResult()
+        if current == .missing {
+            result.cleanedPaths.insert(item.path)
+            result.receiptRows = [.init(item: item, disposition: .missing)]
+        } else if current == .unreadable || expected == .unreadable || current != expected {
+            let detail = current == .unreadable || expected == .unreadable
+                ? String(localized: "Could not verify this item.")
+                : String(localized: "Changed since review. Scan again to review this item.")
+            result.skippedPaths.insert(item.path)
+            result.receiptRows = [.init(item: item, disposition: .skipped, detail: detail, requiresRescan: true)]
+        } else {
+            return nil
+        }
+        return result
+    }
+
+    private func cleanItem(_ item: CleanableItem, exclusions: [String]) async -> CleaningResult {
+        var result = CleaningResult()
+        if CleanupExclusions.excludes(item.path, paths: exclusions) {
+            result.errors.append(String(localized: "Excluded from cleanup: \(item.name)"))
+            return result
+        }
+
+        if item.category == .aiApps, !isSupportedAIAppPath(item.path) {
+            result.errors.append("Unsupported AI app cleanup path: \(item.path)")
+            return result
+        }
+
+        if item.category == .purgeableSpace {
+            let purged = await purgePurgeableSpace()
+            result.freedSpace += purged
+            if purged > 0 { result.itemsCleaned += 1 }
+            // Purgeable space is a one-shot reclaim action, not a file
+            // unlink. Mark it handled so it isn't later mistaken for an
+            // item that "couldn't be removed" (the purge ran regardless of
+            // how much APFS chose to release). See issue #112.
+            result.cleanedPaths.insert(item.path)
+            return result
+        }
+
+        if item.category == .universalBinaries {
+            // Thinning is a lipo rewrite plus re-sign, not a file unlink,
+            // so it bypasses the delete path entirely. The item path is
+            // the app bundle; the per-binary work list is re-derived here
+            // so a stale scan can't strip slices that no longer exist.
+            let thinOutcome = await thinUniversalBinaryItem(item)
+            result.freedSpace += thinOutcome.freed
+            if thinOutcome.cleaned {
                 result.itemsCleaned += 1
                 result.cleanedPaths.insert(item.path)
-            } catch {
-                let nsError = error as NSError
-                let isPermissionDenied =
-                    (nsError.domain == NSCocoaErrorDomain &&
-                        (nsError.code == NSFileWriteNoPermissionError ||
-                         nsError.code == NSFileReadNoPermissionError)) ||
-                    (nsError.domain == NSPOSIXErrorDomain &&
-                        (nsError.code == Int(EACCES) || nsError.code == Int(EPERM)))
-                if isPermissionDenied {
-                    if item.category == .nodeModules {
-                        // Project folders belong to the user; a root rm -rf
-                        // inside a source tree is never worth an auth prompt.
-                        let detail = "node_modules cleanup requires access as the current user: \(item.path)"
-                        result.errors.append(detail)
+            }
+            if let error = thinOutcome.error {
+                result.errors.append(error)
+            }
+            return result
+        }
+
+        if item.category == .languageFiles {
+            // Localizations are sealed into the bundle's CodeResources; a
+            // plain unlink would break the app's code signature, so the
+            // folder is removed through BinaryThinner's staged re-sign
+            // flow instead of the delete path.
+            let lprojOutcome = await removeLanguageFileItem(item)
+            result.freedSpace += lprojOutcome.freed
+            if lprojOutcome.cleaned {
+                result.itemsCleaned += 1
+                result.cleanedPaths.insert(item.path)
+            }
+            if let error = lprojOutcome.error {
+                result.errors.append(error)
+            }
+            return result
+        }
+
+        if item.category == .devToolCaches {
+            // Developer tool caches never take the generic unlink path:
+            // each root is validated by exact match, and tools that manage
+            // their own cache (uv, go) are cleaned through their CLI.
+            let outcome = await cleanDevToolCache(item)
+            result.freedSpace += outcome.freed
+            if outcome.removed { result.itemsCleaned += 1 }
+            if outcome.handled { result.cleanedPaths.insert(item.path) }
+            if outcome.skipped { result.skippedPaths.insert(item.path) }
+            if let error = outcome.error { result.errors.append(error) }
+            return result
+        }
+
+        if item.category == .dockerCache && item.path.isEmpty {
+            // The virtual "Docker prune" entry (empty path, like
+            // purgeableSpace) reclaims space inside the Docker/OrbStack VM
+            // via `docker system prune -f` — there is no file to unlink.
+            let pruneOutcome = await pruneDockerSystem()
+            result.freedSpace += pruneOutcome.freed
+            if pruneOutcome.freed > 0 { result.itemsCleaned += 1 }
+            if pruneOutcome.error == nil { result.cleanedPaths.insert(item.path) }
+            if let error = pruneOutcome.error {
+                result.errors.append(error)
+            }
+            return result
+        }
+
+        if item.category == .rustTargets {
+            // `cargo clean` rather than an unlink, as requested for Rust
+            // projects: cargo knows its own layout and lock files.
+            if CleanupFileIdentity.read(item) == .missing {
+                result.cleanedPaths.insert(item.path)
+                result.receiptRows = [.init(item: item, disposition: .missing)]
+                return result
+            }
+            let cargoOutcome = await cargoClean(item)
+            result.freedSpace += cargoOutcome.freed
+            if cargoOutcome.cleaned {
+                result.itemsCleaned += 1
+                result.cleanedPaths.insert(item.path)
+            }
+            if let error = cargoOutcome.error {
+                result.errors.append(error)
+            }
+            return result
+        }
+
+        if let runtimeID = item.simctlRuntimeIdentifier {
+            // Simulator runtimes live in CoreSimulator's secure storage;
+            // deleting the mount path by hand leaves orphaned disk images.
+            // Always go through `xcrun simctl runtime delete`.
+            let deleteOutcome = await deleteSimulatorRuntime(identifier: runtimeID, reportedSize: item.size)
+            result.freedSpace += deleteOutcome.freed
+            if deleteOutcome.cleaned {
+                result.itemsCleaned += 1
+                result.cleanedPaths.insert(item.path)
+            }
+            if let error = deleteOutcome.error {
+                result.errors.append(error)
+            }
+            return result
+        }
+
+        do {
+            let itemURL = URL(fileURLWithPath: item.path)
+            guard !hasUnexpectedSymlink(in: item.path) else {
+                let msg = String(localized: "Skipped symlink or unsafe path: \(item.path)")
+                Logger.shared.log(msg, level: .warning)
+                result.errors.append(msg)
+                return result
+            }
+            guard fileManager.fileExists(atPath: item.path) else {
+                result.cleanedPaths.insert(item.path)
+                return result
+            }
+            let resolvedURL = itemURL.resolvingSymlinksInPath()
+            let resolved = resolvedURL.path
+
+            // Large files surfaced by scanLargeFiles are per-file items
+            // under Downloads/Documents/Desktop; those get a narrower check
+            // instead of the whole-subtree allow-list.
+            // languageFiles never reaches here — it is handled above via
+            // the staged re-sign flow, not the delete path.
+            let pathAccepted = isSafeToDelete(item: item, resolvedPath: resolved)
+            guard pathAccepted else {
+                let msg = String(localized: "Skipped symlink or unsafe path: \(item.path) -> \(resolved)")
+                Logger.shared.log(msg, level: .warning)
+                result.errors.append(msg)
+                return result
+            }
+
+            // Narrow the TOCTOU window: re-resolve right before the delete
+            // and require the resolved path to still match. Any concurrent
+            // swap between check and delete aborts the operation.
+            let reResolved = itemURL.resolvingSymlinksInPath().path
+            guard reResolved == resolved, !hasUnexpectedSymlink(in: item.path) else {
+                let msg = String(localized: "Aborting delete: path resolution changed between check and unlink for \(item.path)")
+                Logger.shared.log(msg, level: .warning)
+                result.errors.append(msg)
+                return result
+            }
+
+            let isManagedDerivedData = XcodeBuildMCPDerivedDataSupport.isManagedDerivedDataPath(
+                item.path,
+                homeDirectory: homeDirectory
+            ) || XcodeBuildMCPDerivedDataSupport.isManagedDerivedDataPath(
+                resolved,
+                homeDirectory: homeDirectory
+            )
+            if isManagedDerivedData {
+                // The legacy shared root predates XcodeBuildMCP's
+                // per-workspace lock, so only workspace DerivedData waits
+                // for the lock before moving to the Trash.
+                var lifecycleLock: XcodeBuildMCPDerivedDataSupport.LifecycleLock?
+                if XcodeBuildMCPDerivedDataSupport.workspaceKey(
+                    forManagedDerivedDataPath: resolved,
+                    homeDirectory: homeDirectory
+                ) != nil {
+                    guard let acquired = XcodeBuildMCPDerivedDataSupport.acquireLifecycleLock(
+                        forManagedDerivedDataPath: resolved,
+                        homeDirectory: homeDirectory,
+                        fileManager: fileManager
+                    ) else {
+                        let detail = String(localized: "Skipped XcodeBuildMCP DerivedData: lifecycle lock is unavailable: \(item.path)")
                         Logger.shared.log(detail, level: .warning)
-                        continue
-                    }
-                    if item.category == .aiApps {
-                        let detail = "AI app cleanup requires access as the current user: \(item.path)"
                         result.errors.append(detail)
-                        Logger.shared.log(detail, level: .warning)
-                        continue
+                        return result
                     }
-                    if XcodeBuildMCPDerivedDataSupport.isManagedDerivedDataPath(
-                        item.path,
-                        homeDirectory: homeDirectory
-                    ) {
-                        let detail = String(localized: "Refusing administrator escalation for XcodeBuildMCP DerivedData: \(item.path)")
-                        result.errors.append(detail)
-                        Logger.shared.log(detail, level: .warning)
-                        continue
-                    }
-                    // SIP-protected/immutable entries fail even as root, so
-                    // escalating them just wastes an auth prompt and produces
-                    // a bogus "survived admin removal" error. Record and move on.
-                    if FileProtection.isProtectedFromDeletion(path: item.path) {
-                        result.protectedPaths.insert(item.path)
-                        Logger.shared.log("Skipping SIP-protected path: \(item.path)", level: .info)
-                        continue
-                    }
-                    // Defer to the admin pass — these are typically root-owned
-                    // system caches that the user-level process can't unlink.
-                    result.requiresAdmin.append(item)
-                    Logger.shared.log("Deferring to admin pass: \(item.path)", level: .info)
-                } else {
-                    let detail = String(localized: "\(item.name) at \(item.path): \(error.localizedDescription)")
-                    result.errors.append(detail)
-                    Logger.shared.log("Clean failed: \(detail)", level: .error)
+                    lifecycleLock = acquired
                 }
+                defer {
+                    if let lifecycleLock {
+                        XcodeBuildMCPDerivedDataSupport.releaseLifecycleLock(
+                            lifecycleLock,
+                            fileManager: fileManager
+                        )
+                    }
+                }
+                // PureMac's safety contract is Trash-only for recoverable
+                // cleanup. XcodeBuildMCP DerivedData must not be unlinked.
+                if let change = checkedIdentityResult(for: item) { return change }
+                let move = try TrackedTrashMove.moveToTrash(resolvedURL)
+                if let trashedPath = move.trashURL?.path { result.trashedPaths.insert(trashedPath) }
+                result.receiptRows.append(.init(item: item, disposition: .trashed, bytes: item.size,
+                                                trashPath: move.trashURL?.path, recovery: move.recovery))
+            } else {
+                if let change = checkedIdentityResult(for: item) { return change }
+                try fileManager.removeItem(at: itemURL)
+                result.freedSpace += item.size
+            }
+            result.itemsCleaned += 1
+            result.cleanedPaths.insert(item.path)
+        } catch {
+            let nsError = error as NSError
+            let isPermissionDenied =
+                (nsError.domain == NSCocoaErrorDomain &&
+                    (nsError.code == NSFileWriteNoPermissionError ||
+                     nsError.code == NSFileReadNoPermissionError)) ||
+                (nsError.domain == NSPOSIXErrorDomain &&
+                    (nsError.code == Int(EACCES) || nsError.code == Int(EPERM)))
+            if isPermissionDenied {
+                result.permissionDenied.insert(item.id)
+                if item.category == .nodeModules {
+                    // Project folders belong to the user; a root rm -rf
+                    // inside a source tree is never worth an auth prompt.
+                    let detail = "node_modules cleanup requires access as the current user: \(item.path)"
+                    result.errors.append(detail)
+                    Logger.shared.log(detail, level: .warning)
+                    return result
+                }
+                if item.category == .aiApps {
+                    let detail = "AI app cleanup requires access as the current user: \(item.path)"
+                    result.errors.append(detail)
+                    Logger.shared.log(detail, level: .warning)
+                    return result
+                }
+                if XcodeBuildMCPDerivedDataSupport.isManagedDerivedDataPath(
+                    item.path,
+                    homeDirectory: homeDirectory
+                ) {
+                    let detail = String(localized: "Refusing administrator escalation for XcodeBuildMCP DerivedData: \(item.path)")
+                    result.errors.append(detail)
+                    Logger.shared.log(detail, level: .warning)
+                    return result
+                }
+                // SIP-protected/immutable entries fail even as root, so
+                // escalating them just wastes an auth prompt and produces
+                // a bogus "survived admin removal" error. Record and move on.
+                if FileProtection.isProtectedFromDeletion(path: item.path) {
+                    result.protectedPaths.insert(item.path)
+                    Logger.shared.log("Skipping SIP-protected path: \(item.path)", level: .info)
+                    return result
+                }
+                // Defer to the admin pass — these are typically root-owned
+                // system caches that the user-level process can't unlink.
+                result.requiresAdmin.append(item)
+                Logger.shared.log("Deferring to admin pass: \(item.path)", level: .info)
+            } else {
+                let detail = String(localized: "\(item.name) at \(item.path): \(error.localizedDescription)")
+                result.errors.append(detail)
+                Logger.shared.log("Clean failed: \(detail)", level: .error)
             }
         }
 
@@ -314,15 +404,38 @@ actor CleaningEngine {
         return await cleanItems(selectedItems, progressHandler: progressHandler)
     }
 
-    /// Re-runs the deletion of the supplied items as root via NSAppleScript's
-    /// "with administrator privileges" clause. Triggers exactly one auth
-    /// prompt for the whole batch (macOS caches the credential for ~5 min).
-    ///
-    /// Every path is re-validated against the same allow-list as the user-
-    /// level pass (isSafeToDelete / isExplicitSingleFileDeletable) before it
-    /// gets handed off to /bin/rm. Paths are passed via a NUL-separated
-    /// temp file consumed by xargs -0, so no shell-quoting pitfalls.
     func cleanWithAdminPrivileges(items: [CleanableItem]) async -> CleaningResult {
+        var result = CleaningResult()
+        var verified: [CleanableItem] = []
+        for item in items {
+            if let change = checkedIdentityResult(for: item) {
+                result.merge(change)
+            } else {
+                verified.append(item)
+            }
+        }
+        guard !verified.isEmpty else { return result }
+        var elevated = await performAdminPass(items: verified)
+        let recorded = Set(elevated.receiptRows.map(\.id))
+        for item in verified where !recorded.contains(item.id) {
+            let disposition: CleanupDisposition
+            if elevated.protectedPaths.contains(item.path) {
+                disposition = .protected
+            } else if elevated.skippedPaths.contains(item.path) {
+                disposition = .skipped
+            } else if elevated.cleanedPaths.contains(item.path) {
+                disposition = .removed
+            } else {
+                disposition = .failed
+            }
+            elevated.receiptRows.append(.init(item: item, disposition: disposition,
+                                               bytes: disposition == .removed ? item.size : 0))
+        }
+        result.merge(elevated)
+        return result
+    }
+
+    private func performAdminPass(items: [CleanableItem]) async -> CleaningResult {
         var result = CleaningResult()
 
         Logger.shared.log("Admin pass starting with \(items.count) item(s)", level: .info)
@@ -381,90 +494,134 @@ actor CleaningEngine {
             return result
         }
 
-        // Stage paths NUL-separated so newlines/spaces in paths don't matter.
-        let staged = validated.map(\.resolved).joined(separator: "\u{0}")
-        guard let payload = staged.data(using: .utf8) else { return result }
-
-        // Live daemon logs (e.g. /private/var/log/wifi.log) are recreated by
-        // their writer the instant root rm unlinks them. A bare re-stat then
-        // misreads the fresh file as "survived admin removal" and raises a
-        // bogus "Couldn't clean everything" alert. Capture each path's inode
-        // before the delete so the survivor check can tell a recreated file
-        // from an untouched one.
-        var preDeleteInodes: [String: UInt64] = [:]
-        for (_, resolved) in validated {
-            if let attrs = try? fileManager.attributesOfItem(atPath: resolved),
-               let inode = (attrs[.systemFileNumber] as? NSNumber)?.uint64Value {
-                preDeleteInodes[resolved] = inode
-            }
+        let targets = validated.map { entry in
+            (url: URL(fileURLWithPath: entry.resolved), identity: entry.item.reviewedIdentity ?? CleanupFileIdentity.read(entry.item))
         }
-
-        let tempFile = FileManager.default.temporaryDirectory
-            .appendingPathComponent("puremac-rm-\(UUID().uuidString)")
-        do {
-            try payload.write(to: tempFile, options: [.atomic])
-        } catch {
-            Logger.shared.log("Couldn't stage admin path list: \(error.localizedDescription)", level: .error)
-            return result
-        }
-        defer { try? FileManager.default.removeItem(at: tempFile) }
-
-        let quotedTempPath = shellSingleQuoted(tempFile.path)
-        let script = """
-        do shell script "/usr/bin/xargs -0 /bin/rm -rf -- < \(quotedTempPath)" with administrator privileges
-        """
-
-        let runError: String? = await withCheckedContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                let appleScript = NSAppleScript(source: script)
-                var errorInfo: NSDictionary?
-                appleScript?.executeAndReturnError(&errorInfo)
-                if let errorInfo {
-                    continuation.resume(returning: "\(errorInfo)")
+        let outcomes = guardedAdminRemoval(targets)
+        for (item, resolved) in validated {
+            switch outcomes[URL(fileURLWithPath: resolved)] {
+            case .deleted:
+                result.cleanedPaths.insert(item.path)
+                result.itemsCleaned += 1
+                result.freedSpace += item.size
+            case .missing:
+                result.receiptRows.append(.init(item: item, disposition: .missing, bytes: 0))
+            case .changed:
+                result.skippedPaths.insert(item.path)
+                result.receiptRows.append(.init(item: item, disposition: .skipped,
+                                                detail: String(localized: "Changed since review. Scan again to review this item."),
+                                                requiresRescan: true))
+            case .blocked:
+                result.skippedPaths.insert(item.path)
+            default:
+                if FileProtection.isProtectedFromDeletion(path: resolved) {
+                    result.protectedPaths.insert(item.path)
                 } else {
-                    continuation.resume(returning: nil)
+                    result.errors.append(String(localized: "\(item.name) at \(item.path) survived admin removal"))
                 }
             }
         }
-
-        if let runError, runError.contains("-128") {
-            return result
-        }
-        if let runError {
-            Logger.shared.log("Admin clean incomplete: \(runError)", level: .error)
-        }
-
-        // Verify which items actually disappeared. xargs may have reported a
-        // partial failure even when the AppleScript exited cleanly, so we
-        // re-stat every path rather than trust the script's exit status.
-        for (item, resolved) in validated {
-            if !FileManager.default.fileExists(atPath: resolved) {
-                result.cleanedPaths.insert(item.path)
-                result.itemsCleaned += 1
-                result.freedSpace += item.size
-            } else if FileProtection.isProtectedFromDeletion(path: resolved) {
-                // SIP-protected survivors are expected — root rm can't touch
-                // them either. Record quietly instead of raising an error.
-                result.protectedPaths.insert(item.path)
-                Logger.shared.log("Admin pass skipped SIP-protected path: \(item.path)", level: .info)
-            } else if let preInode = preDeleteInodes[resolved],
-                      let nowInode = ((try? fileManager.attributesOfItem(atPath: resolved))?[.systemFileNumber] as? NSNumber)?.uint64Value,
-                      nowInode != preInode {
-                // Different inode: the original WAS deleted and the owning
-                // daemon immediately recreated the file. The old bytes are
-                // gone, so count it as cleaned rather than a survivor.
-                result.cleanedPaths.insert(item.path)
-                result.itemsCleaned += 1
-                result.freedSpace += item.size
-                Logger.shared.log("Deleted and recreated by its daemon (live log): \(item.path)", level: .info)
-            } else {
-                let detail = String(localized: "\(item.name) at \(item.path) survived admin removal")
-                result.errors.append(detail)
-                Logger.shared.log("Admin pass survivor: \(detail)", level: .error)
-            }
-        }
-        Logger.shared.log("Admin pass complete: \(result.itemsCleaned) deleted, \(result.errors.count) survived, \(result.skippedProtected) protected", level: .info)
         return result
+    }
+
+    func isEligibleForReviewedDeletion(_ file: AppRemovalFile, source: AppRemovalSource) -> Bool {
+        let resolved = file.url.resolvingSymlinksInPath().path
+        guard file.disposition(source: source, exclusions: CleanupExclusions.paths()) == .ready,
+              !hasUnexpectedSymlink(in: file.url.path),
+              !FileProtection.isProtectedFromDeletion(path: resolved),
+              !XcodeBuildMCPDerivedDataSupport.isManagedDerivedDataPath(resolved, homeDirectory: homeDirectory)
+        else { return false }
+        let item = CleanableItem(name: file.url.lastPathComponent, path: file.url.path,
+                                 size: 0, category: .systemJunk, isSelected: true, lastModified: nil)
+        return isSafeToDelete(item: item, resolvedPath: resolved, includeUninstallPaths: true)
+    }
+
+    func removeReviewedAppFiles(_ files: [AppRemovalFile], source: AppRemovalSource) -> [URL: AppRemovalOutcome] {
+        var outcomes: [URL: AppRemovalOutcome] = [:]
+        var verified: [(url: URL, identity: CleanupFileIdentity)] = []
+        let exclusions = CleanupExclusions.paths()
+        for file in files {
+            let disposition = file.disposition(source: source, exclusions: exclusions)
+            guard disposition == .ready else {
+                outcomes[file.url] = disposition
+                continue
+            }
+            guard file.outcome == .needsAdmin, isEligibleForReviewedDeletion(file, source: source) else {
+                outcomes[file.url] = .blocked
+                continue
+            }
+            verified.append((file.url, file.identity))
+        }
+        outcomes.merge(guardedAdminRemoval(verified)) { _, new in new }
+        return outcomes
+    }
+
+    private func guardedAdminRemoval(_ files: [(url: URL, identity: CleanupFileIdentity)]) -> [URL: AppRemovalOutcome] {
+        var outcomes = Dictionary(files.map { ($0.url, AppRemovalOutcome.failed) }, uniquingKeysWith: { first, _ in first })
+        var batch: [String] = []
+        var length = 0
+        for (index, file) in files.enumerated() {
+            guard let key = file.identity.adminKey else {
+                outcomes[file.url] = file.identity == .missing ? .missing : .blocked
+                continue
+            }
+            let path = shellSingleQuoted(file.url.resolvingSymlinksInPath().path)
+            let invocation = "remove_reviewed \(index) \(path) \(shellSingleQuoted(key))"
+            if length + invocation.utf8.count > 64_000 && !batch.isEmpty {
+                guard runAdminBatch(batch, files: files, outcomes: &outcomes) else { return outcomes }
+                batch = []
+                length = 0
+            }
+            batch.append(invocation)
+            length += invocation.utf8.count + 1
+        }
+        if !batch.isEmpty { _ = runAdminBatch(batch, files: files, outcomes: &outcomes) }
+        return outcomes
+    }
+
+    static let reviewedRemovalFunction = """
+    remove_reviewed() {
+      if [ ! -e "$2" ] && [ ! -L "$2" ]; then
+        echo "$1 missing"
+      elif [ "$(/usr/bin/stat -f '%d:%i:%z:%m:%B' "$2" 2>/dev/null)" != "$3" ]; then
+        echo "$1 changed"
+      elif /bin/rm -rf -- "$2" >/dev/null 2>&1; then
+        echo "$1 deleted"
+      else
+        echo "$1 failed"
+      fi
+    }
+    """
+
+    private func runAdminBatch(_ invocations: [String], files: [(url: URL, identity: CleanupFileIdentity)],
+                               outcomes: inout [URL: AppRemovalOutcome]) -> Bool {
+        let task = Process()
+        let output = Pipe()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        task.arguments = ["-e", "on run argv\nreturn do shell script (item 1 of argv) with administrator privileges\nend run",
+                          ([Self.reviewedRemovalFunction] + invocations).joined(separator: "\n")]
+        task.standardOutput = output
+        task.standardError = FileHandle.nullDevice
+        do {
+            try task.run()
+            let data = output.fileHandleForReading.readDataToEndOfFile()
+            task.waitUntilExit()
+            guard task.terminationStatus == 0 else { return false }
+            for line in String(decoding: data, as: UTF8.self).split(whereSeparator: { $0.isNewline }) {
+                let parts = line.split(separator: " ")
+                guard parts.count == 2, let index = Int(parts[0]), files.indices.contains(index) else { continue }
+                switch parts[1] {
+                case "deleted": outcomes[files[index].url] = .deleted
+                case "changed": outcomes[files[index].url] = .changed
+                case "missing": outcomes[files[index].url] = .missing
+                default: break
+                }
+            }
+            return true
+        } catch {
+            Logger.shared.log("Could not start reviewed administrator removal: \(error.localizedDescription)", level: .error)
+            return false
+        }
     }
 
     // MARK: - Docker
@@ -557,7 +714,7 @@ actor CleaningEngine {
         do {
             let output = try await BrewProcessRunner.run(
                 executableURL: URL(fileURLWithPath: cargo),
-                arguments: ["clean", "--manifest-path", manifest],
+                arguments: ["clean", "--manifest-path", manifest, "--target-dir", target],
                 timeout: 600,
                 environment: environment
             )
@@ -1157,7 +1314,7 @@ actor CleaningEngine {
     /// stays narrower than the normal cleaner allow-list.
     private func isSafeUninstallEscalationPath(_ path: String) -> Bool {
         let normalized = (path as NSString).standardizingPath
-        let home = fileManager.homeDirectoryForCurrentUser.path
+        let home = homeDirectory.path
 
         return isAppBundlePath(normalized, rootedAt: "/Applications")
             || isAppBundlePath(normalized, rootedAt: "\(home)/Applications")

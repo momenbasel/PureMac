@@ -128,8 +128,14 @@ Most Mac cleaners are subscription apps that hide their disk usage behind a payw
 
 ## What it does
 
+### Overview
+
+Start **Scan this Mac** to review accessible locations. Results show the largest items first. Choose a category in the size breakdown, search for a filename or path, or show only selected items. Filtering keeps your selections. The review includes the full selection and shows the operation for each path.
+
+The receipt separates files moved to the Trash from permanent removals and tool-managed cleanup. Choose **Put Back** on a supported Trash entry to restore it to its original folder. If that location is occupied, PureMac leaves both items where they are. **Save receipt…** writes all outcomes to a local text file. Choose **Return to results** to continue reviewing. Press **⌘K** in the main window to find and open another tool.
+
 ### App Uninstaller
-Discovers everything in `/Applications` and `~/Applications`, then uses a 10-level matching engine (bundle ID, team identifier, entitlements, Spotlight metadata, container discovery, company-name heuristics, partial path matches) to find related files on your disk. Matching is heuristic, so review the results before removal. Three sensitivity tiers - Strict, Enhanced, Deep - let you choose how aggressive that match is. Apple system apps are excluded from the uninstall list automatically. You can also right-click any app in Finder and choose **Services → Uninstall with PureMac** to jump straight into its related-files scan.
+Discovers everything in `/Applications` and `~/Applications`, then uses a 10-level matching engine (bundle ID, team identifier, entitlements, Spotlight metadata, container discovery, company-name heuristics, partial path matches) to find related files on your disk. Matching is heuristic. Review the exact paths before moving them to the Trash. Protected items that require permanent removal have a separate confirmation. Three sensitivity tiers - Strict, Enhanced, Deep - let you choose how aggressive that match is. Apple system apps are excluded from the uninstall list automatically. You can also right-click any app in Finder and choose **Services → Uninstall with PureMac** to jump straight into its related-files scan.
 
 ### Orphan Finder
 Walks `~/Library` and surfaces files left behind by apps that no longer exist on disk. The matcher compares against bundle identifiers and normalized names of every installed app, so a leftover `~/Library/Containers/com.foo.bar` from an app you deleted in 2022 shows up clearly.
@@ -140,7 +146,7 @@ Smart Scan checks each category in sequence and reports progress as files are fo
 - **System Junk** - system caches, logs, temp files
 - **User Cache** - dynamically discovered, no hardcoded app list
 - **AI Apps** - Ollama and LM Studio logs, caches, opt-in history cleanup
-- **Mail Files** - downloaded mail attachments
+- **Mail Files** - downloaded attachments, included in cleanup only when you select them individually
 - **Trash Bins** - empties all bins, including external volumes
 - **Large & Old Files** - >100 MB or older than 1 year (never auto-selected)
 - **Xcode Junk** - DerivedData, Archives, simulator caches, downloaded simulator runtimes (deleted via `simctl runtime delete`; never auto-selected), and XcodeBuildMCP or MobileBuildMCP DerivedData (never auto-selected, so scheduled cleanup leaves it alone; manual cleanup moves it to the Trash while holding the tool's storage lock, which does not detect a running build)
@@ -159,9 +165,9 @@ The **Storage** tab in Apple Features measures known model assets, downloaded sc
 
 Local iPhone and iPad backups have a separate manual review. Nothing is preselected or scheduled. Selected backups move to the Trash after confirmation and fresh checks for changes, symbolic links, and exclusions. Keep any backup you may need to restore a device; space is not reclaimed until the Trash is emptied.
 
-**Space Explorer** measures the allocated space inside a folder you choose. Drill into directories, compare their sizes, and reveal an item in Finder. Packages are measured without exposing their contents as navigable folders. Skipped and inaccessible items are reported.
+**Space Explorer** measures the allocated space inside a folder you choose. Press **⌘F** to find an entry in the current folder. Drill into directories, use Back to return to the previous folder and its filter, or start a duplicate search there. Rescan refreshes its measurements. Hard links and fully shared APFS clones count once per scanned tree. Allocated size is an estimate of what a deletion could release. Packages are measured without exposing their contents as navigable folders. Skipped and inaccessible items are reported.
 
-**Duplicate Finder** groups files with matching sizes and SHA-256 content hashes. Hard links are not counted as separate recoverable copies. Every group keeps one protected copy; selected extras move to the Trash only after confirmation and a fresh identity/content check. Emptying the Trash is a separate step.
+**Duplicate Finder** groups files with matching sizes and SHA-256 content hashes. Hard links are not counted as separate recoverable copies. Choose which copy to keep. Selected extras move to the Trash only after confirmation and a fresh check of both the keeper and the selected files. Emptying the Trash is a separate step.
 
 **Similar Photos** compares image thumbnails using perceptual hashes, color, and aspect ratio. Review likely matches side by side and reveal them in Finder. Similarity is an estimate, so this tool does not remove photos. Each scan checks up to 500 images and 10,000 directory entries, with a visible notice when a limit is reached. Photo libraries, app packages, symbolic links, and cloud-only files are skipped.
 
@@ -178,11 +184,11 @@ Cleanup results support name/path search, size and age filters, sorting, and sel
 Check for updates to Homebrew-managed cask apps and choose which ones to upgrade. PureMac runs Homebrew with analytics disabled and shows command failures. These actions use the network and Homebrew's package sources. Apps installed outside Homebrew are not covered; an App Store shortcut is provided for those managed by Apple.
 
 ### Scheduled Cleaning
-Optional. Configurable interval (hourly to monthly), with auto-clean threshold so background runs only fire when there's something meaningful to remove.
+Set an interval in Settings to scan while PureMac is running. The next run updates when you change the interval. A pending manual review defers the scheduled run until you finish. Auto-clean is a separate setting with a minimum size threshold. Emptying the Trash requires a manual review.
 
 ### Settings
 
-Open **Settings** using the gear in the sidebar or the standard macOS Settings command. General settings include language (including Italian), System/Light/Dark appearance, Full Disk Access status and recheck, startup, menu-bar monitoring, sound and safety. Cleaning and scheduled scanning keep their existing preferences.
+Open **Settings** using the gear in the sidebar or the standard macOS Settings command. Under **General**, choose System, Light or Dark appearance and turn **Animate interface transitions** on or off. PureMac also respects macOS Reduce Motion. General settings include language, Full Disk Access status, startup, menu-bar monitoring, sound and safety.
 
 The **Updates** tab shows the installed version and build and checks official GitHub app releases on request. CLI releases, drafts and prereleases are excluded. Choose the update method for Homebrew instructions or a DMG/ZIP download link. The check reports availability; it does not install an update or run Homebrew.
 
@@ -190,7 +196,7 @@ The **Updates** tab shows the installed version and build and checks official Gi
 
 PureMac needs **Full Disk Access** to read the locations macOS hides from every app by default - Mail downloads, Safari data, the TCC database, protected app containers. Without it, some cleanup categories and app-container scans will be incomplete. The locations available depend on your macOS version and permissions.
 
-The first-launch onboarding walks you through granting it with an animated preview of the exact toggle you need to flip. If you skip it, the dashboard surfaces a single-click "Set up" pill. If a cleanup fails because of a permission issue, PureMac opens System Settings, reveals its bundle in Finder so you can drag it into the FDA list, polls the permission state every second, and auto-retries the failed batch the moment you grant access. You never have to re-select anything.
+You can start your first scan from Overview with the access PureMac already has. Use the access controls in scan results or Settings to include protected locations. The setup guide is also available from the Help menu.
 
 What PureMac does *not* do:
 - It does not collect telemetry, crash reports, or usage analytics.
@@ -216,6 +222,8 @@ Give it a minute to re-seed, then open PureMac once. If it still sticks, a resta
 | Overview | Dark appearance |
 |---|---|
 | ![Overview](screenshots/smart-care.png) | ![Dark appearance](screenshots/smart-care-dark.png) |
+
+![Scan results showing category estimates, individual file selections and the review action](screenshots/scan-results.png)
 
 | Apple Features | Apple Storage |
 |---|---|

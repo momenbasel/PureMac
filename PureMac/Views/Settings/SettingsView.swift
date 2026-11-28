@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import ServiceManagement
+import UserNotifications
 
 struct SettingsView: View {
     @EnvironmentObject private var appState: AppState
@@ -9,6 +10,7 @@ struct SettingsView: View {
     var standalone = false
     @ObservedObject private var permission = PermissionCoordinator.shared
     @State private var selectedTab = SettingsTab.general
+    @Environment(\.interfaceMotionEnabled) private var motionEnabled
 
     private enum SettingsTab: String, CaseIterable, Identifiable {
         case general = "General"
@@ -33,14 +35,9 @@ struct SettingsView: View {
             // sidebar page repeats it as a header.
             if !standalone {
                 HStack(spacing: 14) {
-                    IconTile(systemName: "gearshape.fill", tint: Tint.accent, size: 44, corner: 12)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("Settings")
-                            .font(.system(size: 26, weight: .bold))
-                        Text("Make PureMac work your way.")
-                            .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
-                    }
+
+                    Text("Settings")
+                        .font(.title.weight(.semibold))
                     Spacer()
                     VStack(alignment: .trailing, spacing: 3) {
                         Text(String(format: String(localized: "Version %@"), UpdateService.installedVersion))
@@ -60,6 +57,7 @@ struct SettingsView: View {
                 }
             }
             .pickerStyle(.segmented)
+            .controlSize(.large)
             .labelsHidden()
             .accessibilityIdentifier("settings.tabs")
 
@@ -67,12 +65,15 @@ struct SettingsView: View {
                 switch selectedTab {
                 case .general: GeneralSettingsView(permissionPresentation: standalone ? .settingsWindow : .mainWindow)
                 case .cleaning: CleaningSettingsView()
-                case .schedule: ScheduleSettingsView()
+                case .schedule: ScheduleSettingsView(scheduler: appState.scheduler)
                 case .about: AboutSettingsView()
                 }
             }
+            .id(selectedTab)
+            .transition(.opacity)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .animation(motionEnabled ? .easeOut(duration: 0.18) : nil, value: selectedTab)
         }
         .padding(24)
         .frame(maxWidth: 960)
@@ -119,14 +120,15 @@ struct GeneralSettingsView: View {
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var theme: ThemeManager
     @ObservedObject private var permission = PermissionCoordinator.shared
-    @AppStorage("settings.general.launchAtLogin") private var launchAtLogin = false
+    @State private var loginStatus = SMAppService.mainApp.status
+    @State private var loginError: String?
     @AppStorage("settings.general.searchSensitivity") private var sensitivity: SearchSensitivity = .enhanced
-    @AppStorage("settings.general.confirmBeforeDelete") private var confirmBeforeDelete = true
+    @AppStorage("settings.general.animateInterface") private var animateInterface = true
     @AppStorage("settings.general.menuBarMonitor") private var menuBarMonitor = false
     @AppStorage(Haptics.soundEffectsKey) private var soundEffects = true
     @AppStorage(AppLanguage.preferenceKey) private var appLanguageRaw = AppLanguage.current.rawValue
     private var languageNeedsRelaunch: Bool { appState.settingsNeedLanguageRestart }
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.interfaceMotionEnabled) private var motionEnabled
 
     var body: some View {
         Form {
@@ -138,12 +140,15 @@ struct GeneralSettingsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                Toggle("Animate interface transitions", isOn: $animateInterface)
+                    .accessibilityLabel(Text("Animate interface transitions"))
+                    .accessibilityIdentifier("settings.animateInterface")
             }
 
             Section("Full Disk Access") {
                 HStack(spacing: 12) {
-                    IconTile(systemName: appState.hasFullDiskAccess ? "checkmark.shield.fill" : "lock.shield",
-                             tint: appState.hasFullDiskAccess ? Tint.green : Tint.orange, size: 32, corner: 9)
+                    ToolSymbol(systemName: appState.hasFullDiskAccess ? "checkmark.shield.fill" : "lock.shield",
+                             tint: appState.hasFullDiskAccess ? Tint.green : Tint.orange, size: 32)
                     VStack(alignment: .leading, spacing: 3) {
                         Text(LocalizedStringKey(appState.hasFullDiskAccess ? "Full access" : "Limited access"))
                             .font(.system(size: 13, weight: .semibold))
@@ -157,6 +162,7 @@ struct GeneralSettingsView: View {
                         Button("Set up") {
                             permission.requestAccess(context: .general, presentation: permissionPresentation) { refreshAccess() }
                         }
+                        .buttonStyle(.borderedProminent)
                         .tint(Tint.accent)
                     }
                 }
@@ -184,6 +190,14 @@ struct GeneralSettingsView: View {
 
             Section("Startup") {
                 Toggle("Launch PureMac at login", isOn: launchAtLoginBinding)
+                if loginStatus == .requiresApproval {
+                    LabeledContent("Approval required") {
+                        Button("Login Items Settings") { SMAppService.openSystemSettingsLoginItems() }
+                    }
+                }
+                if let loginError {
+                    Text(loginError).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
+                }
             }
 
             Section("App Scanning") {
@@ -212,20 +226,18 @@ struct GeneralSettingsView: View {
                 Toggle("Play sound effects", isOn: $soundEffects)
             }
 
-            Section("Safety") {
-                Toggle("Confirm before deleting files", isOn: $confirmBeforeDelete)
-            }
         }
         .formStyle(.grouped)
         .onAppear { refreshAccess() }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             refreshAccess()
         }
-        .animation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.85),
+        .animation(motionEnabled ? .easeInOut(duration: 0.22) : nil,
                    value: languageNeedsRelaunch)
     }
 
     private func refreshAccess() {
+        loginStatus = SMAppService.mainApp.status
         appState.checkFullDiskAccess()
         permission.refreshStatus()
     }
@@ -243,11 +255,8 @@ struct GeneralSettingsView: View {
 
     private var launchAtLoginBinding: Binding<Bool> {
         Binding(
-            get: { launchAtLogin },
-            set: { newValue in
-                launchAtLogin = newValue
-                toggleLaunchAtLogin(newValue)
-            }
+            get: { loginStatus == .enabled || loginStatus == .requiresApproval },
+            set: toggleLaunchAtLogin
         )
     }
 
@@ -262,6 +271,8 @@ struct GeneralSettingsView: View {
     }
 
     private func toggleLaunchAtLogin(_ enabled: Bool) {
+        loginError = nil
+        defer { loginStatus = SMAppService.mainApp.status }
         do {
             if enabled {
                 try SMAppService.mainApp.register()
@@ -270,7 +281,7 @@ struct GeneralSettingsView: View {
             }
         } catch {
             Logger.shared.log("Failed to \(enabled ? "enable" : "disable") launch at login: \(error.localizedDescription)", level: .error)
-            launchAtLogin = !enabled
+            loginError = error.localizedDescription
         }
     }
 
@@ -430,39 +441,121 @@ struct CleaningSettingsView: View {
 // MARK: - Schedule
 
 struct ScheduleSettingsView: View {
-    @EnvironmentObject var appState: AppState
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @ObservedObject var scheduler: SchedulerService
+    @Environment(\.interfaceMotionEnabled) private var motionEnabled
+    @State private var notificationStatus: UNAuthorizationStatus?
+    @State private var notificationError: String?
 
     var body: some View {
         Form {
-            Section("Automatic Scanning") {
-                Toggle("Enable scheduled scanning", isOn: $appState.scheduler.config.isEnabled)
+            Section {
+                Toggle("Enable scheduled scanning", isOn: Binding(
+                    get: { scheduler.config.isEnabled },
+                    set: { scheduler.toggleEnabled($0) }
+                ))
+                .accessibilityIdentifier("schedule.enabled")
 
-                if appState.scheduler.config.isEnabled {
-                    Group {
-                        Picker("Scan interval", selection: $appState.scheduler.config.interval) {
-                            ForEach(ScheduleInterval.allCases) { interval in
-                                Text(LocalizedStringKey(interval.rawValue)).tag(interval)
-                            }
+                if scheduler.config.isEnabled {
+                    Picker("Scan interval", selection: Binding(
+                        get: { scheduler.config.interval },
+                        set: { scheduler.updateSchedule(interval: $0) }
+                    )) {
+                        ForEach(ScheduleInterval.allCases) { interval in
+                            Text(LocalizedStringKey(interval.rawValue)).tag(interval)
                         }
+                    }
+                    .accessibilityIdentifier("schedule.interval")
 
-                        Toggle("Auto-clean after scan", isOn: $appState.scheduler.config.autoClean)
-                        Toggle("Notify on completion", isOn: $appState.scheduler.config.notifyOnCompletion)
-
-                        HStack {
-                            Text("Last run")
-                            Spacer()
-                            Text(appState.scheduler.config.formattedLastRun)
+                    Toggle(isOn: $scheduler.config.autoClean) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Auto-clean after scan")
+                            Text(String(format: String(localized: "Auto-clean can permanently remove files when eligible items reach %@. Trash stays for manual review."),
+                                        ByteCountFormatter.string(fromByteCount: scheduler.config.minimumCleanSize, countStyle: .file)))
+                                .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
                     }
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    Toggle("Notify on completion", isOn: $scheduler.config.notifyOnCompletion)
+                    if scheduler.config.notifyOnCompletion {
+                        notificationControls
+                    }
+                }
+            } header: {
+                Text("Automatic Scanning")
+            } footer: {
+                Text("Scheduled scans run while PureMac is open. An unfinished review waits for you.")
+            }
+
+            if scheduler.config.isEnabled || scheduler.config.lastRunDate != nil {
+                Section {
+                    if scheduler.config.isEnabled {
+                        LabeledContent {
+                            if scheduler.isRunning {
+                                Label("In progress", systemImage: "magnifyingglass")
+                                    .foregroundStyle(Tint.accent)
+                            } else if scheduler.isDeferred {
+                                Label("Waiting for the current operation or review", systemImage: "pause.circle")
+                            } else if let next = scheduler.config.nextRunDate {
+                                Text(next.formatted(date: .abbreviated, time: .shortened))
+                                    .monospacedDigit()
+                            }
+                        } label: {
+                            Label("Next run", systemImage: "calendar.badge.clock")
+                        }
+                        .accessibilityIdentifier("schedule.next")
+                    }
+                    LabeledContent {
+                        if let last = scheduler.config.lastRunDate {
+                            Text(last.formatted(date: .abbreviated, time: .shortened))
+                                .monospacedDigit()
+                        } else {
+                            Text("Never")
+                        }
+                    } label: {
+                        Label("Last completed scan", systemImage: "clock.arrow.circlepath")
+                    }
                 }
             }
         }
         .formStyle(.grouped)
-        .animation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.85),
-                   value: appState.scheduler.config.isEnabled)
+        .animation(motionEnabled ? .easeInOut(duration: 0.22) : nil,
+                   value: scheduler.config.isEnabled)
+        .task(id: scheduler.config.isEnabled && scheduler.config.notifyOnCompletion) {
+            await refreshNotificationStatus()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            Task { await refreshNotificationStatus() }
+        }
+    }
+
+    @ViewBuilder
+    private var notificationControls: some View {
+        if notificationStatus == .notDetermined {
+            Button("Allow notifications") {
+                Task {
+                    do {
+                        _ = try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
+                        notificationError = nil
+                        await refreshNotificationStatus()
+                    } catch {
+                        notificationError = error.localizedDescription
+                    }
+                }
+            }
+        } else if notificationStatus == .denied {
+            if let settings = URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension") {
+                Link("Open Notification Settings", destination: settings)
+            }
+        }
+        if let notificationError {
+            Text(notificationError)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func refreshNotificationStatus() async {
+        guard scheduler.config.isEnabled && scheduler.config.notifyOnCompletion else { return }
+        notificationStatus = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
     }
 }
 

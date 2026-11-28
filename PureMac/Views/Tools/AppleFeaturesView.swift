@@ -142,7 +142,7 @@ struct AppleFeaturesView: View {
                     .foregroundStyle(.secondary)
                     .padding(.vertical, 20)
             } else {
-                CardSurface(padding: 0, elevation: .flat) {
+                ToolSection(padding: 0) {
                     VStack(spacing: 0) {
                         ForEach(Array(features.enumerated()), id: \.element.id) { index, feature in
                             AppleFeatureRow(feature: feature, version: version, openDestination: openDestination, openGuide: openURL)
@@ -194,7 +194,7 @@ struct AppleFeaturesView: View {
                     .foregroundStyle(.secondary)
             }
             if let inventory {
-                CardSurface(padding: 0, elevation: .flat) {
+                ToolSection(padding: 0) {
                     VStack(spacing: 0) {
                         ForEach(Array(inventory.enumerated()), id: \.element.id) { index, item in
                             AppleStorageRow(item: item, reveal: reveal, openDestination: openDestination)
@@ -275,7 +275,7 @@ struct AppleFeaturesView: View {
                     .foregroundStyle(.secondary)
             }
             if !backups.isEmpty {
-                CardSurface(padding: 0, elevation: .flat) {
+                ToolSection(padding: 0) {
                     VStack(spacing: 0) {
                         ForEach(Array(backups.enumerated()), id: \.element.id) { index, backup in
                             backupRow(backup)
@@ -575,7 +575,7 @@ private struct DeviceBackupRemovalReport: View {
     let dismiss: () -> Void
 
     var body: some View {
-        CardSurface(padding: 16, elevation: .flat) {
+        ToolSection(padding: 16) {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Text("\(result.removedPaths.count) backups moved to the Trash")

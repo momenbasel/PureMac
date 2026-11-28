@@ -2,9 +2,16 @@ import SwiftUI
 
 struct MainWindow: View {
     @EnvironmentObject var appState: AppState
+    @StateObject private var dashboardFilters = DashboardResultsFilters()
+    @StateObject private var spaceExplorer = SpaceExplorerViewModel()
+    @StateObject private var duplicateFinder = DuplicateFinderViewModel()
+    @StateObject private var similarPhotos = SimilarPhotosViewModel()
     @ObservedObject private var permission = PermissionCoordinator.shared
     @State private var selectedSection: AppSection? = .cleaning(.smartScan)
-    @State private var parentSection: AppSection?
+    @State private var navigationHistory: [AppSection] = []
+    @State private var showsToolSwitcher = false
+    @State private var toolDestination: AppSection?
+    @State private var returnFocus: ToolReturnFocus?
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var cleanupExpanded = false
     @State private var advancedToolsExpanded = false
@@ -12,8 +19,7 @@ struct MainWindow: View {
     @State private var applicationsExpanded = true
     @State private var toolsExpanded = true
     @FocusState private var focusedSection: AppSection?
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.interfaceMotionEnabled) private var motionEnabled
 
     private static let cleanupCategories: [CleaningCategory] = [
         .systemJunk,
@@ -37,12 +43,29 @@ struct MainWindow: View {
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             sidebar
-                .navigationSplitViewColumnWidth(min: 232, ideal: 248, max: 288)
+                .navigationSplitViewColumnWidth(min: 212, ideal: 228, max: 288)
         } detail: {
             detailContainer
         }
         .frame(minWidth: 960, minHeight: 640)
-        .tint(Tint.accent)
+        .appRemovalReviewPresentation()
+        .sheet(isPresented: $showsToolSwitcher, onDismiss: finishToolSwitch) {
+            ToolSwitcher(sections: sections(includingCollapsed: true), current: selectedSection) { section in
+                toolDestination = section
+                showsToolSwitcher = false
+            } cancel: {
+                showsToolSwitcher = false
+            }
+        }
+        .onDisappear {
+            spaceExplorer.cancel()
+            duplicateFinder.cancelScan()
+            duplicateFinder.leaveReview()
+            similarPhotos.cancel()
+        }
+        .onChange(of: selectedSection) { section in
+            if section != .duplicates { duplicateFinder.leaveReview() }
+        }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             appState.checkFullDiskAccess()
             permission.refreshStatus()
@@ -92,38 +115,18 @@ struct MainWindow: View {
     }
 
     private var sidebar: some View {
-        List {
+        List(selection: Binding(
+            get: { selectedSection },
+            set: { section in
+                if let section, section != selectedSection { selectSection(section) }
+            }
+        )) {
             Section {
                 if careExpanded {
-                    navRow(
-                        section: .cleaning(.smartScan),
-                        label: "Overview",
-                        icon: "internaldrive",
-                        tint: Tint.accent,
-                        badge: dashboardBadge,
-                        emphasized: true
-                    )
-                    navRow(
-                        section: .protection,
-                        label: "Protection",
-                        icon: "shield.checkered",
-                        tint: Tint.green,
-                        badge: nil
-                    )
-                    navRow(
-                        section: .performance,
-                        label: "Performance",
-                        icon: "gauge.with.dots.needle.67percent",
-                        tint: Tint.cyan,
-                        badge: nil
-                    )
-                    navRow(
-                        section: .appleFeatures,
-                        label: "Apple Features",
-                        icon: "switch.2",
-                        tint: Tint.accent,
-                        badge: nil
-                    )
+                    navRow(.cleaning(.smartScan), badge: dashboardBadge)
+                    navRow(.protection)
+                    navRow(.performance)
+                    navRow(.appleFeatures)
                 }
             } header: {
                 collapsibleSectionHeader("Care", isExpanded: $careExpanded)
@@ -131,27 +134,9 @@ struct MainWindow: View {
 
             Section {
                 if applicationsExpanded {
-                    navRow(
-                        section: .apps,
-                        label: "Uninstaller",
-                        icon: "app.dashed",
-                        tint: Tint.blue,
-                        badge: appState.installedApps.isEmpty ? nil : "\(appState.installedApps.count)"
-                    )
-                    navRow(
-                        section: .appUpdates,
-                        label: "App Updates",
-                        icon: "arrow.triangle.2.circlepath",
-                        tint: Tint.accent,
-                        badge: nil
-                    )
-                    navRow(
-                        section: .orphans,
-                        label: "Leftovers",
-                        icon: "doc.questionmark",
-                        tint: Tint.orange,
-                        badge: appState.orphanedFiles.isEmpty ? nil : "\(appState.orphanedFiles.count)"
-                    )
+                    navRow(.apps, badge: appState.installedApps.isEmpty ? nil : appState.installedApps.count.formatted())
+                    navRow(.appUpdates)
+                    navRow(.orphans, badge: appState.orphanedFiles.isEmpty ? nil : appState.orphanedFiles.count.formatted())
                 }
             } header: {
                 collapsibleSectionHeader("Applications", isExpanded: $applicationsExpanded)
@@ -159,89 +144,22 @@ struct MainWindow: View {
 
             Section {
                 if toolsExpanded {
-                    navRow(
-                        section: .spaceExplorer,
-                        label: "Space Explorer",
-                        icon: "square.3.layers.3d.down.right",
-                        tint: Tint.accent,
-                        badge: nil
-                    )
-                    navRow(
-                        section: .duplicates,
-                        label: "Duplicate Finder",
-                        icon: "doc.on.doc",
-                        tint: Tint.purple,
-                        badge: nil
-                    )
-                    navRow(
-                        section: .similarPhotos,
-                        label: "Similar Photos",
-                        icon: "photo.stack",
-                        tint: Tint.pink,
-                        badge: nil
-                    )
-                    DisclosureGroup(isExpanded: $cleanupExpanded) {
-                        ForEach(Self.cleanupCategories) { category in
-                            navRow(
-                                section: .cleaning(category),
-                                label: LocalizedStringKey(category.rawValue),
-                                icon: category.icon,
-                                tint: category.color,
-                                badge: sizeBadge(for: category)
-                            )
-                        }
-                    } label: {
-                        SidebarDisclosureHeader(
-                            label: "Cleanup",
-                            icon: "trash.slash"
-                        ) {
-                            withAnimation(reduceMotion ? nil : MotionTokens.gentle) {
-                                cleanupExpanded.toggle()
-                            }
-                        }
-                    }
-                    .tint(.secondary)
-                    .listRowInsets(rowInsets)
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
-                    DisclosureGroup(isExpanded: $advancedToolsExpanded) {
-                        ForEach(Self.advancedCategories) { category in
-                            navRow(
-                                section: .cleaning(category),
-                                label: LocalizedStringKey(category.rawValue),
-                                icon: category.icon,
-                                tint: category.color,
-                                badge: sizeBadge(for: category)
-                            )
-                        }
-                    } label: {
-                        SidebarDisclosureHeader(
-                            label: "Developer Cleanup",
-                            icon: "wrench.and.screwdriver"
-                        ) {
-                            withAnimation(reduceMotion ? nil : MotionTokens.gentle) {
-                                advancedToolsExpanded.toggle()
-                            }
-                        }
-                    }
-                    .tint(.secondary)
-                    .listRowInsets(rowInsets)
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
+                    navRow(.spaceExplorer, badge: spaceExplorer.isScanning ? String(localized: "Scanning") : nil)
+                    navRow(.duplicates, badge: duplicateFinder.state == .scanning ? String(localized: "Scanning") : nil)
+                    navRow(.similarPhotos, badge: similarPhotos.isScanning ? String(localized: "Scanning") : nil)
+                    cleanupGroup("Cleanup", symbol: "trash", categories: Self.cleanupCategories, expanded: $cleanupExpanded)
+                    cleanupGroup("Developer Cleanup", symbol: "wrench.and.screwdriver", categories: Self.advancedCategories, expanded: $advancedToolsExpanded)
                 }
             } header: {
                 collapsibleSectionHeader("Tools", isExpanded: $toolsExpanded)
             }
         }
         .listStyle(.sidebar)
-        .environment(\.defaultMinListRowHeight, 35)
-        .scrollContentBackground(.hidden)
-        .background(sidebarBackground)
         .navigationTitle("PureMac")
         .onMoveCommand(perform: moveSelection)
         .onChange(of: selectedSection) { section in
             guard let section else { return }
-            withAnimation(reduceMotion ? nil : MotionTokens.gentle) {
+            withAnimation(motionEnabled ? MotionTokens.gentle : nil) {
                 switch section {
                 case .cleaning(.smartScan), .protection, .performance, .appleFeatures:
                     careExpanded = true
@@ -267,70 +185,78 @@ struct MainWindow: View {
         }
     }
 
-    private var rowInsets: EdgeInsets {
-        EdgeInsets(top: 1, leading: 12, bottom: 1, trailing: 12)
+    private func cleanupGroup(
+        _ title: LocalizedStringKey, symbol: String, categories: [CleaningCategory], expanded: Binding<Bool>
+    ) -> some View {
+        DisclosureGroup(isExpanded: expanded) {
+            ForEach(categories) { category in
+                navRow(.cleaning(category), badge: sizeBadge(for: category))
+            }
+        } label: {
+            Label(title, systemImage: symbol)
+                .symbolRenderingMode(.monochrome)
+                .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+                .onTapGesture { expanded.wrappedValue.toggle() }
+        }
     }
 
     private func collapsibleSectionHeader(
-        _ text: LocalizedStringKey,
-        isExpanded: Binding<Bool>
+        _ title: LocalizedStringKey, isExpanded: Binding<Bool>
     ) -> some View {
         Button {
-            withAnimation(reduceMotion ? nil : MotionTokens.gentle) {
+            withAnimation(motionEnabled ? .easeOut(duration: 0.16) : nil) {
                 isExpanded.wrappedValue.toggle()
             }
         } label: {
-            HStack(spacing: 5) {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 7.5, weight: .bold))
-                    .foregroundStyle(.secondary)
-                    .rotationEffect(isExpanded.wrappedValue ? .degrees(90) : .zero)
-                Text(text)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                    .textCase(nil)
+            HStack {
+                Text(title)
+                Spacer()
+                Image(systemName: isExpanded.wrappedValue ? "chevron.down" : "chevron.forward")
+                    .font(.caption2)
+                    .accessibilityHidden(true)
             }
+            .foregroundStyle(Color(nsColor: .labelColor))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(Text(text))
+        .accessibilityLabel(Text(title))
         .accessibilityValue(Text(LocalizedStringKey(isExpanded.wrappedValue ? "Expanded" : "Collapsed")))
         .accessibilityAddTraits(.isHeader)
     }
 
-    private func navRow(
-        section: AppSection,
-        label: LocalizedStringKey,
-        icon: String,
-        tint: Color,
-        badge: String?,
-        emphasized: Bool = false
-    ) -> some View {
+    private func navRow(_ section: AppSection, badge: String? = nil) -> some View {
         Button {
             selectSection(section)
         } label: {
-            SidebarNavRow(
-                label: label,
-                icon: icon,
-                tint: tint,
-                badge: badge,
-                isSelected: selectedSection == section,
-                emphasized: emphasized
-            )
+            HStack(spacing: 8) {
+                Label(LocalizedStringKey(section.tool.name), systemImage: section.tool.symbol)
+                    .symbolRenderingMode(.monochrome)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                Spacer(minLength: 2)
+                if let badge {
+                    Text(verbatim: badge)
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .focused($focusedSection, equals: section)
-        .accessibilityLabel(Text(label))
-        .accessibilityIdentifier(accessibilityIdentifier(for: section))
+        .accessibilityLabel(Text(LocalizedStringKey(section.tool.name)))
+        .accessibilityValue(Text(verbatim: badge ?? ""))
+        .accessibilityIdentifier("sidebar.\(section.tool.id)")
         .accessibilityAddTraits(selectedSection == section ? .isSelected : [])
-        .listRowInsets(rowInsets)
-        .listRowSeparator(.hidden)
-        .listRowBackground(Color.clear)
+        .tag(section)
     }
 
-    private var visibleSections: [AppSection] {
+    private func sections(includingCollapsed: Bool) -> [AppSection] {
         var sections: [AppSection] = []
-        if careExpanded {
+        if includingCollapsed || careExpanded {
             sections.append(contentsOf: [
                 .cleaning(.smartScan),
                 .protection,
@@ -338,23 +264,23 @@ struct MainWindow: View {
                 .appleFeatures
             ])
         }
-        if applicationsExpanded {
+        if includingCollapsed || applicationsExpanded {
             sections.append(contentsOf: [
                 .apps,
                 .appUpdates,
                 .orphans
             ])
         }
-        if toolsExpanded {
+        if includingCollapsed || toolsExpanded {
             sections.append(contentsOf: [
                 .spaceExplorer,
                 .duplicates,
                 .similarPhotos
             ])
-            if cleanupExpanded {
+            if includingCollapsed || cleanupExpanded {
                 sections.append(contentsOf: Self.cleanupCategories.map(AppSection.cleaning))
             }
-            if advancedToolsExpanded {
+            if includingCollapsed || advancedToolsExpanded {
                 sections.append(contentsOf: Self.advancedCategories.map(AppSection.cleaning))
             }
         }
@@ -363,35 +289,37 @@ struct MainWindow: View {
     }
 
     private func selectSection(_ section: AppSection) {
-        parentSection = nil
+        navigationHistory.removeAll()
         selectedSection = section
         focusedSection = section
     }
 
     private func navigateFromCurrentSection(to section: AppSection) {
-        parentSection = selectedSection
+        guard selectedSection != section else { return }
+        if let selectedSection { navigationHistory.append(selectedSection) }
         selectedSection = section
         focusedSection = section
     }
 
-    private func accessibilityIdentifier(for section: AppSection) -> String {
-        switch section {
-        case .apps: return "sidebar.uninstaller"
-        case .orphans: return "sidebar.leftovers"
-        case .spaceExplorer: return "sidebar.spaceExplorer"
-        case .duplicates: return "sidebar.duplicates"
-        case .similarPhotos: return "sidebar.similarPhotos"
-        case .protection: return "sidebar.protection"
-        case .performance: return "sidebar.performance"
-        case .appleFeatures: return "sidebar.appleFeatures"
-        case .settings: return "sidebar.settings"
-        case .appUpdates: return "sidebar.appUpdates"
-        case .cleaning(let category): return "sidebar.cleaning.\(category.id)"
+    private func showToolSwitcher() {
+        guard !showsToolSwitcher, let window = NSApp.keyWindow,
+              window.attachedSheet == nil, window.sheetParent == nil else { return }
+        returnFocus = ToolReturnFocus(window: window)
+        showsToolSwitcher = true
+    }
+
+    private func finishToolSwitch() {
+        if let section = toolDestination {
+            selectSection(section)
+        } else {
+            returnFocus?.restore()
         }
+        toolDestination = nil
+        returnFocus = nil
     }
 
     private func moveSelection(_ direction: MoveCommandDirection) {
-        let sections = visibleSections
+        let sections = sections(includingCollapsed: false)
         guard !sections.isEmpty else { return }
         let current = focusedSection ?? selectedSection
         let currentIndex = current.flatMap(sections.firstIndex(of:))
@@ -410,8 +338,11 @@ struct MainWindow: View {
     }
 
     private var dashboardBadge: String? {
-        guard appState.totalJunkSize > 0 else { return nil }
-        return ByteCountFormatter.string(fromByteCount: appState.totalJunkSize, countStyle: .file)
+        switch appState.scanState {
+        case .scanning: return String(localized: "Scanning")
+        case .cleaning: return String(localized: "Cleaning")
+        default: return nil
+        }
     }
 
     private func sizeBadge(for category: CleaningCategory) -> String? {
@@ -419,64 +350,52 @@ struct MainWindow: View {
         return ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
     }
 
-    private var sidebarBackground: some View {
-        Color(nsColor: colorScheme == .dark ? .underPageBackgroundColor : .windowBackgroundColor)
-            .overlay(alignment: .trailing) {
-                Rectangle()
-                    .fill(Color.primary.opacity(0.07))
-                    .frame(width: 0.5)
-            }
-            .ignoresSafeArea()
-    }
-
     private var sidebarFooter: some View {
-        Button {
-            selectSection(.settings)
-        } label: {
-            SidebarNavRow(
-                label: "Settings",
-                icon: "gearshape.fill",
-                tint: Tint.accent,
-                badge: nil,
-                isSelected: selectedSection == .settings,
-                emphasized: false
-            )
+        VStack(spacing: 0) {
+            Divider()
+            navRow(.settings)
+                .padding(.horizontal, 8)
+                .frame(minHeight: 28)
+                .background(selectedSection == .settings ? Color(nsColor: .unemphasizedSelectedContentBackgroundColor) : .clear,
+                            in: RoundedRectangle(cornerRadius: 5))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
         }
-        .buttonStyle(.plain)
-        .focused($focusedSection, equals: .settings)
-        .accessibilityIdentifier("sidebar.settings")
-        .accessibilityAddTraits(selectedSection == .settings ? .isSelected : [])
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(.regularMaterial)
-        .overlay(alignment: .top) { Divider() }
     }
 
     @ViewBuilder
     private var detailContainer: some View {
         VStack(spacing: 0) {
-            if selectedSection != .settings && !appState.hasFullDiskAccess && !appState.fdaBannerDismissed {
+            if selectedSection != .settings && selectedSection != .cleaning(.smartScan) && !appState.hasFullDiskAccess && !appState.fdaBannerDismissed {
                 accessBanner
-                    .padding(.horizontal, 20)
-                    .padding(.top, 14)
-                    .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
+                    .transition(motionEnabled ? .move(edge: .top).combined(with: .opacity) : .identity)
             }
             detailView
                 .id(selectedSection)
-                .transition(reduceMotion ? .opacity : .opacity.combined(with: .offset(y: 6)))
+                .transition(motionEnabled ? .opacity.combined(with: .offset(y: 6)) : .identity)
         }
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: selectedSection)
-        .animation(reduceMotion ? nil : MotionTokens.gentle, value: appState.fdaBannerDismissed)
-        .animation(reduceMotion ? nil : MotionTokens.gentle, value: appState.hasFullDiskAccess)
+        .animation(motionEnabled ? .easeOut(duration: 0.18) : nil, value: selectedSection)
+        .animation(motionEnabled ? MotionTokens.gentle : nil, value: appState.fdaBannerDismissed)
+        .animation(motionEnabled ? MotionTokens.gentle : nil, value: appState.hasFullDiskAccess)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AmbientBackdrop())
+        .background(Color(nsColor: .windowBackgroundColor))
         .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button(action: showToolSwitcher) {
+                    Label("Find a Tool", systemImage: "magnifyingglass")
+                }
+                .keyboardShortcut("k", modifiers: .command)
+                .help(Text(verbatim: "\(String(localized: "Find a Tool")) (⌘K)"))
+                .accessibilityIdentifier("toolbar.toolSwitcher")
+            }
             ToolbarItem(placement: .navigation) {
-                if let parentSection {
+                if !navigationHistory.isEmpty {
                     Button {
-                        selectSection(parentSection)
+                        guard let previous = navigationHistory.popLast() else { return }
+                        selectedSection = previous
+                        focusedSection = previous
                     } label: {
-                        Label("Back", systemImage: "chevron.left")
+                        Label("Back", systemImage: "chevron.backward")
                     }
                     .help("Back")
                 }
@@ -492,11 +411,18 @@ struct MainWindow: View {
         case .orphans:
             OrphanListView()
         case .spaceExplorer:
-            SpaceExplorerView()
+            SpaceExplorerView(
+                model: spaceExplorer,
+                findDuplicates: { folder in
+                    duplicateFinder.startScan(folder)
+                    navigateFromCurrentSection(to: .duplicates)
+                },
+                canFindDuplicates: !duplicateFinder.isMovingToTrash
+            )
         case .duplicates:
-            DuplicateFinderView()
+            DuplicateFinderView(model: duplicateFinder)
         case .similarPhotos:
-            SimilarPhotosView()
+            SimilarPhotosView(model: similarPhotos)
         case .protection:
             ProtectionView()
         case .performance:
@@ -509,7 +435,7 @@ struct MainWindow: View {
             SettingsView()
         case .cleaning(let category):
             if category == .smartScan {
-                DashboardView { navigateFromCurrentSection(to: $0) }
+                DashboardView(filters: dashboardFilters) { navigateFromCurrentSection(to: $0) }
             } else {
                 CategoryDetailView(category: category)
             }
@@ -523,14 +449,14 @@ struct MainWindow: View {
     }
 
     private var accessBanner: some View {
-        HStack(spacing: 12) {
-            IconTile(systemName: "lock.shield", tint: Tint.orange, size: 32, corner: 8)
+        HStack(spacing: 10) {
+            Image(systemName: "lock")
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
-                Text("Full Disk Access is off")
-                    .font(.system(size: 13, weight: .semibold))
+                Text("Full Disk Access is off").font(.subheadline.weight(.medium))
                 Text("Protected caches and app containers will be skipped.")
-                    .font(.system(size: 11.5))
-                    .foregroundStyle(.secondary)
+                    .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
             Button("Set up") {
@@ -538,131 +464,38 @@ struct MainWindow: View {
                     appState.checkFullDiskAccess()
                 }
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.regular)
-            .tint(Tint.accent)
+            .controlSize(.small)
             Button {
                 appState.fdaBannerDismissed = true
             } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                    .padding(6)
+                Label("Dismiss", systemImage: "xmark").labelStyle(.iconOnly)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.borderless)
             .help("Dismiss")
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Tint.orange.opacity(0.075))
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(Tint.orange.opacity(0.18), lineWidth: 0.5)
-        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(.bar)
+        .overlay(alignment: .bottom) { Divider() }
     }
 }
 
-private struct SidebarNavRow: View {
-    let label: LocalizedStringKey
-    let icon: String
-    let tint: Color
-    let badge: String?
-    let isSelected: Bool
-    let emphasized: Bool
+private struct ToolReturnFocus {
+    weak var window: NSWindow?
+    weak var view: NSView?
 
-    @State private var hovering = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.colorScheme) private var colorScheme
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon)
-                .font(.system(size: 16, weight: isSelected ? .medium : .regular))
-                .foregroundStyle(isSelected ? Tint.accent : .secondary)
-                .frame(width: 20)
-                .accessibilityHidden(true)
-            Text(label)
-                .font(.system(size: 12.5, weight: isSelected || emphasized ? .semibold : .regular))
-                .foregroundStyle(labelColor)
-                .lineLimit(1)
-            Spacer(minLength: 5)
-            if let badge {
-                Text(badge)
-                    .font(.system(size: 9.5, weight: .semibold))
-                    .monospacedDigit()
-                    .foregroundStyle(isSelected ? tint : .secondary)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Capsule().fill(Color.primary.opacity(0.05)))
-            }
-        }
-        .frame(maxWidth: .infinity, minHeight: 34, alignment: .leading)
-        .padding(.horizontal, 8)
-        .background {
-            RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .fill(rowFill)
-        }
-        .contentShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
-        .animation(reduceMotion ? nil : MotionTokens.snappy, value: hovering)
-        .animation(reduceMotion ? nil : MotionTokens.snappy, value: isSelected)
-        .onHover { hovering = $0 }
-    }
-
-    private var rowFill: Color {
-        if isSelected {
-            return Tint.accent.opacity(colorScheme == .dark ? 0.16 : 0.10)
-        }
-        if hovering {
-            return Color.primary.opacity(0.035)
-        }
-        return .clear
-    }
-
-    private var labelColor: Color {
-        colorScheme == .dark ? Color.white.opacity(0.91) : Color.black.opacity(0.84)
-    }
-}
-
-private struct SidebarDisclosureHeader: View {
-    let label: LocalizedStringKey
-    let icon: String
-    let onToggle: () -> Void
-
-    @State private var hovering = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.colorScheme) private var colorScheme
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon)
-                .font(.system(size: 16))
-                .foregroundStyle(.secondary)
-                .frame(width: 20)
-                .accessibilityHidden(true)
-            Text(label)
-                .font(.system(size: 12.5, weight: .medium))
-                .foregroundStyle(labelColor)
-                .lineLimit(1)
-            Spacer(minLength: 5)
-        }
-        .frame(maxWidth: .infinity, minHeight: 34, alignment: .leading)
-        .padding(.horizontal, 8)
-        .background {
-            RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .fill(hovering ? Color.primary.opacity(0.035) : .clear)
-        }
-        .contentShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
-        .animation(reduceMotion ? nil : MotionTokens.snappy, value: hovering)
-        .onHover { hovering = $0 }
-        .onTapGesture {
-            onToggle()
+    init(window: NSWindow) {
+        self.window = window
+        if let editor = window.firstResponder as? NSTextView, editor.isFieldEditor,
+           let control = editor.delegate as? NSView {
+            view = control
+        } else {
+            view = window.firstResponder as? NSView
         }
     }
 
-    private var labelColor: Color {
-        colorScheme == .dark ? Color.white.opacity(0.91) : Color.black.opacity(0.84)
+    func restore() {
+        guard let window, let view, view.window === window else { return }
+        window.makeFirstResponder(view)
     }
 }

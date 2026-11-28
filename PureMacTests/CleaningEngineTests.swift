@@ -133,6 +133,45 @@ final class CleaningEngineTests: XCTestCase {
         XCTAssertEqual(result.errors.count, 2)
     }
 
+    func testReviewedBatchReportsEveryOutcomeAndPreservesReplacement() async throws {
+        let urls = ["remove", "missing", "replaced", "excluded"].map { fixtureRoot.appendingPathComponent($0) }
+        for url in urls {
+            try Data(repeating: 1, count: 1024).write(to: url)
+        }
+        let selected = CleanupSelection(items: urls.map { makeItem(path: $0.path, size: 1024) })
+        try fileManager.removeItem(at: urls[1])
+        try Data(repeating: 2, count: 2048).write(to: urls[2], options: .atomic)
+        CleanupExclusions.add(urls[3].path)
+
+        let result = await CleaningEngine().cleanItems(selected.items) { _ in }
+
+        XCTAssertEqual(result.receiptRows.map(\.disposition), [.removed, .missing, .skipped, .skipped])
+        XCTAssertEqual(result.receiptRows.map(\.id), selected.items.map(\.id))
+        XCTAssertEqual(result.freedSpace, 1024)
+        XCTAssertEqual(CleanupReceipt(rows: result.receiptRows).removedBytes, 1024)
+        XCTAssertEqual(try Data(contentsOf: urls[2]).count, 2048)
+        XCTAssertTrue(fileManager.fileExists(atPath: urls[3].path))
+    }
+
+    func testNewFileAtPreviouslyMissingPathIsSkipped() async throws {
+        let url = fixtureRoot.appendingPathComponent("appeared")
+        let selected = CleanupSelection(items: [makeItem(path: url.path, size: 100)])
+        try Data(repeating: 1, count: 100).write(to: url)
+
+        let result = await CleaningEngine().cleanItems(selected.items) { _ in }
+
+        XCTAssertEqual(result.receiptRows.map(\.disposition), [.skipped])
+        XCTAssertEqual(result.freedSpace, 0)
+        XCTAssertTrue(fileManager.fileExists(atPath: url.path))
+    }
+
+    func testOperationsDistinguishCargoDockerAndSimulatorActions() {
+        XCTAssertEqual(CleanupOperation(makeItem(path: "/tmp/project/target", size: 1, category: .rustTargets)), .cargo)
+        XCTAssertEqual(CleanupOperation(makeItem(path: "", size: 1, category: .dockerCache)), .docker)
+        XCTAssertEqual(CleanupOperation(makeItem(path: "simctl-runtime:ABC", size: 1, category: .xcodeJunk)), .simulator)
+        XCTAssertEqual(CleanupOperation(makeItem(path: "/tmp/file", size: 1)), .delete)
+    }
+
     private func makeItem(
         path: String,
         size: Int64,

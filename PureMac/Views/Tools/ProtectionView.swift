@@ -45,14 +45,9 @@ struct ProtectionView: View {
 
     private var header: some View {
         HStack(alignment: .top, spacing: 24) {
-            VStack(alignment: .leading, spacing: 7) {
-                Text("Protection")
-                    .font(.system(size: 28, weight: .bold))
-                Text("Review the macOS safeguards that protect apps, disks, network access, and system files.")
-                    .font(.system(size: 13))
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            Text("Protection")
+                .font(.title.weight(.semibold))
+                .accessibilityAddTraits(.isHeader)
 
             Spacer(minLength: 20)
 
@@ -68,7 +63,7 @@ struct ProtectionView: View {
                     Text(auditButtonTitle)
                 }
             }
-            .buttonStyle(GlowProminentButtonStyle(tint: Tint.accent, gradient: TintGradient.of(Tint.accent)))
+            .buttonStyle(.borderedProminent)
             .disabled(isRunning)
             .accessibilityLabel(auditButtonTitle)
         }
@@ -78,9 +73,9 @@ struct ProtectionView: View {
     private var auditContent: some View {
         switch phase {
         case .idle:
-            CardSurface(padding: 22, elevation: .standard, tint: Tint.accent) {
+            ToolSection(padding: 22) {
                 HStack(spacing: 18) {
-                    IconTile(systemName: "shield.checkered", tint: Tint.accent, size: 44, corner: 12)
+                    ToolSymbol(systemName: "shield.checkered", tint: Tint.accent, size: 44)
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Check built-in safeguards")
                             .font(.system(size: 17, weight: .semibold))
@@ -93,7 +88,7 @@ struct ProtectionView: View {
                 }
             }
         case .running:
-            CardSurface(padding: 0, elevation: .standard, tint: Tint.accent) {
+            ToolSection(padding: 0) {
                 VStack(spacing: 0) {
                     ForEach(Array(ProtectionCheck.allCases.enumerated()), id: \.element.id) { index, check in
                         HStack(spacing: 12) {
@@ -118,7 +113,7 @@ struct ProtectionView: View {
             }
         case .complete(let snapshot):
             VStack(alignment: .leading, spacing: 8) {
-                CardSurface(padding: 0, elevation: .standard) {
+                ToolSection(padding: 0) {
                     VStack(spacing: 0) {
                         ForEach(Array(snapshot.findings.enumerated()), id: \.element.id) { index, finding in
                             ProtectionFindingRow(finding: finding)
@@ -141,10 +136,10 @@ struct ProtectionView: View {
     }
 
     private var permissionsCard: some View {
-        CardSurface(padding: 18, elevation: .flat) {
+        ToolSection(padding: 18) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 10) {
-                    IconTile(systemName: "hand.raised.fill", tint: Tint.purple, size: 31, corner: 8)
+                    ToolSymbol(systemName: "hand.raised.fill", tint: Tint.purple, size: 31)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("App permissions")
                             .font(.system(size: 15, weight: .semibold))
@@ -173,10 +168,10 @@ struct ProtectionView: View {
     }
 
     private var browserPrivacyCard: some View {
-        CardSurface(padding: 18, elevation: .flat) {
+        ToolSection(padding: 18) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top, spacing: 10) {
-                    IconTile(systemName: "safari", tint: Tint.blue, size: 31, corner: 8)
+                    ToolSymbol(systemName: "safari", tint: Tint.blue, size: 31)
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Browser privacy")
                             .font(.system(size: 15, weight: .semibold))

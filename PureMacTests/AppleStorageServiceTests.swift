@@ -48,6 +48,23 @@ final class AppleStorageServiceTests: XCTestCase {
         XCTAssertEqual(item.scannedCount, 3)
     }
 
+    func testInventoryCountsFullCloneAllocationOnce() async throws {
+        let original = root.appendingPathComponent("source")
+        let clone = root.appendingPathComponent("copy")
+        try Data(repeating: 0x43, count: 131_072).write(to: original)
+        let status = clonefile(original.path, clone.path, 0)
+        if status != 0 && errno == ENOTSUP {
+            throw XCTSkip("This test requires a filesystem with clone support")
+        }
+        XCTAssertEqual(status, 0)
+        var info = stat()
+        XCTAssertEqual(lstat(original.path, &info), 0)
+
+        let item = try await scan(root)
+        XCTAssertEqual(item.allocatedBytes, Int64(info.st_blocks) * 512)
+        XCTAssertEqual(item.status, .complete)
+    }
+
     func testSymlinksAndPackagesAreSkippedAndReportedAsPartial() async throws {
         let outside = root.appendingPathComponent("Outside")
         try FileManager.default.createDirectory(at: outside, withIntermediateDirectories: true)

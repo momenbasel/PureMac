@@ -93,6 +93,26 @@ final class LocalizationFilesTests: XCTestCase {
         }
     }
 
+    func testScanAndRemovalReviewAreTranslatedInEverySupportedLanguage() throws {
+        let actionLabels = [
+            "Scan this Mac",
+            "Review cleanup",
+            "Review removal",
+            "Permanent · Delete files",
+            "Move to Trash",
+            "Review permanent deletion",
+            "These items could not be moved to the Trash. Deleting them with administrator access cannot be undone."
+        ]
+        for (language, url) in try localizableStringsFiles() where language != "en" {
+            let strings = try localizedStrings(in: url)
+            for label in actionLabels {
+                let translation = try XCTUnwrap(strings[label], "\(language): missing \(label)")
+                XCTAssertFalse(translation.isEmpty, "\(language): empty translation for \(label)")
+                XCTAssertNotEqual(translation, label, "\(language): English fallback for \(label)")
+            }
+        }
+    }
+
     func testLocalizableStringsFilesDoNotContainDuplicateKeys() throws {
         for (language, fileURL) in try localizableStringsFiles() {
             let keys = try declaredKeys(in: fileURL)

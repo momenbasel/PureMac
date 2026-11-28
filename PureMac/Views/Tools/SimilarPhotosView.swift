@@ -104,11 +104,7 @@ final class SimilarPhotosViewModel: ObservableObject {
 }
 
 struct SimilarPhotosView: View {
-    @StateObject private var model: SimilarPhotosViewModel
-
-    init(finder: SimilarPhotoFinder = SimilarPhotoFinder()) {
-        _model = StateObject(wrappedValue: SimilarPhotosViewModel(finder: finder))
-    }
+    @ObservedObject var model: SimilarPhotosViewModel
 
     var body: some View {
         ZStack {
@@ -129,18 +125,15 @@ struct SimilarPhotosView: View {
             }
         }
         .navigationTitle("Similar Photos")
-        .onDisappear {
-            model.cancel()
-        }
     }
 
     private var header: some View {
         HStack(alignment: .center, spacing: 16) {
-            IconTile(systemName: "photo.stack.fill", tint: Tint.pink, size: 48, corner: 13, vivid: true)
+
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Similar Photos")
-                    .font(.system(size: 25, weight: .bold))
+                    .font(.title.weight(.semibold))
                 Text("Find visually related shots in a folder and review them side by side.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
@@ -154,17 +147,17 @@ struct SimilarPhotosView: View {
                 Label(model.folder == nil ? "Choose Folder" : "Choose Another Folder", systemImage: "folder.badge.plus")
             }
             .buttonStyle(.borderedProminent)
-            .tint(Tint.pink)
+            .tint(Tint.accent)
             .controlSize(.large)
             .disabled(model.isScanning)
         }
     }
 
     private func locationCard(_ folder: URL) -> some View {
-        CardSurface(padding: 11, elevation: .flat, tint: Tint.pink) {
+        ToolSection(padding: 11) {
             HStack(spacing: 10) {
                 Image(systemName: "folder.fill")
-                    .foregroundStyle(Tint.pink)
+                    .foregroundStyle(.secondary)
                 Text(folder.path)
                     .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .lineLimit(1)
@@ -219,7 +212,7 @@ struct SimilarPhotosView: View {
     }
 
     private var idleState: some View {
-        CardSurface(padding: 20, elevation: .flat) {
+        ToolSection(padding: 20) {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Choose a folder of photos")
                     .font(.system(size: 16, weight: .semibold))
@@ -237,7 +230,7 @@ struct SimilarPhotosView: View {
     }
 
     private var scanningState: some View {
-        CardSurface(padding: 24, elevation: .standard, tint: Tint.pink) {
+        ToolSection(padding: 24) {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 13) {
                     ProgressView()
@@ -260,18 +253,18 @@ struct SimilarPhotosView: View {
 
                 ProgressView()
                     .progressViewStyle(.linear)
-                    .tint(Tint.pink)
+                    .tint(Tint.accent)
 
                 HStack(spacing: 8) {
                     StatusChip(
                         label: String(localized: "\(model.progress?.entriesVisited ?? 0) items"),
                         systemImage: "doc.on.doc",
-                        tint: Tint.pink
+                        tint: .secondary
                     )
                     StatusChip(
                         label: String(localized: "\(model.progress?.candidatesFound ?? 0) photos"),
                         systemImage: "photo",
-                        tint: Tint.pink
+                        tint: .secondary
                     )
                     if let progress = model.progress, progress.photosAnalyzed > 0 {
                         StatusChip(
@@ -300,9 +293,9 @@ struct SimilarPhotosView: View {
         VStack(alignment: .leading, spacing: 14) {
             summaryCard(result)
 
-            CardSurface(padding: 14, elevation: .flat, tint: Tint.blue) {
+            ToolSection(padding: 14) {
                 HStack(alignment: .top, spacing: 11) {
-                    IconTile(systemName: "eye.fill", tint: Tint.blue, size: 30, corner: 8)
+                    ToolSymbol(systemName: "eye.fill", tint: Tint.blue, size: 30)
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Review the groups before acting")
                             .font(.system(size: 13.5, weight: .semibold))
@@ -315,9 +308,9 @@ struct SimilarPhotosView: View {
             }
 
             if result.groups.isEmpty {
-                CardSurface(padding: 28, elevation: .standard) {
+                ToolSection(padding: 28) {
                     VStack(spacing: 12) {
-                        IconTile(systemName: "checkmark.circle.fill", tint: Tint.green, size: 52, corner: 14)
+                        ToolSymbol(systemName: "checkmark.circle.fill", tint: Tint.green, size: 52)
                         Text("No similar groups found")
                             .font(.system(size: 18, weight: .semibold))
                         Text("The analyzed photos did not meet PureMac's visual similarity threshold.")
@@ -336,7 +329,7 @@ struct SimilarPhotosView: View {
     }
 
     private func summaryCard(_ result: SimilarPhotoScanResult) -> some View {
-        CardSurface(padding: 16, elevation: .flat) {
+        ToolSection(padding: 16) {
             HStack(spacing: 20) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("\(result.groups.count)")
@@ -369,9 +362,9 @@ struct SimilarPhotosView: View {
     }
 
     private func messageState(title: LocalizedStringKey, message: String, systemImage: String, tint: Color) -> some View {
-        CardSurface(padding: 30, elevation: .standard, tint: tint) {
+        ToolSection(padding: 30) {
             VStack(spacing: 13) {
-                IconTile(systemName: systemImage, tint: tint, size: 54, corner: 15)
+                ToolSymbol(systemName: systemImage, tint: tint, size: 54)
                 Text(title)
                     .font(.system(size: 18, weight: .semibold))
                 Text(message)
@@ -384,7 +377,7 @@ struct SimilarPhotosView: View {
                         model.rescan()
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(Tint.pink)
+                    .tint(Tint.accent)
                 }
             }
             .frame(maxWidth: .infinity, minHeight: 220)
@@ -404,10 +397,10 @@ private struct SimilarPhotoGroupCard: View {
     private let columns = [GridItem(.adaptive(minimum: 190, maximum: 250), spacing: 12)]
 
     var body: some View {
-        CardSurface(padding: 0, elevation: .standard) {
+        ToolSection(padding: 0) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 10) {
-                    IconTile(systemName: "photo.stack.fill", tint: Tint.pink, size: 32, corner: 9)
+                    ToolSymbol(systemName: "photo.stack.fill", tint: .secondary, size: 32)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Group \(index)")
                             .font(.system(size: 15, weight: .semibold))
@@ -419,7 +412,7 @@ private struct SimilarPhotoGroupCard: View {
                     StatusChip(
                         label: String(localized: "\(Int((group.similarity * 100).rounded()))% visual score"),
                         systemImage: "viewfinder",
-                        tint: Tint.pink
+                        tint: .secondary
                     )
                 }
                 .padding(16)

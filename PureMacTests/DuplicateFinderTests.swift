@@ -14,6 +14,64 @@ final class DuplicateFinderTests: XCTestCase {
         try super.tearDownWithError()
     }
 
+    @MainActor
+    func testKeepThisCopyRevalidatesAndNeverSelectsTheNewKeeper() async throws {
+        let folder = try makeTemporaryFolder()
+        for name in ["A", "B", "C"] {
+            try write("duplicate", to: folder.appendingPathComponent(name))
+        }
+        let recorder = URLRecorder()
+        let model = DuplicateFinderViewModel(finder: DuplicateFinder(trashHandler: { recorder.append($0) }))
+        model.startScan(folder)
+        await model.scanTask?.value
+        XCTAssertEqual(model.result?.folder, folder.standardizedFileURL)
+        XCTAssertTrue(model.selectedIDs.isEmpty)
+        let initial = try XCTUnwrap(model.result?.groups.first)
+        let newKeeper = try XCTUnwrap(initial.files.last)
+        model.toggleGroupSelection(initial)
+        model.keep(newKeeper.url, in: initial.id)
+        let updated = try XCTUnwrap(model.result?.groups.first)
+        XCTAssertEqual(updated.keeper, newKeeper)
+        XCTAssertFalse(model.selectedIDs.contains(newKeeper.url))
+        XCTAssertFalse(model.selectedIDs.contains(initial.keeper.url))
+        model.selectAllCopies()
+        XCTAssertEqual(model.selectedIDs, Set(initial.files.map(\.url)).subtracting([newKeeper.url]))
+
+        try write("changed after scan", to: newKeeper.url)
+        model.moveSelectedToTrash()
+        await model.trashTask?.value
+        XCTAssertTrue(recorder.urls.isEmpty)
+        XCTAssertNotNil(model.actionMessage)
+        model.leaveReview()
+        XCTAssertTrue(model.selectedIDs.isEmpty)
+        XCTAssertEqual(model.result?.groups.first?.keeper, newKeeper)
+    }
+
+    @MainActor
+    func testChangingFoldersClearsOldSelectionAndKeeper() async throws {
+        let first = try makeTemporaryFolder()
+        let second = try makeTemporaryFolder()
+        for folder in [first, second] {
+            try write("duplicate", to: folder.appendingPathComponent("A"))
+            try write("duplicate", to: folder.appendingPathComponent("B"))
+        }
+        let model = DuplicateFinderViewModel()
+        model.startScan(first)
+        await model.scanTask?.value
+        let initial = try XCTUnwrap(model.result?.groups.first)
+        model.keep(try XCTUnwrap(initial.files.last).url, in: initial.id)
+        model.selectAllCopies()
+
+        model.startScan(second)
+        await model.scanTask?.value
+
+        XCTAssertTrue(model.selectedIDs.isEmpty)
+        XCTAssertEqual(model.result?.folder, second.standardizedFileURL)
+        XCTAssertTrue(model.result?.groups.first?.files.allSatisfy {
+            $0.url.deletingLastPathComponent() == second.standardizedFileURL
+        } == true)
+    }
+
     func testScanGroupsOnlyByteIdenticalFiles() async throws {
         let folder = try makeTemporaryFolder()
         try write("same payload", to: folder.appendingPathComponent("A.txt"))
@@ -164,6 +222,29 @@ final class DuplicateFinderTests: XCTestCase {
         XCTAssertEqual(report.failures.map(\.url), [selected.url])
         XCTAssertTrue(FileManager.default.fileExists(atPath: selected.url.path))
         XCTAssertTrue(FileManager.default.fileExists(atPath: group.keeper.url.path))
+    }
+
+    func testCancelledBatchReportsCompletedMoveAndKeepsChosenCopy() async throws {
+        let folder = try makeTemporaryFolder()
+        for name in ["A", "B", "C"] {
+            try write("same bytes", to: folder.appendingPathComponent(name))
+        }
+        let result = try await DuplicateFinder().scan(folder: folder)
+        let initial = try XCTUnwrap(result.groups.first)
+        let selectedKeeper = try XCTUnwrap(initial.files.last)
+        let group = try XCTUnwrap(initial.keeping(selectedKeeper.url))
+        let recorder = URLRecorder()
+        let finder = DuplicateFinder(trashHandler: { url in
+            recorder.append(url)
+            withUnsafeCurrentTask { $0?.cancel() }
+        })
+        let report = try await Task {
+            try await finder.moveToTrash(group: group, selectedIDs: Set(group.files.dropFirst().map(\.url)))
+        }.value
+
+        XCTAssertEqual(recorder.urls, [initial.keeper.url])
+        XCTAssertEqual(report.trashedFiles.map(\.url), recorder.urls)
+        XCTAssertFalse(recorder.urls.contains(selectedKeeper.url))
     }
 
     func testValidActionUsesTrashHandlerAndKeepsOriginal() async throws {

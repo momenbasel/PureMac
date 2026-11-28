@@ -1,4 +1,5 @@
 import AppKit
+import Charts
 import SwiftUI
 
 struct PerformanceView: View {
@@ -9,15 +10,13 @@ struct PerformanceView: View {
         case failed(String)
     }
 
-    @ObservedObject private var monitor = SystemMonitor.shared
+    private let monitor = SystemMonitor.shared
     @State private var state: LoadState = .idle
-    @State private var resourcesExpanded = false
     @State private var monitorOwner = UUID()
     @State private var pageIsVisible = false
     @State private var appIsActive = NSApplication.shared.isActive
     @State private var windowIsMinimized = false
     @State private var windowIsKey = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var startupExpanded = false
     @State private var snapshotPendingDeletion: PerformanceSnapshot?
     @State private var deletingSnapshotID: String?
@@ -25,21 +24,17 @@ struct PerformanceView: View {
     private let inspector = PerformanceInspector()
 
     var body: some View {
-        ZStack {
-            Color(nsColor: .windowBackgroundColor)
-                .ignoresSafeArea()
-
-            ScrollView {
-                // Only a few expandable cards: eager layout avoids unstable lazy height estimates.
-                VStack(alignment: .leading, spacing: 14) {
-                    header
-                    liveResources
-                    inspectionContent
-                }
-                .padding(24)
-                .frame(maxWidth: 1040)
-                .frame(maxWidth: .infinity)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                header
+                Divider()
+                PerformanceResources(isActive: resourcesAreActive, monitor: monitor)
+                Divider()
+                inspectionContent
             }
+            .padding(20)
+            .frame(maxWidth: 1020)
+            .frame(maxWidth: .infinity)
         }
         .navigationTitle("Performance")
         .toolbar {
@@ -115,15 +110,10 @@ struct PerformanceView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .center, spacing: 14) {
-            IconTile(systemName: "gauge.with.dots.needle.67percent", tint: Tint.accent, size: 44, corner: 12)
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Performance")
-                    .font(.system(size: 26, weight: .bold))
-                Text("See current resource use and review what starts in the background.")
-                    .font(.system(size: 13))
-                    .foregroundStyle(.secondary)
-            }
+        HStack {
+            Text("Performance")
+                .font(.title2.weight(.semibold))
+                .accessibilityAddTraits(.isHeader)
             Spacer()
             Button("Open Activity Monitor") {
                 openActivityMonitor()
@@ -145,227 +135,104 @@ struct PerformanceView: View {
         }
     }
 
-    private var liveResources: some View {
-        CardSurface(padding: 18, elevation: .standard, tint: Tint.accent) {
-            VStack(alignment: .leading, spacing: 18) {
-                Button {
-                    withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) {
-                        resourcesExpanded.toggle()
-                    }
-                } label: {
-                    HStack(spacing: 10) {
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 11, weight: .semibold))
-                            .rotationEffect(.degrees(resourcesExpanded ? 90 : 0))
-                            .foregroundStyle(.secondary)
-                        IconTile(systemName: "cpu", tint: Tint.accent, size: 30, corner: 8)
-                        Text("CPU - Memory")
-                            .font(.system(size: 15, weight: .semibold))
-                        Spacer()
-                        StatusChip(label: resourcesAreActive ? String(localized: "Live") : String(localized: "Paused"),
-                                   systemImage: resourcesAreActive ? "circle.fill" : "pause.fill",
-                                   tint: resourcesAreActive ? Tint.green : .secondary)
-                    }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("CPU - Memory")
-                .accessibilityValue(Text(LocalizedStringKey(resourcesExpanded ? "Expanded" : "Collapsed")))
-                .accessibilityIdentifier("performance.resourcesDisclosure")
-
-                HStack(spacing: 26) {
-                    ResourceMeter(
-                        title: "CPU",
-                        value: monitor.cpuUsage,
-                        detail: "\(Int((monitor.cpuUsage * 100).rounded()))%",
-                        tint: Tint.accent
-                    )
-                    Divider().frame(height: 52)
-                    ResourceMeter(
-                        title: "Memory in use",
-                        value: monitor.memoryFraction,
-                        detail: memoryDetail,
-                        tint: Tint.purple
-                    )
-                }
-                if resourcesExpanded {
-                    ProcessResourcesView(isActive: resourcesAreActive)
-                }
-            }
-        }
-    }
-
     @ViewBuilder
     private var inspectionContent: some View {
         switch state {
         case .idle, .loading:
-            CardSurface(padding: 28, elevation: .flat) {
-                HStack(spacing: 12) {
-                    ProgressView()
-                        .controlSize(.small)
-                    Text("Inspecting startup items and local snapshots…")
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                }
+            HStack {
+                ProgressView().controlSize(.small)
+                Text("Inspecting startup items and local snapshots…").foregroundStyle(.secondary)
             }
         case .loaded(let inspection):
             if !inspection.issues.isEmpty {
-                issuesCard(inspection.issues)
-            }
-            startupCard(inspection.startupItems)
-            snapshotsCard(inspection.snapshots)
-        case .failed(let message):
-            CardSurface(padding: 18, elevation: .standard, tint: Tint.orange) {
-                HStack(alignment: .top, spacing: 12) {
-                    IconTile(systemName: "exclamationmark.triangle.fill", tint: Tint.orange, size: 32, corner: 9)
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("Inspection stopped")
-                            .font(.system(size: 14, weight: .semibold))
-                        Text(message)
-                            .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    Button("Try Again") {
-                        Task { await refresh() }
-                    }
-                    .buttonStyle(.bordered)
-                }
-            }
-        }
-    }
-
-    private func issuesCard(_ issues: [PerformanceInspectionIssue]) -> some View {
-        CardSurface(padding: 16, elevation: .flat, tint: Tint.orange) {
-            DisclosureGroup {
-                VStack(alignment: .leading, spacing: 10) {
-                    ForEach(issues) { issue in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(issue.title)
-                                .font(.system(size: 12, weight: .medium))
-                            Text(issue.detail)
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                                .textSelection(.enabled)
-                        }
-                    }
-                }
-                .padding(.top, 10)
-            } label: {
-                Label(
-                    "Some information could not be read (\(issues.count))",
-                    systemImage: "exclamationmark.triangle.fill"
-                )
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Tint.orange)
-            }
-        }
-    }
-
-    private func startupCard(_ items: [PerformanceStartupItem]) -> some View {
-        CardSurface(padding: 18, elevation: .standard) {
-            DisclosureGroup(isExpanded: $startupExpanded) {
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Text("Launch agents and daemons installed outside macOS system folders")
-                            .font(.system(size: 11.5))
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Button("Login Items Settings") {
-                            openLoginItemsSettings()
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                    }
-                    Divider()
-                    if items.isEmpty {
-                        EmptyInspectionRow(
-                            systemImage: "checkmark.circle.fill",
-                            title: "No launchd items found",
-                            detail: "The inspected user and third-party launch folders are empty."
-                        )
-                    } else {
-                        LazyVStack(spacing: 0) {
-                            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                                StartupItemRow(item: item) { reveal(item.sourceURL) }
-                                if index < items.count - 1 {
-                                    Divider().padding(.leading, 58)
-                                }
-                            }
-                        }
-                    }
-                }
-                .padding(.top, 14)
-            } label: {
-                HStack(spacing: 10) {
-                    IconTile(systemName: "switch.2", tint: Tint.accent, size: 30, corner: 8)
-                    Text("Startup and background items")
-                        .font(.system(size: 15, weight: .semibold))
-                    Spacer()
-                    StatusChip(label: String(format: String(localized: "%lld found"), Int64(items.count)), tint: Tint.accent)
-                }
-            }
-            .accessibilityIdentifier("performance.startupDisclosure")
-        }
-    }
-
-    private func snapshotsCard(_ snapshots: [PerformanceSnapshot]) -> some View {
-        CardSurface(padding: 0, elevation: .standard) {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 10) {
-                    IconTile(systemName: "clock.arrow.circlepath", tint: Tint.purple, size: 30, corner: 8)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Local snapshots")
-                            .font(.system(size: 15, weight: .semibold))
-                        Text("Time Machine snapshots can be reviewed and removed individually")
-                            .font(.system(size: 11.5))
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    StatusChip(label: String(localized: "\(snapshots.count) found"), tint: Tint.purple)
-                    Button("Time Machine Settings") {
-                        openTimeMachineSettings()
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                }
-                .padding(18)
-
+                issuesSection(inspection.issues)
                 Divider()
+            }
+            startupSection(inspection.startupItems)
+            Divider()
+            snapshotsSection(inspection.snapshots)
+        case .failed(let message):
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "exclamationmark.triangle").accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Inspection stopped").font(.headline)
+                    Text(message).foregroundStyle(.secondary).textSelection(.enabled)
+                }
+                Spacer()
+                Button("Try Again") { Task { await refresh() } }
+            }
+        }
+    }
 
-                if snapshots.isEmpty {
-                    EmptyInspectionRow(
-                        systemImage: "clock.badge.checkmark.fill",
-                        title: "No local snapshots reported",
-                        detail: "Time Machine did not report any snapshots for the startup disk."
-                    )
+    private func issuesSection(_ issues: [PerformanceInspectionIssue]) -> some View {
+        DisclosureGroup {
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(issues) { issue in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(issue.title).fontWeight(.medium)
+                        Text(issue.detail).font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
+                    }
+                }
+            }
+            .padding(.top, 6)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        } label: {
+            Label("Some information could not be read (\(issues.count))", systemImage: "exclamationmark.triangle")
+        }
+    }
+
+    private func startupSection(_ items: [PerformanceStartupItem]) -> some View {
+        DisclosureGroup(isExpanded: $startupExpanded) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Launch agents and daemons installed outside macOS system folders")
+                        .font(.callout).foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Login Items Settings") { openLoginItemsSettings() }.controlSize(.small)
+                }
+                if items.isEmpty {
+                    Text("No launchd items found").foregroundStyle(.secondary)
                 } else {
-                    LazyVStack(spacing: 0) {
-                        ForEach(Array(snapshots.enumerated()), id: \.element.id) { index, snapshot in
-                            SnapshotRow(
-                                snapshot: snapshot,
-                                isDeleting: deletingSnapshotID == snapshot.id,
-                                deletionInProgress: deletingSnapshotID != nil
-                            ) {
-                                snapshotPendingDeletion = snapshot
-                            }
-                            if index < snapshots.count - 1 {
-                                Divider()
-                                    .padding(.leading, 58)
-                            }
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        ForEach(items) { item in
+                            Divider()
+                            StartupItemRow(item: item) { reveal(item.sourceURL) }
                         }
                     }
-
-                    HStack(spacing: 6) {
-                        Image(systemName: "info.circle")
-                        Text("macOS does not report reliable per-snapshot sizes in this listing.")
-                    }
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 12)
-                    .background(Color.primary.opacity(0.025))
                 }
+            }
+            .padding(.top, 8)
+        } label: {
+            HStack {
+                Text("Startup and background items").font(.headline)
+                Spacer()
+                Text(String(format: String(localized: "%lld found"), Int64(items.count)))
+                    .font(.callout.monospacedDigit()).foregroundStyle(.secondary)
+            }
+        }
+        .accessibilityIdentifier("performance.startupDisclosure")
+    }
+
+    private func snapshotsSection(_ snapshots: [PerformanceSnapshot]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Local snapshots").font(.headline)
+                Text(String(localized: "\(snapshots.count) found")).font(.callout.monospacedDigit()).foregroundStyle(.secondary)
+                Spacer()
+                Button("Time Machine Settings") { openTimeMachineSettings() }.controlSize(.small)
+            }
+            if snapshots.isEmpty {
+                Text("No local snapshots reported").foregroundStyle(.secondary)
+            } else {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(snapshots) { snapshot in
+                        Divider()
+                        SnapshotRow(snapshot: snapshot, isDeleting: deletingSnapshotID == snapshot.id,
+                                    deletionInProgress: deletingSnapshotID != nil) { snapshotPendingDeletion = snapshot }
+                    }
+                }
+                Text("macOS does not report reliable per-snapshot sizes in this listing.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
         }
     }
@@ -373,13 +240,6 @@ struct PerformanceView: View {
     private var isLoading: Bool {
         if case .loading = state { return true }
         return false
-    }
-
-    private var memoryDetail: String {
-        let formatter = ByteCountFormatter()
-        formatter.countStyle = .memory
-        formatter.allowedUnits = [.useGB, .useMB]
-        return String(format: String(localized: "%@ of %@"), formatter.string(fromByteCount: monitor.memoryUsed), formatter.string(fromByteCount: monitor.memoryTotal))
     }
 
     private var deletionConfirmationPresented: Binding<Bool> {
@@ -410,7 +270,7 @@ struct PerformanceView: View {
         do {
             state = .loaded(try await inspector.inspect())
         } catch is CancellationError {
-            return
+            state = .idle
         } catch {
             state = .failed(error.localizedDescription)
         }
@@ -454,68 +314,149 @@ struct PerformanceView: View {
     }
 }
 
-private struct ResourceMeter: View {
-    let title: LocalizedStringKey
-    let value: Double
-    let detail: String
-    let tint: Color
+private struct PerformanceResources: View {
+    let isActive: Bool
+    let monitor: SystemMonitor
+    @Environment(\.interfaceMotionEnabled) private var motionEnabled
+    @State private var expanded = false
+    @State private var readings: [SystemMonitor.Reading] = []
+
+    private var latest: SystemMonitor.Reading? { readings.last }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(title)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 9) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("System Monitor").font(.headline).accessibilityAddTraits(.isHeader)
+                Text("Last minute").font(.callout).foregroundStyle(.secondary)
                 Spacer()
-                Text(detail)
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .monospacedDigit()
+                Text(isActive ? "Live" : "Paused").font(.callout).foregroundStyle(.secondary)
             }
-            ProgressView(value: min(1, max(0, value)))
-                .tint(tint)
+
+            historyChart(ending: latest?.date ?? Date())
+
+            Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 4) {
+                metric("CPU", symbol: "circle.fill", value: latest?.cpu,
+                       detail: String(localized: "Total CPU capacity"), tint: .blue)
+                metric("Memory in use", symbol: "diamond.fill", value: latest?.memory,
+                       detail: memoryDetail, tint: .purple)
+            }
+
+            Divider().padding(.vertical, 4)
+            DisclosureGroup(isExpanded: $expanded.animation(motionEnabled ? .easeInOut(duration: 0.18) : nil)) {
+                if expanded {
+                    ProcessResourcesView(isActive: isActive)
+                }
+            } label: {
+                Text("Apps and processes").font(.headline)
+            }
+            .accessibilityIdentifier("performance.resourcesDisclosure")
         }
-        .frame(maxWidth: .infinity)
+        .onReceive(monitor.$latestReading.compactMap { $0 }) { reading in
+            guard isActive else { return }
+            if let previous = latest {
+                let interval = reading.date.timeIntervalSince(previous.date)
+                guard interval != 0 else { return }
+                if interval < 0 || interval > 3 { readings.removeAll(keepingCapacity: true) }
+            }
+            readings.removeAll { reading.date.timeIntervalSince($0.date) > 60 }
+            readings.append(reading)
+        }
+    }
+
+    private func metric(_ title: LocalizedStringKey, symbol: String, value: Double?, detail: String, tint: Color) -> some View {
+        GridRow {
+            HStack(spacing: 6) {
+                Image(systemName: symbol).font(.system(size: 7)).foregroundStyle(tint).accessibilityHidden(true)
+                Text(title)
+            }
+            Text(value?.formatted(.percent.precision(.fractionLength(0))) ?? "…")
+                .monospacedDigit().gridColumnAlignment(.trailing)
+            Text(detail).foregroundStyle(.secondary)
+        }
+        .font(.callout)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var memoryDetail: String {
+        guard let latest, let used = latest.usedMemory else { return String(localized: "Unavailable") }
+        return String(format: String(localized: "%@ of %@"), ByteCountFormatter.string(fromByteCount: used, countStyle: .memory),
+                      ByteCountFormatter.string(fromByteCount: latest.totalMemory, countStyle: .memory))
+    }
+
+    private func historyChart(ending: Date) -> some View {
+        Chart(readings) { reading in
+            if let cpu = reading.cpu {
+                LineMark(x: .value("Time", reading.date), y: .value("CPU", cpu), series: .value("Resource", "CPU"))
+                    .foregroundStyle(Color.blue)
+                    .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round))
+                if reading.id == latest?.id {
+                    PointMark(x: .value("Time", reading.date), y: .value("CPU", cpu))
+                        .foregroundStyle(Color.blue)
+                        .symbolSize(18)
+                }
+            }
+            if let memory = reading.memory {
+                LineMark(x: .value("Time", reading.date), y: .value("Memory", memory), series: .value("Resource", "Memory"))
+                    .foregroundStyle(Color.purple)
+                    .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, dash: [5, 3]))
+                if reading.id == latest?.id {
+                    PointMark(x: .value("Time", reading.date), y: .value("Memory", memory))
+                        .foregroundStyle(Color.purple)
+                        .symbol(.diamond)
+                        .symbolSize(20)
+                }
+            }
+        }
+        .chartXScale(domain: ending.addingTimeInterval(-60)...ending)
+        .chartYScale(domain: 0...1)
+        .chartXAxis {
+            AxisMarks(values: [ending.addingTimeInterval(-60), ending.addingTimeInterval(-30), ending]) { value in
+                AxisGridLine()
+                AxisTick()
+                if let date = value.as(Date.self) {
+                    AxisValueLabel(centered: false, anchor: value.index == value.count - 1 ? .topTrailing : .topLeading) {
+                        Text(date, format: .dateTime.hour().minute().second())
+                    }
+                }
+            }
+        }
+        .chartYAxis {
+            AxisMarks(position: .leading, values: [0.0, 0.5, 1.0]) { value in
+                AxisGridLine()
+                if let fraction = value.as(Double.self) {
+                    AxisValueLabel { Text(fraction, format: .percent.precision(.fractionLength(0))) }
+                }
+            }
+        }
+        .frame(height: 116)
+        .animation(motionEnabled && isActive ? .easeOut(duration: 0.2) : nil, value: latest?.id)
     }
 }
 
 private struct StartupItemRow: View {
     let item: PerformanceStartupItem
     let onReveal: () -> Void
-    @State private var hovering = false
-
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            IconTile(
-                systemName: item.domain == .systemDaemon ? "gearshape.2.fill" : "bolt.horizontal.circle.fill",
-                tint: item.isDisabled ? Color.secondary : Tint.accent,
-                size: 28,
-                corner: 8
-            )
-
+        HStack(alignment: .top, spacing: 10) {
             VStack(alignment: .leading, spacing: 5) {
-                HStack(spacing: 7) {
-                    Text(item.label)
-                        .font(.system(size: 13, weight: .medium))
-                        .lineLimit(1)
-                    StatusChip(
-                        label: item.isDisabled ? String(localized: "Disabled") : item.domain.title,
-                        tint: item.isDisabled ? Color.secondary : Tint.accent
-                    )
-                    ForEach(item.triggers.prefix(2), id: \.self) { trigger in
-                        StatusChip(label: trigger, tint: Tint.purple)
-                    }
-                }
+                Text(item.label)
+                    .fontWeight(.medium)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                let attributes = [item.isDisabled ? String(localized: "Disabled") : item.domain.title]
+                    + item.triggers.prefix(2)
+                Text(attributes.joined(separator: " · ")).font(.caption).foregroundStyle(.secondary)
 
                 Text(item.program ?? String(localized: "Program not declared in this plist"))
                     .font(.system(size: 11.5, design: .monospaced))
-                    .foregroundStyle(item.program == nil ? Tint.orange : .secondary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
                     .textSelection(.enabled)
 
                 Text(item.sourceURL.path)
                     .font(.system(size: 10.5, design: .monospaced))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
                     .textSelection(.enabled)
@@ -530,12 +471,9 @@ private struct StartupItemRow: View {
             .buttonStyle(.plain)
             .foregroundStyle(.secondary)
             .help("Reveal plist in Finder")
-            .opacity(hovering ? 1 : 0.55)
+
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 12)
-        .background(hovering ? Color.primary.opacity(0.025) : Color.clear)
-        .onHover { hovering = $0 }
+        .padding(.vertical, 7)
     }
 }
 
@@ -547,13 +485,6 @@ private struct SnapshotRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            IconTile(
-                systemName: snapshot.kind == .systemUpdate ? "macbook.and.iphone" : "clock.arrow.circlepath",
-                tint: snapshot.kind == .systemUpdate ? Tint.orange : Tint.purple,
-                size: 28,
-                corner: 8
-            )
-
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 7) {
                     Text(snapshot.kind.title)
@@ -566,7 +497,7 @@ private struct SnapshotRow: View {
                 }
                 Text(snapshot.identifier)
                     .font(.system(size: 10.5, design: .monospaced))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
                     .textSelection(.enabled)
@@ -591,31 +522,6 @@ private struct SnapshotRow: View {
                 }
             }
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 12)
-    }
-}
-
-private struct EmptyInspectionRow: View {
-    let systemImage: String
-    let title: LocalizedStringKey
-    let detail: LocalizedStringKey
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: systemImage)
-                .font(.system(size: 22))
-                .foregroundStyle(Tint.green)
-                .frame(width: 30)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title)
-                    .font(.system(size: 13, weight: .medium))
-                Text(detail)
-                    .font(.system(size: 11.5))
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-        }
-        .padding(18)
+        .padding(.vertical, 7)
     }
 }

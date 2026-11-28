@@ -56,16 +56,16 @@ final class ThemeManager: ObservableObject {
 }
 
 enum Tint {
-    static let accent = Color(red: 0.08, green: 0.58, blue: 0.54)
-    static let teal = accent
-    static let blue = Color(red: 0.18, green: 0.48, blue: 0.88)
-    static let green = Color(red: 0.18, green: 0.65, blue: 0.43)
-    static let orange = Color(red: 0.92, green: 0.52, blue: 0.16)
-    static let purple = Color(red: 0.49, green: 0.38, blue: 0.72)
-    static let pink = Color(red: 0.82, green: 0.34, blue: 0.49)
-    static let cyan = Color(red: 0.19, green: 0.63, blue: 0.72)
-    static let red = Color(red: 0.85, green: 0.25, blue: 0.24)
-    static let yellow = Color(red: 0.87, green: 0.68, blue: 0.16)
+    static let accent = Color(nsColor: .controlAccentColor)
+    static let teal = Color(nsColor: .systemTeal)
+    static let blue = Color(nsColor: .systemBlue)
+    static let green = Color(nsColor: .systemGreen)
+    static let orange = Color(nsColor: .systemOrange)
+    static let purple = Color(nsColor: .systemPurple)
+    static let pink = Color(nsColor: .systemPink)
+    static let cyan = Color(nsColor: .systemCyan)
+    static let red = Color(nsColor: .systemRed)
+    static let yellow = Color(nsColor: .systemYellow)
 }
 
 enum MotionTokens {
@@ -74,52 +74,50 @@ enum MotionTokens {
     static let press = Animation.easeOut(duration: 0.1)
 }
 
-enum TintGradient {
-    static let accent = LinearGradient(
-        colors: [Tint.accent, Tint.accent.opacity(0.86)],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-    static let smartCare = LinearGradient(
-        colors: [
-            Color(red: 0.075, green: 0.085, blue: 0.09),
-            Color(red: 0.045, green: 0.052, blue: 0.055)
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-    static let destructive = LinearGradient(
-        colors: [Tint.red, Tint.red.opacity(0.86)],
-        startPoint: .top,
-        endPoint: .bottom
-    )
+private struct InterfaceMotionKey: EnvironmentKey {
+    static let defaultValue = false
+}
 
-    static func of(_ color: Color) -> LinearGradient {
-        LinearGradient(colors: [color, color.opacity(0.82)], startPoint: .top, endPoint: .bottom)
+extension EnvironmentValues {
+    var interfaceMotionEnabled: Bool {
+        get { self[InterfaceMotionKey.self] }
+        set { self[InterfaceMotionKey.self] = newValue }
     }
 }
 
-struct IconTile: View {
+struct InterfaceMotion: ViewModifier {
+    @AppStorage("settings.general.animateInterface") private var animationsEnabled = true
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.controlActiveState) private var controlState
+
+    static func isEnabled(animationsEnabled: Bool, reduceMotion: Bool, windowActive: Bool) -> Bool {
+        animationsEnabled && !reduceMotion && windowActive
+    }
+
+    func body(content: Content) -> some View {
+        let enabled = Self.isEnabled(animationsEnabled: animationsEnabled, reduceMotion: reduceMotion,
+                                     windowActive: controlState != .inactive)
+        content
+            .environment(\.interfaceMotionEnabled, enabled)
+            .transaction { transaction in
+                if !enabled {
+                    transaction.animation = nil
+                    transaction.disablesAnimations = true
+                }
+            }
+    }
+}
+
+struct ToolSymbol: View {
     let systemName: String
-    var tint: Color = Tint.accent
+    var tint: Color = .secondary
     var size: CGFloat = 26
-    var corner: CGFloat = 7
-    var glow = false
-    var vivid = false
 
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: corner, style: .continuous)
-                .fill(vivid ? tint : tint.opacity(glow ? 0.20 : 0.12))
-                .overlay {
-                    RoundedRectangle(cornerRadius: corner, style: .continuous)
-                        .strokeBorder(tint.opacity(vivid ? 0.22 : 0.16), lineWidth: 0.5)
-                }
-            Image(systemName: systemName)
-                .font(.system(size: size * 0.48, weight: .semibold))
-                .foregroundStyle(vivid ? Color.white : tint)
-        }
-        .frame(width: size, height: size)
+        Image(systemName: systemName)
+            .font(.system(size: size * 0.56, weight: .regular))
+            .foregroundStyle(tint)
+            .frame(width: size, height: size)
     }
 }
 
@@ -130,79 +128,15 @@ struct AmbientBackdrop: View {
     }
 }
 
-struct CardSurface<Content: View>: View {
+struct ToolSection<Content: View>: View {
     var padding: CGFloat = 16
-    var accent: Color? = nil
-    var elevation: CardElevation = .standard
-    var material: Material? = nil
-    var tint: Color? = nil
     @ViewBuilder var content: Content
-
-    private let cornerRadius: CGFloat = 10
 
     var body: some View {
         content
             .padding(padding)
-            .background {
-                ZStack {
-                    if let material {
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .fill(material)
-                    } else {
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .fill(Color(nsColor: .controlBackgroundColor))
-                    }
-                    if let tint {
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .fill(tint.opacity(0.035))
-                    }
-                }
-            }
-            .overlay {
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.075), lineWidth: 0.5)
-            }
-            .overlay(alignment: .top) {
-                if let accent {
-                    Capsule()
-                        .fill(accent.opacity(0.72))
-                        .frame(width: 36, height: 2)
-                        .padding(.top, 1)
-                }
-            }
-            .shadow(
-                color: .black.opacity(elevation.ambient),
-                radius: elevation.ambientRadius,
-                y: elevation.ambientY
-            )
-    }
-}
-
-enum CardElevation {
-    case flat, standard, raised
-
-    var ambient: Double {
-        switch self {
-        case .flat: return 0
-        case .standard: return 0
-        case .raised: return 0.07
-        }
-    }
-
-    var ambientRadius: CGFloat {
-        switch self {
-        case .flat: return 0
-        case .standard: return 6
-        case .raised: return 16
-        }
-    }
-
-    var ambientY: CGFloat {
-        switch self {
-        case .flat: return 0
-        case .standard: return 2
-        case .raised: return 7
-        }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .overlay(alignment: .bottom) { Divider() }
     }
 }
 
@@ -212,19 +146,17 @@ struct StatusChip: View {
     var tint: Color = Tint.accent
 
     var body: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: 4) {
             if let systemImage {
                 Image(systemName: systemImage)
-                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(tint)
+                    .accessibilityHidden(true)
             }
             Text(label)
-                .font(.system(size: 10.5, weight: .semibold))
-                .monospacedDigit()
+                .foregroundStyle(.secondary)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .foregroundStyle(tint)
-        .background(RoundedRectangle(cornerRadius: 5).fill(tint.opacity(0.09)))
+        .font(.caption)
+        .monospacedDigit()
     }
 }
 
@@ -266,50 +198,5 @@ struct PressableScale: ViewModifier {
 extension View {
     func pressable(hoverScale: CGFloat = 1.006, lift: Bool = false) -> some View {
         modifier(PressableScale(hoverScale: hoverScale, lift: lift))
-    }
-}
-
-struct GlowProminentButtonStyle: ButtonStyle {
-    var tint: Color = Tint.accent
-    var gradient: LinearGradient = TintGradient.accent
-    var breathes = false
-    var large = false
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: large ? 14 : 13, weight: .semibold))
-            .foregroundStyle(.white)
-            .padding(.horizontal, large ? 20 : 16)
-            .padding(.vertical, large ? 10 : 8)
-            .background(Capsule().fill(gradient))
-            .overlay(Capsule().strokeBorder(Color.white.opacity(0.14), lineWidth: 0.5))
-            .opacity(configuration.isPressed ? 0.84 : 1)
-    }
-}
-
-struct AnimatedCheckboxStyle: ToggleStyle {
-    var tint: Color = Tint.accent
-
-    func makeBody(configuration: Configuration) -> some View {
-        HStack(spacing: 8) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .fill(configuration.isOn ? tint : Color.primary.opacity(0.04))
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .strokeBorder(configuration.isOn ? tint : Color.primary.opacity(0.24), lineWidth: 1)
-                Image(systemName: "checkmark")
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundStyle(.white)
-                    .opacity(configuration.isOn ? 1 : 0)
-            }
-            .frame(width: 15, height: 15)
-            configuration.label
-        }
-        .contentShape(Rectangle())
-        .onTapGesture { configuration.isOn.toggle() }
-        .accessibilityRepresentation {
-            Toggle(isOn: configuration.$isOn) { configuration.label }
-                .toggleStyle(.checkbox)
-        }
     }
 }

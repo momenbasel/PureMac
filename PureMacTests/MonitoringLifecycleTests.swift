@@ -47,6 +47,28 @@ final class MonitoringLifecycleTests: XCTestCase {
         XCTAssertEqual(samples, stoppedCount)
     }
 
+    func testResourceHistoryUsesMeasuredDeltasAndPausesWithItsOwner() async throws {
+        let monitor = SystemMonitor()
+        let owner = UUID()
+        monitor.start(owner: owner, interval: 0.1)
+        defer { monitor.stop(owner: owner) }
+        let first = try XCTUnwrap(monitor.latestReading)
+        XCTAssertNil(first.cpu)
+        XCTAssertGreaterThan(first.totalMemory, 0)
+        XCTAssertTrue((0...1).contains(try XCTUnwrap(first.memory)))
+
+        for _ in 0..<50 where monitor.latestReading?.cpu == nil {
+            try await Task.sleep(nanoseconds: 40_000_000)
+        }
+        let measured = try XCTUnwrap(monitor.latestReading)
+        XCTAssertGreaterThan(measured.date, first.date)
+        XCTAssertTrue((0...1).contains(try XCTUnwrap(measured.cpu)))
+
+        monitor.stop(owner: owner)
+        try await Task.sleep(nanoseconds: 220_000_000)
+        XCTAssertEqual(monitor.latestReading?.date, measured.date)
+    }
+
     func testPausingKeepsTheLastSampleAndResumingResetsTheBaseline() async throws {
         let monitor = ProcessResourceMonitor()
         monitor.setActive(true)

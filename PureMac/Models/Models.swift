@@ -167,6 +167,7 @@ struct CleanableItem: Identifiable, Hashable {
     /// selects them: "Select all", the category checkbox and "Select visible"
     /// skip them.
     var selectOnlyByHand: Bool = false
+    var reviewedIdentity: CleanupFileIdentity?
 
     var formattedSize: String {
         ByteCountFormatter.string(fromByteCount: size, countStyle: .file)

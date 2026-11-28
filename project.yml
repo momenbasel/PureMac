@@ -19,8 +19,8 @@ settings:
     CODE_SIGN_ENTITLEMENTS: "PureMac/PureMac.entitlements"
     INFOPLIST_FILE: "PureMac/Info.plist"
     PRODUCT_BUNDLE_IDENTIFIER: "com.puremac.app"
-    MARKETING_VERSION: "3.3.0"
-    CURRENT_PROJECT_VERSION: "32"
+    MARKETING_VERSION: "3.4.0"
+    CURRENT_PROJECT_VERSION: "33"
     GENERATE_INFOPLIST_FILE: "NO"
     ASSETCATALOG_COMPILER_APPICON_NAME: "AppIcon"
     COMBINE_HIDPI_IMAGES: "YES"
@@ -53,6 +53,20 @@ targets:
         CODE_SIGNING_ALLOWED: "NO"
         CODE_SIGNING_REQUIRED: "NO"
 
+  PureMacUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - PureMacUITests
+    dependencies:
+      - target: PureMac
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.puremac.ui-tests
+        GENERATE_INFOPLIST_FILE: "YES"
+        INFOPLIST_FILE: ""
+        CODE_SIGN_ENTITLEMENTS: ""
+
 schemes:
   PureMac:
     build:
@@ -62,3 +76,11 @@ schemes:
     test:
       targets:
         - name: PureMacTests
+  PureMacUI:
+    build:
+      targets:
+        PureMac: all
+        PureMacUITests: [test]
+    test:
+      targets:
+        - name: PureMacUITests

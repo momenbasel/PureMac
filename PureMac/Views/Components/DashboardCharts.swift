@@ -284,17 +284,17 @@ struct StaggeredReveal: ViewModifier {
     let index: Int
     var baseDelay = 0.035
     @State private var shown = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.interfaceMotionEnabled) private var motion
 
     func body(content: Content) -> some View {
         content
-            .opacity(shown ? 1 : 0)
-            .offset(y: shown || reduceMotion ? 0 : 6)
+            .opacity(shown || !motion ? 1 : 0)
+            .offset(y: shown || !motion ? 0 : 6)
             .onAppear {
-                if reduceMotion {
+                if !motion {
                     shown = true
                 } else {
-                    withAnimation(.easeOut(duration: 0.28).delay(Double(index) * baseDelay)) {
+                    withAnimation(.easeOut(duration: 0.28).delay(Double(min(index, 5)) * baseDelay)) {
                         shown = true
                     }
                 }

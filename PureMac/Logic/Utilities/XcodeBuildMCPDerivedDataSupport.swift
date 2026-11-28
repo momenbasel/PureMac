@@ -162,7 +162,8 @@ enum XcodeBuildMCPDerivedDataSupport {
     static func acquireLifecycleLock(
         forManagedDerivedDataPath path: String,
         homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser,
-        fileManager: FileManager = .default
+        fileManager: FileManager = .default,
+        createParentIfMissing: Bool = true
     ) -> LifecycleLock? {
         guard let lockDirectory = lifecycleLockDirectory(
             forManagedDerivedDataPath: path,
@@ -171,13 +172,17 @@ enum XcodeBuildMCPDerivedDataSupport {
             return nil
         }
 
-        do {
-            try fileManager.createDirectory(
-                at: lockDirectory.deletingLastPathComponent(),
-                withIntermediateDirectories: true
-            )
-        } catch {
-            return nil
+        let parent = lockDirectory.deletingLastPathComponent()
+        if createParentIfMissing {
+            do {
+                try fileManager.createDirectory(at: parent, withIntermediateDirectories: true)
+            } catch {
+                return nil
+            }
+        } else {
+            let descriptor = open(parent.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW_ANY | O_CLOEXEC)
+            guard descriptor >= 0 else { return nil }
+            close(descriptor)
         }
 
         guard Darwin.mkdir(lockDirectory.path, S_IRWXU) == 0 else { return nil }

@@ -3,136 +3,143 @@ import SwiftUI
 struct OrphanListView: View {
     @EnvironmentObject var appState: AppState
     @State private var selectedOrphans: Set<URL> = []
-    @State private var isRemoving = false
-    @State private var showRemovalConfirmation = false
-    @State private var pendingRemoval: Set<URL> = []
-    @State private var removalErrorMessage: String?
+    @State private var didScan = false
     /// Orphan sizes computed off the main thread. Orphans are exactly the large
     /// leftovers (multi-GB Caches/Containers/Application Support), and their
     /// size is a recursive directory walk — calling it from `body` would re-walk
     /// every realized row on each selection toggle and beachball the UI. We walk
     /// once off-main per result set and rows read the cached value.
     @State private var sizeCache: [URL: Int64] = [:]
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.interfaceMotionEnabled) private var motionEnabled
 
     var body: some View {
-        Group {
+        VStack(spacing: 0) {
             if appState.isSearchingOrphans {
-                VStack(spacing: 16) {
-                    ProgressView(LocalizedStringKey("Scanning for orphaned files..."))
-                        .progressViewStyle(.linear)
-                        .frame(maxWidth: 300)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                ProgressView("Scanning for orphaned files...")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if appState.orphanedFiles.isEmpty {
-                EmptyStateView("No Orphaned Files", systemImage: "checkmark.circle", description: "No leftover files from uninstalled apps were found.", action: { appState.findOrphans() }, actionLabel: "Scan for Orphans", tint: Tint.green)
+                if didScan {
+                    EmptyStateView("No Orphaned Files", systemImage: "checkmark.circle",
+                                   description: "No leftover files from uninstalled apps were found.",
+                                   action: scan, actionLabel: "Scan for Orphans", tint: Tint.teal)
+                } else {
+                    EmptyStateView("Leftovers", systemImage: "folder.badge.questionmark",
+                                   description: "Find leftovers from deleted apps",
+                                   action: scan, actionLabel: "Scan for Orphans", tint: Tint.accent)
+                }
             } else {
+                HStack {
+                    Text("Leftovers").font(.headline).accessibilityAddTraits(.isHeader)
+                    Spacer()
+                    Text("\(appState.orphanedFiles.count) files")
+                        .font(.callout.monospacedDigit()).foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                Divider()
                 List {
-                    // No .staggered(): List is lazy, so a delayed-reveal would
-                    // blank each row as it scrolls in. The removal transition
-                    // below still gives the sweep-out on delete.
-                    ForEach(Array(appState.orphanedFiles.enumerated()), id: \.element) { _, fileURL in
-                        OrphanRowView(
-                            fileURL: fileURL,
-                            isSelected: orphanBinding(for: fileURL),
-                            fileSize: sizeCache[fileURL],
-                            onReveal: { revealInFinder(fileURL) },
-                            onCopyPath: {
-                                NSPasteboard.general.clearContents()
-                                NSPasteboard.general.setString(fileURL.path, forType: .string)
-                            },
-                            onIgnore: { ignoreOrphans([fileURL]) },
-                            onTrash: {
-                                pendingRemoval = [fileURL]
-                                showRemovalConfirmation = true
+                    ForEach(appState.orphanedFiles, id: \.self) { fileURL in
+                        FileRow(fileURL: fileURL, isSelected: orphanBinding(for: fileURL), fileSize: sizeCache[fileURL],
+                                onRemove: { appState.reviewSelectedLeftovers([fileURL]) },
+                                onReveal: { revealInFinder(fileURL) })
+                            .contextMenu {
+                                Button("Reveal in Finder") { revealInFinder(fileURL) }
+                                Button("Copy Path") {
+                                    NSPasteboard.general.clearContents()
+                                    NSPasteboard.general.setString(fileURL.path, forType: .string)
+                                }
+                                Divider()
+                                Button("Always Ignore") { ignoreOrphans([fileURL]) }
+                                Button("Review this file") { appState.reviewSelectedLeftovers([fileURL]) }
                             }
-                        )
-                        .transition(
-                            reduceMotion
-                                ? .opacity
-                                : .asymmetric(
-                                    insertion: .opacity,
-                                    removal: .move(edge: .leading).combined(with: .opacity)
-                                )
-                        )
+                            .transition(motionEnabled ? .opacity.combined(with: .offset(y: 4)) : .identity)
                     }
                 }
+                footer
             }
         }
-        .navigationTitle(orphanedFilesTitle)
+        .navigationTitle("Leftovers")
         .task(id: appState.orphanedFiles) {
-            // Recompute off the main thread whenever the orphan set changes
-            // (new scan, removals). FileSizeCalculator is a plain static helper
-            // with no main-actor isolation, so it runs safely on a detached
-            // background task; the result is applied back on the main actor.
             let urls = appState.orphanedFiles
-            let sizes = await Task.detached(priority: .utility) { () -> [URL: Int64] in
-                var out: [URL: Int64] = [:]
+            let task = Task.detached(priority: .utility) { () -> [URL: Int64] in
+                var sizes: [URL: Int64] = [:]
                 for url in urls {
-                    out[url] = FileSizeCalculator.size(of: url) ?? 0
+                    guard !Task.isCancelled else { break }
+                    sizes[url] = FileSizeCalculator.size(of: url)
                 }
-                return out
-            }.value
+                return sizes
+            }
+            let sizes = await withTaskCancellationHandler(operation: { await task.value }, onCancel: { task.cancel() })
+            guard !Task.isCancelled else { return }
             sizeCache = sizes
         }
         .toolbar {
-            ToolbarItemGroup {
-                if !appState.orphanedFiles.isEmpty {
-                    Button(LocalizedStringKey(selectedOrphans.count == appState.orphanedFiles.count ? "Deselect All" : "Select All")) {
-                        if selectedOrphans.count == appState.orphanedFiles.count {
-                            selectedOrphans.removeAll()
-                        } else {
-                            selectedOrphans = Set(appState.orphanedFiles)
-                        }
-                    }
-                }
-
-                Button("Scan for Orphans") {
-                    appState.findOrphans()
-                }
-
-                if !selectedOrphans.isEmpty {
-                    Button(ignoreSelectedLabel) {
-                        ignoreOrphans(Array(selectedOrphans))
-                    }
-                    .disabled(isRemoving)
-
-                    Button(removeSelectedLabel, role: .destructive) {
-                        pendingRemoval = selectedOrphans
-                        showRemovalConfirmation = true
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.red)
-                    .disabled(isRemoving)
-                }
+            ToolbarItem {
+                Button(action: scan) { Label("Scan for Orphans", systemImage: "arrow.clockwise") }
+                    .disabled(appState.isSearchingOrphans || !appState.canBeginAppRemoval)
             }
         }
-        .confirmationDialog("Remove selected leftovers?", isPresented: $showRemovalConfirmation, titleVisibility: .visible) {
-            Button("Remove \(pendingRemoval.count) items", role: .destructive) {
-                let batch = pendingRemoval
-                pendingRemoval = []
-                Task { await removeSelectedOrphans(batch) }
-            }
-            Button("Cancel", role: .cancel) { pendingRemoval = [] }
-        } message: {
-            Text("Files will be moved to the Trash. Items requiring administrator authorization may be permanently deleted. App matching is a best-effort estimate; review files you recognize before removing them.")
+        .onAppear {
+            if !appState.orphanedFiles.isEmpty || appState.isSearchingOrphans { didScan = true }
         }
-        .alert("Some files could not be removed", isPresented: Binding(
-            get: { removalErrorMessage != nil },
-            set: { if !$0 { removalErrorMessage = nil } }
-        )) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(removalErrorMessage ?? "")
+        .onChange(of: appState.isSearchingOrphans) { searching in
+            if searching { didScan = true }
+        }
+        .onChange(of: appState.orphanedFiles) { remaining in
+            if !remaining.isEmpty { didScan = true }
+            selectedOrphans.formIntersection(remaining)
         }
     }
 
-    private var orphanedFilesTitle: String {
-        String(format: String(localized: "Orphaned Files (%lld)"), Int64(appState.orphanedFiles.count))
+    private var footer: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("\(selectedOrphans.count) of \(appState.orphanedFiles.count) selected")
+                    .font(.subheadline).monospacedDigit()
+                Spacer()
+                if !selectedOrphans.isEmpty && selectedOrphans.allSatisfy({ sizeCache[$0] != nil }) {
+                    Text(ByteCountFormatter.string(fromByteCount: selectedOrphans.reduce(Int64(0)) { $0 + (sizeCache[$1] ?? 0) }, countStyle: .file))
+                        .font(.subheadline.monospacedDigit())
+                }
+            }
+            ViewThatFits(in: .horizontal) {
+                HStack { selectionButtons; Spacer(); reviewButton }
+                VStack(alignment: .leading) { HStack { selectionButtons }; reviewButton }
+            }
+        }
+        .disabled(!appState.canBeginAppRemoval)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(.bar)
+        .overlay(alignment: .top) { Divider() }
     }
 
-    private var removeSelectedLabel: String {
-        String(format: String(localized: "Remove Selected (%lld)"), Int64(selectedOrphans.count))
+    @ViewBuilder
+    private var selectionButtons: some View {
+        let allSelected = selectedOrphans.count == appState.orphanedFiles.count
+        Button(allSelected ? LocalizedStringKey("Deselect All") : LocalizedStringKey("Select All")) {
+            selectedOrphans = allSelected ? [] : Set(appState.orphanedFiles)
+        }
+        .buttonStyle(.borderless)
+        Button(ignoreSelectedLabel) { ignoreOrphans(Array(selectedOrphans)) }
+            .disabled(selectedOrphans.isEmpty)
+            .buttonStyle(.borderless)
+    }
+
+    private var reviewButton: some View {
+        Button {
+            appState.reviewSelectedLeftovers(selectedOrphans)
+        } label: {
+            Text("Review Selected Leftovers")
+        }
+        .buttonStyle(.borderedProminent)
+        .disabled(selectedOrphans.isEmpty)
+    }
+
+    private func scan() {
+        guard !appState.isSearchingOrphans, appState.canBeginAppRemoval else { return }
+        didScan = true
+        appState.findOrphans()
     }
 
     private var ignoreSelectedLabel: String {
@@ -159,100 +166,6 @@ struct OrphanListView: View {
         )
     }
 
-    private func removeSelectedOrphans(_ batch: Set<URL>) async {
-        guard !isRemoving else { return }
-        isRemoving = true
-        defer { isRemoving = false }
-
-        let urlsToRemove = batch
-        var failedPaths: [String] = []
-        var removedURLs: Set<URL> = []
-        var needsAdminURLs: [URL] = []
-
-        for url in urlsToRemove {
-            guard OrphanSafetyPolicy.isSafeCandidate(url) else {
-                failedPaths.append("\(url.path) (\(String(localized: "blocked by safety policy")))")
-                continue
-            }
-
-            let outcome = await Task.detached(priority: .userInitiated) { Self.removeOrphan(url) }.value
-            switch outcome {
-            case .removed:
-                removedURLs.insert(url)
-            case .needsAdmin:
-                needsAdminURLs.append(url)
-            case .failed:
-                failedPaths.append(url.path)
-            }
-        }
-
-        if !needsAdminURLs.isEmpty {
-            let adminURLs = needsAdminURLs
-            let adminSucceeded = await Task.detached(priority: .userInitiated) { Self.removeWithAdminPrivileges(adminURLs) }.value
-            if adminSucceeded {
-                for url in needsAdminURLs {
-                    if !FileManager.default.fileExists(atPath: url.path) {
-                        removedURLs.insert(url)
-                    } else {
-                        failedPaths.append(url.path)
-                    }
-                }
-            } else {
-                failedPaths.append(contentsOf: needsAdminURLs.map(\.path))
-            }
-        }
-
-        // Sweep removed rows out (per-row transitions are attached in the
-        // List above); plain assignment under Reduce Motion.
-        if reduceMotion {
-            appState.orphanedFiles.removeAll { removedURLs.contains($0) }
-        } else {
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                appState.orphanedFiles.removeAll { removedURLs.contains($0) }
-            }
-        }
-        selectedOrphans.subtract(removedURLs)
-
-        if !failedPaths.isEmpty {
-            let preview = failedPaths.prefix(3).joined(separator: "\n")
-            let suffix = failedPaths.count > 3 ? "\n…" : ""
-            removalErrorMessage = String(
-                format: String(localized: "%lld item(s) failed to delete.\n\n%@"),
-                Int64(failedPaths.count),
-                preview + suffix
-            )
-        }
-    }
-
-    private enum OrphanRemoveOutcome: Sendable {
-        case removed
-        case needsAdmin
-        case failed
-    }
-
-    private nonisolated static func removeOrphan(_ url: URL) -> OrphanRemoveOutcome {
-        guard OrphanSafetyPolicy.isSafeCandidate(url) else { return .failed }
-        do {
-            try FileManager.default.trashItem(at: url, resultingItemURL: nil)
-            return .removed
-        } catch {
-            let nsError = error as NSError
-            let permissionDeniedCodes = [
-                NSFileReadNoPermissionError,
-                NSFileWriteNoPermissionError,
-                NSFileWriteUnknownError,
-                257,
-                513,
-            ]
-
-            guard permissionDeniedCodes.contains(nsError.code) else {
-                return .failed
-            }
-
-            return .needsAdmin
-        }
-    }
-
     private func revealInFinder(_ url: URL) {
         // activateFileViewerSelecting handles sandbox-bookmarked paths and
         // missing files better than selectFile(_:inFileViewerRootedAtPath:),
@@ -271,109 +184,5 @@ struct OrphanListView: View {
         }
     }
 
-    private nonisolated static func removeWithAdminPrivileges(_ urls: [URL]) -> Bool {
-        guard !urls.isEmpty else { return true }
-        guard urls.allSatisfy({ OrphanSafetyPolicy.isSafeCandidate($0) }) else { return false }
 
-        // Quote path for a POSIX shell command.
-        let quotedPaths = urls.map { url in
-            "'\(url.path.replacingOccurrences(of: "'", with: "'\\\"'\\\"'"))'"
-        }
-        let shellCommand = "rm -rf -- \(quotedPaths.joined(separator: " "))"
-        let appleScriptCommand = shellCommand
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
-        let script = "do shell script \"\(appleScriptCommand)\" with administrator privileges"
-
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        process.arguments = ["-e", script]
-
-        do {
-            try process.run()
-            process.waitUntilExit()
-            if process.terminationStatus != 0 {
-                return false
-            }
-            return true
-        } catch {
-            return false
-        }
-    }
-}
-
-// MARK: - Row
-
-/// Orphan row extracted to its own struct so hover highlight and the springy
-/// checkbox are per-row state.
-private struct OrphanRowView: View {
-    let fileURL: URL
-    @Binding var isSelected: Bool
-    let fileSize: Int64?
-    let onReveal: () -> Void
-    let onCopyPath: () -> Void
-    let onIgnore: () -> Void
-    let onTrash: () -> Void
-
-    @State private var hovering = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    var body: some View {
-        Toggle(isOn: $isSelected) {
-            HStack {
-                Image(nsImage: NSWorkspace.shared.icon(forFile: fileURL.path))
-                    .resizable()
-                    .frame(width: 16, height: 16)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(fileURL.lastPathComponent)
-                        .lineLimit(1)
-                    Text(fileURL.path)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                }
-
-                Spacer()
-
-                // Hover-revealed Finder shortcut; stays in the layout so the
-                // trailing size never shifts sideways.
-                Button {
-                    onReveal()
-                } label: {
-                    Image(systemName: "folder")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .buttonStyle(.plain)
-                .help("Reveal in Finder")
-                .opacity(hovering ? 1 : 0)
-                .scaleEffect(reduceMotion ? 1 : (hovering ? 1 : 0.8))
-                .allowsHitTesting(hovering)
-
-                if let size = fileSize {
-                    Text(ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
-        .toggleStyle(AnimatedCheckboxStyle(tint: Tint.pink))
-        .padding(.vertical, 2)
-        .padding(.horizontal, 4)
-        .background(
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(hovering ? Color.primary.opacity(0.06) : .clear)
-        )
-        .animation(reduceMotion ? nil : MotionTokens.snappy, value: hovering)
-        .onHover { hovering = $0 }
-        .contextMenu {
-            Button("Reveal in Finder") { onReveal() }
-            Button("Copy Path") { onCopyPath() }
-            Divider()
-            Button("Always Ignore") { onIgnore() }
-            Button("Move to Trash", role: .destructive) { onTrash() }
-        }
-    }
 }

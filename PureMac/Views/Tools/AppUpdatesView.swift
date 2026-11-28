@@ -101,11 +101,11 @@ struct AppUpdatesView: View {
 
     private var header: some View {
         HStack(alignment: .center, spacing: 16) {
-            IconTile(systemName: "arrow.down.app.fill", tint: Tint.accent, size: 48, corner: 13, vivid: true)
+
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("App Updates")
-                    .font(.system(size: 25, weight: .bold))
+                    .font(.title.weight(.semibold))
                 Text("Review and update apps installed as Homebrew casks.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
@@ -127,9 +127,9 @@ struct AppUpdatesView: View {
     }
 
     private var sourceCard: some View {
-        CardSurface(padding: 16, elevation: .flat, tint: Tint.accent) {
+        ToolSection(padding: 16) {
             HStack(alignment: .top, spacing: 12) {
-                IconTile(systemName: "shippingbox.fill", tint: Tint.accent, size: 32, corner: 9)
+                ToolSymbol(systemName: "shippingbox.fill", tint: Tint.accent, size: 32)
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Updates from Homebrew")
                         .font(.system(size: 14, weight: .semibold))
@@ -152,7 +152,7 @@ struct AppUpdatesView: View {
                 tint: Tint.orange
             )
         } else if updater.isChecking {
-            CardSurface(padding: 28, elevation: .standard) {
+            ToolSection(padding: 28) {
                 HStack(spacing: 14) {
                     ProgressView()
                         .controlSize(.small)
@@ -167,9 +167,9 @@ struct AppUpdatesView: View {
                 }
             }
         } else if let error = updater.errorMessage {
-            CardSurface(padding: 22, elevation: .standard, tint: Tint.red) {
+            ToolSection(padding: 22) {
                 HStack(alignment: .top, spacing: 14) {
-                    IconTile(systemName: "exclamationmark.triangle.fill", tint: Tint.red, size: 36, corner: 10)
+                    ToolSymbol(systemName: "exclamationmark.triangle.fill", tint: Tint.red, size: 36)
                     VStack(alignment: .leading, spacing: 7) {
                         Text("Couldn't check for updates")
                             .font(.headline)
@@ -194,9 +194,9 @@ struct AppUpdatesView: View {
                 tint: Tint.green
             )
         } else if updater.updates.isEmpty {
-            CardSurface(padding: 28, elevation: .standard) {
+            ToolSection(padding: 28) {
                 VStack(spacing: 14) {
-                    IconTile(systemName: "arrow.triangle.2.circlepath", tint: Tint.accent, size: 48, corner: 13)
+                    ToolSymbol(systemName: "arrow.triangle.2.circlepath", tint: Tint.accent, size: 48)
                     Text("Check installed cask apps")
                         .font(.title3.weight(.semibold))
                     Text("PureMac will ask Homebrew for available versions when you start the check.")
@@ -218,7 +218,7 @@ struct AppUpdatesView: View {
     }
 
     private var updatesCard: some View {
-        CardSurface(padding: 0, elevation: .standard) {
+        ToolSection(padding: 0) {
             VStack(spacing: 0) {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
@@ -260,7 +260,7 @@ struct AppUpdatesView: View {
                 set: { updater.setSelected($0, token: update.token) }
             ))
             .labelsHidden()
-            .toggleStyle(AnimatedCheckboxStyle(tint: Tint.accent))
+            .toggleStyle(.checkbox)
             .disabled(update.isPinned || updater.isBusy)
             .accessibilityLabel("Select \(displayName)")
 
@@ -311,7 +311,7 @@ struct AppUpdatesView: View {
                 .frame(width: 32, height: 32)
                 .accessibilityHidden(true)
         } else {
-            IconTile(systemName: "app.fill", tint: isPinned ? Tint.orange : Tint.accent, size: 32, corner: 8)
+            ToolSymbol(systemName: "app.fill", tint: isPinned ? Tint.orange : Tint.accent, size: 32)
         }
     }
 
@@ -334,9 +334,9 @@ struct AppUpdatesView: View {
     }
 
     private var unmanagedAppsCard: some View {
-        CardSurface(padding: 16, elevation: .flat) {
+        ToolSection(padding: 16) {
             HStack(spacing: 12) {
-                IconTile(systemName: "storefront.fill", tint: Tint.blue, size: 32, corner: 9)
+                ToolSymbol(systemName: "storefront.fill", tint: Tint.blue, size: 32)
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Apps outside Homebrew")
                         .font(.system(size: 14, weight: .semibold))
@@ -354,9 +354,9 @@ struct AppUpdatesView: View {
     }
 
     private func stateCard(title: LocalizedStringKey, message: LocalizedStringKey, systemImage: String, tint: Color) -> some View {
-        CardSurface(padding: 28, elevation: .standard, tint: tint) {
+        ToolSection(padding: 28) {
             VStack(spacing: 12) {
-                IconTile(systemName: systemImage, tint: tint, size: 48, corner: 13)
+                ToolSymbol(systemName: systemImage, tint: tint, size: 48)
                 Text(title)
                     .font(.title3.weight(.semibold))
                 Text(message)
@@ -371,7 +371,7 @@ struct AppUpdatesView: View {
     }
 
     private func statusCard(_ status: String) -> some View {
-        CardSurface(padding: 14, elevation: .flat, tint: Tint.green) {
+        ToolSection(padding: 14) {
             HStack(spacing: 10) {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(Tint.green)

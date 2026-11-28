@@ -15,32 +15,6 @@ enum LeftoverGroup: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var icon: String {
-        switch self {
-        case .application: return "app.fill"
-        case .caches: return "internaldrive.fill"
-        case .appSupport: return "shippingbox.fill"
-        case .preferences: return "gearshape.fill"
-        case .logs: return "doc.text.fill"
-        case .containers: return "cube.box.fill"
-        case .launchAgents: return "bolt.fill"
-        case .other: return "doc.fill"
-        }
-    }
-
-    var tint: Color {
-        switch self {
-        case .application: return Tint.blue
-        case .caches: return Tint.orange
-        case .appSupport: return Tint.purple
-        case .preferences: return Tint.cyan
-        case .logs: return Tint.yellow
-        case .containers: return Tint.pink
-        case .launchAgents: return Tint.red
-        case .other: return Tint.green
-        }
-    }
-
     static func categorize(_ url: URL) -> LeftoverGroup {
         let path = url.path
         if path.hasSuffix(".app") { return .application }
@@ -59,13 +33,10 @@ struct AppFilesView: View {
     let app: InstalledApp
 
     @State private var collapsedGroups: Set<LeftoverGroup> = []
-    @State private var iconHovering = false
-    @State private var showBulkConfirmation = false
-    @State private var pendingRemoval: Set<URL> = []
     /// One-pass size cache so group headers and the selected-size counter
     /// don't re-stat the disk on every render.
     @State private var sizeCache: [URL: Int64] = [:]
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.interfaceMotionEnabled) private var motionEnabled
 
     private var totalSelectedSize: Int64 {
         appState.selectedFiles.reduce(Int64(0)) { total, url in
@@ -86,9 +57,7 @@ struct AppFilesView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
-                .padding(.horizontal, 16)
-                .padding(.top, 14)
-                .padding(.bottom, 10)
+            Divider()
 
             // Content
             if appState.isScanningAppFiles {
@@ -114,7 +83,7 @@ struct AppFilesView: View {
                 var sizes: [URL: Int64] = [:]
                 for url in urls {
                     guard !Task.isCancelled else { break }
-                    sizes[url] = FileSizeCalculator.size(of: url) ?? 0
+                    sizes[url] = FileSizeCalculator.size(of: url)
                 }
                 return sizes
             }
@@ -122,109 +91,53 @@ struct AppFilesView: View {
             guard !Task.isCancelled else { return }
             sizeCache = sizes
         }
-        .disabled(appState.isRemovingAppFiles)
-        .confirmationDialog("Remove selected app files?", isPresented: $showBulkConfirmation, titleVisibility: .visible) {
-            Button("Remove \(pendingRemoval.count) files", role: .destructive) {
-                appState.removeSelectedFiles(confirmedURLs: pendingRemoval)
-                pendingRemoval = []
-            }
-            Button("Cancel", role: .cancel) { pendingRemoval = [] }
-        } message: {
-            Text("PureMac will move the selected app and related files to the Trash. Items requiring administrator authorization may be permanently deleted. Review the selection before continuing.")
-        }
-        .onChange(of: appState.removalNeedsFullDiskAccess) { needs in
-            // FDA-fixable removals jump straight into the rich sheet, the
-            // same flow cleanup uses. The user grants permission once and we
-            // re-fire the failed batch — using the frozen snapshot from
-            // AppState so a mid-sheet selection change or app switch doesn't
-            // re-trash the wrong files.
-            guard needs else { return }
-            let toRetry = appState.lastFailedRemovalURLs
-            let items = toRetry.map { appState.makeUninstallCleanableItem(for: $0) }
-            appState.removalError = nil
-            appState.removalNeedsFullDiskAccess = false
-            appState.lastFailedRemovalURLs = []
-            appState.requestFullDiskAccessAndRetry(
-                items: items,
-                context: .uninstall(appName: app.appName, failedCount: items.count)
-            )
-        }
-        .alert("Removal Failed", isPresented: Binding(
-            get: { appState.removalError != nil && !appState.removalNeedsFullDiskAccess },
-            set: {
-                if !$0 {
-                    appState.removalError = nil
-                    appState.removalNeedsFullDiskAccess = false
-                }
-            }
-        )) {
-            Button("OK", role: .cancel) {
-                appState.removalError = nil
-                appState.removalNeedsFullDiskAccess = false
-            }
-        } message: {
-            Text(appState.removalError ?? "")
-        }
+        .disabled(!appState.canBeginAppRemoval)
+
     }
 
     // MARK: - Header
 
     private var header: some View {
-        CardSurface(padding: 16, tint: Tint.purple) {
-            HStack(spacing: 14) {
-                Image(nsImage: app.icon)
-                    .resizable()
-                    .frame(width: 52, height: 52)
-                    .shadow(color: .black.opacity(0.18), radius: 6, y: 3)
-                    .scaleEffect(iconHovering && !reduceMotion ? 1.06 : 1)
-                    .animation(reduceMotion ? nil : MotionTokens.snappy, value: iconHovering)
-                    .onHover { iconHovering = $0 }
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(app.appName)
-                        .font(.system(size: 17, weight: .bold))
-                    Text(app.bundleIdentifier)
-                        .font(.system(size: 11.5))
-                        .foregroundStyle(.secondary)
+        HStack(alignment: .center, spacing: 10) {
+            Image(nsImage: app.icon)
+                .resizable()
+                .frame(width: 40, height: 40)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(app.appName)
+                    .font(.title3.weight(.semibold))
+                    .lineLimit(2)
+                    .accessibilityAddTraits(.isHeader)
+                Text(app.bundleIdentifier)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .textSelection(.enabled)
+                Button {
+                    NSWorkspace.shared.activateFileViewerSelecting([app.path])
+                } label: {
+                    Label((app.path.path as NSString).abbreviatingWithTildeInPath, systemImage: "folder")
+                        .font(.caption)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
                 }
-
-                Spacer()
-
-                if !appState.discoveredFiles.isEmpty {
-                    VStack(alignment: .trailing, spacing: 2) {
-                        CountUpBytes(bytes: totalSelectedSize)
-                            .font(.system(size: 18, weight: .bold))
-                        Text(filesCountText(count: appState.discoveredFiles.count))
-                            .font(.system(size: 11))
-                            .foregroundStyle(.secondary)
-                            .monospacedDigit()
-                            .contentTransition(.numericText())
-                    }
-                    .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.9),
-                               value: appState.discoveredFiles.count)
-                }
+                .buttonStyle(.borderless)
+                .help("Reveal in Finder")
             }
+            Spacer(minLength: 0)
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
     }
 
-    // MARK: - Scanning state
-
     private var scanningState: some View {
-        VStack(spacing: 14) {
-            Spacer()
-            if reduceMotion {
-                ProgressView(LocalizedStringKey("Scanning for related files..."))
-            } else {
-                SearchPulse()
-                Text("Scanning for related files...")
-                    .font(.system(size: 13, weight: .medium))
-            }
+        VStack(spacing: 12) {
+            ProgressView().controlSize(.small)
+            Text("Scanning for related files...").font(.headline)
             Text(checkingLocationsText(count: appState.currentAppFileSearchLocationCount))
-                .font(.caption)
+                .font(.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
-                .monospacedDigit()
-                .contentTransition(.numericText())
-            Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -243,11 +156,11 @@ struct AppFilesView: View {
                             fileURL: fileURL,
                             isSelected: fileSelectionBinding(for: fileURL),
                             fileSize: cachedSize(fileURL),
-                            onRemove: { removeSingleFile(fileURL) }
+                            onRemove: { appState.reviewSelectedAppFiles([fileURL]) }
                         )
                         .transition(
-                            reduceMotion
-                                ? .opacity
+                            !motionEnabled
+                                ? .identity
                                 : .asymmetric(
                                     insertion: .opacity,
                                     removal: .move(edge: .leading).combined(with: .opacity)
@@ -279,24 +192,21 @@ struct AppFilesView: View {
             )) {
                 EmptyView()
             }
-            .toggleStyle(AnimatedCheckboxStyle())
+            .toggleStyle(.checkbox)
             .labelsHidden()
+            .accessibilityLabel(Text(LocalizedStringKey(group.rawValue)))
 
-            IconTile(systemName: group.icon, tint: group.tint, size: 22, corner: 6)
             Text(LocalizedStringKey(group.rawValue))
-                .font(.system(size: 12.5, weight: .semibold))
-            Text("\(urls.count)")
-                .font(.system(size: 11, weight: .semibold))
-                .monospacedDigit()
+                .font(.subheadline.weight(.semibold))
+            Text(urls.count.formatted())
+                .font(.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 1)
-                .background(Capsule().fill(Color.primary.opacity(0.06)))
             Spacer()
-            Text(ByteCountFormatter.string(fromByteCount: groupSize, countStyle: .file))
-                .font(.system(size: 12, weight: .semibold))
-                .monospacedDigit()
-                .foregroundStyle(.secondary)
+            if urls.allSatisfy({ sizeCache[$0] != nil }) {
+                Text(ByteCountFormatter.string(fromByteCount: groupSize, countStyle: .file))
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(.vertical, 2)
     }
@@ -312,10 +222,10 @@ struct AppFilesView: View {
                         collapsedGroups.insert(group)
                     }
                 }
-                if reduceMotion {
+                if !motionEnabled {
                     change()
                 } else {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { change() }
+                    withAnimation(.easeOut(duration: 0.16)) { change() }
                 }
             }
         )
@@ -324,63 +234,65 @@ struct AppFilesView: View {
     // MARK: - Action bar
 
     private var actionBar: some View {
-        HStack(spacing: 12) {
-            Button("Select All") {
-                appState.selectedFiles = Set(appState.discoveredFiles)
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-
-            Button("Deselect All") {
-                appState.selectedFiles.removeAll()
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-
-            Spacer()
-
-            if !appState.selectedFiles.isEmpty {
-                Button(role: .destructive) {
-                    pendingRemoval = appState.selectedFiles
-                    showBulkConfirmation = true
-                } label: {
-                    Text(removeFilesLabel)
-                }
-                .buttonStyle(GlowProminentButtonStyle(tint: Tint.red, gradient: TintGradient.destructive))
-                .transition(
-                    reduceMotion
-                        ? .opacity
-                        : .move(edge: .trailing).combined(with: .opacity)
-                )
+        let selected = appState.selectedFiles.count
+        let all = appState.discoveredFiles.count
+        let sizesReady = selected > 0 && appState.selectedFiles.allSatisfy { sizeCache[$0] != nil }
+        let selectedSize = sizesReady ? ByteCountFormatter.string(fromByteCount: totalSelectedSize, countStyle: .file) : nil
+        let summary = HStack(spacing: 6) {
+            Text("\(selected) of \(all) selected")
+            if let selectedSize {
+                Text(verbatim: "·").accessibilityHidden(true)
+                Text(selectedSize)
             }
         }
-        .animation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.8),
-                   value: appState.selectedFiles.isEmpty)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .font(.caption.monospacedDigit())
+        .foregroundStyle(.secondary)
+
+        return ViewThatFits(in: .horizontal) {
+            HStack(spacing: 10) {
+                selectionControl(allSelected: selected == all)
+                summary
+                Spacer(minLength: 4)
+                reviewButton
+            }
+            VStack(alignment: .leading, spacing: 6) {
+                summary
+                HStack { selectionControl(allSelected: selected == all); Spacer(); reviewButton }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
         .background(.bar)
-        .overlay(alignment: .top) {
-            Divider().opacity(0.6)
-        }
+        .overlay(alignment: .top) { Divider() }
     }
 
-    // MARK: - Helpers
+    private func selectionControl(allSelected: Bool) -> some View {
+        Menu {
+            Button("Select All") { appState.selectedFiles = Set(appState.discoveredFiles) }
+                .disabled(allSelected)
+            Button("Deselect All") { appState.selectedFiles.removeAll() }
+                .disabled(appState.selectedFiles.isEmpty)
+        } label: {
+            Label("Select", systemImage: "checklist")
+        }
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+    }
 
-    private func filesCountText(count: Int) -> String {
-        String(format: String(localized: "%lld files"), Int64(count))
+    private var reviewButton: some View {
+        Button {
+            appState.reviewSelectedAppFiles(appState.selectedFiles)
+        } label: {
+            Text("Review Selected Files")
+        }
+        .buttonStyle(.borderedProminent)
+        .disabled(appState.selectedFiles.isEmpty)
     }
 
     private func checkingLocationsText(count: Int) -> String {
         String(format: String(localized: "Checking %lld locations..."), Int64(count))
     }
 
-    private var removeFilesLabel: String {
-        String(
-            format: String(localized: "Remove %lld files (%@)"),
-            Int64(appState.selectedFiles.count),
-            ByteCountFormatter.string(fromByteCount: totalSelectedSize, countStyle: .file)
-        )
-    }
 
     private func fileSelectionBinding(for url: URL) -> Binding<Bool> {
         Binding(
@@ -398,131 +310,64 @@ struct AppFilesView: View {
     private func cachedSize(_ url: URL) -> Int64? {
         sizeCache[url]
     }
-
-    private func removeSingleFile(_ url: URL) {
-        appState.selectedFiles = [url]
-        appState.removeSelectedFiles()
-    }
 }
-
-/// Magnifier over expanding sonar rings — the "actively searching" beat for
-/// the related-files scan. Only built when Reduce Motion is off.
-private struct SearchPulse: View {
-    @State private var pulse = false
-
-    var body: some View {
-        ZStack {
-            ForEach(0..<2, id: \.self) { i in
-                Circle()
-                    .stroke(Tint.blue.opacity(0.35), lineWidth: 1.5)
-                    .frame(width: 44, height: 44)
-                    .scaleEffect(pulse ? 1.8 : 1.0)
-                    .opacity(pulse ? 0 : 0.7)
-                    .animation(
-                        .easeOut(duration: 1.4)
-                            .repeatForever(autoreverses: false)
-                            .delay(Double(i) * 0.7),
-                        value: pulse
-                    )
-            }
-            Circle()
-                .fill(Tint.blue.opacity(0.12))
-                .frame(width: 44, height: 44)
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(Tint.blue)
-        }
-        .frame(width: 56, height: 56)
-        .onAppear { pulse = true }
-    }
-}
-
-// MARK: - File Row with hover-to-reveal actions
 
 struct FileRow: View {
     let fileURL: URL
     @Binding var isSelected: Bool
     let fileSize: Int64?
     let onRemove: () -> Void
-
-    @State private var isHovering = false
-    @State private var showConfirmation = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    var onReveal: (() -> Void)? = nil
 
     var body: some View {
-        Toggle(isOn: $isSelected) {
-            HStack {
-                Image(nsImage: NSWorkspace.shared.icon(forFile: fileURL.path))
-                    .resizable()
-                    .frame(width: 16, height: 16)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(fileURL.lastPathComponent)
-                        .lineLimit(1)
-                    Text(fileURL.path)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                }
-
-                Spacer()
-
-                // Buttons stay in the layout permanently and fade with
-                // hover, so the trailing size badge never jumps sideways.
-                Button {
-                    NSWorkspace.shared.selectFile(fileURL.path, inFileViewerRootedAtPath: "")
-                } label: {
-                    Image(systemName: "folder")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .buttonStyle(.plain)
-                .help("Reveal in Finder")
-                .opacity(isHovering ? 1 : 0)
-                .scaleEffect(reduceMotion ? 1 : (isHovering ? 1 : 0.8))
-                .allowsHitTesting(isHovering)
-
-                Button {
-                    showConfirmation = true
-                } label: {
-                    Image(systemName: "trash")
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                }
-                .buttonStyle(.plain)
-                .help("Remove this file")
-                .opacity(isHovering ? 1 : 0)
-                .scaleEffect(reduceMotion ? 1 : (isHovering ? 1 : 0.8))
-                .allowsHitTesting(isHovering)
-
-                if let size = fileSize {
-                    Text(ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
-                }
+        HStack {
+            Toggle(isOn: $isSelected) { EmptyView() }
+                .toggleStyle(.checkbox)
+                .labelsHidden()
+                .accessibilityLabel(Text(verbatim: fileURL.lastPathComponent))
+            Image(nsImage: NSWorkspace.shared.icon(forFile: fileURL.path))
+                .resizable()
+                .frame(width: 16, height: 16)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(fileURL.lastPathComponent)
+                    .lineLimit(1)
+                    .accessibilityIdentifier("apps.fileName.\(fileURL.lastPathComponent)")
+                Text((fileURL.deletingLastPathComponent().path as NSString).abbreviatingWithTildeInPath)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .help(fileURL.path)
+                    .accessibilityLabel(Text(verbatim: fileURL.path))
             }
+            .contentShape(Rectangle())
+            .onTapGesture { isSelected.toggle() }
+            Spacer()
+            if let size = fileSize {
+                Text(ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+            }
+            Button {
+                if let onReveal { onReveal() } else { NSWorkspace.shared.activateFileViewerSelecting([fileURL]) }
+            } label: {
+                Label("Reveal in Finder", systemImage: "folder")
+            }
+            .labelStyle(.iconOnly)
+            .foregroundStyle(.secondary)
+            .buttonStyle(.borderless)
+            .help("Reveal in Finder")
+            Button(action: onRemove) {
+                Label("Review this file", systemImage: "trash")
+            }
+            .labelStyle(.iconOnly)
+            .foregroundStyle(.secondary)
+            .buttonStyle(.borderless)
+            .help("Review this file")
+            .accessibilityIdentifier("apps.fileReview.\(fileURL.lastPathComponent)")
         }
-        .toggleStyle(AnimatedCheckboxStyle())
         .padding(.vertical, 2)
         .padding(.horizontal, 4)
-        .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(isHovering ? Color.primary.opacity(0.06) : Color.clear)
-        )
-        .scaleEffect(isHovering && !reduceMotion ? 1.01 : 1)
-        .animation(reduceMotion ? nil : MotionTokens.snappy, value: isHovering)
-        .onHover { isHovering = $0 }
-        .alert(
-            Text(
-                String(format: String(localized: "Remove %@?"), fileURL.lastPathComponent)
-            ),
-            isPresented: $showConfirmation
-        ) {
-            Button("Cancel", role: .cancel) {}
-            Button("Remove", role: .destructive) { onRemove() }
-        } message: {
-            Text("This will permanently delete this file. This action cannot be undone.")
-        }
     }
 }

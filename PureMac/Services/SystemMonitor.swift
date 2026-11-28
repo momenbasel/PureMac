@@ -11,7 +11,20 @@ import Darwin
 /// notarized build.
 @MainActor
 final class SystemMonitor: ObservableObject {
+    struct Reading: Identifiable {
+        let date: Date
+        let cpu: Double?
+        let usedMemory: Int64?
+        let totalMemory: Int64
+        var id: Date { date }
+        var memory: Double? {
+            guard let usedMemory, totalMemory > 0 else { return nil }
+            return min(1, max(0, Double(usedMemory) / Double(totalMemory)))
+        }
+    }
+
     static let shared = SystemMonitor()
+    @Published private(set) var latestReading: Reading?
 
     /// 0.0 - 1.0 fraction of total CPU time spent non-idle since the last sample.
     @Published private(set) var cpuUsage: Double = 0
@@ -90,9 +103,10 @@ final class SystemMonitor: ObservableObject {
         if let sampleAction {
             sampleAction()
         } else {
-            sampleCPU()
-            sampleMemory()
+            let cpu = sampleCPU()
+            let memory = sampleMemory()
             sampleDisk()
+            latestReading = Reading(date: Date(), cpu: cpu, usedMemory: memory, totalMemory: memoryTotal)
         }
     }
 
@@ -100,7 +114,7 @@ final class SystemMonitor: ObservableObject {
 
     // MARK: - CPU
 
-    private func sampleCPU() {
+    private func sampleCPU() -> Double? {
         var info = host_cpu_load_info()
         var count = mach_msg_type_number_t(
             MemoryLayout<host_cpu_load_info_data_t>.stride / MemoryLayout<integer_t>.stride
@@ -110,7 +124,7 @@ final class SystemMonitor: ObservableObject {
                 host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO, $0, &count)
             }
         }
-        guard result == KERN_SUCCESS else { return }
+        guard result == KERN_SUCCESS else { return nil }
 
         let user = UInt64(info.cpu_ticks.0)
         let system = UInt64(info.cpu_ticks.1)
@@ -121,17 +135,18 @@ final class SystemMonitor: ObservableObject {
 
         defer { previousBusy = busy; previousTotal = total }
         // First sample has no prior baseline to diff against.
-        guard previousTotal != 0, total > previousTotal else { return }
+        guard previousTotal != 0, total > previousTotal else { return nil }
 
         let busyDelta = Double(busy &- previousBusy)
         let totalDelta = Double(total &- previousTotal)
-        guard totalDelta > 0 else { return }
+        guard totalDelta > 0 else { return nil }
         cpuUsage = min(1, max(0, busyDelta / totalDelta))
+        return cpuUsage
     }
 
     // MARK: - Memory
 
-    private func sampleMemory() {
+    private func sampleMemory() -> Int64? {
         var stats = vm_statistics64()
         var count = mach_msg_type_number_t(
             MemoryLayout<vm_statistics64_data_t>.stride / MemoryLayout<integer_t>.stride
@@ -141,7 +156,7 @@ final class SystemMonitor: ObservableObject {
                 host_statistics64(mach_host_self(), HOST_VM_INFO64, $0, &count)
             }
         }
-        guard result == KERN_SUCCESS else { return }
+        guard result == KERN_SUCCESS else { return nil }
 
         let pageSize = Int64(vm_kernel_page_size)
         // "App Memory" + wired + compressed mirrors what Activity Monitor counts
@@ -151,6 +166,7 @@ final class SystemMonitor: ObservableObject {
             + Int64(stats.wire_count)
             + Int64(stats.compressor_page_count)) * pageSize
         memoryUsed = used
+        return used
     }
 
     // MARK: - Disk

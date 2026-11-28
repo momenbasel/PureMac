@@ -91,11 +91,6 @@ enum AppleStorageService {
         }
     }
 
-    private struct Identity: Hashable {
-        let device: dev_t
-        let inode: ino_t
-    }
-
     private static let resourceKeys: Set<URLResourceKey> = [
         .isPackageKey, .isUbiquitousItemKey, .ubiquitousItemDownloadingStatusKey
     ]
@@ -107,7 +102,7 @@ enum AppleStorageService {
         var skipped = 0
         var inaccessible = 0
         var reachedLimit = false
-        var seen: Set<Identity> = []
+        var ledger = FileAllocation.Ledger()
 
         func result(_ status: AppleStorageItem.Status, bytes: Int64?) -> AppleStorageItem {
             AppleStorageItem(kind: location.kind, url: root, allocatedBytes: bytes, status: status,
@@ -159,15 +154,12 @@ enum AppleStorageService {
                 break
             }
             count += 1
-            var metadata = stat()
-            guard lstat(url.path, &metadata) == 0 else {
+            guard let allocation = FileAllocation(at: url) else {
                 inaccessible += 1
                 enumerator.skipDescendants()
                 continue
             }
-            let type = metadata.st_mode & S_IFMT
-            guard type == S_IFREG || type == S_IFDIR,
-                  metadata.st_flags & UInt32(SF_DATALESS) == 0 else {
+            guard allocation.isRegularFile || allocation.isDirectory, !allocation.isDataless else {
                 skipped += 1
                 enumerator.skipDescendants()
                 continue
@@ -187,8 +179,8 @@ enum AppleStorageService {
                 enumerator.skipDescendants()
                 continue
             }
-            if seen.insert(Identity(device: metadata.st_dev, inode: metadata.st_ino)).inserted {
-                bytes += max(0, Int64(metadata.st_blocks)) * 512
+            if let additionalBytes = ledger.additionalBytes(for: allocation) {
+                bytes += additionalBytes
             }
         }
 

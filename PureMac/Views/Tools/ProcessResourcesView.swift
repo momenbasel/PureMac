@@ -157,7 +157,7 @@ private struct ProcessResourceRow: View {
                     .frame(width: 30, height: 30)
                     .accessibilityHidden(true)
             } else {
-                IconTile(systemName: "gearshape.2", tint: .secondary, size: 30, corner: 8)
+                ToolSymbol(systemName: "gearshape.2", tint: .secondary, size: 30)
                     .accessibilityHidden(true)
             }
             VStack(alignment: .leading, spacing: 3) {

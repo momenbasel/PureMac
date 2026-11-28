@@ -1,49 +1,61 @@
 import Foundation
 import Combine
 
+enum ScheduledScanOutcome {
+    case completed
+    case deferred
+    case cancelled
+}
+
 @MainActor
 class SchedulerService: ObservableObject {
     @Published var config: ScheduleConfig {
         didSet { saveConfig() }
     }
+    @Published private(set) var isRunning = false
+    @Published private(set) var isDeferred = false
 
     private var timer: Timer?
     private let configKey = "PureMac.ScheduleConfig"
-    private var onTrigger: (() async -> Void)?
+    private let consentKey = "PureMac.ScheduleEnabledByUser"
+    private let defaults: UserDefaults
+    private let now: () -> Date
+    private var onTrigger: (() async -> ScheduledScanOutcome)?
 
-    init() {
-        if let data = UserDefaults.standard.data(forKey: configKey),
-           var saved = try? JSONDecoder().decode(ScheduleConfig.self, from: data) {
-            // Refuse to honor an already-past nextRunDate loaded from disk -
-            // otherwise an attacker who can write our plist (same-UID foothold)
-            // sets nextRunDate to a past timestamp and our first tick after
-            // launch triggers autoClean. Reset the schedule so the first run
-            // is always at least one full interval after launch.
-            if let next = saved.nextRunDate, next.timeIntervalSinceNow < 60 {
-                saved.nextRunDate = nil
-                saved.lastRunDate = nil
-            }
-            self.config = saved
-        } else {
-            self.config = ScheduleConfig()
+    init(defaults: UserDefaults = .standard, now: @escaping () -> Date = Date.init) {
+        self.defaults = defaults
+        self.now = now
+        var saved = defaults.data(forKey: configKey)
+            .flatMap { try? JSONDecoder().decode(ScheduleConfig.self, from: $0) } ?? ScheduleConfig()
+        let consent = defaults.object(forKey: consentKey) as? Bool
+        if !(consent ?? defaults.bool(forKey: "PureMac.OnboardingComplete")) {
+            saved.isEnabled = false
+            saved.autoClean = false
         }
+        if !saved.isEnabled || (saved.nextRunDate?.timeIntervalSince(now()) ?? 0) < 60 {
+            saved.nextRunDate = nil
+        }
+        self.config = saved
     }
 
-    func setTrigger(_ handler: @escaping () async -> Void) {
-        self.onTrigger = handler
+    func setTrigger(_ handler: @escaping () async -> ScheduledScanOutcome) {
+        onTrigger = handler
     }
 
     func start() {
         stop()
         guard config.isEnabled else { return }
+        if config.nextRunDate == nil {
+            config.nextRunDate = now().addingTimeInterval(config.interval.seconds)
+        }
 
-        updateNextRunDate()
-
-        timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: 60, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
-                self?.checkAndRun()
+                await self?.checkAndRun()
             }
         }
+        RunLoop.main.add(timer, forMode: .common)
+        self.timer = timer
     }
 
     func stop() {
@@ -53,44 +65,41 @@ class SchedulerService: ObservableObject {
 
     func updateSchedule(interval: ScheduleInterval) {
         config.interval = interval
-        updateNextRunDate()
-        if config.isEnabled {
-            start()
-        }
+        isDeferred = false
+        config.nextRunDate = config.isEnabled ? now().addingTimeInterval(interval.seconds) : nil
     }
 
     func toggleEnabled(_ enabled: Bool) {
+        defaults.set(enabled, forKey: consentKey)
         config.isEnabled = enabled
-        if enabled {
-            start()
-        } else {
-            stop()
+        config.nextRunDate = nil
+        isDeferred = false
+        start()
+    }
+
+    func checkAndRun() async {
+        guard !isRunning, config.isEnabled, let deadline = config.nextRunDate,
+              deadline <= now(), let onTrigger else { return }
+
+        isRunning = true
+        let outcome = await onTrigger()
+        isRunning = false
+        let finishedAt = now()
+        if outcome == .completed {
+            config.lastRunDate = finishedAt
+        }
+        guard config.isEnabled, config.nextRunDate == deadline else { return }
+        isDeferred = outcome == .deferred
+        if !isDeferred {
+            config.nextRunDate = finishedAt.addingTimeInterval(config.interval.seconds)
         }
     }
 
-    // MARK: - Private
-
-    private func checkAndRun() {
-        guard config.isEnabled,
-              let nextRun = config.nextRunDate,
-              Date() >= nextRun else { return }
-
-        config.lastRunDate = Date()
-        updateNextRunDate()
-
-        Task {
-            await onTrigger?()
-        }
-    }
-
-    private func updateNextRunDate() {
-        let base = config.lastRunDate ?? Date()
-        config.nextRunDate = base.addingTimeInterval(config.interval.seconds)
-    }
+    deinit { timer?.invalidate() }
 
     private func saveConfig() {
         if let data = try? JSONEncoder().encode(config) {
-            UserDefaults.standard.set(data, forKey: configKey)
+            defaults.set(data, forKey: configKey)
         }
     }
 

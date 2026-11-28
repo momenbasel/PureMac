@@ -39,6 +39,11 @@ struct DuplicateGroup: Identifiable, Hashable, Sendable {
     var fileSize: Int64 { files[0].size }
     var reclaimableSize: Int64 { fileSize * Int64(max(0, files.count - 1)) }
 
+    func keeping(_ url: URL) -> Self? {
+        guard let protected = files.first(where: { $0.url == url }) else { return nil }
+        return Self(digest: digest, files: [protected] + files.filter { $0.url != url })
+    }
+
     func contains(_ url: URL) -> Bool {
         files.contains { $0.url == url }
     }
@@ -76,7 +81,7 @@ struct DuplicateSkippedFile: Identifiable, Hashable, Sendable {
 
 struct DuplicateScanResult: Hashable, Sendable {
     let folder: URL
-    let groups: [DuplicateGroup]
+    var groups: [DuplicateGroup]
     let skippedFiles: [DuplicateSkippedFile]
     let filesInspected: Int
     let bytesHashed: Int64
@@ -382,17 +387,24 @@ actor DuplicateFinder {
                 try preTrashHandler?(file.url)
                 try Self.validateKeeper(group.keeper, expectedDigest: group.digest)
                 try Self.validateSelectedFile(file, expectedDigest: group.digest)
+                try Task.checkCancellation()
                 try trashHandler(file.url)
                 trashed.append(file)
             } catch is CancellationError {
-                throw CancellationError()
+                break
             } catch let error as DuplicateFinderError {
                 failures.append(DuplicateTrashFailure(url: file.url, message: error.localizedDescription))
             } catch {
                 failures.append(DuplicateTrashFailure(url: file.url, message: error.localizedDescription))
             }
         }
-        try Self.validateKeeper(group.keeper, expectedDigest: group.digest)
+        if !Task.isCancelled {
+            do {
+                try Self.validateKeeper(group.keeper, expectedDigest: group.digest)
+            } catch {
+                failures.append(DuplicateTrashFailure(url: group.keeper.url, message: error.localizedDescription))
+            }
+        }
         return DuplicateTrashReport(trashedFiles: trashed, failures: failures)
     }
 

@@ -222,7 +222,7 @@ struct PermissionSheet: View {
                                 action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 10) {
-                IconTile(systemName: icon, tint: Tint.orange, size: 30, corner: 7)
+                ToolSymbol(systemName: icon, tint: Tint.orange, size: 30)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(title)
                         .font(.system(size: 12.5, weight: .semibold))

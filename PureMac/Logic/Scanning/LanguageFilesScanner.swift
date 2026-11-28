@@ -177,7 +177,8 @@ struct LanguageFilesScanner: Sendable {
             if let type = (try? fileManager.attributesOfItem(atPath: lprojPath))?[.type] as? FileAttributeType,
                type == .typeSymbolicLink { continue }
 
-            lprojs.append(.init(path: lprojPath, size: directorySize(path: lprojPath, fileManager: fileManager)))
+            let size = FileSizeCalculator.directorySize(of: URL(fileURLWithPath: lprojPath), includeHidden: true)
+            lprojs.append(.init(path: lprojPath, size: size))
         }
 
         guard !lprojs.isEmpty else { return nil }
@@ -185,26 +186,6 @@ struct LanguageFilesScanner: Sendable {
         let appStore = fileManager.fileExists(atPath: appPath + "/Contents/_MASReceipt")
         let appName = ((appPath as NSString).lastPathComponent as NSString).deletingPathExtension
         return LanguageFileFinding(appName: appName, appPath: appPath, lprojs: lprojs, appStore: appStore)
-    }
-
-    /// Recursive size of one .lproj. Localization folders stay small, so no
-    /// entry cap is applied; unreadable entries are skipped, not fatal.
-    private func directorySize(path: String, fileManager: FileManager) -> Int64 {
-        guard let enumerator = fileManager.enumerator(
-            at: URL(fileURLWithPath: path),
-            includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey],
-            options: [],
-            errorHandler: { _, _ in true }
-        ) else { return 0 }
-
-        var totalSize: Int64 = 0
-        for case let fileURL as URL in enumerator {
-            guard let values = try? fileURL.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey]),
-                  let isFile = values.isRegularFile, isFile,
-                  let size = values.fileSize else { continue }
-            totalSize += Int64(size)
-        }
-        return totalSize
     }
 
     private func isDirectory(_ path: String, fileManager: FileManager) -> Bool {

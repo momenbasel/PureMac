@@ -154,6 +154,12 @@ final class XcodeBuildMCPDerivedDataSupportTests: XCTestCase {
         let item = try XCTUnwrap(scan.items.first { $0.path == expectedPath })
         let result = await CleaningEngine(homeDirectory: temporaryHome).cleanItems([item]) { _ in }
 
+        let receipt = CleanupReceipt(rows: result.receiptRows)
+        XCTAssertEqual(receipt.rows.map(\.disposition), [.trashed])
+        XCTAssertEqual(receipt.rows.first?.trashPath, result.trashedPaths.first)
+        XCTAssertEqual(receipt.trashedBytes, item.size)
+        XCTAssertEqual(receipt.removedBytes, 0)
+        XCTAssertEqual(result.freedSpace, 0)
         XCTAssertEqual(result.itemsCleaned, 1)
         XCTAssertTrue(result.errors.isEmpty)
         XCTAssertFalse(fileManager.fileExists(atPath: legacyDerivedData.path))

@@ -3,6 +3,26 @@ import XCTest
 @testable import PureMac
 
 @MainActor
+final class InterfaceMotionTests: XCTestCase {
+    func testInterfaceMotionRequiresUserPreferenceActiveWindowAndSystemMotion() {
+        let cases = [
+            (true, false, true, true),
+            (true, false, false, false),
+            (true, true, true, false),
+            (true, true, false, false),
+            (false, false, true, false),
+            (false, false, false, false),
+            (false, true, true, false),
+            (false, true, false, false)
+        ]
+        for (enabled, reduced, active, expected) in cases {
+            XCTAssertEqual(InterfaceMotion.isEnabled(animationsEnabled: enabled, reduceMotion: reduced, windowActive: active),
+                           expected, "enabled=\(enabled), reduced=\(reduced), active=\(active)")
+        }
+    }
+}
+
+@MainActor
 final class ThemeManagerTests: XCTestCase {
     private var originalRawValue: String?
     private var originalMode: AppearanceMode = .system

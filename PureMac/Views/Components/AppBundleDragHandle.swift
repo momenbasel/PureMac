@@ -18,26 +18,15 @@ struct AppBundleDragHandle: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color.primary.opacity(hovering ? 0.10 : 0.06))
-                    .frame(width: 84, height: 84)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(
-                                hovering ? Tint.blue.opacity(0.6) : Color.primary.opacity(0.10),
-                                style: StrokeStyle(lineWidth: hovering ? 1.5 : 0.5,
-                                                   dash: hovering ? [] : [3, 3])
-                            )
-                    )
-
-                appIcon
-                    .frame(width: 56, height: 56)
-                    .scaleEffect(hovering ? 1.04 : 1.0)
-                    .shadow(color: .black.opacity(hovering ? 0.18 : 0.08),
-                            radius: hovering ? 8 : 4, y: hovering ? 3 : 1)
-            }
-            .animation(.easeOut(duration: 0.18), value: hovering)
+            appIcon
+                .frame(width: 44, height: 44)
+                .padding(5)
+                .background {
+                    if hovering {
+                        RoundedRectangle(cornerRadius: 5)
+                            .fill(Color(nsColor: .unemphasizedSelectedContentBackgroundColor))
+                    }
+                }
 
             VStack(spacing: 1) {
                 Text("PureMac.app")

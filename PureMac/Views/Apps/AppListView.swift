@@ -3,8 +3,7 @@ import SwiftUI
 struct AppListView: View {
     @EnvironmentObject var appState: AppState
     @State private var searchText = ""
-    @State private var selection: InstalledApp.ID?
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.interfaceMotionEnabled) private var motionEnabled
     @State private var sortOrder: [KeyPathComparator<InstalledApp>] = [
         .init(\.appName, order: .forward)
     ]
@@ -24,17 +23,35 @@ struct AppListView: View {
     }
 
     var body: some View {
-        HSplitView {
-            // Cap the left pane's maxWidth so dragging the splitter cannot
-            // push it past half the window and break the layout (#60).
-            appTable
-                .frame(minWidth: 300, idealWidth: 380, maxWidth: 600)
+        let matches = filteredApps
+        let visibleApp = appState.selectedApp.flatMap { selected in
+            searchText.isEmpty || matches.contains(where: { $0.id == selected.id }) ? selected : nil
+        }
+        return HSplitView {
+            VStack(spacing: 0) {
+                HStack(spacing: 9) {
+                    Text("Installed Apps").font(.headline)
+                        .accessibilityAddTraits(.isHeader)
+                    Spacer()
+                    Text(matches.count.formatted())
+                        .font(.subheadline.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                        .contentTransition(.numericText())
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(.bar)
+                Divider()
+                appTable(matches)
+            }
+            .frame(minWidth: 250, idealWidth: 320, maxWidth: 520)
 
-            fileDetail
+            fileDetail(visibleApp)
                 .frame(minWidth: 300)
+                .animation(motionEnabled ? .easeOut(duration: 0.18) : nil, value: visibleApp?.id)
         }
         .searchable(text: $searchText, prompt: "Search apps")
-        .navigationTitle(installedAppsTitle)
+        .navigationTitle("Uninstaller")
         .toolbar {
             ToolbarItemGroup {
                 Button {
@@ -43,32 +60,20 @@ struct AppListView: View {
                     Label("Refresh", systemImage: "arrow.clockwise")
                 }
 
-                // ToolbarItems can't run insertion transitions on macOS 13 —
-                // keep the button mounted and fade it with the selection.
-                Button(uninstallLabel(count: appState.selectedFiles.count), role: .destructive) {
-                    appState.removeSelectedFiles()
+                Button {
+                    appState.reviewSelectedAppFiles(appState.selectedFiles)
+                } label: {
+                    Label("Review Removal", systemImage: "list.bullet.rectangle")
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.red)
-                .opacity(appState.selectedFiles.isEmpty ? 0 : 1)
-                .disabled(appState.selectedFiles.isEmpty)
-                .animation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.8),
-                           value: appState.selectedFiles.isEmpty)
+                .accessibilityIdentifier("apps.reviewRemoval")
+                .disabled(visibleApp == nil || appState.selectedFiles.isEmpty || !appState.canBeginAppRemoval)
             }
         }
     }
 
-    private var installedAppsTitle: String {
-        String(format: String(localized: "Installed Apps (%lld)"), Int64(appState.installedApps.count))
-    }
-
-    private func uninstallLabel(count: Int) -> String {
-        String(format: String(localized: "Uninstall (%lld files)"), Int64(count))
-    }
-
     // MARK: - App Table (left side)
 
-    private var appTable: some View {
+    private func appTable(_ matches: [InstalledApp]) -> some View {
         Group {
             if appState.isLoadingApps {
                 VStack(spacing: 12) {
@@ -83,12 +88,24 @@ struct AppListView: View {
                     action: { appState.loadInstalledApps() },
                     actionLabel: "Retry"
                 )
+            } else if matches.isEmpty {
+                VStack(spacing: 10) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.title).foregroundStyle(.secondary).accessibilityHidden(true)
+                    Text("No matching apps").font(.headline)
+                    Button("Clear search") { searchText = "" }
+                        .buttonStyle(.borderless)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                Table(filteredApps, selection: $selection, sortOrder: $sortOrder) {
+                Table(matches, selection: selection, sortOrder: $sortOrder) {
                     TableColumn("Application", value: \.appName) { app in
                         HStack(spacing: 8) {
-                            HoverScaleIcon(icon: app.icon)
+                            Image(nsImage: app.icon)
+                                .resizable().frame(width: 20, height: 20)
+                                .accessibilityHidden(true)
                             Text(app.appName)
+                                .accessibilityIdentifier("apps.name.\(app.bundleIdentifier)")
                         }
                     }
                     .width(min: 150)
@@ -100,39 +117,28 @@ struct AppListView: View {
                     }
                     .width(ideal: 70)
                 }
-                .onChange(of: selection) { newValue in
-                    guard let id = newValue,
-                          let app = appState.installedApps.first(where: { $0.id == id })
-                    else { return }
-                    // Skip when the selection was just synced from an external
-                    // (Finder Services) hand-off that already scanned this app,
-                    // so we don't fire a redundant second scan.
-                    guard appState.selectedApp?.id != app.id else { return }
-                    appState.selectedApp = app
-                    appState.scanForAppFiles(app)
-                }
-                .onChange(of: appState.selectedApp) { app in
-                    // Reflect an externally-driven selection (Finder Services)
-                    // in the table highlight.
-                    if selection != app?.id { selection = app?.id }
-                }
-                .onAppear {
-                    // Sync the highlight when this view mounts already pointed
-                    // at an externally-selected app.
-                    if selection != appState.selectedApp?.id {
-                        selection = appState.selectedApp?.id
-                    }
-                }
+                .tableStyle(.inset(alternatesRowBackgrounds: false))
             }
         }
+    }
+
+    private var selection: Binding<InstalledApp.ID?> {
+        Binding(get: { appState.selectedApp?.id }, set: { id in
+            guard let id, appState.selectedApp?.id != id,
+                  let app = appState.installedApps.first(where: { $0.id == id }) else { return }
+            appState.selectedApp = app
+            appState.scanForAppFiles(app)
+        })
     }
 
     // MARK: - File Detail (right side)
 
     @ViewBuilder
-    private var fileDetail: some View {
-        if let app = appState.selectedApp {
+    private func fileDetail(_ selected: InstalledApp?) -> some View {
+        if let app = selected {
             AppFilesView(app: app)
+                .id(app.id)
+                .transition(motionEnabled ? .opacity : .identity)
         } else {
             EmptyStateView(
                 "Select an App",
@@ -141,22 +147,5 @@ struct AppListView: View {
                 tint: Tint.purple
             )
         }
-    }
-}
-
-/// App icon that scales up slightly on hover inside a Table cell.
-private struct HoverScaleIcon: View {
-    let icon: NSImage
-
-    @State private var hovering = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    var body: some View {
-        Image(nsImage: icon)
-            .resizable()
-            .frame(width: 22, height: 22)
-            .scaleEffect(hovering && !reduceMotion ? 1.12 : 1)
-            .animation(reduceMotion ? nil : MotionTokens.snappy, value: hovering)
-            .onHover { hovering = $0 }
     }
 }

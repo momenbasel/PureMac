@@ -295,8 +295,11 @@ actor ScanEngine {
         ]
 
         for path in mailPaths {
-            let scanned = scanDirectory(path: path, category: .mailAttachments, recursive: true, maxDepth: 3)
-            items.append(contentsOf: scanned)
+            let scanned = scanDirectory(path: path, category: .mailAttachments, recursive: true, maxDepth: 3, isSelected: false)
+            for var item in scanned {
+                item.selectOnlyByHand = true
+                items.append(item)
+            }
         }
 
         let totalSize = items.reduce(0) { $0 + $1.size }
@@ -1340,36 +1343,9 @@ actor ScanEngine {
     }
 
     private func directorySize(path: String, includeHidden: Bool = false) -> Int64 {
-        var totalSize: Int64 = 0
-
-        // errorHandler returns true so unreadable entries are skipped
-        // instead of aborting the walk partway through the tree.
-        guard let enumerator = fileManager.enumerator(
-            at: URL(fileURLWithPath: path),
-            includingPropertiesForKeys: [.totalFileAllocatedSizeKey, .fileSizeKey, .isRegularFileKey],
-            options: includeHidden ? [] : [.skipsHiddenFiles],
-            errorHandler: { _, _ in true }
-        ) else { return 0 }
-
-        // No entry cap. A 10k cap was here previously and made huge trees
-        // like Xcode DerivedData (millions of files) report a fraction of
-        // their real size. report() is throttled, so display stays cheap.
-        // A DerivedData/DeviceSupport walk can hold this loop for minutes,
-        // so honor task cancellation to let an aborted scan stop promptly.
-        for case let fileURL as URL in enumerator {
-            if Task.isCancelled { break }
-            report(fileURL.path)
-            guard let values = try? fileURL.resourceValues(forKeys: [.totalFileAllocatedSizeKey, .fileSizeKey, .isRegularFileKey]),
-                  let isFile = values.isRegularFile, isFile else { continue }
-            // Allocated size counts actual on-disk blocks (accurate for
-            // sparse/cloned files); fall back to logical size when the
-            // volume doesn't report it.
-            if let size = values.totalFileAllocatedSize ?? values.fileSize {
-                totalSize += Int64(size)
-            }
+        FileSizeCalculator.directorySize(of: URL(fileURLWithPath: path), includeHidden: includeHidden) {
+            report($0.path)
         }
-
-        return totalSize
     }
 
     private func fileModDate(path: String) -> Date? {

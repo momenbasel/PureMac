@@ -281,11 +281,20 @@ final class NodeCachePathTests: XCTestCase {
     }
 
     func testRustTargetIsCleanedWithCargo() async throws {
-        let realCargo = FileManager.default.homeDirectoryForCurrentUser.path + "/.cargo/bin/cargo"
-        try XCTSkipUnless(FileManager.default.isExecutableFile(atPath: realCargo), "cargo is not installed")
+        let cargoPaths = [
+            FileManager.default.homeDirectoryForCurrentUser.path + "/.cargo/bin/cargo",
+            "/opt/homebrew/bin/cargo",
+            "/usr/local/bin/cargo"
+        ]
+        guard let realCargo = cargoPaths.first(where: FileManager.default.isExecutableFile(atPath:)) else {
+            throw XCTSkip("cargo is not installed")
+        }
         let home = try makeHome()
         try makeDir("\(home)/.cargo/bin")
+        let rustc = URL(fileURLWithPath: realCargo).deletingLastPathComponent().appendingPathComponent("rustc")
+        guard FileManager.default.isExecutableFile(atPath: rustc.path) else { throw XCTSkip("rustc is not installed") }
         try FileManager.default.createSymbolicLink(atPath: "\(home)/.cargo/bin/cargo", withDestinationPath: realCargo)
+        try FileManager.default.createSymbolicLink(atPath: "\(home)/.cargo/bin/rustc", withDestinationPath: rustc.path)
         // rustup resolves its toolchains through RUSTUP_HOME / CARGO_HOME,
         // which default to the fake home here; point them back at the real ones.
         let realHome = FileManager.default.homeDirectoryForCurrentUser.path
@@ -302,7 +311,14 @@ final class NodeCachePathTests: XCTestCase {
             .write(to: URL(fileURLWithPath: "\(project)/Cargo.toml"))
         try touch("\(project)/src/lib.rs")
         try makeDir("\(project)/target/debug")
-        try touch("\(project)/target/CACHEDIR.TAG")
+        try Data("Signature: 8a477f597d28d172789f06886806bc55\n".utf8)
+            .write(to: URL(fileURLWithPath: "\(project)/target/CACHEDIR.TAG"))
+        let otherTarget = "\(home)/code/shared-target"
+        try makeDir(otherTarget)
+        try touch("\(otherTarget)/keep")
+        try makeDir("\(project)/.cargo")
+        try Data("[build]\ntarget-dir = \"\(otherTarget)\"\n".utf8)
+            .write(to: URL(fileURLWithPath: "\(project)/.cargo/config.toml"))
         let item = CleanableItem(
             name: "~/code/crate",
             path: "\(project)/target",
@@ -319,5 +335,7 @@ final class NodeCachePathTests: XCTestCase {
         XCTAssertEqual(result.freedSpace, 42)
         XCTAssertFalse(FileManager.default.fileExists(atPath: "\(project)/target"))
         XCTAssertTrue(FileManager.default.fileExists(atPath: "\(project)/Cargo.toml"))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: "\(otherTarget)/keep"))
+        XCTAssertEqual(result.receiptRows.map(\.disposition), [.completed])
     }
 }

@@ -331,7 +331,16 @@ jobs:
               echo ""
               echo "Universal binary (Intel + Apple Silicon). Signed with Developer ID + notarized + stapled by Apple."
               echo ""
-              if [[ "${VERSION}" == "3.0.0" ]]; then
+              if [[ "${VERSION}" == "3.4.0" ]]; then
+                echo "### What changed"
+                echo ""
+                echo "- Overview shows your startup disk and storage. Use Command-K to open any tool."
+                echo "- Search scan results by name, path or category. Review shows every selected file, including selections hidden by a filter."
+                echo "- Cleanup receipts record each outcome and can be saved as a text file. Put Back restores eligible Trash items when the original location is free."
+                echo "- Space Explorer and Duplicate Finder use native file lists. Downloaded Mail attachments require individual selection."
+                echo "- Bulk selection is faster for large scans. Scheduled scans wait for an open review, and Arabic and Persian windows follow right-to-left layout."
+                echo ""
+              elif [[ "${VERSION}" == "3.0.0" ]]; then
                 echo "### What changed"
                 echo "- Redesigned dashboard and navigation, with clearer storage and cleanup review."
                 echo "- New Space Explorer, exact Duplicate Finder, and Similar Photos review."
