@@ -266,15 +266,11 @@ struct DashboardView: View {
     }
 
     private var scopeDisclosure: some View {
-        DisclosureGroup(isExpanded: $showsScope) {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), alignment: .leading)], alignment: .leading, spacing: 10) {
-                ForEach(appState.scanCategories) { category in
-                    Label(LocalizedStringKey(category.rawValue), systemImage: category.icon)
-                        .font(.callout)
-                }
-            }
-            .padding(.vertical, 10)
-        } label: {
+        InlineDisclosure(
+            isExpanded: $showsScope,
+            contentPadding: EdgeInsets(top: 10, leading: 18, bottom: 10, trailing: 0),
+            accessibilityLabel: Text("Scan scope")
+        ) {
             HStack {
                 Text("Scan scope")
                 Spacer()
@@ -287,6 +283,13 @@ struct DashboardView: View {
                 }
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
+            }
+        } content: {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), alignment: .leading)], alignment: .leading, spacing: 10) {
+                ForEach(appState.scanCategories) { category in
+                    Label(LocalizedStringKey(category.rawValue), systemImage: category.icon)
+                        .font(.callout)
+                }
             }
         }
     }
